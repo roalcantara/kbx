@@ -19,7 +19,7 @@ pub struct FilterChoice {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FilterGroup {
     /// The group label.
-    pub label: &'static str,
+    pub label: String,
     /// Its choices, never empty.
     pub choices: Vec<FilterChoice>,
 }
@@ -39,9 +39,11 @@ fn toggled(values: &[String], value: &str) -> Vec<String> {
 #[must_use]
 pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -> Vec<FilterGroup> {
     let mut groups = Vec::new();
-    if !current.types.is_empty() || !current.tags.is_empty() {
+    let active = current.types.len() + current.tags.len();
+    if active > 0 {
         groups.push(FilterGroup {
-            label: "Filters",
+            // "2 Filters", as Raycast's summary above Clear All Filters.
+            label: format!("{active} Filter{}", if active == 1 { "" } else { "s" }),
             choices: vec![FilterChoice {
                 label: "Clear All Filters".into(),
                 checked: false,
@@ -62,7 +64,7 @@ pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -
         .collect();
     if !type_choices.is_empty() {
         groups.push(FilterGroup {
-            label: "Types",
+            label: "Types".into(),
             choices: type_choices,
         });
     }
@@ -79,7 +81,7 @@ pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -
         .collect();
     if !tag_choices.is_empty() {
         groups.push(FilterGroup {
-            label: "Tags",
+            label: "Tags".into(),
             choices: tag_choices,
         });
     }
@@ -111,6 +113,17 @@ mod tests {
     }
 
     #[test]
+    fn counts_the_active_filters_as_raycast() {
+        let current = FilterState {
+            types: strings(&["commands"]),
+            tags: strings(&["git"]),
+        };
+        let groups = filter_groups(&strings(&["commands"]), &strings(&["git"]), &current);
+        assert_eq!(groups[0].label, "2 Filters");
+        assert_eq!(groups[0].choices[0].label, "Clear All Filters");
+    }
+
+    #[test]
     fn adds_an_unchecked_choice_and_removes_a_checked_one() {
         let current = FilterState {
             types: strings(&["commands"]),
@@ -118,8 +131,8 @@ mod tests {
         };
         let groups = filter_groups(&strings(&["commands", "notes"]), &strings(&["git"]), &current);
         assert_eq!(
-            groups.iter().map(|g| g.label).collect::<Vec<_>>(),
-            ["Filters", "Types", "Tags"]
+            groups.iter().map(|g| g.label.as_str()).collect::<Vec<_>>(),
+            ["1 Filter", "Types", "Tags"]
         );
         let types = &groups[1].choices;
         assert_eq!(
@@ -144,7 +157,7 @@ mod tests {
     #[test]
     fn offers_no_clear_choice_without_a_filter() {
         let groups = filter_groups(&strings(&["notes"]), &[], &FilterState::default());
-        assert_eq!(groups.iter().map(|g| g.label).collect::<Vec<_>>(), ["Types"]);
+        assert_eq!(groups.iter().map(|g| g.label.as_str()).collect::<Vec<_>>(), ["Types"]);
     }
 
     #[test]

@@ -71,10 +71,10 @@ done, a chord such as ⌘↩ counting as one. The characters typed to search the
 same in both apps and are left out. Raycast's count assumes a hotkey assigned to kb Search; from its root search, add
 ⌘Space, the command's name and ↩. Each kb sequence is replayed by a UI test, and tier 3 times its slowest step.
 
-| #  | Task                                               | Raycast | kb | Sequence after the hotkey      | Evidence                                                                        |
-| -- | -------------------------------------------------- | ------- | -- | ------------------------------ | ------------------------------------------------------------------------------- |
-| T1 | Find a bookmark by a word in its title and open it | 2       | 2  | query, ⌘↩                      | `task_t1_opens_a_bookmark_with_a_query_and_one_chord`                           |
-| T2 | Find a command and copy it                         | 2       | 2  | query, ⌘↩                      | `task_t2_copies_a_command_with_a_query_and_one_chord`; ⌘↩ → clipboard in tier 3 |
-| T3 | Filter by one type and one tag                     | 5       | 5  | ⌘P, type, ↩, ⌘P, tag, ↩        | `task_t3_filters_by_a_type_and_a_tag_with_two_picks`                            |
-| T4 | Read a code-heavy note in the detail screen        | 2       | 2  | query, ↩                       | `task_t4_reads_a_note_with_a_query_and_return`                                  |
-| T5 | Rebuild the index                                  | 2       | 2  | ⌘R; the rebuild starts at once | `task_t5_rebuilds_the_index_with_one_chord`                                     |
+| #  | Task                                               | Raycast | kb | Sequence after the hotkey                     | Evidence                                                                        |
+| -- | -------------------------------------------------- | ------- | -- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| T1 | Find a bookmark by a word in its title and open it | 2       | 2  | query, ⌘↩                                     | `task_t1_opens_a_bookmark_with_a_query_and_one_chord`                           |
+| T2 | Find a command and copy it                         | 2       | 2  | query, ⌘↩                                     | `task_t2_copies_a_command_with_a_query_and_one_chord`; ⌘↩ → clipboard in tier 3 |
+| T3 | Filter by one type and one tag                     | 5       | 4  | ⌘P, type, ↩, tag, ↩ (the dropdown stays open) | `task_t3_filters_by_a_type_and_a_tag_in_one_visit`                              |
+| T4 | Read a code-heavy note in the detail screen        | 2       | 2  | query, ↩                                      | `task_t4_reads_a_note_with_a_query_and_return`                                  |
+| T5 | Rebuild the index                                  | 2       | 2  | ⌘R; the rebuild starts at once                | `task_t5_rebuilds_the_index_with_one_chord`                                     |

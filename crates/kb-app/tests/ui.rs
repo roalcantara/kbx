@@ -377,17 +377,20 @@ fn task_t2_copies_a_command_with_a_query_and_one_chord(cx: &mut TestAppContext) 
 }
 
 #[gpui_kit::test]
-fn task_t3_filters_by_a_type_and_a_tag_with_two_picks(cx: &mut TestAppContext) {
+fn task_t3_filters_by_a_type_and_a_tag_in_one_visit(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
+    press(cx, window, "cmd-p");
+    cx.run_until_parked();
     for choice in ["Commands", "#docker"] {
-        press(cx, window, "cmd-p");
-        cx.run_until_parked();
         type_text(cx, window, choice);
         cx.run_until_parked();
         press(cx, window, "enter");
         settle(cx);
     }
+    assert!(cx.read(|cx| view.read(cx).is_filter_open()), "stays open while picking");
+    press(cx, window, "escape");
+    assert!(!cx.read(|cx| view.read(cx).is_filter_open()));
     let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
     assert_eq!(
         (filter.types, filter.tags),

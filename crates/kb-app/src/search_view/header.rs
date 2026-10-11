@@ -104,13 +104,16 @@ impl SearchView {
             )
             .when(parts.filter, |header| {
                 header.child(
-                    Button::new("filter-button")
-                        .ghost()
-                        .small()
-                        .icon(IconName::Funnel)
-                        .label(filter_label)
-                        .child(Icon::new(chevron).xsmall())
-                        .on_click(cx.listener(|this, _, window, cx| this.open_filter(&OpenFilter, window, cx))),
+                    self.filter_popover(
+                        Button::new("filter-button")
+                            .ghost()
+                            .small()
+                            .icon(IconName::Funnel)
+                            .label(filter_label)
+                            .child(Icon::new(chevron).xsmall())
+                            .on_click(cx.listener(|this, _, window, cx| this.open_filter(&OpenFilter, window, cx))),
+                        cx,
+                    ),
                 )
             })
     }

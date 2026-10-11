@@ -2,9 +2,8 @@
 //! every command's handler.
 
 use std::fs;
-use std::rc::Rc;
 
-use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
+use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::{ActiveTheme as _, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
@@ -13,22 +12,21 @@ use gpui_kit::{
     IntoElement, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
 };
 use kb_domain::entry::Entry;
-use kb_domain::search::{FilterState, entry_types, tags};
+use kb_domain::search::FilterState;
 use kb_domain::sync::open_readonly;
 
-mod actions_popover;
 mod footer;
 mod header;
+mod overlays;
 
 use crate::config::Config;
 use crate::entry_list::EntryList;
-use crate::filter::filter_groups;
 use crate::keys::{
     Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
     OpenSourceFile, Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::{PaneLayout, notes_pane};
-use crate::palette::{Page, PaletteCommand};
+use crate::palette::Page;
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
@@ -63,6 +61,7 @@ pub struct SearchView {
     list: Entity<ListState<EntryList>>,
     query_input: Entity<InputState>,
     palette: Entity<CommandState>,
+    filter_palette: Entity<CommandState>,
     /// Focus for the screens without the list, so their keys reach this view.
     focus: FocusHandle,
     screen: Screen,
@@ -102,6 +101,7 @@ impl SearchView {
             input.focus(window, cx);
         });
         let palette = cx.new(|cx| CommandState::new(window, cx));
+        let filter_palette = cx.new(|cx| CommandState::new(window, cx));
         let list_sub = cx.subscribe_in(&list, window, Self::on_list_event);
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
         // The theme follows the system's light or dark appearance while the panel is open.
@@ -113,6 +113,7 @@ impl SearchView {
             list,
             query_input,
             palette,
+            filter_palette,
             focus: cx.focus_handle(),
             screen: Screen::Search,
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
@@ -356,9 +357,9 @@ impl SearchView {
     fn back(&mut self, _: &Back, window: &mut Window, cx: &mut Context<Self>) {
         // Esc leaves a page of the actions popover, then the popover, before the screen.
         match self.overlay {
-            Overlay::Actions(Page::Main) => return self.set_actions_open(false, window, cx),
-            Overlay::Actions(_) => return self.show_actions_page(Page::Main, window, cx),
-            Overlay::Filter | Overlay::None => {}
+            Overlay::Actions(Page::Main) | Overlay::Filter => return self.show_overlay(Overlay::None, window, cx),
+            Overlay::Actions(_) => return self.show_overlay(Overlay::Actions(Page::Main), window, cx),
+            Overlay::None => {}
         }
         match &self.screen {
             Screen::Rebuild(sync) if sync.read(cx).is_running() => sync.read(cx).cancel(),
@@ -380,66 +381,13 @@ impl SearchView {
         cx.notify();
     }
 
-    /// Opens a palette in a dialog. The dialog sits in Root's overlay layer, beside this view,
-    /// so a row's Action is dispatched only after the dialog closes and focus is back here.
-    fn open_palette(
-        &self,
-        placeholder: &'static str,
-        groups: Vec<(&'static str, Vec<(CommandItem, PaletteCommand)>)>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let palette = self.palette.clone();
-        palette.update(cx, |state, cx| state.set_query("", window, cx));
-        let mut command_groups = Vec::new();
-        let mut commands: Vec<Vec<PaletteCommand>> = Vec::new();
-        for (label, rows) in groups {
-            let (items, row_commands): (Vec<_>, Vec<_>) = rows.into_iter().unzip();
-            command_groups.push(CommandGroup::new().label(label).items(items));
-            commands.push(row_commands);
-        }
-        let commands = Rc::new(commands);
-        let view = cx.entity().downgrade();
-        window.open_dialog(cx, move |dialog, _, _| {
-            let (palette, command_groups, commands, view) =
-                (palette.clone(), command_groups.clone(), commands.clone(), view.clone());
-            dialog.close_button(false).p_0().content(move |content, _, _| {
-                let (commands, view) = (commands.clone(), view.clone());
-                content.child(
-                    command_groups
-                        .iter()
-                        .cloned()
-                        .fold(
-                            Command::new(&palette).bordered(false).placeholder(placeholder),
-                            Command::group,
-                        )
-                        .on_confirm(move |ix: IndexPath, window, cx| {
-                            window.close_dialog(cx);
-                            match commands.get(ix.section).and_then(|rows| rows.get(ix.row)) {
-                                Some(PaletteCommand::Run(action)) => window.dispatch_action(action.boxed_clone(), cx),
-                                Some(PaletteCommand::OpenUrl(url)) => cx.open_url(url),
-                                Some(PaletteCommand::Copy(text)) => {
-                                    cx.write_to_clipboard(ClipboardItem::new_string(text.clone()));
-                                }
-                                Some(PaletteCommand::Filter(filter)) => {
-                                    let filter = filter.clone();
-                                    let _ = view.update(cx, |this, cx| this.apply_filter(filter, cx));
-                                }
-                                Some(PaletteCommand::OpenPage(_)) | None => {}
-                            }
-                        }),
-                )
-            })
-        });
-        // Opening the dialog moves focus into it; hand it to the palette's search field after.
-        let palette = self.palette.clone();
-        window.defer(cx, move |window, cx| {
-            palette.update(cx, |state, cx| state.focus(window, cx));
-        });
-    }
-
     fn open_actions(&mut self, _: &OpenActions, window: &mut Window, cx: &mut Context<Self>) {
-        self.set_actions_open(!self.is_actions_open(), window, cx);
+        let next = if self.is_actions_open() {
+            Overlay::None
+        } else {
+            Overlay::Actions(Page::Main)
+        };
+        self.show_overlay(next, window, cx);
     }
 
     fn open_detail(&mut self, _: &OpenDetail, window: &mut Window, cx: &mut Context<Self>) {
@@ -455,34 +403,12 @@ impl SearchView {
     }
 
     fn open_filter(&mut self, _: &OpenFilter, window: &mut Window, cx: &mut Context<Self>) {
-        let delegate = self.list.read(cx).delegate();
-        let Some(connection) = delegate.connection() else {
-            return;
+        let next = if self.is_filter_open() {
+            Overlay::None
+        } else {
+            Overlay::Filter
         };
-        let (types, all_tags) = match (entry_types(connection), tags(connection)) {
-            (Ok(types), Ok(tags)) => (types, tags),
-            (Err(error), _) | (_, Err(error)) => {
-                window.push_notification(format!("Couldn’t read the filter choices: {error}"), cx);
-                return;
-            }
-        };
-        let groups = filter_groups(&types, &all_tags, delegate.filter())
-            .into_iter()
-            .map(|group| {
-                let rows = group
-                    .choices
-                    .into_iter()
-                    .map(|choice| {
-                        (
-                            CommandItem::new().label(choice.label).checked(choice.checked),
-                            PaletteCommand::Filter(choice.next),
-                        )
-                    })
-                    .collect();
-                (group.label, rows)
-            })
-            .collect();
-        self.open_palette("Filter by Type or Tag…", groups, window, cx);
+        self.show_overlay(next, window, cx);
     }
 
     fn apply_filter(&mut self, filter: FilterState, cx: &mut Context<Self>) {
