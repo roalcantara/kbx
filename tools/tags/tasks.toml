@@ -6,19 +6,27 @@ description = "Test the tag tools"
 run = "bun test tools/tags"
 
 ["tags:suggest"]
-description = "Propose tag merges: writes tags.proposed.toml in the knowledge folder, for review"
+description = "Propose tag merges: writes tags.proposed.toml in the knowledge folder, for review (the first run queries Wikidata for minutes)"
 run = '''
 #!/usr/bin/env bun
 import { join } from 'node:path'
 // mise runs an inline script from a temporary file, so the module is imported from the project root.
-const { proposalsToml, propose, readIndex, sourcesDir, stackOverflowSynonyms } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+const { abbreviations, concepts, proposalsToml, propose, readIndex, readSemantic, sourcesDir, stackOverflowSynonyms } = await import(`${process.cwd()}/tools/tags/tags.ts`)
 
 const { uses, cooccur } = readIndex()
+const dir = sourcesDir()
 const synonyms = await stackOverflowSynonyms('tmp/tags/so-synonyms.json')
-const proposals = propose(uses, cooccur, synonyms)
+const sources = {
+  synonyms,
+  abbreviations: await abbreviations('tmp/tags/abbreviations.json', synonyms),
+  concepts: await concepts(Object.keys(uses), 'tmp/tags/wikidata.json'),
+  // One-off judgements (an LLM pass) the owner reviews like the rest, if present.
+  semantic: readSemantic(join(dir, 'tags.semantic.toml')),
+}
+const proposals = propose(uses, cooccur, sources)
 const merged = new Set(proposals.map((p) => p.alias))
 const loose = Object.keys(uses).filter((t) => uses[t] === 1 && !merged.has(t)).sort()
-const file = join(sourcesDir(), 'tags.proposed.toml')
+const file = join(dir, 'tags.proposed.toml')
 await Bun.write(file, proposalsToml(proposals, uses, loose))
 const bySignal = Map.groupBy(proposals, (p) => p.signal)
 console.log(`${Object.keys(uses).length} tags; ${proposals.length} proposals (${[...bySignal].map(([s, ps]) => `${s} ${ps.length}`).join(', ')}); ${loose.length} used once`)
