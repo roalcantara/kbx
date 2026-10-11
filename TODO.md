@@ -200,6 +200,11 @@
   - **Created**: 2026-10-11 13:53
   - **Tags**: tags
 
+- [ ] bVkg **-** Regenerate skills.yml from dots' script/catalog_global_skills.py with the reviewed docs/skills.tags.toml (type skills, no skills tag, 105 tags), after the tag review (Xvn5); review and commit the script in dots
+  - **Priority**: high
+  - **Created**: 2026-10-11 15:37
+  - **Tags**: tags
+
 - [ ] XQgR **-** Tag icons: brainstorm the second sub-project (render tinted in a fixed box as Raycast's tintColor; fill gaps from Simple Icons and Lucide), after the tags are clean
   - **Priority**: medium
   - **Created**: 2026-10-11 13:53
