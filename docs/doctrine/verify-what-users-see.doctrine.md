@@ -20,7 +20,7 @@ they drift one change at a time. The pass is where they are checked, against the
 
 ## Where the rules live
 
-Each kind of rule has one home. Read it there, and never copy it elsewhere, the checklist included.
+Each kind of rule has one home. Read it, and change it, there.
 
 | Rule                                            | Home                                                                |
 | ----------------------------------------------- | ------------------------------------------------------------------- |
@@ -34,7 +34,8 @@ Each kind of rule has one home. Read it there, and never copy it elsewhere, the 
 
 ## How to apply
 
-- Before merging a UI change, run the Visual Pass in compact and expanded (⌘⇧F), and commit the ticks.
-- A new rule goes to its home first; then a check cites it. A check states an expectation in its own words only when
-  no home holds it.
-- A failed check stays unticked with a one-line note and becomes a TODO item.
+- Before merging a UI change, run the Visual Pass in the small and the expanded window, and commit the ticks.
+- The Visual Pass turns these rules into plain observations a tester can make without reading them. When a rule
+  changes in its home, change the check that observes it in the same commit.
+- What a test can prove belongs in a test, listed in the Visual Pass's appendix, not in its manual checks.
+- A failed check stays unticked with a note of what was seen, and becomes a TODO item.

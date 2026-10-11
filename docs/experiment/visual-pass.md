@@ -1,227 +1,165 @@
 # Visual Pass
 
-What the tests cannot see, checked by hand in the running app until each check is automated. Every check verifies a
-rule that lives elsewhere and cites it; the doctrine
-[verify-what-users-see](../doctrine/verify-what-users-see.doctrine.md) says where each kind of rule lives.
+A manual check of kb, done by a person at the keyboard, in about 20 minutes. It covers only what automated tests
+cannot see: how kb looks and how it feels to use. What tests already prove is listed in the appendix, so nobody checks
+it twice.
 
 **Last run:** none yet.
 
-## How to run
+## Before you start
 
-1. `mise run show`, with the system in dark appearance and your own sources indexed (⌘R once).
-2. Go through the phases in order, compact first; phase 8 repeats the layout checks in expanded (⌘⇧F).
-3. Tick what holds. Leave a failure unticked with ` — <what was seen>` after it, and file it in TODO.md.
-4. Update **Last run** (date, kb version, sizes) and commit the ticks: `docs: Run the Visual Pass on <version>`.
-5. Before the next run, untick everything: `sed -i '' 's/^- \[x\] \*\*VP-/- [ ] **VP-/' docs/experiment/visual-pass.md`.
+1. Install the latest `kb.app` from the [GitHub Releases](https://github.com/roalcantara/kbx/releases), or run
+   `mise run show` in the repository.
+2. Set macOS to the dark appearance (System Settings › Appearance › Dark).
+3. Press **⌥K** (Option+K) to open kb, then **⌘R** to index your entries. Wait for the report, then press **Esc**.
+4. Your data should hold at least: a bookmark, a YouTube video bookmark, a command, an entry with tags, an entry with
+   links and an entry with notes. When it has no such entry, skip the check that needs it and say so.
 
-## Tags
+## The parts of the panel
 
-How each check is verified, and the route to automating it:
+| Name              | Where                                                       |
+| ----------------- | ----------------------------------------------------------- |
+| **search field**  | top, after the `‹` back arrow                               |
+| **filter button** | top right, with a funnel icon and "All Entries"             |
+| **list**          | the rows below the search field                             |
+| **details pane**  | the right part of the panel, when shown                     |
+| **footer**        | the bottom edge: a pill on the left, two pills on the right |
+| **Actions popup** | the menu ⌘K opens                                           |
+| **Filter popup**  | the menu ⌘P opens                                           |
+| **detail screen** | one entry full width, opened with ↩                         |
 
-- **[test]** a UI or unit test already proves it; the test is named. A manual run only confirms the app as built.
-- **[probe]** scriptable from outside: the CGEvent `probe` (`tools/bench/probes`) drives keys; a screenshot or the
-  window list shows the result.
-- **[pixel]** needs an image compared with a reference capture.
-- **[eye]** human judgement: balance, legibility, calm.
+## How to record
 
-## Sources
+Tick each check that holds. When one fails, leave it unticked and write what you saw after it
+(`— the row touches the panel's edge`). When done, fill in **Last run** (date, kb version) and commit:
+`docs: Run the Visual Pass on <version>`. To reset for the next run:
+`sed -i '' 's/^- \[x\] \*\*VP/- [ ] **VP/' docs/experiment/visual-pass.md`.
 
-`DESIGN §n` is a DESIGN.md section; `PRODUCT` is PRODUCT.md; `Keys` is the README's key table; `Sn`, `An`, `Fn`, `Ln`
-and `Tn` are rows of [parity.md](parity.md); `UI-nn` is a UI comparison finding, mapped in DESIGN.md's appendix;
-`compliance` is [compliance.md](compliance.md); `CONTEXT` is CONTEXT.md.
+Each check reads: WHILE <the situation>, WHEN <you do this>, THE <part> SHALL <what you should see>. One check, one
+thing to look at.
 
-## 0. Global
+## VP1. Opening and closing
 
-- [ ] **VP-0.01** [pixel] THE panel SHALL draw each surface in its palette role: window, header, selection, raised,
-      divider (DESIGN §2).
-- [ ] **VP-0.02** [eye] THE panel SHALL keep colour for meaning only: type tints, tags, state (DESIGN §1, §2).
-- [ ] **VP-0.03** [pixel] THE panel SHALL tint each type and each tag with its accent, the same tag the same accent on
-      every screen (DESIGN §2 Type tints, Tag accents).
-- [ ] **VP-0.04** [eye] THE panel SHALL keep every text legible on its surface, tag pills included (DESIGN §2 Pills;
-      PRODUCT Accessibility & Inclusion).
-- [ ] **VP-0.05** [eye] THE panel SHALL draw each text element in its size, weight and colour (DESIGN §3).
-- [ ] **VP-0.06** [eye] THE panel SHALL label commands, buttons and sections in Title Case and write messages as
-      sentences (DESIGN §3; A11; compliance).
-- [ ] **VP-0.07** [eye] THE panel SHALL space and inset equivalent content alike on every screen, with a divider only
-      at a pane or section boundary (DESIGN §5).
-- [ ] **VP-0.08** [eye] THE panel SHALL be flat and opaque, overlays separated by their edge and shadow (DESIGN §6).
-- [ ] **VP-0.09** [eye] THE panel SHALL name nothing by colour alone: a tag shows its `#name` or tooltip, a type its
-      icon (PRODUCT Accessibility & Inclusion; compliance).
-- [ ] **VP-0.10** [eye] THE panel SHALL use CONTEXT's words in every label and message (CONTEXT).
+AS a user,
+I want to interact with **KB**
+SO THAT I can efficiently search and manage my knowledge base
 
-## 1. Open and hide
+- [ ] **VP101** WHEN `⌥K` is pressed, THEN **KB** SHALL appear in the middle of the currently focused screen.
+- [ ] **VP102** WHEN **KB** appears, THEN the search field SHALL have a blinking cursor, focused and ready for typing.
+- [ ] **VP103** WHEN **KB** appears, THEN list SHALL show Bookmarks, Cheat Sheets with the first row selected and highlighted.
+- [ ] **VP104** WHEN another app's window is focused, THEN **KB** SHALL disappear.
+- [ ] **VP105** WHEN `Esc` is pressed and the search field is empty, THEN **KB** SHALL disappear.
 
-- [ ] **VP-1.01** [probe] WHEN ⌥K is pressed anywhere THE panel SHALL appear centred on the screen with the query
-      field focused (Keys; L01; CONTEXT Hotkey).
-- [ ] **VP-1.02** [probe] WHEN the panel opens THE list SHALL show the entries with the first selected and no split
-      pane (S02, S09).
-- [ ] **VP-1.03** [probe] WHEN another window takes focus THE panel SHALL hide (CONTEXT Panel; L01).
-- [ ] **VP-1.04** [test] WHEN Esc is pressed with a query THE panel SHALL clear it, and with none, hide (Keys;
-      L01; `opens_the_detail_screen_on_enter_and_returns_on_escape`).
-- [ ] **VP-1.05** [probe] WHEN ⌥K is pressed again after hiding THE panel SHALL reappear as it was left (L01).
-- [ ] **VP-1.06** [probe] WHEN ⌘Q is pressed THE app SHALL quit (Keys; L02).
+## VP2. Searching and the list
 
-## 2. Search and list
+As a user,
+I want to search and view items in the list
+SO THAT I can quickly find and interact with the content I need.
 
-- [ ] **VP-2.01** [test] WHEN the user types THE list SHALL narrow to matching entries once typing settles, ranked
-      (S01, S02; `lists_entries_by_title_and_narrows_them_as_the_user_types`, `runs_one_query_after_typing_settles`).
-- [ ] **VP-2.02** [eye] WHILE a query runs THE previous results SHALL stay on screen and typing SHALL never stall
-      (S04; PRODUCT principle 4).
-- [ ] **VP-2.03** [pixel] THE query's first character SHALL start where row titles start, and the back chevron sit on
-      the row-icon axis (DESIGN §4 Header, §5).
-- [ ] **VP-2.04** [eye] THE header SHALL show the query field's placeholder, the filter button with its funnel, the
-      current filter and a closed chevron, and no divider below (DESIGN §4 Header; UI-02).
-- [ ] **VP-2.05** [pixel] THE selected row SHALL be an inset, rounded fill, never a full-width bar (DESIGN §4 List row;
-      UI-03).
-- [ ] **VP-2.06** [eye] THE list SHALL show on each row its tinted type icon, or a bookmark's favicon with the globe as fallback
-      (DESIGN §4 List row; S05; UI-21).
-- [ ] **VP-2.07** [eye] THE list SHALL show on each row a regular-weight title and a muted description of the same size
-      (DESIGN §3, §4 List row; S06; UI-04).
-- [ ] **VP-2.08** [eye] THE list SHALL end each row with at most three tags, each a filled pill or its image, then `+N`, then the
-      link count (DESIGN §4 List row, Tag pill; S07; UI-05, UI-06).
-- [ ] **VP-2.09** [eye] WHEN a title or description is longer than its row THE row SHALL truncate it, the tags still
-      in view (DESIGN §4 List row).
-- [ ] **VP-2.10** [test] WHEN ↑ or ↓ is pressed THE selection SHALL move one row and stay in view (Keys;
-      `moves_the_selection_with_the_arrow_keys`).
-- [ ] **VP-2.11** [test] WHEN a new query returns THE first result SHALL be selected
-      (`selects_the_first_result_of_a_new_query`).
-- [ ] **VP-2.12** [probe] WHEN the selection reaches the end of a page THE next page SHALL load (S03).
-- [ ] **VP-2.13** [eye] IF nothing matches THE list SHALL say so, and IF there is no index, offer ⌘R (S08).
+- [ ] **VP201** WHILE you type a word, THE letters SHALL appear at once, without waiting for results.
+- [ ] **VP202** WHILE you type, THE previous rows SHALL stay visible until the new ones arrive (no blank flash).
+- [ ] **VP203** WHILE the list shows, THE first letter you type SHALL line up with the first letter of the row titles below it.
+- [ ] **VP204** WHILE the list shows, THE `‹` back arrow SHALL line up with the row icons below it.
+- [ ] **VP205** WHILE the list shows, THE line between the search field and the list SHALL NOT exist.
+- [ ] **VP206** WHILE a row is highlighted, THE highlight SHALL have rounded corners and SHALL NOT touch the panel's left or right edge.
+- [ ] **VP207** WHILE the list shows, THE row titles SHALL be in regular weight, not bold.
+- [ ] **VP208** WHILE the list shows, THE row description SHALL be the same size as the title, in a dimmer colour.
+- [ ] **VP209** WHILE a command row shows, THE icon at its left SHALL be a green terminal icon.
+- [ ] **VP210** WHILE a bookmark row shows, THE icon at its left SHALL be the website's own icon, or a globe while it loads or when the site has none.
+- [ ] **VP211** WHILE a row with tags shows, THE tags SHALL appear at its right end as coloured `#name` pills, or as a small picture for tags that have one.
+- [ ] **VP212** WHILE a row with links shows, THE link icon and the number of links SHALL appear after its tags.
+- [ ] **VP213** WHILE a title is too long for its row, THE title SHALL end in `…` and the tags SHALL stay visible.
+- [ ] **VP214** WHEN you type text that matches nothing, THE list SHALL say that no entries match.
 
-## 3. Split pane
+## VP3. The details pane
 
-- [ ] **VP-3.01** [test] WHEN → is pressed with the caret at the query's end THE split pane SHALL open, and WHEN ← is
-      pressed the same way, close (Keys; S09; A06;
-      `shows_details_with_right_at_the_end_of_the_query_and_hides_them_with_left`).
-- [ ] **VP-3.02** [test] WHEN → or ← is pressed mid-query THE caret SHALL move and the pane stay as it is (DESIGN
-      Adaptations; `moves_the_caret_with_right_and_left_inside_the_query`).
-- [ ] **VP-3.03** [test] WHEN ⌘D is pressed THE split pane SHALL toggle (DESIGN Adaptations;
-      `opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d`).
-- [ ] **VP-3.04** [pixel] WHILE the pane is open THE list SHALL take about a third of the width and the pane the rest,
-      one divider between (DESIGN §4 Split pane; UI-08).
-- [ ] **VP-3.05** [eye] WHILE the pane is open THE rows SHALL show their titles without tags or descriptions crowding
-      them (DESIGN §4 List row, Split pane).
-- [ ] **VP-3.06** [eye] WHEN the selection moves THE pane SHALL show the newly selected entry (S09).
-- [ ] **VP-3.07** [eye] THE pane SHALL show the notes, or the "no notes" placeholder, above the metadata card (S09,
-      S12; DESIGN §4 Notes).
-- [ ] **VP-3.08** [pixel] THE description SHALL be a quote with the red bar (DESIGN §4 Notes; UI-10).
-- [ ] **VP-3.09** [eye] THE notes SHALL render headings, lists, tables, highlighted code and images (S12).
-- [ ] **VP-3.10** [eye] WHEN a YouTube bookmark is selected THE pane SHALL show its thumbnail first (S12; DESIGN §4
-      Notes; UI-20).
-- [ ] **VP-3.11** [eye] THE metadata card SHALL list its rows in order, labels left and values right, alternate rows
-      shaded, Type and Tags as pills, the source with a file icon (S10; DESIGN §4 Metadata card; UI-09).
-- [ ] **VP-3.12** [probe] WHEN a URL in the card is clicked THE browser SHALL open it, and the row show ↗ (DESIGN §4
-      Metadata card; UI-22).
-- [ ] **VP-3.13** [eye] WHEN the notes are longer than the pane THE notes SHALL scroll, the card staying reachable
-      (DESIGN §4 Split pane).
+- [ ] **VP301** WHILE the cursor is at the end of your search text, WHEN you press →, THE details pane SHALL open on the right.
+- [ ] **VP302** WHILE the details pane is open, THE list SHALL take about one third of the panel's width.
+- [ ] **VP303** WHILE the details pane is open, WHEN you press ↓, THE details pane SHALL show the newly highlighted entry.
+- [ ] **VP304** WHILE an entry with a description is highlighted, THE description SHALL show as a quote with a red bar at its left.
+- [ ] **VP305** WHILE an entry with notes is highlighted, THE notes SHALL show headings, lists and code with coloured syntax.
+- [ ] **VP306** WHILE a YouTube video bookmark is highlighted, THE video's thumbnail SHALL show at the top of the pane.
+- [ ] **VP307** WHILE any entry is highlighted, THE box below the notes SHALL list its details with labels on the left, values on the right and every other row shaded.
+- [ ] **VP308** WHILE an entry with tags is highlighted, THE tags in that box SHALL have the same colours as in its list row.
+- [ ] **VP309** WHILE a bookmark is highlighted, WHEN you click its URL in that box, THE browser SHALL open that page.
+- [ ] **VP310** WHILE an entry's notes are longer than the pane, WHEN you scroll over the pane, THE notes SHALL scroll.
+- [ ] **VP311** WHILE the details pane is open and the cursor is at the end of your search text, WHEN you press ←, THE details pane SHALL close.
 
-## 4. Detail screen
+## VP4. The detail screen
 
-- [ ] **VP-4.01** [test] WHEN ↩ is pressed in the list THE detail screen SHALL open without running the primary action
-      (Keys; A02; S11; `opens_details_with_enter_in_the_list_without_running_the_primary_action`).
-- [ ] **VP-4.02** [test] THE header SHALL show only the back chevron (DESIGN §4 Detail screen, Header; UI-11;
-      `shows_only_the_back_chevron_in_the_detail_screen_header`).
-- [ ] **VP-4.03** [eye] THE screen SHALL start with the notes, without a title block, the thumbnail first for a YouTube
-      bookmark (DESIGN §4 Detail screen; UI-12, UI-23).
-- [ ] **VP-4.04** [test] WHEN → or ← is pressed THE metadata column SHALL show or hide on the right, about a third wide
-      (Keys; A06; DESIGN §4 Detail screen;
-      `shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen`).
-- [ ] **VP-4.05** [test] WHEN ↩ is pressed THE primary action SHALL run (Keys; A04;
-      `runs_the_primary_action_with_enter_on_the_detail_screen`).
-- [ ] **VP-4.06** [test] WHEN Esc is pressed THE list SHALL return with the query and selection kept (Keys; L01;
-      `opens_the_detail_screen_on_enter_and_returns_on_escape`).
+- [ ] **VP401** WHILE an entry with notes is highlighted, WHEN you press ↩, THE entry's notes SHALL fill the panel.
+- [ ] **VP402** WHILE the detail screen shows, THE top of the panel SHALL show only the `‹` back arrow: no search field, no filter button.
+- [ ] **VP403** WHILE the detail screen shows, THE notes SHALL start at the top, without the entry's title above them.
+- [ ] **VP404** WHILE the detail screen shows, WHEN you press →, THE entry's details SHALL appear in a column on the right.
+- [ ] **VP405** WHILE the detail screen shows, THE footer's left pill SHALL show the entry's icon and title.
+- [ ] **VP406** WHILE the detail screen shows, WHEN you press Esc, THE list SHALL return with the same search text and the same row highlighted.
 
-## 5. Footer
+## VP5. The footer
 
-- [ ] **VP-5.01** [eye] THE footer SHALL be two floating pills over the panel's bottom edge, with no full-width bar or
-      divider (DESIGN §4 Footer; UI-07).
-- [ ] **VP-5.02** [eye] THE left pill SHALL name the context: the extension in the list, the entry (with its tinted
-      icon) on the detail screen, the rebuild while it runs (DESIGN §4 Footer; S13).
-- [ ] **VP-5.03** [eye] THE right pills SHALL show the primary action of the screen and Actions, each key its own
-      keycap (DESIGN §4 Footer; S13).
-- [ ] **VP-5.04** [test] WHEN a footer pill is clicked THE same action as its key SHALL run
-      (`the_action_bar_opens_details_and_runs_the_primary_action`).
+- [ ] **VP501** WHILE the list shows, THE footer SHALL be separate rounded pills floating above the bottom edge, not a full-width bar.
+- [ ] **VP502** WHILE the list shows, THE right pills SHALL read "Show Details" with a `↵` key and "Actions" with separate `⌘` and `K` keys.
 
-## 6. Actions popover
+## VP6. The Actions popup
 
-- [ ] **VP-6.01** [probe] WHEN ⌘K is pressed THE popover SHALL open above the footer's Actions button, opening upwards,
-      with its search focused (Keys; A01; DESIGN §4 Actions popover; UI-13).
-- [ ] **VP-6.02** [eye] THE popover SHALL list the actions in Raycast's order, sectioned, the list's first two rows
-      Show Details and the primary action (A01–A03; DESIGN §4 Actions popover; UI-15).
-- [ ] **VP-6.03** [eye] THE popover SHALL show on each row its keys, one keycap per key, and those keys SHALL run it from the list
-      (A01; Keys; UI-14).
-- [ ] **VP-6.04** [eye] THE search field SHALL sit at the bottom, and typing SHALL narrow the rows (DESIGN §4 Actions
-      popover; UI-16).
-- [ ] **VP-6.05** [test] WHEN Copy… is chosen THE popover SHALL show its page in place, and its rows copy (A09; UI-16;
-      `copies_the_title_from_the_copy_page_of_the_actions`).
-- [ ] **VP-6.06** [eye] WHEN Links is chosen on an entry with links THE popover SHALL show, per link, Open and Copy URL
-      (A08).
-- [ ] **VP-6.07** [test] WHEN Esc is pressed on a page THE main page SHALL return, and on the main page the popover
-      close, the screen untouched (`leaves_a_page_of_the_actions_then_the_actions_with_escape`).
-- [ ] **VP-6.08** [eye] THE popover SHALL be separated from the panel by its edge and shadow, not a lighter fill
-      (DESIGN §6).
-- [ ] **VP-6.09** [eye] WHEN an action runs THE popover SHALL close and the keyboard return to the screen (DESIGN §4
-      Actions popover).
-- [ ] **VP-6.10** [eye] WHILE the detail screen shows THE popover SHALL lead with the primary action on ↩ and offer Show/Hide
-      Metadata (A04, A06).
+- [ ] **VP601** WHEN you press ⌘K, THE Actions popup SHALL open just above the footer's Actions pill, aligned to its right.
+- [ ] **VP602** WHILE the Actions popup is open, THE search field SHALL sit at its bottom.
+- [ ] **VP603** WHILE the Actions popup is open, THE first two actions SHALL be "Show Details" and the entry's main action (for a bookmark, "Open in Browser").
+- [ ] **VP604** WHILE the Actions popup is open, THE actions that have a shortcut SHALL show its keys, one key per box.
+- [ ] **VP605** WHILE the Actions popup is open, THE popup SHALL stand out from the panel by its border and shadow.
+- [ ] **VP606** WHILE the Actions popup is open, WHEN you type `copy`, THE popup SHALL list only actions containing "copy".
+- [ ] **VP607** WHILE an entry with links is highlighted and the Actions popup is open, WHEN you choose "Links", THE popup SHALL list, for each link, "Open" and "Copy URL".
+- [ ] **VP608** WHILE the Actions popup is open, WHEN you choose "Open Source File", THE popup SHALL close and the entry's file SHALL open in your editor.
 
-## 7. Filter dropdown
+## VP7. The Filter popup
 
-- [ ] **VP-7.01** [probe] WHEN ⌘P is pressed THE dropdown SHALL open under the filter button, its chevron turned up,
-      its search focused (Keys; F01; DESIGN §4 Filter dropdown, Header; UI-17).
-- [ ] **VP-7.02** [eye] THE dropdown SHALL list Types and Tags, each choice marked ✓ or ○ (F01; DESIGN §4 Filter
-      dropdown; UI-18).
-- [ ] **VP-7.03** [test] WHEN a choice is picked THE list SHALL refilter at once and THE dropdown SHALL stay open with
-      a fresh search (F02; T3; UI-18; `task_t3_filters_by_a_type_and_a_tag_in_one_visit`).
-- [ ] **VP-7.04** [eye] WHILE a filter is active THE dropdown SHALL lead with the count of filters and Clear All
-      Filters, and the button SHALL name the filter (F01; DESIGN §4 Filter dropdown; UI-19).
-- [ ] **VP-7.05** [probe] WHEN Esc or ⌘P is pressed THE dropdown SHALL close, the filter kept and the keyboard back in
-      the query (Keys; DESIGN §4 Filter dropdown).
-- [ ] **VP-7.06** [probe] WHEN the app is relaunched THE filter SHALL be reset (F03).
+- [ ] **VP701** WHEN you press ⌘P, THE Filter popup SHALL open just below the filter button, aligned to its right.
+- [ ] **VP702** WHILE the Filter popup is open, THE filter button's arrow SHALL point up.
+- [ ] **VP703** WHILE the Filter popup is open, THE entry types and tags SHALL each show an empty circle (○).
+- [ ] **VP704** WHILE the Filter popup is open, WHEN you choose a type, THE popup SHALL stay open and that type SHALL show a filled circle with a tick.
+- [ ] **VP705** WHILE a filter is active, THE top of the Filter popup SHALL show how many filters are on (for example "1 Filter") and "Clear All Filters".
+- [ ] **VP706** WHILE a filter is active, WHEN you press Esc, THE filter button SHALL show the filter's name instead of "All Entries".
 
-## 8. Window size
+## VP8. The expanded window
 
-- [ ] **VP-8.01** [test] WHEN ⌘⇧F is pressed THE panel SHALL switch between compact and expanded, and back
-      (Keys; DESIGN §5; CONTEXT Size toggle; `toggles_the_window_size_with_cmd_shift_f`).
-- [ ] **VP-8.02** [probe] WHEN the size changes THE panel SHALL keep its centre on the screen (DESIGN §5, Adaptations).
-- [ ] **VP-8.03** [eye] WHILE expanded THE panel SHALL satisfy VP-2.03 to VP-2.09, VP-3.04, VP-3.05, VP-3.07,
-      VP-3.11, VP-4.03, VP-4.04, VP-5.01 to VP-5.03, VP-6.01, VP-6.08 and VP-7.01 (DESIGN §5).
-- [ ] **VP-8.04** [eye] WHILE expanded THE extra room SHALL go to content (longer titles, notes, the pane), not to
-      wider gaps (DESIGN §5).
-- [ ] **VP-8.05** [probe] WHEN the panel hides and reopens THE size SHALL hold for the session (CONTEXT Size toggle).
+- [ ] **VP801** WHEN you press ⌘⇧F, THE panel SHALL grow to most of the screen and stay centred.
+- [ ] **VP802** WHILE the panel is expanded, WHEN you go through sections 2 to 7 again, THE checks SHALL hold as they did in the small window.
+- [ ] **VP803** WHILE the panel is expanded, THE extra room SHALL go to longer titles and notes, not to wider empty gaps.
+- [ ] **VP804** WHILE the panel is expanded, WHEN you press ⌘⇧F, THE panel SHALL shrink back and stay centred.
 
-## 9. Rebuild
+## VP9. Rebuilding the index
 
-- [ ] **VP-9.01** [test] WHEN ⌘R is pressed THE rebuild screen SHALL replace the list and the rebuild start (Keys;
-      A10; CONTEXT Sync; `task_t5_rebuilds_the_index_with_one_chord`).
-- [ ] **VP-9.02** [eye] WHILE the rebuild runs THE screen SHALL show its progress, and Esc SHALL cancel it, the
-      previous index kept (CONTEXT Sync).
-- [ ] **VP-9.03** [eye] WHEN the rebuild ends THE screen SHALL show the sync report per source file, failures with
-      their reason (CONTEXT Sync report).
-- [ ] **VP-9.04** [eye] WHEN the rebuild ends THE list SHALL show the new index after Esc (CONTEXT Sync).
+- [ ] **VP901** WHEN you press ⌘R, THE panel SHALL show the rebuild's progress.
+- [ ] **VP902** WHEN the rebuild ends, THE panel SHALL list each of your source files with its number of entries, and the reason for any file that failed.
+- [ ] **VP903** WHILE the rebuild report shows, WHEN you press Esc, THE list SHALL return.
 
-## 10. Keyboard map
+## Appendix: already automated
 
-- [ ] **VP-10.01** [test] WHEN ⌘↩ is pressed in the list THE primary action SHALL run (Keys; A03;
-      `task_t1_opens_a_bookmark_with_a_query_and_one_chord`, `task_t2_copies_a_command_with_a_query_and_one_chord`).
-- [ ] **VP-10.02** [probe] WHEN ⌘⇧C is pressed on a bookmark THE URL SHALL be copied (Keys; A05).
-- [ ] **VP-10.03** [probe] WHEN ⌘O is pressed THE entry's source file SHALL open (Keys; A07).
-- [ ] **VP-10.04** [probe] WHEN ⌘⇧, is pressed THE preferences file SHALL open, created from its template when missing
-      (Keys; A10).
-- [ ] **VP-10.05** [eye] THE keys every overlay and pill shows SHALL be the keys that run them (Keys; A01).
+Automated tests prove these on every push (`mise run gate`, CI). They are not part of the manual pass.
 
-## Summary
+| What                                                                                 | Proved by                                                                                                                                     |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typing narrows the list once typing settles; a new query selects its first result    | `lists_entries_by_title_and_narrows_them_as_the_user_types`, `runs_one_query_after_typing_settles`, `selects_the_first_result_of_a_new_query` |
+| ↑ ↓ move the selection                                                               | `moves_the_selection_with_the_arrow_keys`                                                                                                     |
+| → / ← mid-text move the cursor, not the pane; ⌘D toggles the pane                    | `moves_the_caret_with_right_and_left_inside_the_query`, `opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d`                       |
+| ↩ opens the detail screen without running the main action; ↩ there runs it           | `opens_details_with_enter_in_the_list_without_running_the_primary_action`, `runs_the_primary_action_with_enter_on_the_detail_screen`          |
+| → / ← toggle the metadata on the detail screen; its header shows only the back arrow | `shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen`, `shows_only_the_back_chevron_in_the_detail_screen_header`            |
+| ⌘↩ runs the main action (opens a bookmark, copies a command)                         | `task_t1_…`, `task_t2_…`, `copies_a_command_with_its_primary_action`                                                                          |
+| The footer pills run the same actions as their keys                                  | `the_action_bar_opens_details_and_runs_the_primary_action`                                                                                    |
+| Copy… opens a page of copy actions; Esc leaves the page, then the popup              | `copies_the_title_from_the_copy_page_of_the_actions`, `leaves_a_page_of_the_actions_then_the_actions_with_escape`                             |
+| Picking filters keeps the Filter popup open and narrows the list                     | `task_t3_filters_by_a_type_and_a_tag_in_one_visit`                                                                                            |
+| ⌘⇧F switches the window size; ⌘R starts a rebuild                                    | `toggles_the_window_size_with_cmd_shift_f`, `task_t5_rebuilds_the_index_with_one_chord`                                                       |
+| The dark theme uses DESIGN.md's palette; every text meets WCAG AA contrast           | `draws_dark_mode_in_the_palette_of_design_md`; `tools/design/validate.mjs`                                                                    |
+| Tags take the same colour as in the Raycast extension; types their tint              | `hashes_tags_as_the_raycast_extension_does`, `tints_each_type_as_raycast`                                                                     |
+| Rows show at most three tags, then `+N`                                              | `collapses_tags_after_three`                                                                                                                  |
 
-| Phase              | Checks | test | probe | pixel | eye |
-| ------------------ | ------ | ---- | ----- | ----- | --- |
-| 0. Global          | 10     | 0    | 0     | 2     | 8   |
-| 1. Open and hide   | 6      | 1    | 5     | 0     | 0   |
-| 2. Search and list | 13     | 3    | 1     | 2     | 7   |
-| 3. Split pane      | 13     | 3    | 1     | 2     | 7   |
-| 4. Detail screen   | 6      | 5    | 0     | 0     | 1   |
-| 5. Footer          | 4      | 1    | 0     | 0     | 3   |
-| 6. Actions popover | 10     | 2    | 1     | 0     | 7   |
-| 7. Filter dropdown | 6      | 1    | 3     | 0     | 2   |
-| 8. Window size     | 5      | 1    | 2     | 0     | 2   |
-| 9. Rebuild         | 4      | 1    | 0     | 0     | 3   |
-| 10. Keyboard map   | 5      | 1    | 3     | 0     | 1   |
+## Appendix: to automate next
+
+Rules that only a reviewer could check today, and that tests can prove (TODO):
+
+- Every command, button and section label is in Title Case; messages are sentences.
+- Every key shown in the Actions popup and the footer is the key that runs that action.
+- Esc with search text clears it; the filter resets when kb restarts; the window size holds after kb hides.
+- ⌘⇧C copies a bookmark's URL; ⌘O opens the source file; ⌘⇧, opens the preferences file.
+- Later, with reference screenshots: the colours of each surface, the row and header alignment, the split width.
+
+- [ ] **VP106** WHILE **KB** is open, THE desktop behind it SHALL NOT show through it.
