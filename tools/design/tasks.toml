@@ -9,6 +9,6 @@ run = "uv run -q --with pillow python -I tools/design/sample.py && dprint fmt to
 description = "Validate the palettes, regenerate the app theme from the chosen one, and open the comparison page (tmp/design/palettes.html)"
 run = [
   "node tools/design/validate.mjs && dprint fmt tools/design/validation.json",
-  "node tools/design/theme.mjs && dprint fmt crates/kb-app/assets/themes/kb.json",
+  "node tools/design/theme.mjs && dprint fmt crates/kb-app/assets/themes/*.json crates/kb-app/tests/fixtures/tag-accents.json",
   "node tools/design/render.mjs && open tmp/design/palettes.html",
 ]

@@ -66,61 +66,73 @@ pub fn type_label(entry_type: &str) -> String {
     known.to_owned()
 }
 
-/// A colour role from the theme's palette. Rendering resolves it against the active theme
-/// (`cx.theme().red`, …), so badges and tags follow light, dark and custom themes alike.
+/// A colour role among the seven accents of DESIGN.md. Rendering resolves it for the current
+/// appearance (`accents::accent`), so badges and tags follow light and dark alike.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Hue {
-    /// `theme.red`
-    Red,
-    /// `theme.yellow`
-    Yellow,
-    /// `theme.green`
-    Green,
-    /// `theme.cyan`
-    Cyan,
-    /// `theme.blue`
+    /// Cheats; tags.
     Blue,
-    /// `theme.magenta`
+    /// Commands; tags.
+    Green,
+    /// Notes; tags.
+    Orange,
+    /// Bookmarks; tags.
+    Purple,
+    /// Tasks; tags.
     Magenta,
-    /// The muted foreground: no hue.
-    Neutral,
+    /// Tags.
+    Yellow,
+    /// Tags; the notes' description bar.
+    Red,
 }
 
-/// The coloured square that leads a list row: a glyph or an icon, in the type's hue.
+/// The tinted icon that leads a list row.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TypeBadge {
-    /// The icon, used when there is no glyph.
+    /// The type's icon, as Raycast's.
     pub icon: IconName,
-    /// A text glyph shown instead of the icon: `>` for commands, as in a terminal.
-    pub glyph: Option<&'static str>,
     /// The type's hue.
     pub hue: Hue,
 }
 
-/// The badge for an entry type.
+/// The badge for an entry type: Raycast's icon and tint; an unknown type hashes its singular
+/// name, as the Raycast extension's `typeColor`.
 #[must_use]
 pub fn type_badge(entry_type: &str) -> TypeBadge {
-    let (icon, glyph, hue) = match type_key(entry_type) {
-        TypeKey::Command => (IconName::SquareTerminal, Some(">"), Hue::Green),
-        TypeKey::Cheat => (IconName::FileText, None, Hue::Blue),
-        TypeKey::Bookmark => (IconName::Globe, None, Hue::Cyan),
-        TypeKey::Note => (IconName::BookOpen, None, Hue::Magenta),
-        TypeKey::Task => (IconName::CircleCheck, None, Hue::Red),
-        TypeKey::Other => (IconName::FileText, None, Hue::Neutral),
+    let (icon, hue) = match type_key(entry_type) {
+        TypeKey::Bookmark => (IconName::Globe, Hue::Purple),
+        TypeKey::Command => (IconName::SquareTerminal, Hue::Green),
+        TypeKey::Cheat => (IconName::FileText, Hue::Blue),
+        TypeKey::Note => (IconName::NotebookText, Hue::Orange),
+        TypeKey::Task => (IconName::CircleCheck, Hue::Magenta),
+        TypeKey::Other => {
+            let name = entry_type.trim().to_lowercase();
+            (IconName::FileText, tag_hue(name.strip_suffix('s').unwrap_or(&name)))
+        }
     };
-    TypeBadge { icon, glyph, hue }
+    TypeBadge { icon, hue }
 }
 
-/// The hues tags are spread over, in hash order.
-const TAG_HUES: [Hue; 6] = [Hue::Red, Hue::Yellow, Hue::Green, Hue::Cyan, Hue::Blue, Hue::Magenta];
+/// The order tags and unknown types hash into, as the Raycast extension's `accessories.ts`.
+const TAG_ORDER: [Hue; 7] = [
+    Hue::Blue,
+    Hue::Orange,
+    Hue::Green,
+    Hue::Purple,
+    Hue::Magenta,
+    Hue::Yellow,
+    Hue::Red,
+];
 
-/// A tag's hue: a stable hash of its lowercased name, so a tag keeps its colour everywhere.
+/// The Raycast extension's hash: `acc × 31 + code point`, modulo 100 003, over the characters.
+fn hash(value: &str) -> usize {
+    value.chars().fold(0_usize, |acc, c| (acc * 31 + c as usize) % 100_003)
+}
+
+/// A tag's hue: its lowercased name hashed, so a tag keeps its colour everywhere.
 #[must_use]
 pub fn tag_hue(tag: &str) -> Hue {
-    let hash = tag.to_lowercase().bytes().fold(5381_usize, |hash, byte| {
-        hash.wrapping_mul(33).wrapping_add(usize::from(byte))
-    });
-    TAG_HUES[hash % TAG_HUES.len()]
+    TAG_ORDER[hash(&tag.to_lowercase()) % TAG_ORDER.len()]
 }
 
 /// What the primary action does.
@@ -320,31 +332,52 @@ mod tests {
     }
 
     #[test]
-    fn gives_each_type_its_badge() {
+    fn hashes_tags_as_the_raycast_extension_does() {
+        let fixture: std::collections::BTreeMap<String, String> =
+            serde_json::from_str(include_str!("../tests/fixtures/tag-accents.json")).unwrap();
+        for (tag, accent) in fixture {
+            assert_eq!(format!("{:?}", tag_hue(&tag)).to_lowercase(), accent, "#{tag}");
+        }
+        assert_eq!(tag_hue("Git"), tag_hue("git"));
+    }
+
+    #[test]
+    fn tints_each_type_as_raycast() {
+        assert_eq!(
+            type_badge("bookmarks"),
+            TypeBadge {
+                icon: IconName::Globe,
+                hue: Hue::Purple
+            }
+        );
         assert_eq!(
             type_badge("Commands"),
             TypeBadge {
                 icon: IconName::SquareTerminal,
-                glyph: Some(">"),
                 hue: Hue::Green
             }
         );
         assert_eq!(
-            (type_badge("cheats").icon, type_badge("cheats").hue),
-            (IconName::FileText, Hue::Blue)
+            type_badge("cheats"),
+            TypeBadge {
+                icon: IconName::FileText,
+                hue: Hue::Blue
+            }
         );
-        assert_eq!(type_badge("bookmarks").hue, Hue::Cyan);
-        assert_eq!(type_badge("snippets").hue, Hue::Neutral);
-    }
-
-    #[test]
-    fn hashes_tags_to_a_stable_hue_whatever_their_case() {
-        assert_eq!(tag_hue("Git"), tag_hue("git"));
-        let hues: std::collections::HashSet<Hue> = ["git", "aws", "kube", "rust", "ai", "docker", "nu", "react"]
-            .map(tag_hue)
-            .into_iter()
-            .collect();
-        assert!(hues.len() > 2, "tags spread over several hues");
-        assert!(!hues.contains(&Hue::Neutral));
+        assert_eq!(
+            type_badge("notes"),
+            TypeBadge {
+                icon: IconName::NotebookText,
+                hue: Hue::Orange
+            }
+        );
+        assert_eq!(
+            type_badge("tasks"),
+            TypeBadge {
+                icon: IconName::CircleCheck,
+                hue: Hue::Magenta
+            }
+        );
+        assert_eq!(type_badge("snippets").hue, tag_hue("snippet"));
     }
 }

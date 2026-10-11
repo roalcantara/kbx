@@ -42,3 +42,16 @@ export const pill = (roles, accent) => {
   }
   return { background, text }
 }
+
+// Interim light accents (Tailwind 600) over a white window, until the light palette (TODO QTjG).
+export const LIGHT_ACCENTS = {
+  window: '#FFFFFF',
+  text: '#0A0A0A',
+  blue: '#2563EB',
+  green: '#16A34A',
+  orange: '#EA580C',
+  purple: '#9333EA',
+  magenta: '#DB2777',
+  yellow: '#CA8A04',
+  red: '#DC2626'
+}

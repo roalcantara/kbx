@@ -20,11 +20,11 @@ global-hotkey.workspace = true
 gpui-kit.workspace = true
 kb-domain.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 [dev-dependencies]
 gpui-kit = { workspace = true, features = ["test-support"] }
-serde_json.workspace = true
 tempfile.workspace = true
 # `cargo packager --release` (mise run package): the .app and .dmg in target/packager.
 [package.metadata.packager]

@@ -2,10 +2,10 @@
 // chosen one, or the id given. Keys GPUI Kit's default dark theme does not define are refused; keys left out keep
 // GPUI Kit's defaults.
 // Usage: node tools/design/theme.mjs [palette-id]
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { mix, pill } from './color.mjs'
+import { ACCENTS, LIGHT_ACCENTS, mix, pill, tagAccent } from './color.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..', '..')
@@ -75,6 +75,39 @@ const theme = {
 }
 writeFileSync(out, `${JSON.stringify(theme, null, 2)}\n`)
 console.log(`wrote ${out.replace(`${root}/`, '')} from ${palette.id}`)
+
+// The seven accents GPUI Kit's theme has no keys for, with their tag pills, per appearance (accents.rs reads them).
+const accentsOut = resolve(root, 'crates/kb-app/assets/themes/accents.json')
+const accentSet = (roles) => Object.fromEntries(ACCENTS.map((a) => [a, { accent: roles[a], ...pill(roles, a) }]))
+writeFileSync(accentsOut, `${JSON.stringify({ dark: accentSet(r), light: accentSet(LIGHT_ACCENTS) }, null, 2)}\n`)
+console.log(`wrote ${accentsOut.replace(`${root}/`, '')}`)
+
+// Tag → accent by the Raycast extension's hash: the Rust hash is tested against it (presentation.rs).
+const fixtureOut = resolve(root, 'crates/kb-app/tests/fixtures/tag-accents.json')
+const sampleTags = [
+  'git',
+  'docker',
+  'kube',
+  'rust',
+  'kb',
+  'video',
+  'talks',
+  'docs',
+  'containers',
+  'mixed-case',
+  'aws',
+  'nu',
+  'linux',
+  'gradle',
+  'grails',
+  'schedule',
+  'ai',
+  'react',
+  'café'
+]
+mkdirSync(dirname(fixtureOut), { recursive: true })
+writeFileSync(fixtureOut, `${JSON.stringify(Object.fromEntries(sampleTags.map((t) => [t, tagAccent(t)])), null, 2)}\n`)
+console.log(`wrote ${fixtureOut.replace(`${root}/`, '')}`)
 
 // GPUI Kit's default-theme.json in the Cargo registry, at the version Cargo.lock pins.
 function defaultThemePath() {

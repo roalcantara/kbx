@@ -6,6 +6,7 @@
 
 #![warn(missing_docs)]
 
+mod accents;
 pub mod cli;
 pub mod config;
 pub mod entry_list;
