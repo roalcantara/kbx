@@ -7,15 +7,15 @@ use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
-use gpui_kit::component::input::{Input, InputEvent, InputState, MoveDown, MoveUp};
+use gpui_kit::component::input::{Input, InputEvent, InputState, MoveDown, MoveLeft, MoveRight, MoveUp};
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::resizable::{h_resizable, resizable_panel};
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, Theme, WindowExt as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
-    Keystroke, ParentElement, Render, Styled as _, Subscription, Window, div, rems,
+    AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
+    IntoElement, Keystroke, ParentElement, Render, Styled as _, Subscription, Window, div, rems,
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::{FilterState, entry_types, tags};
@@ -24,11 +24,12 @@ use kb_domain::sync::open_readonly;
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::filter::{filter_groups, filter_summary};
-use crate::notes::notes_pane;
-use crate::palette::{
-    Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile, PaletteCommand,
-    Quit, Rebuild, RunPrimary, ToggleDetails, entry_palette,
+use crate::keys::{
+    Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile,
+    Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, caret_at_end,
 };
+use crate::notes::notes_pane;
+use crate::palette::{PaletteCommand, entry_palette};
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key, type_label};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::trace;
@@ -119,6 +120,12 @@ impl SearchView {
     #[must_use]
     pub fn is_showing_details(&self) -> bool {
         self.show_details
+    }
+
+    /// Whether the detail screen shows the metadata beside the notes.
+    #[must_use]
+    pub fn is_showing_metadata(&self) -> bool {
+        self.show_metadata
     }
 
     /// Whether the rebuild screen is showing.
@@ -231,6 +238,28 @@ impl SearchView {
             _ => self.show_details = !self.show_details,
         }
         cx.notify();
+    }
+
+    fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
+        match self.screen {
+            Screen::Detail => self.show_metadata = true,
+            _ => self.show_details = true,
+        }
+        cx.notify();
+    }
+
+    fn hide_details(&mut self, _: &HideDetails, _: &mut Window, cx: &mut Context<Self>) {
+        match self.screen {
+            Screen::Detail => self.show_metadata = false,
+            _ => self.show_details = false,
+        }
+        cx.notify();
+    }
+
+    /// Whether → and ← should act on the split pane: the caret is at the query's end.
+    fn caret_at_end(&self, cx: &App) -> bool {
+        let input = self.query_input.read(cx);
+        caret_at_end(input.cursor(), input.selected_range(), input.value().len())
     }
 
     fn open_source_file(&mut self, _: &OpenSourceFile, _: &mut Window, cx: &mut Context<Self>) {
@@ -466,6 +495,20 @@ impl SearchView {
                     .min_w_0()
                     .capture_action(cx.listener(|this, _: &MoveUp, window, cx| this.move_selection(-1, window, cx)))
                     .capture_action(cx.listener(|this, _: &MoveDown, window, cx| this.move_selection(1, window, cx)))
+                    // → and ← toggle the split pane, as in Raycast, but only with the caret at the
+                    // query's end, so they still move it while editing (DESIGN.md, Adaptations).
+                    .capture_action(cx.listener(|this, _: &MoveRight, window, cx| {
+                        if !this.show_details && this.caret_at_end(cx) {
+                            this.show_details(&ShowDetails, window, cx);
+                            cx.stop_propagation();
+                        }
+                    }))
+                    .capture_action(cx.listener(|this, _: &MoveLeft, window, cx| {
+                        if this.show_details && this.caret_at_end(cx) {
+                            this.hide_details(&HideDetails, window, cx);
+                            cx.stop_propagation();
+                        }
+                    }))
                     .child(Input::new(&self.query_input).cleanable(true).appearance(false)),
             )
             .child(
@@ -593,6 +636,8 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::run_primary))
             .on_action(cx.listener(Self::copy_url))
             .on_action(cx.listener(Self::toggle_details))
+            .on_action(cx.listener(Self::show_details))
+            .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))
             .on_action(cx.listener(Self::open_preferences))

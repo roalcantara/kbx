@@ -13,6 +13,7 @@ pub mod entry_list;
 mod filter;
 #[cfg(test)]
 mod fixture;
+pub mod keys;
 mod notes;
 pub mod palette;
 mod panel;

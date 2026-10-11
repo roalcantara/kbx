@@ -14,7 +14,7 @@ use gpui_kit::{
 };
 
 use crate::config::Config;
-use crate::palette::key_bindings;
+use crate::keys::key_bindings;
 use crate::search_view::SearchView;
 use crate::trace;
 

@@ -17,7 +17,7 @@ use gpui_kit::{
 };
 use kb_app::config::Config;
 use kb_app::entry_list::DEBOUNCE;
-use kb_app::palette::key_bindings;
+use kb_app::keys::key_bindings;
 use kb_app::search_view::SearchView;
 
 /// A config whose sources are the sample corpus and whose index is already built.
@@ -240,6 +240,45 @@ fn opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d(cx: &mut TestAp
     assert!(!cx.read(|cx| view.read(cx).is_showing_details()));
     press(cx, window, "cmd-d");
     assert!(cx.read(|cx| view.read(cx).is_showing_details()));
+}
+
+#[gpui_kit::test]
+fn shows_details_with_right_at_the_end_of_the_query_and_hides_them_with_left(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "right");
+    assert!(cx.read(|cx| view.read(cx).is_showing_details()));
+    press(cx, window, "left");
+    assert!(!cx.read(|cx| view.read(cx).is_showing_details()));
+}
+
+#[gpui_kit::test]
+fn moves_the_caret_with_right_and_left_inside_the_query(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "left");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_showing_details()),
+        "left with the pane hidden moves the caret"
+    );
+    press(cx, window, "right");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_showing_details()),
+        "right mid-query moves the caret"
+    );
+    press(cx, window, "right");
+    assert!(
+        cx.read(|cx| view.read(cx).is_showing_details()),
+        "right at the end shows the pane"
+    );
+}
+
+#[gpui_kit::test]
+fn shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "enter");
+    press(cx, window, "right");
+    assert!(cx.read(|cx| view.read(cx).is_showing_metadata()));
+    press(cx, window, "left");
+    assert!(!cx.read(|cx| view.read(cx).is_showing_metadata()));
 }
 
 #[gpui_kit::test]
