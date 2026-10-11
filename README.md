@@ -47,10 +47,13 @@ Then press **⌥K** anywhere to open the panel, and **⌘R** once to build the i
 | ⌘↩   | run the main action: open a bookmark, copy a command |
 | ⌘K   | all actions for the selected entry                   |
 | ⌘P   | filter by type and tag                               |
-| ⌘D   | show or hide the details pane                        |
+| → ←  | show or hide the details pane (at the query's end)   |
 | ⌘R   | rebuild the index                                    |
+| ⌘⇧C  | copy a bookmark's URL                                |
+| ⌘O   | open the entry's source file                         |
 | ⌘⇧,  | open the preferences file                            |
-| Esc  | back, then hide the panel                            |
+| ⌘⇧F  | switch between the compact and expanded window       |
+| Esc  | close a popover, go back, then hide the panel        |
 | ⌘Q   | quit kb                                              |
 
 kb has no Dock icon: it lives behind ⌥K until you quit it. To start it at login, add `~/Applications/kb.app` in
@@ -60,6 +63,7 @@ The sources are `~/.config/kodexb/sources` unless `~/.config/kb/config.toml` say
 
 ```toml
 sources_path = "~/Work/knowledge"
+tag_images_path = "~/.config/kb/images" # <tag>.svg draws #tag; `mise run images` copies the extension's
 ```
 
 The index lives in `~/Library/Application Support/kb-native/kb.db`; the Raycast extension's index is never
@@ -138,6 +142,7 @@ tools/                      developer tooling
 | `mise run bench:session`                | preflight, then every tier 2 and 3 run and maintainability, in order  |
 | `mise run package`                      | build and sign `kb.app`; `install` copies it to ~/Applications        |
 | `mise run show`                         | (re)start kb in the background with the panel showing, without ⌥K     |
+| `mise run images`                       | copy the Raycast extension's tag images into `~/.config/kb/images`    |
 | `mise run ci`                           | what CI checks: the gate on macOS, `ci:lint` and `ci:test` elsewhere  |
 | `mise run release -- --dry-run --no-ci` | preview the next release (`GITHUB_TOKEN=$(gh auth token)`)            |
 | `mise run report`                       | gate, parity, then `docs/experiment/report.md` from the results       |

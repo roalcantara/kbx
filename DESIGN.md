@@ -83,14 +83,15 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
 
 ## 4. Component Stylings
 
-- **Header:** no divider below it. The leading control (search glyph, or the back chevron on the detail screen) sits
-  on the row-icon axis; the search text starts where row titles start. The filter button on the right carries a funnel
+- **Header:** no divider below it. The back chevron (on every screen, as Raycast's) sits on the row-icon axis; the search text starts where row titles start. The filter button on the right carries a funnel
   icon and the current filter ("All Entries"), and shows its open state with a chevron.
-- **List row:** a fixed icon column with the type tint; the title; the muted description on the same line; trailing
+- **List row:** a fixed icon column with the tinted type icon (Raycast's: globe, terminal, document, notebook, check
+  circle), or a bookmark's favicon; the title; the muted description on the same line; trailing
   accessories: at most three tag pills, then `+N`, then the link count with a link icon. The selection is an inset,
   rounded `selection` fill, never a full-width bar.
-- **Tag pill:** filled (no outline), `#name` in pill text on the pill fill. **Tag image** (D4): a tag with a known
-  image (`#linux` → penguin) shows the image instead, its name in the tooltip.
+- **Tag pill:** filled (no outline), `#name` in pill text on the pill fill. **Tag image** (D4): a tag with an image
+  in the tag-images folder (`<tag>.svg`; `tag_images_path`, default `~/.config/kb/images`, filled by
+  `mise run images`) shows the image instead, its name in the tooltip.
 - **Split pane** (D3): the list takes about ⅓ of the width, the detail pane ⅔; one `divider` line between them.
 - **Metadata card:** rows with the label left (`textMuted`) and the value right-aligned (`text`); alternate rows a
   shade lighter; Type and Tags as pills; Source with a file icon; URLs with an open-link ↗ icon.
@@ -99,8 +100,9 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
 - **Detail screen:** the header shows only the back chevron; content starts with the notes, without a title block.
 - **Footer:** two floating pills over the panel's bottom edge: the entry on the left; the primary action and Actions on
   the right, one keycap per key (`⌘` `K`, not `⌘K`).
-- **Actions popover:** anchored above the footer's Actions button and opening upwards; the Return action first, then
-  the primary action; each row shows its shortcut as keycaps; "Copy…" opens a submenu; the search field at the bottom.
+- **Actions popover:** anchored above the footer's Actions button and opening upwards; Show Details (↵) first, then
+  the primary action (⌘↵); each row shows its keys, one keycap per key; "Links" and "Copy…" open as pages in place
+  (Esc comes back); the search field at the bottom.
 - **Filter dropdown:** anchored under the filter button; a "Filters" section with the count and Clear All Filters while
   any is active; types and tags with ✓ / ○; it stays open while picking.
 
@@ -132,7 +134,11 @@ Where kb departs from Raycast, and why.
 | Opaque surfaces, no blur                  | Translucent, blurred window | D1: the colours matter, not the material; blur costs GPU memory (tier 2)  |
 | Popovers separated by edge and shadow     | Lighter translucent popover | Same-tone surfaces without blur need an edge to read as overlays          |
 | Pill text lifted to 4.5:1                 | Pure accent text            | WCAG AA for 12-point text (PRODUCT.md)                                    |
-| ⌘D toggles the split pane                 | → / ←                       | → and ← move the search cursor in GPUI's input                            |
+| → / ← act only with the caret at the end  | → / ← always                | The query field keeps → and ← for editing; ⌘D toggles too, unlisted       |
+| Favicons from DuckDuckGo's icon service   | Raycast's own service       | `api.ray.so` serves Raycast, not other apps                               |
+| Tag images from a local folder            | Bundled in the extension    | Their mixed licences stay out of this public repository                   |
+| Images fetched by `curl`                  | Built in                    | GPUI gives native apps no HTTP client                                     |
+| A patched GPUI keeps the window centred   | —                           | GPUI resizes from the bottom-left corner and cannot move a window         |
 | ⌘P opens the filter dropdown              | ⌘P                          | Same key, kept explicit                                                   |
 | Two window sizes, toggled by ⌘⇧F          | One fixed size              | D5: kb is not bound by Raycast's window                                   |
 | Title Case over the guide's sentence case | Title Case                  | Matches Raycast; owner-approved deviation from the GPUI Kit Design Guides |
