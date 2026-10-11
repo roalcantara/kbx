@@ -43,7 +43,7 @@ export const pill = (roles, accent) => {
   return { background, text }
 }
 
-// Interim light accents (Tailwind 600) over a white window, until the light palette (TODO QTjG).
+// Light accents (Tailwind 600) over a white window, for GPUI Kit's default light theme: kb is designed for dark.
 export const LIGHT_ACCENTS = {
   window: '#FFFFFF',
   text: '#0A0A0A',

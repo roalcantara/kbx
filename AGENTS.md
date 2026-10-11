@@ -23,6 +23,8 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
   UI change
 - `tools/design/`: the design kit: palettes, their validation, the app theme generator, the comparison page
 - `TODO.md`: done and pending work, kept with the `todo` CLI (pinned in `mise.toml`; usage in its REF comments)
+  Done tasks come first, pending ones after, in the order to do them; a decision or a won't-do is a comment on its
+  task, with the date.
 
 ## Core engineering rules
 

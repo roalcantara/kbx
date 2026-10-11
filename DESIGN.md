@@ -59,7 +59,7 @@ candidates in `palettes.json`.
 - **Validation** (`validation.json`): every text role on every surface meets WCAG 2.2 AA; every pill meets 4.5:1; the
   seven accents stay at least ΔE 15 apart (OKLab ×100) for normal vision and 8 under protan and deutan simulation.
   A passing check does not replace looking at the component on screen.
-- **Light appearance:** GPUI Kit's default light theme, until a light palette is chosen (TODO).
+- **Light appearance:** GPUI Kit's default light theme, with Tailwind 600 accents; kb is designed for dark, and no light palette is planned.
 
 ## 3. Typography Rules
 
