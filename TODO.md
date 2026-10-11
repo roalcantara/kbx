@@ -276,7 +276,7 @@
   - **Created**: 2026-10-11 09:30
   - **Tags**: app, plan7
 
-- [ ] bQVp **-** Plan 7 visual pass by the owner: each screen of tools/reports against kb (split, detail, popovers, ⌘⇧F); fix drift per DESIGN.md
+- [ ] bQVp **-** Run the Visual Pass (docs/experiment/visual-pass.md) on v0.4.0, compact and expanded; file failures
   - **Priority**: high
   - **Created**: 2026-10-11 09:30
   - **Tags**: app, plan7

@@ -16,6 +16,7 @@ Values live in one place each, and this file points at them:
 The palette table below repeats the chosen hexes for readers; `validate.mjs` fails when it drifts from `palettes.json`.
 `mise run design:palettes` validates every palette, regenerates the theme and opens the comparison page
 (`tmp/design/palettes.html`).
+The [Visual Pass](docs/experiment/visual-pass.md) checks the running app against this file.
 
 ## 1. Visual Theme & Atmosphere
 
