@@ -223,6 +223,29 @@ fn opens_the_detail_screen_on_enter_and_returns_on_escape(cx: &mut TestAppContex
 }
 
 #[gpui_kit::test]
+fn scrolls_the_detail_screen_with_the_arrow_keys(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "enter");
+    // A short window, so the notes overflow it.
+    act(cx, window, |window, _| window.resize(size(px(500.), px(140.))));
+    act(cx, window, |_, _| {});
+    press(cx, window, "cmd-down");
+    let paged = cx.read(|cx| view.read(cx).detail_scroll_offset());
+    assert!(paged < px(0.), "⌘↓ scrolls down a page: {paged:?}");
+    press(cx, window, "up");
+    assert!(
+        cx.read(|cx| view.read(cx).detail_scroll_offset()) > paged,
+        "↑ scrolls back up"
+    );
+    press(cx, window, "cmd-up");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).detail_scroll_offset()),
+        px(0.),
+        "⌘↑ goes back to the top"
+    );
+}
+
+#[gpui_kit::test]
 fn runs_the_primary_action_with_enter_on_the_detail_screen(cx: &mut TestAppContext) {
     let (_home, window, _view) = open_with_query(cx, "explicit");
     press(cx, window, "enter");

@@ -39,22 +39,23 @@ open ~/Applications/kb.app
 
 Then press **⌥K** anywhere to open the panel, and **⌘R** once to build the index from your sources.
 
-| Key  | Does                                                 |
-| ---- | ---------------------------------------------------- |
-| type | search titles, descriptions and notes                |
-| ↑ ↓  | move the selection                                   |
-| ↩    | show the entry; on the entry, run its main action    |
-| ⌘↩   | run the main action: open a bookmark, copy a command |
-| ⌘K   | all actions for the selected entry                   |
-| ⌘P   | filter by type and tag                               |
-| → ←  | show or hide the details pane (at the query's end)   |
-| ⌘R   | rebuild the index                                    |
-| ⌘⇧C  | copy a bookmark's URL                                |
-| ⌘O   | open the entry's source file                         |
-| ⌘⇧,  | open the preferences file                            |
-| ⌘⇧F  | switch between the compact and expanded window       |
-| Esc  | close a popover, go back, then hide the panel        |
-| ⌘Q   | quit kb                                              |
+| Key   | Does                                                 |
+| ----- | ---------------------------------------------------- |
+| type  | search titles, descriptions and notes                |
+| ↑ ↓   | move the selection; on an entry, scroll its notes    |
+| ⌘↑ ⌘↓ | on an entry, scroll its notes a page                 |
+| ↩     | show the entry; on the entry, run its main action    |
+| ⌘↩    | run the main action: open a bookmark, copy a command |
+| ⌘K    | all actions for the selected entry                   |
+| ⌘P    | filter by type and tag                               |
+| → ←   | show or hide the details pane (at the query's end)   |
+| ⌘R    | rebuild the index                                    |
+| ⌘⇧C   | copy a bookmark's URL                                |
+| ⌘O    | open the entry's source file                         |
+| ⌘⇧,   | open the preferences file                            |
+| ⌘⇧F   | switch between the compact and expanded window       |
+| Esc   | close a popover, go back, then hide the panel        |
+| ⌘Q    | quit kb                                              |
 
 kb has no Dock icon: it lives behind ⌥K until you quit it. To start it at login, add `~/Applications/kb.app` in
 System Settings › General › Login Items. If another app holds ⌥K, kb says so when it opens.

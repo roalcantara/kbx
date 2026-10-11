@@ -9,7 +9,8 @@ use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::{ActiveTheme as _, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
-    IntoElement, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
+    IntoElement, ParentElement, Pixels, Render, ScrollHandle, Styled as _, Subscription, Window, div, point, px,
+    relative,
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::FilterState;
@@ -23,9 +24,10 @@ use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
     Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
-    OpenSourceFile, Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
+    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, ScrollNotesDown, ScrollNotesUp, ShowDetails,
+    ToggleDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::notes::{PaneLayout, notes_pane};
+use crate::notes::{PaneLayout, next_offset, notes_pane};
 use crate::palette::Page;
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
@@ -43,6 +45,9 @@ enum Screen {
     /// A rebuild and its report.
     Rebuild(Entity<SyncView>),
 }
+
+/// How far ↓ and ↑ scroll the detail screen's notes: about three lines.
+const NOTES_LINE_STEP: Pixels = px(60.);
 
 /// What is open over the screen: one overlay at a time.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,6 +73,8 @@ pub struct SearchView {
     show_details: bool,
     show_metadata: bool,
     window_size: WindowSize,
+    /// The detail screen's notes, scrolled by the keyboard.
+    detail_scroll: ScrollHandle,
     /// The overlay open over the screen, if any.
     overlay: Overlay,
     subscriptions: Vec<Subscription>,
@@ -120,6 +127,7 @@ impl SearchView {
             show_details: false,
             show_metadata: false,
             window_size: WindowSize::default(),
+            detail_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
             subscriptions: vec![list_sub, input_sub, appearance],
         }
@@ -155,6 +163,12 @@ impl SearchView {
         self.window_size
     }
 
+    /// How far the detail screen's notes are scrolled: 0 at the top, negative below it.
+    #[must_use]
+    pub fn detail_scroll_offset(&self) -> Pixels {
+        self.detail_scroll.offset().y
+    }
+
     /// Whether the rebuild screen is showing.
     #[must_use]
     pub fn is_rebuilding(&self) -> bool {
@@ -187,6 +201,7 @@ impl SearchView {
         }
         self.screen = Screen::Detail;
         self.show_metadata = false;
+        self.detail_scroll.set_offset(point(px(0.), px(0.)));
         self.focus.focus(window, cx);
         cx.notify();
     }
@@ -287,6 +302,36 @@ impl SearchView {
     fn caret_at_end(&self, cx: &App) -> bool {
         let input = self.query_input.read(cx);
         caret_at_end(input.cursor(), input.selected_range(), input.value().len())
+    }
+
+    /// Scrolls the detail screen's notes by `delta` (negative: up), within their ends.
+    fn scroll_notes(&mut self, delta: Pixels, cx: &mut Context<Self>) {
+        let offset = self.detail_scroll.offset();
+        let max = self.detail_scroll.max_offset().y;
+        self.detail_scroll
+            .set_offset(point(offset.x, next_offset(offset.y, delta, max)));
+        cx.notify();
+    }
+
+    /// A page: the visible height, less a few lines kept for context.
+    fn notes_page(&self) -> Pixels {
+        (self.detail_scroll.bounds().size.height - NOTES_LINE_STEP).max(NOTES_LINE_STEP)
+    }
+
+    fn scroll_notes_down(&mut self, _: &ScrollNotesDown, _: &mut Window, cx: &mut Context<Self>) {
+        self.scroll_notes(NOTES_LINE_STEP, cx);
+    }
+
+    fn scroll_notes_up(&mut self, _: &ScrollNotesUp, _: &mut Window, cx: &mut Context<Self>) {
+        self.scroll_notes(-NOTES_LINE_STEP, cx);
+    }
+
+    fn page_notes_down(&mut self, _: &PageNotesDown, _: &mut Window, cx: &mut Context<Self>) {
+        self.scroll_notes(self.notes_page(), cx);
+    }
+
+    fn page_notes_up(&mut self, _: &PageNotesUp, _: &mut Window, cx: &mut Context<Self>) {
+        self.scroll_notes(-self.notes_page(), cx);
     }
 
     fn toggle_window_size(&mut self, _: &ToggleWindowSize, window: &mut Window, cx: &mut Context<Self>) {
@@ -427,7 +472,15 @@ impl SearchView {
             // The notes alone, without a title block: the footer names the entry (UI-12).
             Screen::Detail => selected.map_or_else(
                 || div().into_any_element(),
-                |entry| notes_pane(entry, self.show_metadata, PaneLayout::Detail, cx),
+                |entry| {
+                    notes_pane(
+                        entry,
+                        self.show_metadata,
+                        PaneLayout::Detail,
+                        Some(&self.detail_scroll),
+                        cx,
+                    )
+                },
             ),
             // Raycast's split: the list a third of the width, the pane the rest (DESIGN.md, D3).
             Screen::Search => match selected.filter(|_| self.show_details) {
@@ -442,13 +495,13 @@ impl SearchView {
                             .border_color(cx.theme().border)
                             .child(List::new(&self.list)),
                     )
-                    .child(
-                        div()
-                            .h_full()
-                            .flex_1()
-                            .min_w_0()
-                            .child(notes_pane(entry, true, PaneLayout::Split, cx)),
-                    )
+                    .child(div().h_full().flex_1().min_w_0().child(notes_pane(
+                        entry,
+                        true,
+                        PaneLayout::Split,
+                        None,
+                        cx,
+                    )))
                     .into_any_element(),
                 None => List::new(&self.list).into_any_element(),
             },
@@ -475,6 +528,10 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::toggle_window_size))
+            .on_action(cx.listener(Self::scroll_notes_down))
+            .on_action(cx.listener(Self::scroll_notes_up))
+            .on_action(cx.listener(Self::page_notes_down))
+            .on_action(cx.listener(Self::page_notes_up))
             .on_action(cx.listener(Self::open_detail))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))
