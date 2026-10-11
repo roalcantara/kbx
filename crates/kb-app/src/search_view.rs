@@ -4,22 +4,19 @@
 use std::fs;
 use std::rc::Rc;
 
-use gpui_kit::assets::IconName;
-use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::input::{InputEvent, InputState};
-use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::list::{List, ListEvent, ListState};
-use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, Theme, WindowExt as _, h_flex, v_flex};
-use gpui_kit::prelude::FluentBuilder as _;
+use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
-    IntoElement, Keystroke, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
+    IntoElement, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::{FilterState, entry_types, tags};
 use kb_domain::sync::open_readonly;
 
+mod footer;
 mod header;
 
 use crate::config::Config;
@@ -526,72 +523,6 @@ impl SearchView {
                 None => List::new(&self.list).into_any_element(),
             },
         }
-    }
-
-    /// The context on the left; the main action and the action palette, with their keys, on the right.
-    fn render_footer(&self, selected: Option<&Entry>, window: &Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let (context_icon, context_text) = match &self.screen {
-            Screen::Detail => (
-                IconName::BookOpen,
-                selected.map_or_else(|| "Detail".to_owned(), |e| e.title.clone()),
-            ),
-            Screen::Rebuild(_) => (IconName::RefreshCw, "Rebuilding the index…".to_owned()),
-            Screen::Search => (IconName::BookOpen, "Search Knowledge Base".to_owned()),
-        };
-        let primary_label = if self.is_showing_detail() {
-            selected.map_or("Run", |e| primary_action(e).title)
-        } else {
-            "Show Details"
-        };
-        let enter_hint = Keystroke::parse("enter").ok().map(Kbd::new);
-        let actions_hint = Kbd::binding_for_action(&OpenActions, Some(CONTEXT), window);
-        h_flex()
-            .h_11()
-            .w_full()
-            .items_center()
-            .justify_between()
-            .px_3()
-            .border_t_1()
-            .border_color(cx.theme().border)
-            .child(
-                h_flex()
-                    .items_center()
-                    .gap_2()
-                    .px_2()
-                    .py_1()
-                    .rounded(cx.theme().radius)
-                    .bg(cx.theme().muted)
-                    .text_xs()
-                    .child(Icon::new(context_icon).small().text_color(cx.theme().red))
-                    .child(div().truncate().max_w_80().child(context_text)),
-            )
-            .child(
-                h_flex()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        Button::new("footer-primary-action")
-                            .ghost()
-                            .small()
-                            .label(primary_label)
-                            .when_some(enter_hint, ParentElement::child)
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                if this.is_showing_detail() {
-                                    this.run_primary(&RunPrimary, window, cx);
-                                } else {
-                                    this.show_detail_screen(window, cx);
-                                }
-                            })),
-                    )
-                    .child(
-                        Button::new("footer-open-actions")
-                            .ghost()
-                            .small()
-                            .label("Actions")
-                            .when_some(actions_hint, ParentElement::child)
-                            .on_click(cx.listener(|this, _, window, cx| this.open_actions(&OpenActions, window, cx))),
-                    ),
-            )
     }
 }
 
