@@ -10,13 +10,14 @@ use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::{
     ActivationPolicy, App, AppContext as _, AsyncApp, Bounds, Entity, Subscription, WindowBounds, WindowKind,
-    WindowOptions, px, size,
+    WindowOptions,
 };
 
 use crate::config::Config;
 use crate::keys::key_bindings;
 use crate::search_view::SearchView;
 use crate::trace;
+use crate::window_size::COMPACT;
 
 /// How long a deactivation must last before the panel hides.
 const BLUR_SETTLE: Duration = Duration::from_millis(100);
@@ -36,10 +37,8 @@ pub fn window_options(cx: &App) -> WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
             None,
             // The frame is in the platform's points and is fixed before the window has a rem
-            // size; everything inside it is laid out in rems and follows the base font. Raycast's
-            // is 750 × 475; this one is larger so the split pane leaves the notes room.
-            size(px(860.), px(520.)),
-            cx,
+            // size; everything inside it is laid out in rems and follows the base font.
+            COMPACT, cx,
         ))),
         is_movable: false,
         is_resizable: false,

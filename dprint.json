@@ -18,6 +18,7 @@
     "CHANGELOG.md",
     ".mise/**",
     "crates/third-party/block/**",
+    "crates/third-party/gpui-pre-macos/**",
     "**/*.lock",
     "tools/bench/ts/bun.lock"
   ],

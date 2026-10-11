@@ -19,6 +19,7 @@ use kb_app::config::Config;
 use kb_app::entry_list::DEBOUNCE;
 use kb_app::keys::key_bindings;
 use kb_app::search_view::SearchView;
+use kb_app::window_size::WindowSize;
 
 /// A config whose sources are the sample corpus and whose index is already built.
 fn sample_config(home: &Path) -> Config {
@@ -279,6 +280,15 @@ fn shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen(cx: &mu
     assert!(cx.read(|cx| view.read(cx).is_showing_metadata()));
     press(cx, window, "left");
     assert!(!cx.read(|cx| view.read(cx).is_showing_metadata()));
+}
+
+#[gpui_kit::test]
+fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "cmd-shift-f");
+    assert_eq!(cx.read(|cx| view.read(cx).window_size()), WindowSize::Expanded);
+    press(cx, window, "cmd-shift-f");
+    assert_eq!(cx.read(|cx| view.read(cx).window_size()), WindowSize::Compact);
 }
 
 #[gpui_kit::test]

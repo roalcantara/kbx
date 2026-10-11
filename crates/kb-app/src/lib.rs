@@ -21,6 +21,7 @@ mod presentation;
 pub mod search_view;
 mod sync_view;
 mod trace;
+pub mod window_size;
 
 use gpui_kit::component::{Theme, ThemeRegistry};
 

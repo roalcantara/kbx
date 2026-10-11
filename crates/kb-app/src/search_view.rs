@@ -26,13 +26,14 @@ use crate::entry_list::EntryList;
 use crate::filter::{filter_groups, filter_summary};
 use crate::keys::{
     Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile,
-    Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, caret_at_end,
+    Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::notes_pane;
 use crate::palette::{PaletteCommand, entry_palette};
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key, type_label};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::trace;
+use crate::window_size::{COMPACT, WindowSize};
 
 /// What fills the panel.
 #[derive(Debug)]
@@ -56,6 +57,7 @@ pub struct SearchView {
     screen: Screen,
     show_details: bool,
     show_metadata: bool,
+    window_size: WindowSize,
     subscriptions: Vec<Subscription>,
 }
 
@@ -100,6 +102,7 @@ impl SearchView {
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
             show_metadata: false,
+            window_size: WindowSize::default(),
             subscriptions: vec![list_sub, input_sub, appearance],
         }
     }
@@ -126,6 +129,12 @@ impl SearchView {
     #[must_use]
     pub fn is_showing_metadata(&self) -> bool {
         self.show_metadata
+    }
+
+    /// The panel's current size.
+    #[must_use]
+    pub fn window_size(&self) -> WindowSize {
+        self.window_size
     }
 
     /// Whether the rebuild screen is showing.
@@ -260,6 +269,15 @@ impl SearchView {
     fn caret_at_end(&self, cx: &App) -> bool {
         let input = self.query_input.read(cx);
         caret_at_end(input.cursor(), input.selected_range(), input.value().len())
+    }
+
+    fn toggle_window_size(&mut self, _: &ToggleWindowSize, window: &mut Window, cx: &mut Context<Self>) {
+        self.window_size = self.window_size.toggled();
+        let display = window
+            .display(cx)
+            .map_or(COMPACT, |display| display.visible_bounds().size);
+        window.resize(self.window_size.size(display));
+        cx.notify();
     }
 
     fn open_source_file(&mut self, _: &OpenSourceFile, _: &mut Window, cx: &mut Context<Self>) {
@@ -638,6 +656,7 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::toggle_details))
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
+            .on_action(cx.listener(Self::toggle_window_size))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))
             .on_action(cx.listener(Self::open_preferences))
