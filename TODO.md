@@ -195,7 +195,7 @@
   - **Created**: 2026-10-11 12:51
   - **Tags**: app, visual-pass
 
-- [ ] Xvn5 **-** Review ~/Work/knowledge/tags.proposed.toml (keep, edit, uncomment), save it as tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
+- [ ] Xvn5 **-** Review ~/Work/knowledge/docs/tags.proposed.toml (keep, edit, uncomment), save it as docs/tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
   - **Priority**: high
   - **Created**: 2026-10-11 13:53
   - **Tags**: tags
