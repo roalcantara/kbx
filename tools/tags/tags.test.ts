@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { normalize, type Proposal, propose, rewrite, violations } from './tags.ts'
+import { normalize, type Proposal, propose, resolveAliases, rewrite, violations } from './tags.ts'
 
 const byAlias = (proposals: Proposal[]) =>
   Object.fromEntries(proposals.map((p) => [p.alias, [p.preferred.join(' + '), p.signal]]))
@@ -68,10 +68,11 @@ describe('signals', () => {
 
   test('split a compound whose words are all tags', () => {
     const got = byAlias(
-      propose({ coding_patterns: 2, 'coding-pattern': 1, coding: 9, pattern: 30, patterns: 3 }, {}, {})
+      propose({ coding_patterns: 2, 'coding-pattern': 1, coding: 9, pattern: 3, patterns: 30 }, {}, {})
     )
     expect(got['coding-pattern']).toEqual(['coding + patterns', 'split'])
-    expect(got.coding_patterns?.[0]).toBe('coding + patterns')
+    expect(got.coding_patterns?.[0]).toBe('coding-patterns') // the split of coding-patterns is its own suggestion
+    expect(got['coding-patterns']).toEqual(['coding + patterns', 'split'])
   })
 
   test('shorten to an established abbreviation', () => {
@@ -105,12 +106,46 @@ describe('signals', () => {
     }])
   })
 
+  test('follow chains through trusted proposals only, never one guess into another', () => {
+    const semantic = { coding_pattern: { preferred: ['coding', 'patterns'], reason: 'owner' } }
+    const synonyms = { patterns: 'design-patterns' }
+    const abbreviations = { 'design-patterns': 'gof' }
+    const got = byAlias(
+      propose({ coding_pattern: 2, coding: 9, patterns: 3 }, {}, { semantic, synonyms, abbreviations })
+    )
+    expect(got.coding_pattern?.[0]).toBe('coding + patterns')
+    expect(got['design-patterns']).toBeUndefined()
+  })
+
+  test('suggest a new two-letter abbreviation only when it is already a tag', () => {
+    const abbreviations = { azure: 'az', python: 'py' }
+    const got = byAlias(propose({ azure: 3, python: 2, py: 9 }, {}, { abbreviations }))
+    expect(got.azure).toBeUndefined()
+    expect(got.python?.[0]).toBe('py')
+  })
+
   test('resolve chains to their end, so no tag is both alias and preferred', () => {
     const got = byAlias(
       propose({ k8s: 1, kube: 3, kubernetes: 2 }, {}, { synonyms: { k8s: 'kube', kube: 'kubernetes' } })
     )
-    expect(got.k8s?.[0]).toBe('kubernetes')
     expect(got.kube?.[0]).toBe('kubernetes')
+    expect(got.k8s?.[0]).toBe('kube') // a guess does not chain into another guess
+  })
+})
+
+describe('the reviewed map', () => {
+  test('compose accepted steps, so an alias lands on its final tags', () => {
+    const map = {
+      'coding-patterns': { aliases: ['coding_patterns'] },
+      coding: { aliases: ['coding-patterns'] },
+      patterns: { aliases: ['coding-patterns'] },
+      '-': { aliases: ['general'] }
+    }
+    expect(resolveAliases(map)).toEqual({
+      coding_patterns: ['coding', 'patterns'],
+      'coding-patterns': ['coding', 'patterns'],
+      general: []
+    })
   })
 })
 

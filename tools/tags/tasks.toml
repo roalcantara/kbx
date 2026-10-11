@@ -19,7 +19,7 @@ const synonyms = await stackOverflowSynonyms('tmp/tags/so-synonyms.json')
 const sources = {
   synonyms,
   abbreviations: await abbreviations('tmp/tags/abbreviations.json', synonyms),
-  concepts: await concepts(Object.keys(uses), 'tmp/tags/wikidata.json'),
+  concepts: await concepts(Object.keys(uses), 'tmp/tags/wikidata-labels.json'),
   // One-off judgements (an LLM pass) the owner reviews like the rest, if present.
   semantic: readSemantic(join(dir, 'tags.semantic.toml')),
 }

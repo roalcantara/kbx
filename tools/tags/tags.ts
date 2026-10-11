@@ -67,8 +67,8 @@ export interface Sources {
 
 /**
  * Proposes the preferred tags of every tag that should merge, from the first signal that fires, in order:
- * fingerprint (OpenRefine key collision), convention (the normalized form), semantic (reviewed one-off
- * judgements, which may also drop a tag), plural (Z39.19: a singular whose plural
+ * semantic (reviewed one-off judgements, which may also drop a tag), fingerprint (OpenRefine key collision),
+ * convention (the normalized form), plural (Z39.19: a singular whose plural
  * is also a tag, never a form made by stripping letters), split (a compound
  * whose words are all tags), stackoverflow (its synonyms), concept (tags naming one Wikidata concept, into the
  * shortest), shorten (an established abbreviation), similar (one or two edits apart) and together (the same entries).
@@ -86,8 +86,17 @@ export const propose = (uses: Uses, cooccur: Cooccurrences, sources: Sources): P
   const free = (tag: string) => !merged.has(tag)
   const byUse = (a: string, b: string) => (uses[b] ?? 0) - (uses[a] ?? 0) || a.localeCompare(b)
   // Forms the signals produced that are not tags yet: they merge onwards too (best_practice → best-practice → best-practices).
-  const produced = () => [...new Set([...merged.values()].flatMap((p) => p.preferred))].filter((t) => !(t in uses))
+  // Trusted: spelling signals and reviewed judgements. Only they produce forms that merge onwards and carry chains, so a
+  // guess never feeds another (patterns → design-patterns → gof).
+  const trusted = (p: Proposal) => p.confident || p.signal === 'semantic'
+  const produced = () =>
+    [...new Set([...merged.values()].filter(trusted).flatMap((p) => p.preferred))].filter((t) => !(t in uses))
   const existing = (word: string) => (word in uses ? word : plurals(word).find((p) => p in uses))
+
+  // semantic: reviewed one-off judgements, before the signals that guess and first: they are keyed by today's names (coding_pattern)
+  for (const [alias, { preferred, reason }] of Object.entries(semantic)) {
+    if (alias in uses || produced().includes(alias)) add(alias, preferred, 'semantic', reason, false)
+  }
 
   // fingerprint: the same tag but for case, separators and spaces
   const groups = Map.groupBy(tags, (tag) => normalize(tag).replaceAll('-', ''))
@@ -100,11 +109,6 @@ export const propose = (uses: Uses, cooccur: Cooccurrences, sources: Sources): P
   // convention: alone, but not in the convention's shape
   for (const tag of tags.filter(free)) {
     if (normalize(tag) !== tag) add(tag, normalize(tag), 'convention', violations(tag).join('; '), true)
-  }
-
-  // semantic: reviewed one-off judgements, before the signals that guess (shells → shell over shell → shells)
-  for (const [alias, { preferred, reason }] of Object.entries(semantic)) {
-    if (alias in uses || produced().includes(alias)) add(alias, preferred, 'semantic', reason, false)
   }
 
   // plural: a singular whose plural is also a tag (also repairs stripped proper names: maco → macos)
@@ -143,7 +147,9 @@ export const propose = (uses: Uses, cooccur: Cooccurrences, sources: Sources): P
   // shorten: an established abbreviation, for a tag or a form the signals produced
   for (const tag of [...tags, ...produced()].filter(free)) {
     const short = abbreviations[tag]
-    if (short && short.length < tag.length) {
+    // A new two-letter form is too ambiguous (azure → az, backend → be); one that is already a tag is not (python → py).
+    const clear = short !== undefined && (short.length > 2 || short in uses)
+    if (clear && short.length < tag.length) {
       add(tag, short, 'shorten', `${short} is its established abbreviation`, false)
     }
   }
@@ -171,7 +177,7 @@ export const propose = (uses: Uses, cooccur: Cooccurrences, sources: Sources): P
   // chains: follow each preferred tag to its ends
   const ends = (tag: string, seen: Set<string> = new Set()): string[] => {
     const next = merged.get(tag)
-    if (!next || seen.has(tag)) return [tag]
+    if (!next || !trusted(next) || seen.has(tag)) return [tag]
     seen.add(tag)
     return [...new Set(next.preferred.flatMap((t) => ends(t, new Set(seen))))]
   }
@@ -347,8 +353,9 @@ export const abbreviations = async (cache: string, synonyms: Synonyms): Promise<
 }
 
 /**
- * Each tag's Wikidata concept, searched in English and Portuguese with hyphens as spaces; only an exact label or
- * alias match counts. Cached per tag in `cache`, five requests a second; a first run over 650 tags takes minutes.
+ * Each tag's Wikidata concept, searched in English and Portuguese with hyphens as spaces. Only an exact match on the
+ * concept's label counts: aliases are short and ambiguous (`mv`, `rds` and `sql` are aliases of many things), so
+ * `database` and `banco de dados` meet, while abbreviations are left to the abbreviation list. Cached per tag in `cache`, five requests a second; a first run over 650 tags takes minutes.
  */
 export const concepts = async (tags: string[], cache: string): Promise<Record<string, string>> => {
   const known: Record<string, string | null> = existsSync(cache) ? JSON.parse(readFileSync(cache, 'utf8')) : {}
@@ -359,11 +366,11 @@ export const concepts = async (tags: string[], cache: string): Promise<Record<st
       const url = 'https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&limit=1&uselang=en'
         + `&language=${language}&search=${encodeURIComponent(phrase)}`
       const body = await (await fetch(url, { headers: { 'User-Agent': userAgent } })).json() as {
-        search?: { id: string; match?: { text?: string } }[]
+        search?: { id: string; match?: { type?: string; text?: string } }[]
       }
       await Bun.sleep(200)
       const top = body.search?.[0]
-      if (top && top.match?.text?.toLowerCase() === phrase) {
+      if (top && top.match?.type === 'label' && top.match.text?.toLowerCase() === phrase) {
         known[tag] = top.id
         break
       }
@@ -380,11 +387,23 @@ export const readSemantic = (file: string): NonNullable<Sources['semantic']> =>
 
 /** The reviewed map, `[preferred] aliases = [...]`, as each alias to its preferred tags: an alias in several tables
  * becomes all of them. */
-export const readAliases = (file: string): Aliases => {
-  const map = Bun.TOML.parse(readFileSync(file, 'utf8')) as Record<string, { aliases?: string[] }>
-  return Object.fromEntries(
-    Object.entries(map).flatMap(([preferred, { aliases = [] }]) => aliases.map((a) => [a.toLowerCase(), preferred]))
-  )
+export const readAliases = (file: string): Aliases =>
+  resolveAliases(Bun.TOML.parse(readFileSync(file, 'utf8')) as Record<string, { aliases?: string[] }>)
+
+/**
+ * The reviewed map's tables as each alias to its final tags: an alias under several tables becomes all of them, one
+ * under `["-"]` is dropped, and accepted steps compose (coding_patterns → coding-patterns → coding + patterns).
+ */
+export const resolveAliases = (map: Record<string, { aliases?: string[] }>): Aliases => {
+  const step: Aliases = {}
+  for (const [preferred, { aliases: names = [] }] of Object.entries(map)) {
+    for (const name of names) {
+      step[name.toLowerCase()] = [...(step[name.toLowerCase()] ?? []), ...(preferred === '-' ? [] : [preferred])]
+    }
+  }
+  const final = (tag: string, seen: Set<string>): string[] =>
+    step[tag] && !seen.has(tag) ? [...new Set(step[tag].flatMap((t) => final(t, new Set([...seen, tag]))))] : [tag]
+  return Object.fromEntries(Object.keys(step).map((alias) => [alias, final(alias, new Set())]))
 }
 
 /** The proposals as a reviewable map: trusted ones as tables, the rest as commented tables to opt into. */
