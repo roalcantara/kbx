@@ -150,7 +150,7 @@ Commits follow Conventional Commits with a sentence-case subject; hk checks the 
 
 **Releases.** Every push to `main` is checked on GitHub Actions, and one with a `feat`, `fix` or `perf` commit is released:
 semantic-release picks the version, updates [CHANGELOG.md](CHANGELOG.md), tags it and publishes a
-[GitHub Release](https://github.com/roalcantara/kb/releases) with `kb.app` for Apple silicon. The app is signed ad hoc:
+[GitHub Release](https://github.com/roalcantara/kbx/releases) with `kb.app` for Apple silicon. The app is signed ad hoc:
 open it the first time with right-click → Open. How and why: [ADR 0007](docs/adr/0007-releases.md).
 
 ## Coding Standards
