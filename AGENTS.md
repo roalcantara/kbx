@@ -17,7 +17,8 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 - `crates/third-party/`: patched external crates, outside the workspace
 - `tools/bench/`: the benchmark kit (TS and Rust benchmarks, probes, report); purgeable as a unit
 - `tools/graph/`: code graphs for agents (CRG, Gortex, Graphify); use them before a broad search: tools/graph/README.md
-- `docs/`: ADRs, experiment, specs and plans
+- `docs/`: ADRs, experiment, specs and plans; `docs/doctrine/`: principles to load when a change matches their
+  `applies_to` (start with verify-what-users-see for any UI change)
 - `PRODUCT.md`: what kb is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any
   UI change
 - `tools/design/`: the design kit: palettes, their validation, the app theme generator, the comparison page
@@ -33,6 +34,7 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
   stay so. Only `tools/bench/fixtures/private.sha256` is committed.
 - Never write to the Raycast repository (`$KB_TS_REPO`).
 - Keep quality gates and thresholds unchanged unless the owner approves the change.
+- A UI change passes the Visual Pass before merge ([doctrine](docs/doctrine/verify-what-users-see.doctrine.md)).
 
 ## Naming conventions
 
