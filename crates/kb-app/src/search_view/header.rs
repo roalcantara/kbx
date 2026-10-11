@@ -9,7 +9,7 @@ use gpui_kit::component::{Icon, Sizable as _, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{Context, InteractiveElement as _, IntoElement, ParentElement as _, Styled as _, div, px};
 
-use super::SearchView;
+use super::{Overlay, SearchView};
 use crate::filter::filter_summary;
 use crate::keys::{Back, HideDetails, OpenFilter, ShowDetails};
 
@@ -50,7 +50,7 @@ impl SearchView {
     pub(super) fn render_header(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let parts = self.header_parts();
         let filter_label = filter_summary(self.list.read(cx).delegate().filter());
-        let chevron = if self.filter_open {
+        let chevron = if self.overlay == Overlay::Filter {
             IconName::ChevronUp
         } else {
             IconName::ChevronDown

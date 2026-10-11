@@ -7,7 +7,7 @@ use std::rc::Rc;
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::list::{List, ListEvent, ListState};
-use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
+use gpui_kit::component::{ActiveTheme as _, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
     IntoElement, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
@@ -16,6 +16,7 @@ use kb_domain::entry::Entry;
 use kb_domain::search::{FilterState, entry_types, tags};
 use kb_domain::sync::open_readonly;
 
+mod actions_popover;
 mod footer;
 mod header;
 
@@ -23,11 +24,11 @@ use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::filter::filter_groups;
 use crate::keys::{
-    Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile,
-    Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
+    Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
+    OpenSourceFile, Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::{PaneLayout, notes_pane};
-use crate::palette::{PaletteCommand, entry_palette};
+use crate::palette::{Page, PaletteCommand};
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
@@ -45,6 +46,17 @@ enum Screen {
     Rebuild(Entity<SyncView>),
 }
 
+/// What is open over the screen: one overlay at a time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Overlay {
+    /// Nothing.
+    None,
+    /// The actions popover, on this page.
+    Actions(Page),
+    /// The filter dropdown.
+    Filter,
+}
+
 /// The panel's root view.
 pub struct SearchView {
     config: Config,
@@ -57,8 +69,8 @@ pub struct SearchView {
     show_details: bool,
     show_metadata: bool,
     window_size: WindowSize,
-    /// Whether the filter dropdown is open.
-    filter_open: bool,
+    /// The overlay open over the screen, if any.
+    overlay: Overlay,
     subscriptions: Vec<Subscription>,
 }
 
@@ -107,7 +119,7 @@ impl SearchView {
             show_details: false,
             show_metadata: false,
             window_size: WindowSize::default(),
-            filter_open: false,
+            overlay: Overlay::None,
             subscriptions: vec![list_sub, input_sub, appearance],
         }
     }
@@ -342,6 +354,12 @@ impl SearchView {
     }
 
     fn back(&mut self, _: &Back, window: &mut Window, cx: &mut Context<Self>) {
+        // Esc leaves a page of the actions popover, then the popover, before the screen.
+        match self.overlay {
+            Overlay::Actions(Page::Main) => return self.set_actions_open(false, window, cx),
+            Overlay::Actions(_) => return self.show_actions_page(Page::Main, window, cx),
+            Overlay::Filter | Overlay::None => {}
+        }
         match &self.screen {
             Screen::Rebuild(sync) if sync.read(cx).is_running() => sync.read(cx).cancel(),
             Screen::Search => {
@@ -407,7 +425,7 @@ impl SearchView {
                                     let filter = filter.clone();
                                     let _ = view.update(cx, |this, cx| this.apply_filter(filter, cx));
                                 }
-                                None => {}
+                                Some(PaletteCommand::OpenPage(_)) | None => {}
                             }
                         }),
                 )
@@ -421,33 +439,19 @@ impl SearchView {
     }
 
     fn open_actions(&mut self, _: &OpenActions, window: &mut Window, cx: &mut Context<Self>) {
-        let entry = match self.screen {
-            Screen::Rebuild(_) => None,
-            _ => self.list.read(cx).delegate().selected_entry().cloned(),
-        };
-        let showing = if self.is_showing_detail() {
-            self.show_metadata
-        } else {
-            self.show_details
-        };
-        let groups = entry_palette(entry.as_ref(), showing)
-            .into_iter()
-            .map(|group| {
-                let rows = group
-                    .rows
-                    .into_iter()
-                    .map(|row| {
-                        let mut item = CommandItem::new().label(row.label).icon(Icon::new(row.icon));
-                        if let PaletteCommand::Run(action) = &row.command {
-                            item = item.action(action.boxed_clone());
-                        }
-                        (item, row.command)
-                    })
-                    .collect();
-                (group.label, rows)
-            })
-            .collect();
-        self.open_palette("Search for Actions…", groups, window, cx);
+        self.set_actions_open(!self.is_actions_open(), window, cx);
+    }
+
+    fn open_detail(&mut self, _: &OpenDetail, window: &mut Window, cx: &mut Context<Self>) {
+        self.show_detail_screen(window, cx);
+    }
+
+    /// Hands the keyboard to the current screen: the query field in the list, the panel elsewhere.
+    fn focus_screen(&self, window: &mut Window, cx: &mut Context<Self>) {
+        match self.screen {
+            Screen::Search => self.query_input.update(cx, |input, cx| input.focus(window, cx)),
+            _ => self.focus.focus(window, cx),
+        }
     }
 
     fn open_filter(&mut self, _: &OpenFilter, window: &mut Window, cx: &mut Context<Self>) {
@@ -545,6 +549,7 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::toggle_window_size))
+            .on_action(cx.listener(Self::open_detail))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))
             .on_action(cx.listener(Self::open_preferences))

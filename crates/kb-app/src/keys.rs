@@ -42,6 +42,9 @@ actions!(
         HideDetails,
         /// Switch the window between its compact and expanded sizes.
         ToggleWindowSize,
+        /// Open the selected entry's detail screen (Return in the list, which the query field
+        /// reports; no binding of its own).
+        OpenDetail,
     ]
 );
 

@@ -151,14 +151,17 @@ impl SearchView {
                     )
                     .child(
                         pill(cx).child(
-                            Button::new("footer-open-actions")
-                                .ghost()
-                                .xsmall()
-                                .label("Actions")
-                                .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx)))
-                                .on_click(
-                                    cx.listener(|this, _, window, cx| this.open_actions(&OpenActions, window, cx)),
-                                ),
+                            self.actions_popover(
+                                Button::new("footer-open-actions")
+                                    .ghost()
+                                    .xsmall()
+                                    .label("Actions")
+                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx)))
+                                    .on_click(
+                                        cx.listener(|this, _, window, cx| this.open_actions(&OpenActions, window, cx)),
+                                    ),
+                                cx,
+                            ),
                         ),
                     ),
             )

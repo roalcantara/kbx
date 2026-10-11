@@ -166,16 +166,50 @@ fn copies_a_command_with_its_primary_action(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn copies_the_title_from_the_action_palette(cx: &mut TestAppContext) {
+fn copies_the_title_from_the_copy_page_of_the_actions(cx: &mut TestAppContext) {
     let (_home, window, _view) = open_with_query(cx, "rebase");
     press(cx, window, "cmd-k");
     cx.run_until_parked();
-    type_text(cx, window, "copy title");
+    type_text(cx, window, "Copy…");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    type_text(cx, window, "title");
     cx.run_until_parked();
     press(cx, window, "enter");
     cx.run_until_parked();
     let copied = cx.read_from_clipboard().and_then(|item| item.text());
     assert_eq!(copied.as_deref(), Some("Interactive rebase"));
+}
+
+#[gpui_kit::test]
+fn leaves_a_page_of_the_actions_then_the_actions_with_escape(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    assert!(cx.read(|cx| view.read(cx).is_actions_open()));
+    type_text(cx, window, "Copy…");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
+    assert_eq!(
+        labels,
+        [["Copy Title", "Copy Notes", "Copy Raw YAML"]],
+        "the cheat has no description"
+    );
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
+    assert_eq!(labels[0], ["Show Details", "Copy Cheat Sheet"]);
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
+    assert_eq!(
+        titles(&view, cx),
+        ["Interactive rebase"],
+        "Esc closed the popover, not the query"
+    );
 }
 
 #[gpui_kit::test]
