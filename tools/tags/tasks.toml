@@ -6,15 +6,15 @@ description = "Test the tag tools"
 run = "bun test tools/tags"
 
 ["tags:suggest"]
-description = "Propose tag merges: writes tags.proposed.toml in the knowledge folder, for review (the first run queries Wikidata for minutes)"
+description = "Propose tag merges: writes docs/tags.proposed.toml in the knowledge folder, for review (the first run queries Wikidata for minutes)"
 run = '''
 #!/usr/bin/env bun
 import { join } from 'node:path'
 // mise runs an inline script from a temporary file, so the module is imported from the project root.
-const { abbreviations, concepts, proposalsToml, propose, readIndex, readSemantic, sourcesDir, stackOverflowSynonyms } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+const { abbreviations, concepts, proposalsToml, propose, readIndex, readSemantic, stackOverflowSynonyms, tagsDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
 
 const { uses, cooccur } = readIndex()
-const dir = sourcesDir()
+const dir = tagsDir()
 const synonyms = await stackOverflowSynonyms('tmp/tags/so-synonyms.json')
 const sources = {
   synonyms,
@@ -34,21 +34,21 @@ console.log(`wrote ${file}: review it, save it as tags.toml, then run mise run t
 '''
 
 ["tags:apply"]
-description = "Apply tags.toml to the knowledge folder's YAML: a diff by default, --write to rewrite"
+description = "Apply docs/tags.toml to the knowledge folder's YAML: a diff by default, --write to rewrite"
 usage = 'flag "--write" help="rewrite the files instead of printing the diff"'
 run = '''
 #!/usr/bin/env bun
 import { $ } from 'bun'
 import { join, relative } from 'node:path'
 // mise runs an inline script from a temporary file, so the module is imported from the project root.
-const { readAliases, rewrite, sourcesDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+const { readAliases, rewrite, sourcesDir, tagsDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
 
 const dir = sourcesDir()
 const write = process.env.usage_write === 'true'
 const status = await $`git -C ${dir} status --porcelain`.nothrow().quiet()
 if (status.exitCode !== 0) throw new Error(`${dir} is not a git work tree: run git init and commit it first`)
 if (write && status.stdout.toString().trim()) throw new Error(`${dir} has uncommitted changes: commit them first`)
-const aliases = readAliases(join(dir, 'tags.toml'))
+const aliases = readAliases(join(tagsDir(), 'tags.toml'))
 // The dry run writes its copies in kb's tmp/, never in the knowledge folder.
 const scratch = join(process.cwd(), 'tmp/tags/dry-run')
 await $`rm -rf ${scratch}`.quiet()
@@ -72,16 +72,16 @@ console.log(write
 '''
 
 ["tags:check"]
-description = "List the indexed tags that break the convention or are an alias in tags.toml"
+description = "List the indexed tags that break the convention or are an alias in docs/tags.toml"
 run = '''
 #!/usr/bin/env bun
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 // mise runs an inline script from a temporary file, so the module is imported from the project root.
-const { readAliases, readIndex, sourcesDir, violations } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+const { readAliases, readIndex, tagsDir, violations } = await import(`${process.cwd()}/tools/tags/tags.ts`)
 
 const { uses } = readIndex()
-const map = join(sourcesDir(), 'tags.toml')
+const map = join(tagsDir(), 'tags.toml')
 const aliases = existsSync(map) ? readAliases(map) : {}
 const problems = Object.keys(uses).sort().flatMap((tag) => {
   const found = [...violations(tag), ...(aliases[tag] ? [`an alias of ${aliases[tag]}`] : [])]

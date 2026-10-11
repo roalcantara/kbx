@@ -270,6 +270,9 @@ export const sourcesDir = (): string => {
   return realpathSync(expand(configured ?? '~/.config/kodexb/sources'))
 }
 
+/** Where the tag maps live: the knowledge folder's `docs/`, apart from the YAML values they govern. */
+export const tagsDir = (): string => join(sourcesDir(), 'docs')
+
 /** Every tag's uses and every pair's co-occurrences, from kb's index. */
 export const readIndex = (): { uses: Uses; cooccur: Cooccurrences } => {
   const db = new Database(join(home, 'Library/Application Support/kb-native/kb.db'), { readonly: true })

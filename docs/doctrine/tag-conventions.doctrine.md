@@ -10,7 +10,7 @@ always: false
 ## Principle
 
 As few tags as possible, each as short as possible: one tag per concept, in its shortest established form. Variants,
-synonyms, translations and long forms are recorded as aliases in the knowledge folder's `tags.toml`, never used on
+synonyms, translations and long forms are recorded as aliases in the knowledge folder's `docs/tags.toml`, never used on
 entries. The convention is borrowed, not invented: each rule names its source.
 
 ## Why
@@ -38,8 +38,9 @@ and `kubernetes` into `kubernete`. Established conventions already settle these 
 ## How to apply
 
 - Before adding a tag, run `mise run tags:check`: it lists the tags that break these rules or are an alias.
-- To clean up: `mise run tags:suggest` writes `tags.proposed.toml` in the knowledge folder, each proposal with its
+- To clean up: `mise run tags:suggest` writes `docs/tags.proposed.toml` in the knowledge folder (the maps live in `docs/`, apart from the YAML
+  values), each proposal with its
   reason. It reads, beside the index, Stack Overflow's synonyms, Wikipedia's abbreviations, Wikidata's concepts and
-  the knowledge folder's `tags.semantic.toml` (one-off judgements, e.g. an LLM pass), all as suggestions. Keep, edit or delete each block, save it as `tags.toml` (an alias under several tables becomes all of them; under `["-"]`, it is dropped), then `mise run tags:apply` shows the diff and
+  the knowledge folder's `docs/tags.semantic.toml` (one-off judgements, e.g. an LLM pass), all as suggestions. Keep, edit or delete each block, save it as `tags.toml` (an alias under several tables becomes all of them; under `["-"]`, it is dropped), then `mise run tags:apply` shows the diff and
   `mise run tags:apply -- --write` rewrites the tag lines. The knowledge folder must be a clean git work tree.
 - kb itself never writes source files: these tools do, only when asked.
