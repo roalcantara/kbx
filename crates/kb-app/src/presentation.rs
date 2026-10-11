@@ -189,6 +189,15 @@ pub fn row_label(entry: &Entry) -> String {
     parts.join(", ")
 }
 
+/// A bookmark's favicon from `DuckDuckGo`'s icon service (DESIGN.md, Adaptations: Raycast's own
+/// service serves Raycast); `None` when the URL has no host.
+#[must_use]
+pub fn favicon_url(url: &str) -> Option<String> {
+    let rest = url.split_once("://")?.1;
+    let host = rest.split(['/', '?', '#']).next().filter(|host| !host.is_empty())?;
+    Some(format!("https://icons.duckduckgo.com/ip3/{host}.ico"))
+}
+
 /// The tags a row shows and how many more there are.
 #[must_use]
 pub fn row_tags(tags: &[String]) -> (&[String], usize) {
@@ -329,6 +338,16 @@ mod tests {
             metadata(&entry("bookmarks", "https://b.example", "title: B\n"))[0],
             ("URL", "https://b.example".into())
         );
+    }
+
+    #[test]
+    fn asks_duckduckgo_for_a_bookmark_favicon() {
+        assert_eq!(
+            favicon_url("https://www.youtube.com/watch?v=x").as_deref(),
+            Some("https://icons.duckduckgo.com/ip3/www.youtube.com.ico")
+        );
+        assert_eq!(favicon_url("not a url"), None);
+        assert_eq!(favicon_url("https://"), None);
     }
 
     #[test]

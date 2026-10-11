@@ -20,6 +20,7 @@ mod panel;
 mod presentation;
 pub mod search_view;
 mod sync_view;
+mod tag_images;
 mod trace;
 pub mod window_size;
 

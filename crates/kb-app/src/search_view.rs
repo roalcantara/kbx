@@ -34,6 +34,7 @@ use crate::notes::notes_pane;
 use crate::palette::{PaletteCommand, entry_palette};
 use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key, type_label};
 use crate::sync_view::{SyncFinished, SyncView};
+use crate::tag_images::TagImages;
 use crate::trace;
 use crate::window_size::{COMPACT, WindowSize};
 
@@ -78,7 +79,10 @@ impl SearchView {
     /// Opens the index if there is one and builds the list over it.
     pub fn new(config: Config, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let connection = open_readonly(config.database()).ok();
-        let list = cx.new(|cx| ListState::new(EntryList::new(connection), window, cx).searchable(false));
+        let tag_images = TagImages::scan(config.tag_images());
+        let list = cx.new(|cx| {
+            ListState::new(EntryList::new(connection).with_tag_images(tag_images), window, cx).searchable(false)
+        });
         let query_input = cx.new(|cx| InputState::new(window, cx).placeholder("Search Knowledge Base…"));
         // The first row starts selected, as in Raycast, so Enter and ⌘K act on it at once.
         list.update(cx, |list, cx| {
