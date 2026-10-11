@@ -33,6 +33,12 @@ describe('signals', () => {
     expect(got.maco).toEqual(['macos', 'plural'])
   })
 
+  test('merge a renamed singular into its plural', () => {
+    const got = byAlias(propose({ best_practice: 1, 'best practices': 1, 'best-practices': 2 }, {}, {}))
+    expect(got.best_practice?.[0]).toBe('best-practices')
+    expect(got['best practices']?.[0]).toBe('best-practices')
+  })
+
   test("follow Stack Overflow's synonyms", () => {
     const got = byAlias(propose({ k8s: 2, kubernetes: 1 }, {}, { k8s: 'kubernetes' }))
     expect(got.k8s).toEqual(['kubernetes', 'stackoverflow'])

@@ -74,8 +74,10 @@ export const propose = (uses: Uses, cooccur: Cooccurrences, synonyms: Synonyms):
     if (normalize(tag) !== tag) add(tag, normalize(tag), 'convention', violations(tag).join('; '), true)
   }
 
-  // plural: a singular whose plural is also a tag (also repairs stripped proper names: maco → macos)
-  for (const tag of tags.filter(free)) {
+  // plural: a singular whose plural is also a tag (also repairs stripped proper names: maco → macos). Forms the
+  // signals above produced count too: best_practice → best-practice joins best-practices.
+  const produced = [...new Set([...merged.values()].map((p) => p.preferred))].filter((t) => !(t in uses))
+  for (const tag of [...tags.filter(free), ...produced.filter(free)]) {
     // A tag ending in s is no singular here: postgres + s is the typo postgress, not a plural.
     const plural = tag.endsWith('s') ? undefined : plurals(tag).find((p) => p in uses)
     if (plural) {
