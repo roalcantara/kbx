@@ -17,6 +17,8 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 - `crates/third-party/`: patched external crates, outside the workspace
 - `tools/bench/`: the benchmark kit (TS and Rust benchmarks, probes, report); purgeable as a unit
 - `tools/graph/`: code graphs for agents (CRG, Gortex, Graphify); use them before a broad search: tools/graph/README.md
+- `tools/tags/`: the tag tools (suggest, apply, check) for the knowledge folder's tags; rules in
+  `docs/doctrine/tag-conventions.doctrine.md`
 - `docs/`: ADRs, experiment, specs and plans; `docs/doctrine/`: principles to load when a change matches their
   `applies_to` (start with verify-what-users-see for any UI change)
 - `PRODUCT.md`: what kb is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any

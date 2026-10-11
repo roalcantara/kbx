@@ -195,6 +195,16 @@
   - **Created**: 2026-10-11 12:51
   - **Tags**: app, visual-pass
 
+- [ ] Xvn5 **-** Review ~/Work/knowledge/tags.proposed.toml (keep, edit, uncomment), save it as tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
+  - **Priority**: high
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: tags
+
+- [ ] XQgR **-** Tag icons: brainstorm the second sub-project (render tinted in a fixed box as Raycast's tintColor; fill gaps from Simple Icons and Lucide), after the tags are clean
+  - **Priority**: medium
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: app, tags
+
 - [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
   - **Comments**: 9Cpo
   - **Priority**: medium
@@ -243,6 +253,11 @@
   - **Created**: 2026-10-10 07:17
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/graph.ts#L1:1"
   - **Tags**: graph, quality, tools
+
+- [ ] r3TH **-** Port tools/design/sample.py and the design kit's .mjs scripts to Bun, inline in tools/design/tasks.toml (AGENTS.md)
+  - **Priority**: low
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: tools
 
 - [ ] niEv **-** The notes pane is invisible to VoiceOver: GPUI Kit's TextView sets no accessibility role (0.7.1)
   - **Comments**: qC0Z
