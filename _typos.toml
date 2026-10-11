@@ -18,3 +18,5 @@ maco = "maco"
 kubernete = "kubernete"
 postgre = "postgre"
 serverles = "serverles"
+# A misspelt tag the tag tools must catch (tools/tags tests).
+postgress = "postgress"

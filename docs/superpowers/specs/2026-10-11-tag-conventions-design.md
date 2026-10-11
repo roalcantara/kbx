@@ -22,9 +22,10 @@ labels. The doctrine `docs/doctrine/tag-conventions.doctrine.md` states it, with
 each a known technique: OpenRefine's fingerprint key collision (case, punctuation and token order), nearest-neighbour
 string similarity (typos and separators, `rapidfuzz`), Stack Exchange's tag synonyms (`k8s` → `kubernetes`), dictionary
 inflection (`inflect`, never suffix stripping, which produced today's `maco` and `kubernete`), plus co-occurrence on the
-same entries for semantic pairs (`ia` / `ai`). The owner reviews a table and keeps, edits or rejects each proposal.
+same entries for redundant pairs. The proposals arrive as a commented map, `tags.proposed.toml`: the owner keeps, edits or
+deletes each block and saves the result as `tags.toml`.
 
-**T3. The data stays private.** The alias map (`tags.toml`) and the review table live in the knowledge folder beside the
+**T3. The data stays private.** The alias map (`tags.toml`) and the proposals live in the knowledge folder beside the
 YAML they govern; kb's repository holds only the doctrine and the scripts, which read the map from there.
 
 **T4. One rewrite, of the source files.** An apply step rewrites tag lines only, in place, after `git init` of the
@@ -40,11 +41,11 @@ In: the doctrine, `tools/tags/` (suggest, apply, check), the mise tasks, the fir
 
 ## Tooling
 
-| Task                    | Does                                                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `mise run tags:suggest` | Reads every tag and its uses from the index, writes `<knowledge>/tags-review.csv`: tag, uses, proposal, signal, reason |
-| `mise run tags:apply`   | Reads the reviewed `<knowledge>/tags.toml`; prints the diff of tag lines; with `--write`, rewrites them                |
-| `mise run tags:check`   | Lists tags that break the convention or are an alias: for new tags, any time                                           |
+| Task                    | Does                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `mise run tags:suggest` | Reads every tag and its uses from the index, writes `<knowledge>/tags.proposed.toml`: each proposal with its uses, signal and reason |
+| `mise run tags:apply`   | Reads the reviewed `<knowledge>/tags.toml`; prints the diff of tag lines; with `--write`, rewrites them                              |
+| `mise run tags:check`   | Lists tags that break the convention or are an alias: for new tags, any time                                                         |
 
 Python through `uv run --with` (as `tools/design/sample.py`), no lockfile: `inflect`, `rapidfuzz`, the standard library
 for SQLite, HTTP and TOML. The knowledge folder is `sources_path` from kb's config. Stack Exchange's synonyms are fetched
