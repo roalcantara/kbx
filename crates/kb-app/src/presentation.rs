@@ -159,12 +159,12 @@ pub struct PrimaryAction {
 #[must_use]
 pub fn primary_action(entry: &Entry) -> PrimaryAction {
     let (kind, title) = match type_key(&entry.entry_type) {
-        TypeKey::Bookmark => (PrimaryKind::OpenInBrowser, "Open in browser"),
-        TypeKey::Command => (PrimaryKind::Copy, "Copy command snippet"),
-        TypeKey::Cheat => (PrimaryKind::Copy, "Copy cheat sheet"),
-        TypeKey::Note => (PrimaryKind::Copy, "Copy notes"),
-        TypeKey::Task => (PrimaryKind::Copy, "Copy task"),
-        TypeKey::Other => (PrimaryKind::Copy, "Copy primary content"),
+        TypeKey::Bookmark => (PrimaryKind::OpenInBrowser, "Open in Browser"),
+        TypeKey::Command => (PrimaryKind::Copy, "Copy Command Snippet"),
+        TypeKey::Cheat => (PrimaryKind::Copy, "Copy Cheat Sheet"),
+        TypeKey::Note => (PrimaryKind::Copy, "Copy Notes"),
+        TypeKey::Task => (PrimaryKind::Copy, "Copy Task"),
+        TypeKey::Other => (PrimaryKind::Copy, "Copy Primary Content"),
     };
     PrimaryAction {
         kind,
@@ -264,12 +264,12 @@ mod tests {
     #[test]
     fn matches_the_raycast_primary_action_matrix() {
         let cases = [
-            ("bookmarks", PrimaryKind::OpenInBrowser, "Open in browser"),
-            ("commands", PrimaryKind::Copy, "Copy command snippet"),
-            ("cheats", PrimaryKind::Copy, "Copy cheat sheet"),
-            ("notes", PrimaryKind::Copy, "Copy notes"),
-            ("tasks", PrimaryKind::Copy, "Copy task"),
-            ("snippets", PrimaryKind::Copy, "Copy primary content"),
+            ("bookmarks", PrimaryKind::OpenInBrowser, "Open in Browser"),
+            ("commands", PrimaryKind::Copy, "Copy Command Snippet"),
+            ("cheats", PrimaryKind::Copy, "Copy Cheat Sheet"),
+            ("notes", PrimaryKind::Copy, "Copy Notes"),
+            ("tasks", PrimaryKind::Copy, "Copy Task"),
+            ("snippets", PrimaryKind::Copy, "Copy Primary Content"),
         ];
         for (entry_type, kind, title) in cases {
             let action = primary_action(&entry(entry_type, "key", "title: t\n"));

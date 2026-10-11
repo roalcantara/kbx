@@ -43,7 +43,7 @@ pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -
         groups.push(FilterGroup {
             label: "Filters",
             choices: vec![FilterChoice {
-                label: "Clear all filters".into(),
+                label: "Clear All Filters".into(),
                 checked: false,
                 next: FilterState::default(),
             }],
@@ -86,7 +86,7 @@ pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -
     groups
 }
 
-/// The filter in a few words, for the list placeholder: "All entries", "Commands", "Commands, #git".
+/// The filter in a few words, for the list placeholder: "All Entries", "Commands", "Commands, #git".
 #[must_use]
 pub fn filter_summary(filter: &FilterState) -> String {
     let parts: Vec<String> = filter
@@ -96,7 +96,7 @@ pub fn filter_summary(filter: &FilterState) -> String {
         .chain(filter.tags.iter().map(|t| format!("#{t}")))
         .collect();
     if parts.is_empty() {
-        "All entries".into()
+        "All Entries".into()
     } else {
         parts.join(", ")
     }
@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn summarizes_the_filter() {
-        assert_eq!(filter_summary(&FilterState::default()), "All entries");
+        assert_eq!(filter_summary(&FilterState::default()), "All Entries");
         assert_eq!(
             filter_summary(&FilterState {
                 types: strings(&["commands"]),

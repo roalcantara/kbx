@@ -72,7 +72,7 @@ impl SearchView {
     pub fn new(config: Config, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let connection = open_readonly(config.database()).ok();
         let list = cx.new(|cx| ListState::new(EntryList::new(connection), window, cx).searchable(false));
-        let query_input = cx.new(|cx| InputState::new(window, cx).placeholder("Search knowledge base…"));
+        let query_input = cx.new(|cx| InputState::new(window, cx).placeholder("Search Knowledge Base…"));
         // The first row starts selected, as in Raycast, so Enter and ⌘K act on it at once.
         list.update(cx, |list, cx| {
             if !list.delegate().entries().is_empty() {
@@ -395,7 +395,7 @@ impl SearchView {
                 (group.label, rows)
             })
             .collect();
-        self.open_palette("Search actions…", groups, window, cx);
+        self.open_palette("Search for Actions…", groups, window, cx);
     }
 
     fn open_filter(&mut self, _: &OpenFilter, window: &mut Window, cx: &mut Context<Self>) {
@@ -426,7 +426,7 @@ impl SearchView {
                 (group.label, rows)
             })
             .collect();
-        self.open_palette("Filter by type or tag…", groups, window, cx);
+        self.open_palette("Filter by Type or Tag…", groups, window, cx);
     }
 
     fn apply_filter(&mut self, filter: FilterState, cx: &mut Context<Self>) {
@@ -515,12 +515,12 @@ impl SearchView {
                 selected.map_or_else(|| "Detail".to_owned(), |e| e.title.clone()),
             ),
             Screen::Rebuild(_) => (IconName::RefreshCw, "Rebuilding the index…".to_owned()),
-            Screen::Search => (IconName::BookOpen, "Search knowledge base".to_owned()),
+            Screen::Search => (IconName::BookOpen, "Search Knowledge Base".to_owned()),
         };
         let primary_label = if self.is_showing_detail() {
             selected.map_or("Run", |e| primary_action(e).title)
         } else {
-            "Show details"
+            "Show Details"
         };
         let enter_hint = Keystroke::parse("enter").ok().map(Kbd::new);
         let actions_hint = Kbd::binding_for_action(&OpenActions, Some(CONTEXT), window);
