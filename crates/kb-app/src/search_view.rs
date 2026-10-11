@@ -7,7 +7,7 @@ use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
-use gpui_kit::component::input::{Input, InputEvent, InputState, MoveDown, MoveLeft, MoveRight, MoveUp};
+use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::resizable::{h_resizable, resizable_panel};
@@ -21,9 +21,11 @@ use kb_domain::entry::Entry;
 use kb_domain::search::{FilterState, entry_types, tags};
 use kb_domain::sync::open_readonly;
 
+mod header;
+
 use crate::config::Config;
 use crate::entry_list::EntryList;
-use crate::filter::{filter_groups, filter_summary};
+use crate::filter::filter_groups;
 use crate::keys::{
     Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile,
     Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
@@ -58,6 +60,8 @@ pub struct SearchView {
     show_details: bool,
     show_metadata: bool,
     window_size: WindowSize,
+    /// Whether the filter dropdown is open.
+    filter_open: bool,
     subscriptions: Vec<Subscription>,
 }
 
@@ -103,6 +107,7 @@ impl SearchView {
             show_details: false,
             show_metadata: false,
             window_size: WindowSize::default(),
+            filter_open: false,
             subscriptions: vec![list_sub, input_sub, appearance],
         }
     }
@@ -485,61 +490,6 @@ impl SearchView {
     }
 }
 impl SearchView {
-    /// The search field between the back and filter buttons.
-    fn render_header(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let filter_label = filter_summary(self.list.read(cx).delegate().filter());
-        h_flex()
-            .h_12()
-            .w_full()
-            .items_center()
-            .px_3()
-            .gap_2()
-            .border_b_1()
-            .border_color(cx.theme().border)
-            .child(
-                Button::new("back-button")
-                    .ghost()
-                    .small()
-                    .icon(IconName::ChevronLeft)
-                    .accessibility_label("Back")
-                    .tooltip("Back (Esc)")
-                    .on_click(cx.listener(|this, _, window, cx| this.back(&Back, window, cx))),
-            )
-            .child(
-                // A single-line input consumes ↑ and ↓ without propagating them, so they are
-                // captured here, before it, to move the list selection.
-                div()
-                    .flex_1()
-                    .min_w_0()
-                    .capture_action(cx.listener(|this, _: &MoveUp, window, cx| this.move_selection(-1, window, cx)))
-                    .capture_action(cx.listener(|this, _: &MoveDown, window, cx| this.move_selection(1, window, cx)))
-                    // → and ← toggle the split pane, as in Raycast, but only with the caret at the
-                    // query's end, so they still move it while editing (DESIGN.md, Adaptations).
-                    .capture_action(cx.listener(|this, _: &MoveRight, window, cx| {
-                        if !this.show_details && this.caret_at_end(cx) {
-                            this.show_details(&ShowDetails, window, cx);
-                            cx.stop_propagation();
-                        }
-                    }))
-                    .capture_action(cx.listener(|this, _: &MoveLeft, window, cx| {
-                        if this.show_details && this.caret_at_end(cx) {
-                            this.hide_details(&HideDetails, window, cx);
-                            cx.stop_propagation();
-                        }
-                    }))
-                    .child(Input::new(&self.query_input).cleanable(true).appearance(false)),
-            )
-            .child(
-                Button::new("filter-button")
-                    .ghost()
-                    .small()
-                    .icon(IconName::ListFilter)
-                    .label(filter_label)
-                    .dropdown_caret(true)
-                    .on_click(cx.listener(|this, _, window, cx| this.open_filter(&OpenFilter, window, cx))),
-            )
-    }
-
     /// The screen: the list and its split pane, the detail screen, or the rebuild.
     fn render_content(&self, selected: Option<&Entry>, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         match &self.screen {

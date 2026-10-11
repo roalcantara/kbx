@@ -294,3 +294,9 @@ priority = -1
 [lints.rust.unexpected_cfgs]
 level = "allow"
 priority = 0
+
+# Patched for kb (crates/third-party/README.md). As a path dependency it loses the lint cap
+# registry crates get, and its cocoa-era code warns ~1,200 times about deprecated APIs; the
+# published crate builds the same, silently.
+[lints.rust]
+deprecated = "allow"

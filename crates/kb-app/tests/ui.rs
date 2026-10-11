@@ -292,6 +292,16 @@ fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn shows_only_the_back_chevron_in_the_detail_screen_header(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    let parts = cx.read(|cx| view.read(cx).header_parts());
+    assert_eq!((parts.query, parts.filter, parts.back), (true, true, true));
+    press(cx, window, "enter");
+    let parts = cx.read(|cx| view.read(cx).header_parts());
+    assert_eq!((parts.query, parts.filter, parts.back), (false, false, true));
+}
+
+#[gpui_kit::test]
 fn opens_details_with_enter_in_the_list_without_running_the_primary_action(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     cx.write_to_clipboard(gpui_kit::ClipboardItem::new_string("before".into()));
