@@ -6,13 +6,13 @@
 **Goal:** The tag convention as a doctrine, and `tools/tags/` to propose, apply and check it on the knowledge folder
 ([spec](../specs/2026-10-11-tag-conventions-design.md)).
 
-**Architecture:** Pure Python modules, each tested: `convention.py` (the rules), `signals.py` (proposals from the five
-signals), `tagfile.py` (rewriting tag lines in YAML text), and `cli.py` (suggest, apply, check) gluing them to the
-index, the knowledge folder and the cached Stack Exchange synonyms. Run through `uv run --with`, no lockfile.
+**Architecture:** One tested module, `tools/tags/tags.ts`, holds the logic: `convention` (the rules), `signals.ts` (proposals from the five
+signals), `tagfile.ts` (rewriting tag lines in YAML text), and `cli.ts` (suggest, apply, check) gluing them to the
+index, the knowledge folder and the cached Stack Exchange synonyms. The CLI glue is inline in `tools/tags/tasks.toml` (AGENTS.md); npm packages are pinned imports Bun installs itself.
 
-**Tech Stack:** Python 3.13, `inflect`, `rapidfuzz`, `pytest`; stdlib `sqlite3`, `tomllib`, `urllib`, `difflib`.
+**Tech Stack:** Bun, TypeScript, `bun test`, `bun:sqlite`, `Bun.TOML`; npm `pluralize`, `fastest-levenshtein`.
 
-**Rules:** test first; `uv run -q --with pytest --with inflect --with rapidfuzz python -I -m pytest tools/tags -q` after
+**Rules:** test first (the test blocks below are written in Python syntax for brevity; write them as `bun test` cases); `bun test tools/tags` after
 each step; `hk check --all` before each commit; commits as the repo's (≤ 72, sentence case, Co-Authored-By trailer).
 Nothing from the knowledge folder enters the repository: tests use made-up tags.
 
@@ -25,7 +25,7 @@ Nothing from the knowledge folder enters the repository: tests use made-up tags.
 | `tools/tags/signals.py`                     | `propose(uses, cooccur, synonyms) -> list[Proposal]`             |
 | `tools/tags/tagfile.py`                     | `rewrite(text, aliases) -> str`: tag lines only                  |
 | `tools/tags/cli.py`                         | `suggest`, `apply [--write]`, `check`; paths from kb's config    |
-| `tools/tags/test_*.py`                      | pytest, beside the code                                          |
+| `tools/tags/*.test.ts`, `package.json`      | `bun test` beside the code; the npm packages                     |
 | `tools/tags/tasks.toml`, `mise.toml`        | `tags:suggest`, `tags:apply`, `tags:check`, `tags:test`; include |
 | `AGENTS.md`, `README.md`                    | pointers                                                         |
 
@@ -40,11 +40,11 @@ Nothing from the knowledge folder enters the repository: tests use made-up tags.
       `maco`), How to apply (`tags:check` before adding a tag; `tags:suggest` → review → `tags:apply`).
 - [ ] Commit `docs: Add the tag conventions doctrine`.
 
-### Task 2: `convention.py`
+### Task 2: `convention.ts`
 
-- [ ] Test (`tools/tags/test_convention.py`):
+- [ ] Test (`tools/tags/convention.test.ts`):
 
-```python
+```ts
 from convention import normalize, violations
 
 def test_normalizes_case_separators_and_spaces():
@@ -65,11 +65,11 @@ def test_reports_what_breaks_the_convention():
       `node.js`, `s3` need them).
 - [ ] Tests pass; commit `feat(tools): Add the tag convention rules`.
 
-### Task 3: `signals.py`
+### Task 3: `signals.ts`
 
-- [ ] Test (`tools/tags/test_signals.py`), each signal on made-up tags:
+- [ ] Test (`tools/tags/signals.test.ts`), each signal on made-up tags:
 
-```python
+```ts
 from signals import propose
 
 def by_alias(proposals):
@@ -101,20 +101,20 @@ def test_flags_tags_that_always_come_together():
 - [ ] Implement `Proposal(alias, preferred, signal, reason)` and `propose(uses, cooccur, synonyms)`:
   1. **fingerprint** (OpenRefine key collision): key = `normalize(tag)` with `-` removed; a group of 2+ merges into its
      most-used member.
-  2. **plural**: if `tag + "s"` (or `inflect`'s plural of `tag`) is also a tag, merge `tag` into it (Z39.19 plural for
+  2. **plural**: if `tag + "s"` (or `pluralize(tag)`) is also a tag, merge `tag` into it (Z39.19 plural for
      countables; repairs suffix-stripped proper names).
   3. **stackoverflow**: if `synonyms[normalize(tag)]` names a different tag, propose it (the target need not exist yet).
-  4. **similar**: `rapidfuzz` ratio ≥ 90 between tags of length ≥ 5, merge into the more used.
+  4. **similar**: a Levenshtein similarity ≥ 0.9 (`fastest-levenshtein`) between tags of length ≥ 5, merge into the more used.
   5. **together**: two tags whose entries are the same set (`cooccur[(a, b)] == uses[a] == uses[b]`): flag the less
      common or shorter as an alias, for review.
      The first signal that fires wins; no tag is both alias and preferred (chains resolve to the end).
 - [ ] Tests pass; commit `feat(tools): Propose tag merges from known signals`.
 
-### Task 4: `tagfile.py`
+### Task 4: `tagfile.ts`
 
-- [ ] Test (`tools/tags/test_tagfile.py`):
+- [ ] Test (`tools/tags/tagfile.test.ts`):
 
-```python
+```ts
 from tagfile import rewrite
 
 ALIASES = {"maco": "macos", "job": "jobs"}
@@ -142,9 +142,9 @@ def test_leaves_text_without_aliases_byte_for_byte():
       written.
 - [ ] Tests pass; commit `feat(tools): Rewrite tag lines in YAML text`.
 
-### Task 5: `cli.py` and the tasks
+### Task 5: `cli.ts` and the tasks
 
-- [ ] `cli.py`: paths from `~/.config/kb/config.toml` (`sources_path`, `~` expanded; default
+- [ ] `cli.ts`: paths from `~/.config/kb/config.toml` (`sources_path`, `~` expanded; default
       `~/.config/kodexb/sources`) and the index `~/Library/Application Support/kb-native/kb.db`.
   - `suggest`: reads `select tag, count(*) from entry_tags group by tag` and co-occurrence
     (`select a.tag, b.tag, count(*) from entry_tags a join entry_tags b on a.entry_id = b.entry_id and a.tag < b.tag
@@ -156,7 +156,7 @@ def test_leaves_text_without_aliases_byte_for_byte():
     prints the unified diff of every changed `.yml`/`.yaml`, writes only with `--write`.
   - `check`: prints each indexed tag that `violations` flags or that `tags.toml` lists as an alias; exit 1 when any.
 - [ ] `tools/tags/tasks.toml` (`tags:test`, `tags:suggest`, `tags:apply`, `tags:check`, each
-      `uv run -q --with … python -I tools/tags/cli.py <cmd>`), included from `mise.toml`.
+      `bun tools/tags/cli.ts <cmd>`, with `bun install` in `tools/tags` first), included from `mise.toml`.
 - [ ] Run `mise run tags:test`, then `mise run tags:suggest`; read the proposal counts. Commit
       `feat(tools): Add the tags suggest, apply and check tasks`.
 

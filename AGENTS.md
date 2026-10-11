@@ -36,6 +36,10 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
   stay so. Only `tools/bench/fixtures/private.sha256` is committed.
 - Never write to the Raycast repository (`$KB_TS_REPO`).
 - Keep quality gates and thresholds unchanged unless the owner approves the change.
+- Scripts that stay in `tools/` are TypeScript run by Bun, written inline in the tool's mise task file
+  (`run = '''#!/usr/bin/env bun …'''`). A module file exists only for logic with unit tests (`bun test` beside it).
+  npm packages are imported with a pinned version (`import x from "pkg@1.2.3"`), which `bun run` installs on first
+  use: no `package.json`. `bun test` does not, so a tested module imports none. No new Python or Node-only scripts (`tools/design/sample.py` and the design kit's `.mjs` predate this).
 - A UI change passes the Visual Pass before merge ([doctrine](docs/doctrine/verify-what-users-see.doctrine.md)).
 
 ## Naming conventions

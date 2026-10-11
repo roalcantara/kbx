@@ -20,8 +20,8 @@ labels. The doctrine `docs/doctrine/tag-conventions.doctrine.md` states it, with
 
 **T2. Suggested by tools, decided by the owner.** A script proposes a canonical form for every tag from four signals,
 each a known technique: OpenRefine's fingerprint key collision (case, punctuation and token order), nearest-neighbour
-string similarity (typos and separators, `rapidfuzz`), Stack Exchange's tag synonyms (`k8s` → `kubernetes`), dictionary
-inflection (`inflect`, never suffix stripping, which produced today's `maco` and `kubernete`), plus co-occurrence on the
+string similarity (typos and separators, Levenshtein), Stack Exchange's tag synonyms (`k8s` → `kubernetes`), dictionary
+inflection (`pluralize`, never suffix stripping, which produced today's `maco` and `kubernete`), plus co-occurrence on the
 same entries for redundant pairs. The proposals arrive as a commented map, `tags.proposed.toml`: the owner keeps, edits or
 deletes each block and saves the result as `tags.toml`.
 
@@ -47,8 +47,8 @@ In: the doctrine, `tools/tags/` (suggest, apply, check), the mise tasks, the fir
 | `mise run tags:apply`   | Reads the reviewed `<knowledge>/tags.toml`; prints the diff of tag lines; with `--write`, rewrites them                              |
 | `mise run tags:check`   | Lists tags that break the convention or are an alias: for new tags, any time                                                         |
 
-Python through `uv run --with` (as `tools/design/sample.py`), no lockfile: `inflect`, `rapidfuzz`, the standard library
-for SQLite, HTTP and TOML. The knowledge folder is `sources_path` from kb's config. Stack Exchange's synonyms are fetched
+TypeScript run by Bun (AGENTS.md): `bun:sqlite`, `Bun.TOML`, `fetch`, and the npm packages `pluralize` and
+`fastest-levenshtein` in `tools/tags/package.json`; tests with `bun test`. The knowledge folder is `sources_path` from kb's config. Stack Exchange's synonyms are fetched
 once and cached in `tmp/`.
 
 ## Tag lines
