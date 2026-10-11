@@ -99,6 +99,7 @@ includes = [
   "tools/bench/tasks.toml",  # the benchmark kit: remove when purging it
   "tools/design/tasks.toml", # the design kit (tools/design)
   "tools/graph/tasks.toml",  # the code graph tools (tools/graph/README.md)
+  "tools/tags/tasks.toml",   # the tag tools (docs/doctrine/tag-conventions.doctrine.md)
 ]
 
 [tools]

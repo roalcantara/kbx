@@ -1,0 +1,84 @@
+# The tag tools (docs/doctrine/tag-conventions.doctrine.md), included from the root mise.toml. The logic and its tests
+# are in tags.ts; these are its entry points. They read kb's index and config, and write only in the knowledge folder.
+
+["tags:test"]
+description = "Test the tag tools"
+run = "bun test tools/tags"
+
+["tags:suggest"]
+description = "Propose tag merges: writes tags.proposed.toml in the knowledge folder, for review"
+run = '''
+#!/usr/bin/env bun
+import { join } from 'node:path'
+// mise runs an inline script from a temporary file, so the module is imported from the project root.
+const { proposalsToml, propose, readIndex, sourcesDir, stackOverflowSynonyms } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+
+const { uses, cooccur } = readIndex()
+const synonyms = await stackOverflowSynonyms('tmp/tags/so-synonyms.json')
+const proposals = propose(uses, cooccur, synonyms)
+const merged = new Set(proposals.map((p) => p.alias))
+const loose = Object.keys(uses).filter((t) => uses[t] === 1 && !merged.has(t)).sort()
+const file = join(sourcesDir(), 'tags.proposed.toml')
+await Bun.write(file, proposalsToml(proposals, uses, loose))
+const bySignal = Map.groupBy(proposals, (p) => p.signal)
+console.log(`${Object.keys(uses).length} tags; ${proposals.length} proposals (${[...bySignal].map(([s, ps]) => `${s} ${ps.length}`).join(', ')}); ${loose.length} used once`)
+console.log(`wrote ${file}: review it, save it as tags.toml, then run mise run tags:apply`)
+'''
+
+["tags:apply"]
+description = "Apply tags.toml to the knowledge folder's YAML: a diff by default, --write to rewrite"
+usage = 'flag "--write" help="rewrite the files instead of printing the diff"'
+run = '''
+#!/usr/bin/env bun
+import { $ } from 'bun'
+import { join, relative } from 'node:path'
+// mise runs an inline script from a temporary file, so the module is imported from the project root.
+const { readAliases, rewrite, sourcesDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+
+const dir = sourcesDir()
+const write = process.env.usage_write === 'true'
+const status = await $`git -C ${dir} status --porcelain`.nothrow().quiet()
+if (status.exitCode !== 0) throw new Error(`${dir} is not a git work tree: run git init and commit it first`)
+if (write && status.stdout.toString().trim()) throw new Error(`${dir} has uncommitted changes: commit them first`)
+const aliases = readAliases(join(dir, 'tags.toml'))
+// The dry run writes its copies in kb's tmp/, never in the knowledge folder.
+const scratch = join(process.cwd(), 'tmp/tags/dry-run')
+await $`rm -rf ${scratch}`.quiet()
+let changed = 0
+for await (const path of new Bun.Glob('**/*.{yml,yaml}').scan({ cwd: dir, absolute: true })) {
+  const text = await Bun.file(path).text()
+  const next = rewrite(text, aliases)
+  if (next === text) continue
+  changed++
+  if (write) {
+    await Bun.write(path, next)
+  } else {
+    const copy = join(scratch, relative(dir, path))
+    await Bun.write(copy, next)
+    await $`git diff --no-index --color=always -- ${path} ${copy}`.nothrow()
+  }
+}
+console.log(write
+  ? `rewrote ${changed} files; review with git -C ${dir} diff, then commit`
+  : `${changed} files would change; run mise run tags:apply --write to rewrite them`)
+'''
+
+["tags:check"]
+description = "List the indexed tags that break the convention or are an alias in tags.toml"
+run = '''
+#!/usr/bin/env bun
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+// mise runs an inline script from a temporary file, so the module is imported from the project root.
+const { readAliases, readIndex, sourcesDir, violations } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+
+const { uses } = readIndex()
+const map = join(sourcesDir(), 'tags.toml')
+const aliases = existsSync(map) ? readAliases(map) : {}
+const problems = Object.keys(uses).sort().flatMap((tag) => {
+  const found = [...violations(tag), ...(aliases[tag] ? [`an alias of ${aliases[tag]}`] : [])]
+  return found.length ? [`${tag} (${uses[tag]}): ${found.join('; ')}`] : []
+})
+console.log(problems.length ? problems.join('\n') : 'every tag follows the convention')
+process.exit(problems.length ? 1 : 0)
+'''
