@@ -214,7 +214,7 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/plans/2026-10-10-kb-native-06-design-foundation.md#L1:1"
   - **Tags**: design, next, ui
 
-- [ ] eWka **-** Plan 7: components from DESIGN.md: anchored overlays, rows, split pane, footer, detail, media, ⌘⇧F size toggle; parity A01 and S12
+- [x] eWka **-** Plan 7: components from DESIGN.md: anchored overlays, rows, split pane, footer, detail, media, ⌘⇧F size toggle; parity A01 and S12 (feat/components)
   - **Priority**: high
   - **Created**: 2026-10-10 10:30
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-ui-polish-design.md#L1:1"
@@ -225,6 +225,66 @@
   - **Created**: 2026-10-10 10:30
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-ui-polish-design.md#L1:1"
   - **Tags**: design, ui
+
+- [x] BAsb **-** Plan 7 T1: seven accents from accents.json; Raycast's type tints and tag hash, tested against it (fdf3b3c)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:29
+  - **Tags**: app, plan7
+
+- [x] HIFy **-** Plan 7 T2: Raycast's Title Case labels (858cd98)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:29
+  - **Tags**: app, plan7
+
+- [x] YVq7 **-** Plan 7 T3: → / ← toggle the split pane and the metadata, caret-aware; ⌘D alias (37ab079)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:29
+  - **Tags**: app, plan7
+
+- [x] 56dX **-** Plan 7 T4: ⌘⇧F compact/expanded window, centred via patched gpui-pre-macos (809a72c)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] l5jK **-** Plan 7 T5: header as Raycast's: chevron on the icon axis, funnel filter button (ce8207e)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] boCl **-** Plan 7 T6: rows with favicons, tag images (tag_images_path, mise run images), +N, link count (6167d0b)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] UJWP **-** Plan 7 T7: remote images through curl (f399dc5); metadata card, ⅓ split, red description bar (f737e7e)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] DLzs **-** Plan 7 T8: footer as floating pills, one keycap per key (9ce42e7)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] ZNHd **-** Plan 7 T9: actions popover anchored to the footer, keycaps, Links and Copy… pages (e7b65b3)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [x] Al5b **-** Plan 7 T10: filter dropdown anchored and kept open; T3 in one visit (639c023)
+  - **Priority**: medium
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [ ] bQVp **-** Plan 7 visual pass by the owner: each screen of tools/reports against kb (split, detail, popovers, ⌘⇧F); fix drift per DESIGN.md
+  - **Priority**: high
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: app, plan7
+
+- [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
+  - **Priority**: low
+  - **Created**: 2026-10-11 09:30
+  - **Tags**: plan7, report
 
 # Actors
 

@@ -2,37 +2,26 @@
 
 use std::time::Duration;
 
+use gpui_kit::assets::IconName;
 use gpui_kit::component::empty::{Empty, EmptyDescription, EmptyHeader, EmptyTitle};
 use gpui_kit::component::list::{ListDelegate, ListItem, ListState};
 use gpui_kit::component::tag::Tag;
+use gpui_kit::component::tooltip::Tooltip;
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    App, Context, FontWeight, Hsla, IntoElement as _, ParentElement, Role, SharedString,
-    StatefulInteractiveElement as _, Styled as _, Task, Window, div,
+    AnyElement, App, Context, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
+    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, relative,
 };
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
 use kb_domain::row::row_to_entry;
 use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, search};
 
-use crate::presentation::{Hue, row_label, row_tags, tag_hue, type_badge};
+use crate::accents::accent;
+use crate::presentation::{TypeKey, favicon_url, row_label, row_tags, tag_hue, type_badge, type_key};
+use crate::tag_images::TagImages;
 use crate::trace;
-
-/// The theme colour of a hue.
-#[must_use]
-pub fn hue_color(hue: Hue, cx: &App) -> Hsla {
-    let theme = cx.theme();
-    match hue {
-        Hue::Red => theme.red,
-        Hue::Yellow => theme.yellow,
-        Hue::Green => theme.green,
-        Hue::Cyan => theme.cyan,
-        Hue::Blue => theme.blue,
-        Hue::Magenta => theme.magenta,
-        Hue::Neutral => theme.muted_foreground,
-    }
-}
 
 /// Keystrokes settle this long before a query runs, as in the Raycast command.
 pub const DEBOUNCE: Duration = Duration::from_millis(150);
@@ -47,6 +36,7 @@ pub struct EntryList {
     entries: Vec<Entry>,
     selected: Option<IndexPath>,
     secondary_confirm: bool,
+    tag_images: TagImages,
 }
 
 impl EntryList {
@@ -61,9 +51,17 @@ impl EntryList {
             entries: Vec::new(),
             selected: None,
             secondary_confirm: false,
+            tag_images: TagImages::default(),
         };
         list.refresh();
         list
+    }
+
+    /// Draws the tags that have an image as that image.
+    #[must_use]
+    pub fn with_tag_images(mut self, tag_images: TagImages) -> Self {
+        self.tag_images = tag_images;
+        self
     }
 
     /// Whether an index is open.
@@ -133,10 +131,18 @@ impl EntryList {
         }
     }
 
-    fn render_row(entry: &Entry, selected: bool, cx: &App) -> ListItem {
+    /// A row as Raycast's (DESIGN.md, List row): the type icon or the bookmark's favicon, the
+    /// title, the muted description at the same size, then up to three tags (pills, or their
+    /// images), `+N` and the link count.
+    fn render_row(&self, entry: &Entry, selected: bool, cx: &App) -> ListItem {
         let (tags, more) = row_tags(&entry.tags);
         let badge = type_badge(&entry.entry_type);
-        let badge_hue = hue_color(badge.hue, cx);
+        let tint = accent(badge.hue, cx).color;
+        let type_icon = move || Icon::new(badge.icon).small().text_color(tint).into_any_element();
+        let favicon = (type_key(&entry.entry_type) == TypeKey::Bookmark)
+            .then(|| favicon_url(&entry.primary_content))
+            .flatten();
+        let muted = cx.theme().muted_foreground;
 
         ListItem::new(SharedString::from(entry.id.clone()))
             // The List wraps each row in its own ListItem node and reports only nodes with a role,
@@ -144,36 +150,32 @@ impl EntryList {
             .role(Role::Label)
             .accessibility_label(row_label(entry))
             .selected(selected)
-            .rounded_lg()
+            // Inset and rounded, as Raycast's selection (tools/design/layout.json, resultRow).
+            .mx(px(8.))
+            .px(px(16.))
+            .h(px(50.))
+            .rounded(px(12.))
             .child(
                 h_flex()
                     .w_full()
                     .items_center()
-                    .gap_3()
-                    .py_1()
-                    .px_1p5()
+                    .gap(px(12.))
                     .child(
                         div()
                             .flex_none()
-                            .size_5()
-                            .rounded(cx.theme().radius)
-                            .border_1()
-                            .border_color(badge_hue.opacity(0.6))
-                            .bg(badge_hue.opacity(0.15))
+                            .w(px(24.))
                             .flex()
-                            .items_center()
                             .justify_center()
-                            .text_xs()
-                            .font_weight(FontWeight::BOLD)
-                            .text_color(badge_hue)
-                            .map(|square| match badge.glyph {
-                                Some(glyph) => square.child(glyph),
-                                None => square.child(Icon::new(badge.icon).xsmall().text_color(badge_hue)),
+                            .map(|column| match favicon {
+                                Some(url) => column.child(img(url).size_4().with_fallback(type_icon)),
+                                None => column.child(type_icon()),
                             }),
                     )
                     .child(
                         div()
                             .flex_none()
+                            .max_w(relative(0.6))
+                            .truncate()
                             .text_color(cx.theme().foreground)
                             .child(entry.title.clone()),
                     )
@@ -182,33 +184,43 @@ impl EntryList {
                             .flex_1()
                             .min_w_0()
                             .truncate()
-                            .text_color(cx.theme().muted_foreground)
-                            .text_xs()
+                            .text_color(muted)
                             .when_some(entry.description.clone(), ParentElement::child),
                     )
-                    .children(tags.iter().map(|tag| {
-                        let hue = hue_color(tag_hue(tag), cx);
-                        Tag::custom(hue.opacity(0.15), hue, hue.opacity(0.3))
-                            .xsmall()
-                            .child(format!("#{tag}"))
-                    }))
+                    .children(tags.iter().map(|tag| self.render_tag(tag, cx)))
                     .when(more > 0, |row| {
-                        row.child(
-                            div()
-                                .text_color(cx.theme().muted_foreground)
-                                .text_xs()
-                                .child(format!("+{more}")),
-                        )
+                        row.child(div().text_color(muted).text_xs().child(format!("+{more}")))
                     })
                     .when(!entry.links.is_empty(), |row| {
                         row.child(
-                            div()
-                                .text_color(cx.theme().muted_foreground)
+                            h_flex()
+                                .gap_1()
+                                .items_center()
+                                .text_color(muted)
                                 .text_xs()
-                                .child(format!("{} links", entry.links.len())),
+                                .child(Icon::new(IconName::Link).xsmall())
+                                .child(entry.links.len().to_string()),
                         )
                     }),
             )
+    }
+
+    /// A tag: its image when the tag-images folder has one, else its filled pill.
+    fn render_tag(&self, tag: &str, cx: &App) -> AnyElement {
+        if let Some(path) = self.tag_images.get(tag) {
+            let name = format!("#{tag}");
+            return div()
+                .id(SharedString::from(format!("tag-{tag}")))
+                .child(img(path.to_path_buf()).size_4())
+                .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
+                .into_any_element();
+        }
+        let accent = accent(tag_hue(tag), cx);
+        Tag::custom(accent.pill, accent.pill_text, accent.pill)
+            .xsmall()
+            .rounded(px(10.))
+            .child(format!("#{tag}"))
+            .into_any_element()
     }
 }
 
@@ -238,7 +250,7 @@ impl ListDelegate for EntryList {
 
     fn render_item(&mut self, ix: IndexPath, _: &mut Window, cx: &mut Context<ListState<Self>>) -> Option<ListItem> {
         let entry = self.entries.get(ix.row)?;
-        Some(Self::render_row(entry, Some(ix) == self.selected, cx))
+        Some(self.render_row(entry, Some(ix) == self.selected, cx))
     }
 
     fn render_empty(&mut self, _: &mut Window, cx: &mut Context<ListState<Self>>) -> impl gpui_kit::IntoElement {

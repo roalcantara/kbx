@@ -260,6 +260,18 @@ run = '''
   exec target/release/kb
 '''
 
+[tasks.images]
+description = "Copy the Raycast extension's tag images into ~/.config/kb/images, where kb draws #tag as <tag>.svg (reads $KB_TS_REPO, never writes it)"
+run = '''
+  #!/usr/bin/env bash
+  set -euo pipefail
+  src="${KB_TS_REPO:?set KB_TS_REPO to the Raycast extension repository}/apps/kb/assets/images"
+  dest="$HOME/.config/kb/images"
+  mkdir -p "$dest"
+  cp -n "$src"/*.svg "$dest"/ || true # -n keeps images already there
+  echo "$(ls "$dest" | wc -l | tr -d ' ') tag images in $dest"
+'''
+
 [tasks.show]
 description = "Show the panel without the hotkey: build, then (re)start kb in the background, which opens showing it"
 run = '''

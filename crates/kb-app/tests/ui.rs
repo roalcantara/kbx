@@ -17,8 +17,9 @@ use gpui_kit::{
 };
 use kb_app::config::Config;
 use kb_app::entry_list::DEBOUNCE;
-use kb_app::palette::key_bindings;
+use kb_app::keys::key_bindings;
 use kb_app::search_view::SearchView;
+use kb_app::window_size::WindowSize;
 
 /// A config whose sources are the sample corpus and whose index is already built.
 fn sample_config(home: &Path) -> Config {
@@ -165,16 +166,50 @@ fn copies_a_command_with_its_primary_action(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn copies_the_title_from_the_action_palette(cx: &mut TestAppContext) {
+fn copies_the_title_from_the_copy_page_of_the_actions(cx: &mut TestAppContext) {
     let (_home, window, _view) = open_with_query(cx, "rebase");
     press(cx, window, "cmd-k");
     cx.run_until_parked();
-    type_text(cx, window, "copy title");
+    type_text(cx, window, "Copy…");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    type_text(cx, window, "title");
     cx.run_until_parked();
     press(cx, window, "enter");
     cx.run_until_parked();
     let copied = cx.read_from_clipboard().and_then(|item| item.text());
     assert_eq!(copied.as_deref(), Some("Interactive rebase"));
+}
+
+#[gpui_kit::test]
+fn leaves_a_page_of_the_actions_then_the_actions_with_escape(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    assert!(cx.read(|cx| view.read(cx).is_actions_open()));
+    type_text(cx, window, "Copy…");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
+    assert_eq!(
+        labels,
+        [["Copy Title", "Copy Notes", "Copy Raw YAML"]],
+        "the cheat has no description"
+    );
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
+    assert_eq!(labels[0], ["Show Details", "Copy Cheat Sheet"]);
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
+    assert_eq!(
+        titles(&view, cx),
+        ["Interactive rebase"],
+        "Esc closed the popover, not the query"
+    );
 }
 
 #[gpui_kit::test]
@@ -243,6 +278,64 @@ fn opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d(cx: &mut TestAp
 }
 
 #[gpui_kit::test]
+fn shows_details_with_right_at_the_end_of_the_query_and_hides_them_with_left(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "right");
+    assert!(cx.read(|cx| view.read(cx).is_showing_details()));
+    press(cx, window, "left");
+    assert!(!cx.read(|cx| view.read(cx).is_showing_details()));
+}
+
+#[gpui_kit::test]
+fn moves_the_caret_with_right_and_left_inside_the_query(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "left");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_showing_details()),
+        "left with the pane hidden moves the caret"
+    );
+    press(cx, window, "right");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_showing_details()),
+        "right mid-query moves the caret"
+    );
+    press(cx, window, "right");
+    assert!(
+        cx.read(|cx| view.read(cx).is_showing_details()),
+        "right at the end shows the pane"
+    );
+}
+
+#[gpui_kit::test]
+fn shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "enter");
+    press(cx, window, "right");
+    assert!(cx.read(|cx| view.read(cx).is_showing_metadata()));
+    press(cx, window, "left");
+    assert!(!cx.read(|cx| view.read(cx).is_showing_metadata()));
+}
+
+#[gpui_kit::test]
+fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "cmd-shift-f");
+    assert_eq!(cx.read(|cx| view.read(cx).window_size()), WindowSize::Expanded);
+    press(cx, window, "cmd-shift-f");
+    assert_eq!(cx.read(|cx| view.read(cx).window_size()), WindowSize::Compact);
+}
+
+#[gpui_kit::test]
+fn shows_only_the_back_chevron_in_the_detail_screen_header(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    let parts = cx.read(|cx| view.read(cx).header_parts());
+    assert_eq!((parts.query, parts.filter, parts.back), (true, true, true));
+    press(cx, window, "enter");
+    let parts = cx.read(|cx| view.read(cx).header_parts());
+    assert_eq!((parts.query, parts.filter, parts.back), (false, false, true));
+}
+
+#[gpui_kit::test]
 fn opens_details_with_enter_in_the_list_without_running_the_primary_action(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     cx.write_to_clipboard(gpui_kit::ClipboardItem::new_string("before".into()));
@@ -284,17 +377,20 @@ fn task_t2_copies_a_command_with_a_query_and_one_chord(cx: &mut TestAppContext) 
 }
 
 #[gpui_kit::test]
-fn task_t3_filters_by_a_type_and_a_tag_with_two_picks(cx: &mut TestAppContext) {
+fn task_t3_filters_by_a_type_and_a_tag_in_one_visit(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
+    press(cx, window, "cmd-p");
+    cx.run_until_parked();
     for choice in ["Commands", "#docker"] {
-        press(cx, window, "cmd-p");
-        cx.run_until_parked();
         type_text(cx, window, choice);
         cx.run_until_parked();
         press(cx, window, "enter");
         settle(cx);
     }
+    assert!(cx.read(|cx| view.read(cx).is_filter_open()), "stays open while picking");
+    press(cx, window, "escape");
+    assert!(!cx.read(|cx| view.read(cx).is_filter_open()));
     let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
     assert_eq!(
         (filter.types, filter.tags),

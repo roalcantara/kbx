@@ -18,6 +18,8 @@
     "CHANGELOG.md",
     ".mise/**",
     "crates/third-party/block/**",
+    "crates/third-party/gpui-pre-macos/**",
+    ".claude/settings.local.json",
     "**/*.lock",
     "tools/bench/ts/bun.lock"
   ],

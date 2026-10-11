@@ -1,0 +1,21 @@
+{
+  "git": "red",
+  "docker": "purple",
+  "kube": "red",
+  "rust": "blue",
+  "kb": "red",
+  "video": "blue",
+  "talks": "green",
+  "docs": "blue",
+  "containers": "red",
+  "mixed-case": "purple",
+  "aws": "orange",
+  "nu": "red",
+  "linux": "purple",
+  "gradle": "orange",
+  "grails": "magenta",
+  "schedule": "red",
+  "ai": "magenta",
+  "react": "yellow",
+  "café": "green"
+}

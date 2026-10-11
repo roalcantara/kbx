@@ -4,6 +4,7 @@
 //!
 //! ```toml
 //! sources_path = "~/Work/knowledge"
+//! tag_images_path = "~/Pictures/kb-tags"
 //! ```
 //!
 //! Without it the sources are `~/.config/kodexb/sources`, as in the Raycast extension. The index
@@ -17,6 +18,8 @@ use serde::Deserialize;
 
 /// The sources directory when the preferences name none.
 const DEFAULT_SOURCES: &str = ".config/kodexb/sources";
+/// The tag-images folder when the preferences name none, relative to the home directory.
+const DEFAULT_TAG_IMAGES: &str = ".config/kb/images";
 /// The preferences file, relative to the home directory.
 const PREFERENCES: &str = ".config/kb/config.toml";
 
@@ -45,12 +48,14 @@ pub enum ConfigError {
 #[serde(deny_unknown_fields)]
 struct Preferences {
     sources_path: Option<String>,
+    tag_images_path: Option<String>,
 }
 
 /// The resolved locations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config {
     sources_dir: PathBuf,
+    tag_images: PathBuf,
     database: PathBuf,
     preferences: PathBuf,
 }
@@ -89,8 +94,12 @@ impl Config {
         let sources_dir = parsed
             .sources_path
             .map_or_else(|| home.join(DEFAULT_SOURCES), |path| expand_home(&path, home));
+        let tag_images = parsed
+            .tag_images_path
+            .map_or_else(|| home.join(DEFAULT_TAG_IMAGES), |path| expand_home(&path, home));
         Self {
             sources_dir,
+            tag_images,
             database: data_dir.join("kb-native").join("kb.db"),
             preferences: home.join(PREFERENCES),
         }
@@ -100,6 +109,12 @@ impl Config {
     #[must_use]
     pub fn sources_dir(&self) -> &Path {
         &self.sources_dir
+    }
+
+    /// The folder of tag images: `<tag>.svg` draws `#tag` (`mise run images` fills the default).
+    #[must_use]
+    pub fn tag_images(&self) -> &Path {
+        &self.tag_images
     }
 
     /// The index file.
@@ -161,6 +176,15 @@ mod tests {
         let config = Config::defaults(home.path(), Path::new("/data"));
         assert_eq!(config.sources_dir(), home.path().join(".config/kodexb/sources"));
         assert_eq!(config.preferences(), home.path().join(".config/kb/config.toml"));
+    }
+
+    #[test]
+    fn reads_the_tag_images_path_and_defaults_beside_the_preferences() {
+        let home = home_with(Some("tag_images_path = \"~/art\"\n"));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.tag_images(), home.path().join("art"));
+        let config = Config::defaults(home.path(), Path::new("/data"));
+        assert_eq!(config.tag_images(), home.path().join(".config/kb/images"));
     }
 
     #[test]

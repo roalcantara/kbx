@@ -14,13 +14,16 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
       `SyncView`, the list); the notes pane is a function returning an element (`notes.rs`).
 - [x] Repeated elements have stable domain-based ids: the notes `TextView` is keyed by the entry id; sync report rows
       by their path; list rows by the List's own index model, which is virtualized (`notes.rs`, `sync_view.rs`).
-- [x] Theme tokens replace visual literals: no hex, `rgb` or `hsla` in the app; hues map to `theme.red` … `theme.magenta`
-      (`entry_list::hue_color`); the split uses `rems` (`search_view::LIST_WIDTH_REMS`). **Exception:** the window frame,
-      `px(860.) × px(520.)`, is in platform points, documented at `panel::window_options`.
+- [x] Theme tokens replace visual literals: no hex, `rgb` or `hsla` in the app's code; colours come from the theme
+      (`assets/themes/kb.json`) and the seven accents from `assets/themes/accents.json` (`accents::accent`), both
+      generated from DESIGN.md's palette by `tools/design/theme.mjs`. **Exception:** component geometry (header,
+      rows, footer, popovers, the window sizes) is in points, the values of `tools/design/layout.json` as DESIGN.md
+      states them; text sizes stay in the rem scale.
 - [x] Keyboard actions, focus and overlays work together: every action has a binding in a context
-      (`palette::key_bindings`); the up and down keys are captured from the search field; the palettes open in `Root`
-      and focus returns after them (`task_t3_filters_by_a_type_and_a_tag_with_two_picks` presses ⌘P again after a
-      pick).
+      (`keys::key_bindings`); the up and down keys are captured from the search field, and → / ← only with the caret
+      at its end; the overlays are popovers anchored to their controls, Esc leaves them before the screen, and focus
+      returns to the screen after them (`task_t3_filters_by_a_type_and_a_tag_in_one_visit`,
+      `leaves_a_page_of_the_actions_then_the_actions_with_escape`).
 - [x] Loading, empty, error and cancellation paths are represented: empty states for no index and no match
       (`EntryList::render_empty`); rebuild stopped and failed states (`SyncStatus`); unreadable preferences and a taken
       hotkey become notifications (`main.rs`, `panel::open`); a failed filter read too (`search_view.rs`).
@@ -45,13 +48,14 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
       tooltip; the footer buttons carry their labels and key hints (`search_view::render_header`, `render_footer`).
 - [x] Status is not told by colour alone: type badges carry a glyph and the type in the metadata; tags carry their
       `#name`; rebuild states have a title and text.
-- [ ] Copy follows Raycast's Title Case, with an ellipsis only on commands that ask for more input: "Open in Browser",
-      "Copy Command Snippet", "Rebuild Index", "Clear All Filters" ([DESIGN.md, Adaptations](../../DESIGN.md#adaptations);
-      an owner-approved deviation from the GPUI Kit Design Guides). Plan 7 changes the labels, still sentence case
-      (`presentation.rs`, `palette.rs`, `filter.rs`).
+- [x] Copy follows Raycast's Title Case, with an ellipsis only on commands that open more choices or ask for more input:
+      "Open in Browser", "Copy Command Snippet", "Rebuild Index…", "Copy…", "Clear All Filters"
+      ([DESIGN.md, Adaptations](../../DESIGN.md#adaptations); an owner-approved deviation from the GPUI Kit Design
+      Guides) (`presentation.rs`, `palette.rs`, `filter.rs`). Messages stay sentences.
 - [x] Errors read as what happened and what to do: "Couldn’t register ⌥K: … Another app may be using it."
 - [x] An app-level Quit command exists: ⌘Q, and "Quit kb" in the action palette (`palette::Quit`).
-- [x] Content remains usable at larger text: the list width is in rems, so it grows with the base font.
+- [x] Content remains usable at larger text: text sizes are in the rem scale and grow with the base font; the split is
+      a share of the window (⅓ list), and ⌘⇧F expands the window when the compact size is too small.
 - [x] Assistive technology can read the controls and the list: GPUI exposes them through AccessKit once a client
       asks. The back, filter and footer buttons and the search field carry their names; each list row is named by its
       visible text — title, type, description, tags (`presentation::row_label`, `names_a_row_by_its_visible_text`).

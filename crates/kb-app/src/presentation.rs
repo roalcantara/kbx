@@ -66,61 +66,73 @@ pub fn type_label(entry_type: &str) -> String {
     known.to_owned()
 }
 
-/// A colour role from the theme's palette. Rendering resolves it against the active theme
-/// (`cx.theme().red`, …), so badges and tags follow light, dark and custom themes alike.
+/// A colour role among the seven accents of DESIGN.md. Rendering resolves it for the current
+/// appearance (`accents::accent`), so badges and tags follow light and dark alike.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Hue {
-    /// `theme.red`
-    Red,
-    /// `theme.yellow`
-    Yellow,
-    /// `theme.green`
-    Green,
-    /// `theme.cyan`
-    Cyan,
-    /// `theme.blue`
+    /// Cheats; tags.
     Blue,
-    /// `theme.magenta`
+    /// Commands; tags.
+    Green,
+    /// Notes; tags.
+    Orange,
+    /// Bookmarks; tags.
+    Purple,
+    /// Tasks; tags.
     Magenta,
-    /// The muted foreground: no hue.
-    Neutral,
+    /// Tags.
+    Yellow,
+    /// Tags; the notes' description bar.
+    Red,
 }
 
-/// The coloured square that leads a list row: a glyph or an icon, in the type's hue.
+/// The tinted icon that leads a list row.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TypeBadge {
-    /// The icon, used when there is no glyph.
+    /// The type's icon, as Raycast's.
     pub icon: IconName,
-    /// A text glyph shown instead of the icon: `>` for commands, as in a terminal.
-    pub glyph: Option<&'static str>,
     /// The type's hue.
     pub hue: Hue,
 }
 
-/// The badge for an entry type.
+/// The badge for an entry type: Raycast's icon and tint; an unknown type hashes its singular
+/// name, as the Raycast extension's `typeColor`.
 #[must_use]
 pub fn type_badge(entry_type: &str) -> TypeBadge {
-    let (icon, glyph, hue) = match type_key(entry_type) {
-        TypeKey::Command => (IconName::SquareTerminal, Some(">"), Hue::Green),
-        TypeKey::Cheat => (IconName::FileText, None, Hue::Blue),
-        TypeKey::Bookmark => (IconName::Globe, None, Hue::Cyan),
-        TypeKey::Note => (IconName::BookOpen, None, Hue::Magenta),
-        TypeKey::Task => (IconName::CircleCheck, None, Hue::Red),
-        TypeKey::Other => (IconName::FileText, None, Hue::Neutral),
+    let (icon, hue) = match type_key(entry_type) {
+        TypeKey::Bookmark => (IconName::Globe, Hue::Purple),
+        TypeKey::Command => (IconName::SquareTerminal, Hue::Green),
+        TypeKey::Cheat => (IconName::FileText, Hue::Blue),
+        TypeKey::Note => (IconName::NotebookText, Hue::Orange),
+        TypeKey::Task => (IconName::CircleCheck, Hue::Magenta),
+        TypeKey::Other => {
+            let name = entry_type.trim().to_lowercase();
+            (IconName::FileText, tag_hue(name.strip_suffix('s').unwrap_or(&name)))
+        }
     };
-    TypeBadge { icon, glyph, hue }
+    TypeBadge { icon, hue }
 }
 
-/// The hues tags are spread over, in hash order.
-const TAG_HUES: [Hue; 6] = [Hue::Red, Hue::Yellow, Hue::Green, Hue::Cyan, Hue::Blue, Hue::Magenta];
+/// The order tags and unknown types hash into, as the Raycast extension's `accessories.ts`.
+const TAG_ORDER: [Hue; 7] = [
+    Hue::Blue,
+    Hue::Orange,
+    Hue::Green,
+    Hue::Purple,
+    Hue::Magenta,
+    Hue::Yellow,
+    Hue::Red,
+];
 
-/// A tag's hue: a stable hash of its lowercased name, so a tag keeps its colour everywhere.
+/// The Raycast extension's hash: `acc × 31 + code point`, modulo 100 003, over the characters.
+fn hash(value: &str) -> usize {
+    value.chars().fold(0_usize, |acc, c| (acc * 31 + c as usize) % 100_003)
+}
+
+/// A tag's hue: its lowercased name hashed, so a tag keeps its colour everywhere.
 #[must_use]
 pub fn tag_hue(tag: &str) -> Hue {
-    let hash = tag.to_lowercase().bytes().fold(5381_usize, |hash, byte| {
-        hash.wrapping_mul(33).wrapping_add(usize::from(byte))
-    });
-    TAG_HUES[hash % TAG_HUES.len()]
+    TAG_ORDER[hash(&tag.to_lowercase()) % TAG_ORDER.len()]
 }
 
 /// What the primary action does.
@@ -147,12 +159,12 @@ pub struct PrimaryAction {
 #[must_use]
 pub fn primary_action(entry: &Entry) -> PrimaryAction {
     let (kind, title) = match type_key(&entry.entry_type) {
-        TypeKey::Bookmark => (PrimaryKind::OpenInBrowser, "Open in browser"),
-        TypeKey::Command => (PrimaryKind::Copy, "Copy command snippet"),
-        TypeKey::Cheat => (PrimaryKind::Copy, "Copy cheat sheet"),
-        TypeKey::Note => (PrimaryKind::Copy, "Copy notes"),
-        TypeKey::Task => (PrimaryKind::Copy, "Copy task"),
-        TypeKey::Other => (PrimaryKind::Copy, "Copy primary content"),
+        TypeKey::Bookmark => (PrimaryKind::OpenInBrowser, "Open in Browser"),
+        TypeKey::Command => (PrimaryKind::Copy, "Copy Command Snippet"),
+        TypeKey::Cheat => (PrimaryKind::Copy, "Copy Cheat Sheet"),
+        TypeKey::Note => (PrimaryKind::Copy, "Copy Notes"),
+        TypeKey::Task => (PrimaryKind::Copy, "Copy Task"),
+        TypeKey::Other => (PrimaryKind::Copy, "Copy Primary Content"),
     };
     PrimaryAction {
         kind,
@@ -177,6 +189,15 @@ pub fn row_label(entry: &Entry) -> String {
     parts.join(", ")
 }
 
+/// A bookmark's favicon from `DuckDuckGo`'s icon service (DESIGN.md, Adaptations: Raycast's own
+/// service serves Raycast); `None` when the URL has no host.
+#[must_use]
+pub fn favicon_url(url: &str) -> Option<String> {
+    let rest = url.split_once("://")?.1;
+    let host = rest.split(['/', '?', '#']).next().filter(|host| !host.is_empty())?;
+    Some(format!("https://icons.duckduckgo.com/ip3/{host}.ico"))
+}
+
 /// The tags a row shows and how many more there are.
 #[must_use]
 pub fn row_tags(tags: &[String]) -> (&[String], usize) {
@@ -191,6 +212,46 @@ pub fn notes_markdown(entry: &Entry) -> &str {
         NO_NOTES
     } else {
         &entry.notes_markdown
+    }
+}
+
+/// The notes Markdown split around the description quote, which the pane draws itself with the
+/// red bar of DESIGN.md (`TextView` draws every quote bar in the border colour).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NotesParts<'a> {
+    /// What precedes the quote: the thumbnail, a command's code block.
+    pub before: &'a str,
+    /// The description, when the Markdown carries its quote.
+    pub description: Option<&'a str>,
+    /// The rest: notes, links, source.
+    pub after: &'a str,
+}
+
+/// Finds the quote `kb_domain::markdown` writes for `description` (each line prefixed `> `);
+/// without it, the Markdown stays whole in `after` and keeps its own quote.
+#[must_use]
+pub fn split_description<'a>(markdown: &'a str, description: Option<&'a str>) -> NotesParts<'a> {
+    let whole = NotesParts {
+        before: "",
+        description: None,
+        after: markdown,
+    };
+    let Some(description) = description.map(str::trim).filter(|d| !d.is_empty()) else {
+        return whole;
+    };
+    let quote = description.lines().fold(String::new(), |mut quote, line| {
+        quote.push_str("> ");
+        quote.push_str(line);
+        quote.push('\n');
+        quote
+    });
+    match markdown.find(&quote) {
+        Some(at) => NotesParts {
+            before: &markdown[..at],
+            description: Some(description),
+            after: &markdown[at + quote.len()..],
+        },
+        None => whole,
     }
 }
 
@@ -252,12 +313,12 @@ mod tests {
     #[test]
     fn matches_the_raycast_primary_action_matrix() {
         let cases = [
-            ("bookmarks", PrimaryKind::OpenInBrowser, "Open in browser"),
-            ("commands", PrimaryKind::Copy, "Copy command snippet"),
-            ("cheats", PrimaryKind::Copy, "Copy cheat sheet"),
-            ("notes", PrimaryKind::Copy, "Copy notes"),
-            ("tasks", PrimaryKind::Copy, "Copy task"),
-            ("snippets", PrimaryKind::Copy, "Copy primary content"),
+            ("bookmarks", PrimaryKind::OpenInBrowser, "Open in Browser"),
+            ("commands", PrimaryKind::Copy, "Copy Command Snippet"),
+            ("cheats", PrimaryKind::Copy, "Copy Cheat Sheet"),
+            ("notes", PrimaryKind::Copy, "Copy Notes"),
+            ("tasks", PrimaryKind::Copy, "Copy Task"),
+            ("snippets", PrimaryKind::Copy, "Copy Primary Content"),
         ];
         for (entry_type, kind, title) in cases {
             let action = primary_action(&entry(entry_type, "key", "title: t\n"));
@@ -320,31 +381,84 @@ mod tests {
     }
 
     #[test]
-    fn gives_each_type_its_badge() {
+    fn splits_the_notes_around_the_description_quote() {
+        let bookmark = entry(
+            "bookmarks",
+            "https://youtu.be/aqz-KE-bpKQ",
+            "desc: A talk\nnotes: Watch it.\n",
+        );
+        let parts = split_description(&bookmark.notes_markdown, bookmark.description.as_deref());
+        assert!(parts.before.starts_with("![]("), "{}", parts.before);
+        assert_eq!(parts.description, Some("A talk"));
+        assert!(parts.after.contains("Watch it."), "{}", parts.after);
+        assert!(!parts.after.contains("> A talk"));
+    }
+
+    #[test]
+    fn keeps_the_notes_whole_without_a_description() {
+        let note = entry("notes", "n", "notes: Hi\n");
+        let parts = split_description(&note.notes_markdown, None);
+        assert_eq!((parts.before, parts.description), ("", None));
+        assert_eq!(parts.after, note.notes_markdown);
+    }
+
+    #[test]
+    fn asks_duckduckgo_for_a_bookmark_favicon() {
+        assert_eq!(
+            favicon_url("https://www.youtube.com/watch?v=x").as_deref(),
+            Some("https://icons.duckduckgo.com/ip3/www.youtube.com.ico")
+        );
+        assert_eq!(favicon_url("not a url"), None);
+        assert_eq!(favicon_url("https://"), None);
+    }
+
+    #[test]
+    fn hashes_tags_as_the_raycast_extension_does() {
+        let fixture: std::collections::BTreeMap<String, String> =
+            serde_json::from_str(include_str!("../tests/fixtures/tag-accents.json")).unwrap();
+        for (tag, accent) in fixture {
+            assert_eq!(format!("{:?}", tag_hue(&tag)).to_lowercase(), accent, "#{tag}");
+        }
+        assert_eq!(tag_hue("Git"), tag_hue("git"));
+    }
+
+    #[test]
+    fn tints_each_type_as_raycast() {
+        assert_eq!(
+            type_badge("bookmarks"),
+            TypeBadge {
+                icon: IconName::Globe,
+                hue: Hue::Purple
+            }
+        );
         assert_eq!(
             type_badge("Commands"),
             TypeBadge {
                 icon: IconName::SquareTerminal,
-                glyph: Some(">"),
                 hue: Hue::Green
             }
         );
         assert_eq!(
-            (type_badge("cheats").icon, type_badge("cheats").hue),
-            (IconName::FileText, Hue::Blue)
+            type_badge("cheats"),
+            TypeBadge {
+                icon: IconName::FileText,
+                hue: Hue::Blue
+            }
         );
-        assert_eq!(type_badge("bookmarks").hue, Hue::Cyan);
-        assert_eq!(type_badge("snippets").hue, Hue::Neutral);
-    }
-
-    #[test]
-    fn hashes_tags_to_a_stable_hue_whatever_their_case() {
-        assert_eq!(tag_hue("Git"), tag_hue("git"));
-        let hues: std::collections::HashSet<Hue> = ["git", "aws", "kube", "rust", "ai", "docker", "nu", "react"]
-            .map(tag_hue)
-            .into_iter()
-            .collect();
-        assert!(hues.len() > 2, "tags spread over several hues");
-        assert!(!hues.contains(&Hue::Neutral));
+        assert_eq!(
+            type_badge("notes"),
+            TypeBadge {
+                icon: IconName::NotebookText,
+                hue: Hue::Orange
+            }
+        );
+        assert_eq!(
+            type_badge("tasks"),
+            TypeBadge {
+                icon: IconName::CircleCheck,
+                hue: Hue::Magenta
+            }
+        );
+        assert_eq!(type_badge("snippets").hue, tag_hue("snippet"));
     }
 }

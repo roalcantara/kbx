@@ -1,0 +1,20 @@
+{
+  "dark": {
+    "blue": { "accent": "#70B9F4", "background": "#32445F", "text": "#70B9F4" },
+    "green": { "accent": "#30E1A5", "background": "#264C4F", "text": "#30E1A5" },
+    "orange": { "accent": "#F5A95D", "background": "#4D4141", "text": "#F5A95D" },
+    "purple": { "accent": "#A362F2", "background": "#3D335F", "text": "#B595F8" },
+    "magenta": { "accent": "#E927AB", "background": "#4B2751", "text": "#DA7DD5" },
+    "yellow": { "accent": "#D9E753", "background": "#474D3F", "text": "#D9E753" },
+    "red": { "accent": "#E04F50", "background": "#492F3E", "text": "#D78B9F" }
+  },
+  "light": {
+    "blue": { "accent": "#2563EB", "background": "#D3E0FB", "text": "#225AD5" },
+    "green": { "accent": "#16A34A", "background": "#D0EDDB", "text": "#127537" },
+    "orange": { "accent": "#EA580C", "background": "#FBDECE", "text": "#A7410B" },
+    "purple": { "accent": "#9333EA", "background": "#E9D6FB", "text": "#852FD4" },
+    "magenta": { "accent": "#DB2777", "background": "#F8D4E4", "text": "#B12161" },
+    "yellow": { "accent": "#CA8A04", "background": "#F4E8CD", "text": "#875D06" },
+    "red": { "accent": "#DC2626", "background": "#F8D4D4", "text": "#B22020" }
+  }
+}

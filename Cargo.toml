@@ -71,3 +71,4 @@ debug = false
 # future Rust rejects. Its one-line fix, until GPUI Kit moves off it (crates/third-party/README.md).
 [patch.crates-io]
 block = { path = "crates/third-party/block" }
+gpui-pre-macos = { path = "crates/third-party/gpui-pre-macos" }

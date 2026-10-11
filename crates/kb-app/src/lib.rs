@@ -6,19 +6,25 @@
 
 #![warn(missing_docs)]
 
+mod accents;
 pub mod cli;
 pub mod config;
 pub mod entry_list;
 mod filter;
 #[cfg(test)]
 mod fixture;
+mod http;
+pub mod keys;
+mod metadata;
 mod notes;
 pub mod palette;
 mod panel;
 mod presentation;
 pub mod search_view;
 mod sync_view;
+mod tag_images;
 mod trace;
+pub mod window_size;
 
 use gpui_kit::component::{Theme, ThemeRegistry};
 
@@ -52,6 +58,8 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
 pub fn run(config: Config, notices: Vec<String>, trace: bool) {
     gpui_kit::application()
         .with_assets(gpui_kit::assets::Assets)
+        // Remote images (favicons, thumbnails) need a client; GPUI gives native apps none.
+        .with_http_client(std::sync::Arc::new(http::CurlClient))
         .run(move |cx| {
             gpui_kit::init(cx);
             cx.set_app_identity(APP_ID, "kb");
