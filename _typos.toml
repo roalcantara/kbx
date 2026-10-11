@@ -13,3 +13,8 @@ extend-exclude = [
 [default.extend-words]
 # A status of the todo CLI (TODO.md): French for "in progress".
 cours = "cours"
+# Tag names a naive "drop the s" once produced; docs/doctrine/tag-conventions.doctrine.md quotes them as examples.
+maco = "maco"
+kubernete = "kubernete"
+postgre = "postgre"
+serverles = "serverles"
