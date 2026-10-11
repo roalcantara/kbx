@@ -215,6 +215,46 @@ pub fn notes_markdown(entry: &Entry) -> &str {
     }
 }
 
+/// The notes Markdown split around the description quote, which the pane draws itself with the
+/// red bar of DESIGN.md (`TextView` draws every quote bar in the border colour).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NotesParts<'a> {
+    /// What precedes the quote: the thumbnail, a command's code block.
+    pub before: &'a str,
+    /// The description, when the Markdown carries its quote.
+    pub description: Option<&'a str>,
+    /// The rest: notes, links, source.
+    pub after: &'a str,
+}
+
+/// Finds the quote `kb_domain::markdown` writes for `description` (each line prefixed `> `);
+/// without it, the Markdown stays whole in `after` and keeps its own quote.
+#[must_use]
+pub fn split_description<'a>(markdown: &'a str, description: Option<&'a str>) -> NotesParts<'a> {
+    let whole = NotesParts {
+        before: "",
+        description: None,
+        after: markdown,
+    };
+    let Some(description) = description.map(str::trim).filter(|d| !d.is_empty()) else {
+        return whole;
+    };
+    let quote = description.lines().fold(String::new(), |mut quote, line| {
+        quote.push_str("> ");
+        quote.push_str(line);
+        quote.push('\n');
+        quote
+    });
+    match markdown.find(&quote) {
+        Some(at) => NotesParts {
+            before: &markdown[..at],
+            description: Some(description),
+            after: &markdown[at + quote.len()..],
+        },
+        None => whole,
+    }
+}
+
 /// The metadata pane's rows, in the Raycast order: target, type, workflow, description, tags,
 /// links, source.
 #[must_use]
@@ -338,6 +378,28 @@ mod tests {
             metadata(&entry("bookmarks", "https://b.example", "title: B\n"))[0],
             ("URL", "https://b.example".into())
         );
+    }
+
+    #[test]
+    fn splits_the_notes_around_the_description_quote() {
+        let bookmark = entry(
+            "bookmarks",
+            "https://youtu.be/aqz-KE-bpKQ",
+            "desc: A talk\nnotes: Watch it.\n",
+        );
+        let parts = split_description(&bookmark.notes_markdown, bookmark.description.as_deref());
+        assert!(parts.before.starts_with("![]("), "{}", parts.before);
+        assert_eq!(parts.description, Some("A talk"));
+        assert!(parts.after.contains("Watch it."), "{}", parts.after);
+        assert!(!parts.after.contains("> A talk"));
+    }
+
+    #[test]
+    fn keeps_the_notes_whole_without_a_description() {
+        let note = entry("notes", "n", "notes: Hi\n");
+        let parts = split_description(&note.notes_markdown, None);
+        assert_eq!((parts.before, parts.description), ("", None));
+        assert_eq!(parts.after, note.notes_markdown);
     }
 
     #[test]

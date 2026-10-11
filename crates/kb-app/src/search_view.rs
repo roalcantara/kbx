@@ -10,12 +10,11 @@ use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandSt
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::list::{List, ListEvent, ListState};
-use gpui_kit::component::resizable::{h_resizable, resizable_panel};
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, Theme, WindowExt as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
-    IntoElement, Keystroke, ParentElement, Render, Styled as _, Subscription, Window, div, rems,
+    IntoElement, Keystroke, ParentElement, Render, Styled as _, Subscription, Window, div, relative,
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::{FilterState, entry_types, tags};
@@ -30,9 +29,9 @@ use crate::keys::{
     Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenFilter, OpenPreferences, OpenSourceFile,
     Quit, Rebuild, RunPrimary, ShowDetails, ToggleDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::notes::notes_pane;
+use crate::notes::{PaneLayout, notes_pane};
 use crate::palette::{PaletteCommand, entry_palette};
-use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key, type_label};
+use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
@@ -495,30 +494,37 @@ impl SearchView {
 }
 impl SearchView {
     /// The screen: the list and its split pane, the detail screen, or the rebuild.
-    fn render_content(&self, selected: Option<&Entry>, window: &Window, cx: &mut Context<Self>) -> AnyElement {
+    fn render_content(&self, selected: Option<&Entry>, cx: &mut Context<Self>) -> AnyElement {
         match &self.screen {
             Screen::Rebuild(sync) => sync.clone().into_any_element(),
-            Screen::Detail => match selected {
-                Some(entry) => v_flex()
+            // The notes alone, without a title block: the footer names the entry (UI-12).
+            Screen::Detail => selected.map_or_else(
+                || div().into_any_element(),
+                |entry| notes_pane(entry, self.show_metadata, PaneLayout::Detail, cx),
+            ),
+            // Raycast's split: the list a third of the width, the pane the rest (DESIGN.md, D3).
+            Screen::Search => match selected.filter(|_| self.show_details) {
+                Some(entry) => h_flex()
                     .size_full()
-                    .child(div().px_3().pt_3().text_lg().child(entry.title.clone()))
                     .child(
                         div()
-                            .px_3()
-                            .text_color(cx.theme().muted_foreground)
-                            .child(type_label(&entry.entry_type)),
+                            .h_full()
+                            .w(relative(1. / 3.))
+                            .flex_none()
+                            .border_r_1()
+                            .border_color(cx.theme().border)
+                            .child(List::new(&self.list)),
                     )
-                    .child(notes_pane(entry, self.show_metadata, cx))
+                    .child(
+                        div()
+                            .h_full()
+                            .flex_1()
+                            .min_w_0()
+                            .child(notes_pane(entry, true, PaneLayout::Split, cx)),
+                    )
                     .into_any_element(),
-                None => div().into_any_element(),
+                None => List::new(&self.list).into_any_element(),
             },
-            Screen::Search => h_resizable("search-split")
-                // The panel API takes pixels; derive them from the rem scale so the split zooms.
-                .child(resizable_panel().size(rems(LIST_WIDTH_REMS).to_pixels(window.rem_size())).child(List::new(&self.list)))
-                .when_some(selected.filter(|_| self.show_details), |split, entry| {
-                    split.child(resizable_panel().child(notes_pane(entry, true, cx)))
-                })
-                .into_any_element(),
         }
     }
 
@@ -589,9 +595,6 @@ impl SearchView {
     }
 }
 
-/// The list's starting width in the split, in rems.
-const LIST_WIDTH_REMS: f32 = 20.;
-
 impl Render for SearchView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let selected = self.list.read(cx).delegate().selected_entry().cloned();
@@ -625,7 +628,7 @@ impl Render for SearchView {
                     .flex_1()
                     .min_h_0()
                     .w_full()
-                    .child(self.render_content(selected.as_ref(), window, cx)),
+                    .child(self.render_content(selected.as_ref(), cx)),
             )
             .child(self.render_footer(selected.as_ref(), window, cx))
     }

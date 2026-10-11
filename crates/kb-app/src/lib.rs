@@ -15,6 +15,7 @@ mod filter;
 mod fixture;
 mod http;
 pub mod keys;
+mod metadata;
 mod notes;
 pub mod palette;
 mod panel;
