@@ -512,6 +512,11 @@ impl SearchView {
 impl Render for SearchView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let selected = self.list.read(cx).delegate().selected_entry().cloned();
+        // Rows show their titles alone while the split pane is open beside them.
+        let compact = matches!(self.screen, Screen::Search) && self.show_details && selected.is_some();
+        if self.list.read(cx).delegate().is_compact() != compact {
+            self.list.update(cx, |list, _| list.delegate_mut().set_compact(compact));
+        }
         let context = if self.is_showing_detail() {
             format!("{CONTEXT} {DETAIL_CONTEXT}")
         } else {

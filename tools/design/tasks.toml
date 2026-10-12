@@ -265,7 +265,7 @@ run = [
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { AA, ACCENTS, LIGHT_ACCENTS, contrast, mix, pill, tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { AA, ACCENTS, LIGHT_ACCENTS, contrast, description, mix, pill, tagAccent, tint } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const root = process.cwd()
 const here = resolve(root, 'tools/design')
@@ -288,7 +288,8 @@ const colors = {
   'list.head.background': r.window,
   'table.background': r.window,
   'title_bar.background': r.header,
-  'list.active.background': r.selection,
+  // A translucent highlight, as GPUI Kit draws it (see CAPPED below): it shows as `selection` over the window.
+  'list.active.background': tint(r.selection, r.window, 0.2),
   'accent.background': r.selection,
   'secondary.hover.background': r.selection,
   'secondary.active.background': r.selection,
@@ -307,9 +308,10 @@ const colors = {
   'popover.foreground': r.text,
   'accent.foreground': r.text,
   'secondary.foreground': r.text,
-  'muted.foreground': r.textMuted,
+  // Descriptions and placeholders: dimmer than textMuted, so they read apart from titles (color.ts, description).
+  'muted.foreground': description(r),
   'description_list_label.foreground': r.textMuted,
-  'selection.background': mix(r.blue, r.window, 0.35),
+  'selection.background': `${r.blue}4D`, // blue at 30%
   ring: r.blue,
   'link.foreground': r.blue
 }
@@ -326,6 +328,16 @@ for (
 ) {
   colors[`base.${hue}`] = r[role]
   colors[`base.${hue}.light`] = pill(r, role).background
+}
+
+// GPUI Kit caps these keys' opacity (theme/schema.rs, clamp_alpha): they are highlights laid over content, so its
+// themes give them an accent at low opacity. An opaque colour here would be drawn at the cap, nearly invisible.
+const CAPPED = { 'list.active.background': 0.2, 'table.active.background': 0.2, 'selection.background': 0.3 }
+for (const [key, cap] of Object.entries(CAPPED)) {
+  const value = colors[key]
+  if (value === undefined) continue
+  const alpha = value.length === 9 ? Number.parseInt(value.slice(7), 16) / 255 : 1
+  if (alpha > cap + 0.005) throw new Error(`${key} is ${value}: GPUI Kit draws it at most ${cap} opaque, so give it that opacity`)
 }
 
 const defaults = JSON.parse(readFileSync(defaultThemePath(), 'utf8')).themes.find((t) => t.mode === 'dark').colors
@@ -442,7 +454,7 @@ run = '''
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { MAX_TAGS, mix, pill, tagAccent, typeAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { MAX_TAGS, description, mix, pill, tagAccent, typeAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const root = process.cwd()
 const read = (path) => readFileSync(resolve(root, path), 'utf8')
@@ -579,6 +591,7 @@ const splitScene = (roles) => {
 const vars = (roles) =>
   Object.entries({
     ...Object.fromEntries(roleOrder.map((r) => [r, roles[r]])),
+    description: description(roles),
     popupBorder: mix(roles.divider, roles.raised, 0.58),
     zebra: mix(roles.text, roles.raised, 0.03)
   })
@@ -660,8 +673,8 @@ const page = `<!doctype html>
 }; border-radius: ${pt(resultRow.selectionRadius)}; }
     .row.sel { background: var(--selection); }
     .icon { width: 16px; height: 16px; border-radius: 4px; justify-self: center; }
-    .text { min-width: 0; } .title { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sub { color: var(--textMuted); font-size: 12px; margin-top: ${
+    .text { min-width: 0; } .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { color: var(--description); font-size: 12px; margin-top: ${
   pt(resultRow.titleToDescriptionGap)
 }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tags { display: flex; gap: ${pt(tag.gap)}; align-items: center; }
@@ -675,7 +688,7 @@ const page = `<!doctype html>
   pt(footer.pillVerticalPadding / 2)
 } ${
   pt(footer.pillHorizontalPadding)
-}; border-radius: 999px; background: var(--raised); border: 1px solid var(--popupBorder); color: var(--textMuted); font-size: 12px; }
+}; color: var(--textMuted); font-size: 12px; }
     kbd { font: 11px/1 inherit; min-width: 14px; text-align: center; padding: 3px 4px; border-radius: 5px; background: var(--selection); color: var(--text); }
     .split { display: grid; grid-template-columns: ${splitPane.listFraction}fr ${splitPane.detailFraction}fr; min-height: 300px; }
     .split .list-body { border-right: 1px solid var(--divider); }

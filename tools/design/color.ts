@@ -18,6 +18,14 @@ export const toHex = (c: number[]): string =>
 export const mix = (fg: string, bg: string, a: number): string =>
   toHex(rgb(fg).map((v, i) => v * a + rgb(bg)[i]! * (1 - a)))
 
+/** The colour that, drawn at `alpha` over `under`, shows as `target`, as `#RRGGBBAA`: for the theme keys GPUI Kit draws
+ * as translucent highlights (it caps their opacity). Throws when no colour at that opacity reaches the target. */
+export const tint = (target: string, under: string, alpha: number): string => {
+  const channels = rgb(target).map((v, i) => rgb(under)[i]! + (v - rgb(under)[i]!) / alpha)
+  if (channels.some((v) => v < -0.5 || v > 255.5)) throw new Error(`No tint at ${alpha} shows ${target} over ${under}`)
+  return `${toHex(channels)}${Math.round(alpha * 255).toString(16).padStart(2, '0').toUpperCase()}`
+}
+
 export const lin = (v: number): number => {
   const c = v / 255
   return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
@@ -53,6 +61,18 @@ export const pill = (roles: Roles, accent: string): { background: string; text: 
     text = mix(roles.text!, roles[accent]!, lift)
   }
   return { background, text }
+}
+
+/** The description's text (list rows, placeholders: GPUI Kit's `muted.foreground`): textMuted dimmed toward textFaint
+ * in 10% steps, as far as WCAG AA holds on the window, the selection and popovers, so it reads apart from titles. */
+export const description = (roles: Roles): string => {
+  let shade = roles.textMuted!
+  for (let step = 0.1; step <= 1.0001; step += 0.1) {
+    const next = mix(roles.textFaint!, roles.textMuted!, step)
+    if (['window', 'selection', 'raised'].some((s) => contrast(next, roles[s]!) < AA)) break
+    shade = next
+  }
+  return shade
 }
 
 // Light accents (Tailwind 600) over a white window, for GPUI Kit's default light theme: kb is designed for dark.

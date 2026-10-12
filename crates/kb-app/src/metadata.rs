@@ -10,6 +10,7 @@ use gpui_kit::{App, IntoElement, ParentElement as _, SharedString, Styled as _, 
 use kb_domain::entry::Entry;
 
 use crate::accents::accent;
+use crate::entry_list::TAG_RADIUS;
 use crate::presentation::{Hue, metadata, tag_hue, type_badge};
 
 /// A value in the card.
@@ -72,7 +73,7 @@ pub fn metadata_card(entry: &Entry, cx: &App) -> impl IntoElement {
                 .px(px(12.))
                 .py(px(6.))
                 // Alternate rows a shade lighter, as Raycast's card.
-                .when(ix % 2 == 1, |row| row.bg(theme.muted.opacity(0.5)))
+                .when(ix % 2 == 1, |row| row.bg(theme.foreground.opacity(0.03)))
                 .child(div().flex_none().text_color(theme.muted_foreground).child(row.label))
                 .child(
                     h_flex()
@@ -98,7 +99,7 @@ fn render_value(label: &'static str, value: MetaValue, cx: &App) -> gpui_kit::An
                 let accent = accent(hue, cx);
                 Tag::custom(accent.pill, accent.pill_text, accent.pill)
                     .xsmall()
-                    .rounded(px(10.))
+                    .rounded(px(TAG_RADIUS))
                     .child(text)
             }))
             .into_any_element(),

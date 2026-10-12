@@ -301,6 +301,17 @@ fn opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d(cx: &mut TestAp
 }
 
 #[gpui_kit::test]
+fn shows_titles_alone_beside_the_split_pane(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    let compact = |cx: &mut TestAppContext| cx.read(|cx| view.read(cx).list().read(cx).delegate().is_compact());
+    assert!(!compact(cx));
+    press(cx, window, "cmd-d");
+    assert!(compact(cx));
+    press(cx, window, "cmd-d");
+    assert!(!compact(cx));
+}
+
+#[gpui_kit::test]
 fn shows_details_with_right_at_the_end_of_the_query_and_hides_them_with_left(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     press(cx, window, "right");

@@ -7,11 +7,11 @@ use gpui_kit::component::empty::{Empty, EmptyDescription, EmptyHeader, EmptyTitl
 use gpui_kit::component::list::{ListDelegate, ListItem, ListState};
 use gpui_kit::component::tag::Tag;
 use gpui_kit::component::tooltip::Tooltip;
-use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex};
+use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, App, Context, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
-    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, relative, svg,
+    AnyElement, App, Context, FontWeight, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
+    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, svg,
 };
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
@@ -22,6 +22,9 @@ use crate::accents::accent;
 use crate::presentation::{TypeKey, favicon_url, row_label, row_tags, tag_hue, type_badge, type_key};
 use crate::tag_images::TagImages;
 use crate::trace;
+
+/// A tag pill's corner radius: squarer than a pill, as Raycast's (tools/design/layout.json, tag).
+pub const TAG_RADIUS: f32 = 4.;
 
 /// Keystrokes settle this long before a query runs, as in the Raycast command.
 pub const DEBOUNCE: Duration = Duration::from_millis(150);
@@ -37,6 +40,7 @@ pub struct EntryList {
     selected: Option<IndexPath>,
     secondary_confirm: bool,
     tag_images: TagImages,
+    compact: bool,
 }
 
 impl EntryList {
@@ -52,6 +56,7 @@ impl EntryList {
             selected: None,
             secondary_confirm: false,
             tag_images: TagImages::default(),
+            compact: false,
         };
         list.refresh();
         list
@@ -62,6 +67,17 @@ impl EntryList {
     pub fn with_tag_images(mut self, tag_images: TagImages) -> Self {
         self.tag_images = tag_images;
         self
+    }
+
+    /// Whether rows show their titles alone, as beside the split pane.
+    #[must_use]
+    pub fn is_compact(&self) -> bool {
+        self.compact
+    }
+
+    /// Shows titles alone (`true`, beside the split pane) or with descriptions, tags and links.
+    pub fn set_compact(&mut self, compact: bool) {
+        self.compact = compact;
     }
 
     /// Whether an index is open.
@@ -171,27 +187,32 @@ impl EntryList {
                                 None => column.child(type_icon()),
                             }),
                     )
+                    // The title over its description, smaller and dimmer (DESIGN.md, List row); the title
+                    // alone beside the split pane.
                     .child(
-                        div()
-                            .flex_none()
-                            .max_w(relative(0.6))
-                            .truncate()
-                            .text_color(cx.theme().foreground)
-                            .child(entry.title.clone()),
-                    )
-                    .child(
-                        div()
+                        v_flex()
                             .flex_1()
                             .min_w_0()
-                            .truncate()
-                            .text_color(muted)
-                            .when_some(entry.description.clone(), ParentElement::child),
+                            .gap(px(2.))
+                            .child(
+                                div()
+                                    .truncate()
+                                    .text_sm()
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .text_color(cx.theme().foreground)
+                                    .child(entry.title.clone()),
+                            )
+                            .when(!self.compact, |text| {
+                                text.when_some(entry.description.clone(), |text, description| {
+                                    text.child(div().truncate().text_xs().text_color(muted).child(description))
+                                })
+                            }),
                     )
-                    .children(tags.iter().map(|tag| self.render_tag(tag, cx)))
-                    .when(more > 0, |row| {
+                    .when(!self.compact, |row| row.children(tags.iter().map(|tag| self.render_tag(tag, cx))))
+                    .when(!self.compact && more > 0, |row| {
                         row.child(div().text_color(muted).text_xs().child(format!("+{more}")))
                     })
-                    .when(!entry.links.is_empty(), |row| {
+                    .when(!self.compact && !entry.links.is_empty(), |row| {
                         row.child(
                             h_flex()
                                 .gap_1()
@@ -212,7 +233,7 @@ impl EntryList {
         let accent = accent(tag_hue(tag), cx);
         let pill = Tag::custom(accent.pill, accent.pill_text, accent.pill)
             .xsmall()
-            .rounded(px(10.));
+            .rounded(px(TAG_RADIUS));
         let Some(path) = self.tag_images.get(tag) else {
             return pill.child(format!("#{tag}")).into_any_element();
         };

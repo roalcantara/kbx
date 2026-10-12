@@ -73,20 +73,9 @@ pub fn keycap_row(caps: Vec<String>, cx: &App) -> impl IntoElement {
     }))
 }
 
-/// A floating pill.
-fn pill(cx: &App) -> gpui_kit::Div {
-    let theme = cx.theme();
-    h_flex()
-        .h(px(30.))
-        .items_center()
-        .gap(px(8.))
-        .px(px(12.))
-        .rounded_full()
-        .bg(theme.popover)
-        .border_1()
-        .border_color(theme.border)
-        .shadow_sm()
-        .text_xs()
+/// A footer item: its text and keycaps, with neither fill nor line around them.
+fn pill(_: &App) -> gpui_kit::Div {
+    h_flex().h(px(30.)).items_center().gap(px(8.)).px(px(12.)).text_xs()
 }
 
 impl SearchView {

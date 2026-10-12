@@ -124,6 +124,8 @@ impl SearchView {
         // keyboard away from its search field.
         let focus = search.read(cx).focus_handle(cx);
         Popover::new(spec.id)
+            // Rounder than GPUI Kit's default, as the prototype (tools/design/layout.json, popover).
+            .rounded(px(16.))
             .anchor(spec.anchor)
             .open(open)
             .track_focus(&focus)
@@ -205,14 +207,20 @@ fn actions_content(this: &SearchView, view: &WeakEntity<SearchView>, window: &mu
                 _ => palette_row.keys.iter().map(|key| (*key).to_owned()).collect(),
             };
             let drills_in = matches!(palette_row.command, PaletteCommand::OpenPage(_));
-            let (label, icon) = (palette_row.label.clone(), palette_row.icon);
+            let label = palette_row.label.clone();
             items.push(CommandItem::new().label(palette_row.label).child(move |_, cx| {
                 let muted = cx.theme().muted_foreground;
-                row(icon, muted, &label).child(if drills_in {
-                    div().text_color(muted).child("›").into_any_element()
-                } else {
-                    keycap_row(keys.clone(), cx).into_any_element()
-                })
+                // Label and keys alone, without an icon, as the prototype.
+                h_flex()
+                    .w_full()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(div().flex_1().min_w_0().truncate().child(label.clone()))
+                    .child(if drills_in {
+                        div().text_color(muted).child("›").into_any_element()
+                    } else {
+                        keycap_row(keys.clone(), cx).into_any_element()
+                    })
             }));
             row_commands.push(palette_row.command);
         }
