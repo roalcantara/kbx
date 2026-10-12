@@ -259,12 +259,13 @@ if (drift.length) {
 ["design:theme"]
 description = "Write the app's GPUI Kit dark theme (kb.json), its accents and the tag-accent fixture from the chosen palette, or the one named"
 usage = 'arg "[palette]" help="a palette id of palettes.json; the chosen one by default"'
-run = ['''
+run = [
+  '''
 #!/usr/bin/env bun
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { ACCENTS, LIGHT_ACCENTS, mix, pill, tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { AA, ACCENTS, LIGHT_ACCENTS, contrast, mix, pill, tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const root = process.cwd()
 const here = resolve(root, 'tools/design')
@@ -275,6 +276,9 @@ const palettes = JSON.parse(readFileSync(resolve(here, 'palettes.json'), 'utf8')
 const palette = palettes.find((p) => (id ? p.id === id : p.chosen))
 if (!palette) throw new Error(id ? `No palette ${id} in palettes.json.` : 'No palette in palettes.json is chosen.')
 const r = palette.roles
+
+// The shade code sits on (code blocks, syntax): a step below the window.
+const code = mix('#000000', r.window, 0.3)
 
 // Role → GPUI Kit key (DESIGN.md, Color Palette & Roles). GPUI Kit has no orange or purple: they wait for Plan 7.
 const colors = {
@@ -290,7 +294,8 @@ const colors = {
   'secondary.active.background': r.selection,
   'popover.background': r.raised,
   'secondary.background': r.raised,
-  'muted.background': r.raised,
+  // Code blocks' background in the notes: a shade below the window, so they stand apart from the text.
+  'muted.background': code,
   'description_list_label.background': r.raised,
   border: r.divider,
   'input.border': r.divider,
@@ -327,10 +332,58 @@ const defaults = JSON.parse(readFileSync(defaultThemePath(), 'utf8')).themes.fin
 const unknown = Object.keys(colors).filter((k) => !(k in defaults))
 if (unknown.length) throw new Error(`Not GPUI Kit dark theme keys: ${unknown.join(', ')}`)
 
+// Code blocks and syntax in the notes (GPUI Kit's `highlight`): without it the light theme's syntax colours stay, dark
+// on dark. Each colour is the palette's, lifted toward `text` as a pill's text is,
+// only as far as AA needs on that shade.
+const readable = (accent) => {
+  let c = accent
+  for (let lift = 0.05; contrast(c, code) < AA && lift <= 1; lift += 0.05) c = mix(r.text, accent, lift)
+  return c
+}
+const color = (role) => ({ color: readable(r[role]) })
+const highlight = {
+  'editor.foreground': r.text,
+  'editor.background': code,
+  'editor.active_line.background': r.selection,
+  'editor.line_number': readable(r.textFaint),
+  'editor.active_line_number': r.textMuted,
+  syntax: {
+    attribute: color('blue'),
+    boolean: color('orange'),
+    comment: color('textFaint'),
+    'comment.doc': color('textFaint'),
+    constant: color('orange'),
+    constructor: color('purple'),
+    embedded: color('text'),
+    emphasis: { font_style: 'italic' },
+    'emphasis.strong': { font_weight: 700 },
+    function: color('blue'),
+    keyword: color('purple'),
+    link_text: { ...color('blue'), font_style: 'normal' },
+    link_uri: { ...color('blue'), font_style: 'italic' },
+    number: color('orange'),
+    operator: color('textMuted'),
+    property: color('text'),
+    punctuation: color('textMuted'),
+    string: color('green'),
+    'string.escape': color('yellow'),
+    'string.regex': color('yellow'),
+    'string.special': color('green'),
+    'string.special.symbol': color('green'),
+    tag: color('red'),
+    'text.literal': color('green'),
+    'text.code.span': color('green'),
+    title: { ...color('text'), font_weight: 600 },
+    type: color('yellow'),
+    variable: color('text'),
+    'variable.special': color('red')
+  }
+}
+
 const theme = {
   name: 'kb',
   author: 'kb',
-  themes: [{ name: 'kb Dark', mode: 'dark', colors: Object.fromEntries(Object.entries(colors).sort()) }]
+  themes: [{ name: 'kb Dark', mode: 'dark', colors: Object.fromEntries(Object.entries(colors).sort()), highlight }]
 }
 writeFileSync(out, `${JSON.stringify(theme, null, 2)}\n`)
 console.log(`wrote ${out.replace(`${root}/`, '')} from ${palette.id}`)
@@ -378,7 +431,9 @@ function defaultThemePath() {
   if (!index) throw new Error(`gpui-component ${version} is not in ${registry}: run cargo fetch.`)
   return resolve(registry, index, `gpui-component-${version}`, 'src/theme/default-theme.json')
 }
-''', "dprint fmt crates/kb-app/assets/themes/*.json crates/kb-app/tests/fixtures/tag-accents.json"]
+''',
+  "dprint fmt crates/kb-app/assets/themes/*.json crates/kb-app/tests/fixtures/tag-accents.json",
+]
 
 ["design:render"]
 description = "Render tmp/design/palettes.html: every palette as kb's list, popovers and split pane, from the sample corpus's goldens"

@@ -97,7 +97,8 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
 - **Split pane** (D3): the list takes about ⅓ of the width, the detail pane ⅔; one `divider` line between them.
 - **Metadata card:** rows with the label left (`textMuted`) and the value right-aligned (`text`); alternate rows a
   shade lighter; Type and Tags as pills; Source with a file icon; URLs with an open-link ↗ icon.
-- **Notes:** the description as a quote with a `red` bar; bookmark thumbnails above the metadata (split) or first
+- **Notes:** code blocks on a shade below the window, their syntax in the palette's accents (each lifted to AA on
+  that shade, as pill text is); the description as a quote with a `red` bar; bookmark thumbnails above the metadata (split) or first
   (detail).
 - **Detail screen:** the header shows only the back chevron; content starts with the notes, without a title block.
 - **Footer:** two floating pills over the panel's bottom edge: the entry on the left; the primary action and Actions on
