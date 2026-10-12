@@ -223,7 +223,7 @@
   - **Tags**: design, plan8
 
 - [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
-  - **Comments**: 3kaC,QQca,303s
+  - **Comments**: 3kaC,QQca,303s,1xKt
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -487,5 +487,8 @@
   - **Task**: OKAo
 
 - 303s **-** 2026-10-12, v6: the popover's search placeholder reads Search. Simplifications closed.
+  - **Task**: OKAo
+
+- 1xKt **-** 2026-10-12, v7 labels (one word each, Raycast's words where it has one): Details ↵, Copy ⌘↵ (Open on bookmarks), Preview ⌘D (the split pane), Resize ⇧⌘F, Edit ⌘O (opens the entry's YAML in the editor), More… ›; ADMINISTRATION: Refresh ⌘R (the sync; CONTEXT.md keeps 'Sync'), Configure ⇧⌘, (Raycast's 'Configure Extension'). The popover is closed.
   - **Task**: OKAo
 
