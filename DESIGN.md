@@ -91,7 +91,9 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
   rounded `selection` fill, never a full-width bar.
 - **Tag pill:** filled (no outline), `#name` in pill text on the pill fill. **Tag image** (D4): a tag with an image
   in the tag-images folder (`<tag>.svg`; `tag_images_path`, default `~/.config/kb/images`, filled by
-  `mise run images`) shows the image instead, its name in the tooltip.
+  `mise run tags:images`) shows the image in its pill instead, drawn as a mask in the pill text colour (Raycast's
+  `tintColor`), its name in the tooltip. Brands are Simple Icons logos, concepts Lucide icons, so every image has
+  the same size, weight and contrast.
 - **Split pane** (D3): the list takes about ⅓ of the width, the detail pane ⅔; one `divider` line between them.
 - **Metadata card:** rows with the label left (`textMuted`) and the value right-aligned (`text`); alternate rows a
   shade lighter; Type and Tags as pills; Source with a file icon; URLs with an open-link ↗ icon.

@@ -11,7 +11,7 @@ use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_fle
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyElement, App, Context, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
-    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, relative,
+    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, relative, svg,
 };
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
@@ -205,21 +205,29 @@ impl EntryList {
             )
     }
 
-    /// A tag: its image when the tag-images folder has one, else its filled pill.
+    /// A tag: its filled pill, holding its image when the tag-images folder has one. The image is drawn as a mask in
+    /// the pill's text colour (Raycast's `tintColor`), so every image has the pill's size and contrast whatever its
+    /// own colours and margins.
     fn render_tag(&self, tag: &str, cx: &App) -> AnyElement {
-        if let Some(path) = self.tag_images.get(tag) {
-            let name = format!("#{tag}");
-            return div()
-                .id(SharedString::from(format!("tag-{tag}")))
-                .child(img(path.to_path_buf()).size_4())
-                .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
-                .into_any_element();
-        }
         let accent = accent(tag_hue(tag), cx);
-        Tag::custom(accent.pill, accent.pill_text, accent.pill)
+        let pill = Tag::custom(accent.pill, accent.pill_text, accent.pill)
             .xsmall()
-            .rounded(px(10.))
-            .child(format!("#{tag}"))
+            .rounded(px(10.));
+        let Some(path) = self.tag_images.get(tag) else {
+            return pill.child(format!("#{tag}")).into_any_element();
+        };
+        let name = format!("#{tag}");
+        div()
+            .id(SharedString::from(format!("tag-{tag}")))
+            .child(
+                pill.child(
+                    svg()
+                        .external_path(path.to_string_lossy().into_owned())
+                        .size_3()
+                        .text_color(accent.pill_text),
+                ),
+            )
+            .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
             .into_any_element()
     }
 }
