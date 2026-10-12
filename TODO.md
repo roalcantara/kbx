@@ -200,7 +200,7 @@
   - **Created**: 2026-10-11 13:53
   - **Tags**: tags
 
-- [ ] bVkg **-** Reconcile skills.yml's tags (cheats tagged skills) with docs/skills.tags.toml, 408 differ, by hand or a tags-only merge: never regenerate over its curated descs and commands; review and commit the script in dots
+- [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
   - **Priority**: high
   - **Created**: 2026-10-11 15:37
   - **Tags**: tags
