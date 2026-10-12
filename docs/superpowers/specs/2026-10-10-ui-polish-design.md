@@ -19,7 +19,7 @@ contrast for every text role on every surface, and colour-blind separation for t
 
 **D2. Typography is more than casing.** Raycast's sizes, weights and casing are copied: the system font (SF Pro, used by
 both apps), regular-weight titles, muted subtitles, and Title Case for commands and labels. Title Case departs from the
-GPUI Kit Design Guides' sentence case; DESIGN.md and `docs/experiment/compliance.md` record it.
+GPUI Kit Design Guides' sentence case; DESIGN.md and `docs/guides/compliance.md` record it.
 
 **D3. Split pane as Raycast's:** the pane takes about two thirds of the width.
 

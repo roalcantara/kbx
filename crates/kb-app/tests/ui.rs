@@ -389,7 +389,7 @@ fn the_action_bar_opens_details_and_runs_the_primary_action(cx: &mut TestAppCont
     assert_eq!(copied.as_deref(), Some("kubectl get pods -A"));
 }
 
-// Task cost (docs/experiment/parity.md, "Tasks"): each test presses exactly the keys the matrix
+// Task cost (docs/guides/parity.md, "Tasks"): each test presses exactly the keys the matrix
 // counts for its task once the panel is shown.
 
 #[gpui_kit::test]

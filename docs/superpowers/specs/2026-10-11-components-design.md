@@ -95,8 +95,8 @@ file (kb never writes source files); the light palette (TODO QTjG); re-running t
 ## Docs
 
 - DESIGN.md: Adaptations lose the ⌘D row and gain the favicon service and the tag-images folder; §4 notes the drill-in.
-- `docs/experiment/parity.md`: A01 and S12 back to Same; S09 → / ←; any row the new keys change.
-- `docs/experiment/compliance.md`: the Title Case item checked.
+- `docs/guides/parity.md`: A01 and S12 back to Same; S09 → / ←; any row the new keys change.
+- `docs/guides/compliance.md`: the Title Case item checked.
 - README: the keyboard table; `tag_images_path`; `mise run images`.
 - CONTEXT.md: Tag image; Size toggle.
 - TODO.md: Plan 7 (eWka) split per area, each ticked as it lands; the measurement session stays next.

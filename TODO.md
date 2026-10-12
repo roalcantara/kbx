@@ -47,7 +47,7 @@
 - [x] bt8n **-** Plan 5 T8: methodology Session and Maintainability sections, and the spec's report amendment (44fedfa)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/methodology.md#L1:1"
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
   - **Tags**: docs, plan5
 
 - [x] Kkuw **-** kb opens on the list alone, as Raycast's kb Search does; ⌘D shows the split pane (1cc355b)
@@ -68,7 +68,7 @@
   - **Comments**: 7Tbq
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/results/archive/2026-10-10-pre-polish/README.md#L1:1"
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/results/archive/2026-10-10-pre-polish/README.md#L1:1"
   - **Tags**: bench, results
 
 - [x] hU1X **-** Visual polish: bring kb's colours, typography and spacing up to Raycast's, with a spec, a plan, side-by-side screenshots and the GPUI Kit Design Guides
@@ -250,7 +250,7 @@
 - [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/methodology.md#L1:1"
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
   - **Tags**: plan5, report
 
 - [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
@@ -336,7 +336,7 @@
 - HGSp **-** A rerun right after the session's CPU, latency and ⌘↩ runs read 505 MiB idle against 178 MiB earlier. Relaunching Raycast in memory.sh, as cpu-ts.sh does, was proposed and set aside for now. Owner: run Raycast's memory after the polish.
   - **Task**: Towo
 
-- TbBw **-** About 23 minutes hands-off. The first run is archived in docs/experiment/results/archive/2026-10-10-pre-polish/ with why.
+- TbBw **-** About 23 minutes hands-off. The first run is archived in docs/guides/results/archive/2026-10-10-pre-polish/ with why.
   - **Task**: pzxe
 
 - ouCi **-** Saves about 5 of the session's 23 hands-off minutes without changing any measurement.
@@ -345,7 +345,7 @@
 - S3cM **-** The three probes hard-code the same deeplink the variable holds.
   - **Task**: EYAZ
 
-- qC0Z **-** The only unchecked item of docs/experiment/compliance.md. Upstream fix; until then the row label carries the description.
+- qC0Z **-** The only unchecked item of docs/guides/compliance.md. Upstream fix; until then the row label carries the description.
   - **Task**: niEv
 
 - JOrA **-** Checked 2026-10-10 in a scratch worktree: mise finds .config/mise.toml; cargo deny fell back to its defaults (it reads deny.toml, .deny.toml or .cargo/deny.toml); dprint, typos, taplo and ast-grep were inconclusive. Cargo/rustc configs (Cargo.toml, rust-toolchain.toml, rustfmt.toml, clippy.toml, deny.toml) stay at the root, as in every surveyed repo. Survey: uv, ruff, rust-analyzer, Zed and Servo keep a .config/ folder.
@@ -360,7 +360,7 @@
 - j6rR **-** Decision 2026-10-11: no. The code graphs are a local aid for agents (tools/graph/README.md); a published report would add CI time and a page nobody reads.
   - **Task**: 3mTj
 
-- EYc7 **-** Decision 2026-10-11: purge it, after the report (Y0HE). The measurements, results and report stay in docs/experiment.
+- EYc7 **-** Decision 2026-10-11: purge it, after the report (Y0HE). The measurements, results and report stay in docs/guides.
   - **Task**: jYHt
 
 - gMCt **-** Closed 2026-10-11, won't do: the benchmark kit is purged after the report (Y0HE); five minutes of one remaining session do not justify the change.

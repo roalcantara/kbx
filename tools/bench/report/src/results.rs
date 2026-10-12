@@ -1,4 +1,4 @@
-//! Reading `docs/experiment/results/`: the latest run of each kind, and the figures in it.
+//! Reading `docs/guides/results/`: the latest run of each kind, and the figures in it.
 //!
 //! Every result file is named `<kind>-<UTC stamp>.json` (methodology, "Results"); a kind's
 //! latest run is the one whose stamp sorts last.

@@ -147,10 +147,10 @@ tools/                      developer tooling
 | `mise run tags:suggest` / `tags:apply` / `tags:check` | propose, apply and check tag merges in your sources (tag conventions doctrine) |
 | `mise run ci`                                         | what CI checks: the gate on macOS, `ci:lint` and `ci:test` elsewhere           |
 | `mise run release -- --dry-run --no-ci`               | preview the next release (`GITHUB_TOKEN=$(gh auth token)`)                     |
-| `mise run report`                                     | gate, parity, then `docs/experiment/report.md` from the results                |
+| `mise run report`                                     | gate, parity, then `docs/guides/report.md` from the results                    |
 | `hk check --all`                                      | every baseline step over the whole repository                                  |
 
-Measuring both apps is one sitting: set up what `docs/experiment/methodology.md` ("Session") asks, run
+Measuring both apps is one sitting: set up what `docs/guides/methodology.md` ("Session") asks, run
 `mise run bench:session`, record the manual keystroke run, commit the results, then `mise run report`.
 
 Commits follow Conventional Commits with a sentence-case subject; hk checks the message.

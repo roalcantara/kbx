@@ -1,6 +1,6 @@
 //! The benchmark kit's report generator (tools/bench/README.md).
 //!
-//! `cargo run -p kb-report -- report [--verified]` writes `docs/experiment/report.md` from the
+//! `cargo run -p kb-report -- report [--verified]` writes `docs/guides/report.md` from the
 //! results, the parity matrix and the compliance checklist. `mise run report` runs the gate and
 //! golden parity first and passes `--verified` only when both pass.
 
@@ -55,7 +55,7 @@ fn run() -> Result<(), Error> {
         _ => return Err(Error::Usage),
     };
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
-    let experiment = root.join("docs/experiment");
+    let experiment = root.join("docs/guides");
     let read = |name: &str| {
         let path = experiment.join(name);
         fs::read_to_string(&path).map_err(|e| Error::io(&path, e))

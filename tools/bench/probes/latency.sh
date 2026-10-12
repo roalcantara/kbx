@@ -3,7 +3,7 @@
 # hide it. `probe show` times hotkey → window on screen from outside, for either app. For kb,
 # `kb --trace` also reports show and keystroke → updated list from inside, as both ends of its
 # drawn..presented range (src/trace.rs). Raycast exposes no equivalent, so its keystroke latency
-# is the manual screen-recording step in docs/experiment/methodology.md.
+# is the manual screen-recording step in docs/guides/methodology.md.
 # Usage: [KB_HOME=<home>, default tmp/bench-home] [KB_RAYCAST_HOTKEY="<keycode> <mods>"] latency.sh kb|raycast <results-dir> [runs]
 #   KB_RAYCAST_HOTKEY: the hotkey assigned to kb Search in Raycast (set it in mise.local.toml);
 #   required for raycast, so the run times the kb command and not Raycast's root search.
@@ -40,7 +40,7 @@ kb)
 raycast)
   owner=Raycast
   [ -n "${KB_RAYCAST_HOTKEY:-}" ] || {
-    echo "set KB_RAYCAST_HOTKEY to kb Search's hotkey in Raycast (docs/experiment/methodology.md, Tier 3)"
+    echo "set KB_RAYCAST_HOTKEY to kb Search's hotkey in Raycast (docs/guides/methodology.md, Tier 3)"
     exit 1
   }
   read -r code mods <<<"$KB_RAYCAST_HOTKEY"

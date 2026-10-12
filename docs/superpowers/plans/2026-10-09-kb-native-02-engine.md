@@ -44,23 +44,23 @@ hooks run on every commit — if one fixes files, review, `git add` them, and co
 
 ## File map
 
-| Path                                                                               | Responsibility                                            | Task  |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------- | ----- |
-| `Cargo.toml`                                                                       | workspace dependencies and members                        | 1, 12 |
-| `crates/kb-domain/Cargo.toml`                                                      | the engine's dependencies                                 | 1     |
-| `crates/kb-domain/src/lib.rs`                                                      | module list                                               | 1–10  |
-| `crates/kb-domain/src/yaml.rs`                                                     | load, read and write YAML through `saphyr`                | 2     |
-| `crates/kb-domain/src/entry.rs`                                                    | `Entry`, ids, primary content, tags, links, normalization | 3     |
-| `crates/kb-domain/src/markdown.rs`                                                 | notes → Markdown, the `json2md` subset                    | 4     |
-| `crates/kb-domain/src/row.rs`                                                      | `IndexRow`, searchable text, entry ↔ row                  | 5     |
-| `crates/kb-domain/src/query.rs`                                                    | search text → FTS5 prefix query                           | 6     |
-| `crates/kb-domain/src/search.rs`                                                   | filter, query, SQL, one page of rows                      | 7     |
-| `crates/kb-domain/src/source.rs`                                                   | finding and reading source files; scanning                | 8     |
-| `crates/kb-domain/src/report.rs`                                                   | per-file sync report and excerpts                         | 9     |
-| `crates/kb-domain/src/schema.sql`, `sync.rs`                                       | the index schema; the transactional rebuild               | 10    |
-| `crates/kb-domain/tests/goldens.rs`                                                | parity with the TypeScript engine                         | 11    |
-| `crates/kb-bench/**`                                                               | tier 1 benchmarks in the shared schema                    | 12    |
-| `mise.toml`, `hk.pkl`, `CONTEXT.md`, `README.md`, `docs/experiment/methodology.md` | tasks, gates, docs                                        | 11–14 |
+| Path                                                                           | Responsibility                                            | Task  |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------- | ----- |
+| `Cargo.toml`                                                                   | workspace dependencies and members                        | 1, 12 |
+| `crates/kb-domain/Cargo.toml`                                                  | the engine's dependencies                                 | 1     |
+| `crates/kb-domain/src/lib.rs`                                                  | module list                                               | 1–10  |
+| `crates/kb-domain/src/yaml.rs`                                                 | load, read and write YAML through `saphyr`                | 2     |
+| `crates/kb-domain/src/entry.rs`                                                | `Entry`, ids, primary content, tags, links, normalization | 3     |
+| `crates/kb-domain/src/markdown.rs`                                             | notes → Markdown, the `json2md` subset                    | 4     |
+| `crates/kb-domain/src/row.rs`                                                  | `IndexRow`, searchable text, entry ↔ row                  | 5     |
+| `crates/kb-domain/src/query.rs`                                                | search text → FTS5 prefix query                           | 6     |
+| `crates/kb-domain/src/search.rs`                                               | filter, query, SQL, one page of rows                      | 7     |
+| `crates/kb-domain/src/source.rs`                                               | finding and reading source files; scanning                | 8     |
+| `crates/kb-domain/src/report.rs`                                               | per-file sync report and excerpts                         | 9     |
+| `crates/kb-domain/src/schema.sql`, `sync.rs`                                   | the index schema; the transactional rebuild               | 10    |
+| `crates/kb-domain/tests/goldens.rs`                                            | parity with the TypeScript engine                         | 11    |
+| `crates/kb-bench/**`                                                           | tier 1 benchmarks in the shared schema                    | 12    |
+| `mise.toml`, `hk.pkl`, `CONTEXT.md`, `README.md`, `docs/guides/methodology.md` | tasks, gates, docs                                        | 11–14 |
 
 ---
 
@@ -3046,7 +3046,7 @@ run = '''
   fi
   cargo build --release -p kb-bench
   target/release/kb-bench --fixtures fixtures --corpus "$corpus" --digest "$digest" --files "$files" \
-    --out "docs/experiment/results/tier1-rust-$corpus-$(date -u +%Y%m%dT%H%M%SZ).json"
+    --out "docs/guides/results/tier1-rust-$corpus-$(date -u +%Y%m%dT%H%M%SZ).json"
 '''
 ```
 
@@ -3070,7 +3070,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Files:**
 
-- Modify: `hk.pkl`, `mise.toml`, `CONTEXT.md`, `README.md`, `docs/experiment/methodology.md`
+- Modify: `hk.pkl`, `mise.toml`, `CONTEXT.md`, `README.md`, `docs/guides/methodology.md`
 
 - [ ] **Step 1: Tests must exist now**
 
@@ -3106,7 +3106,7 @@ for `mise run parity` (golden parity on the private corpus) and `mise run bench:
 
 - [ ] **Step 5: Methodology**
 
-Under "Tier 1 — engine" in `docs/experiment/methodology.md`, add:
+Under "Tier 1 — engine" in `docs/guides/methodology.md`, add:
 
 ```markdown
 The Rust engine runs the same cases (`kb-bench`, release build). `search-app` is each app's real path:
@@ -3121,7 +3121,7 @@ Run: `mise run gate`
 Expected: every command passes.
 
 ```bash
-git add hk.pkl mise.toml CONTEXT.md README.md docs/experiment/methodology.md
+git add hk.pkl mise.toml CONTEXT.md README.md docs/guides/methodology.md
 git commit -m "build: Require tests and report coverage now the engine exists
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3133,12 +3133,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 On AC power, other heavy apps closed: `mise run bench:rs private && mise run bench:rs private-10x`
 
-Expected: two `64 cases -> docs/experiment/results/tier1-rust-…json` lines.
+Expected: two `64 cases -> docs/guides/results/tier1-rust-…json` lines.
 
 - [ ] **Step 2: Compare with the TypeScript baseline**
 
 ```bash
-R=docs/experiment/results
+R=docs/guides/results
 for c in private private-10x; do
   ts=$(ls $R/tier1-ts-node22-$c-20261009T08*.json | tail -1); rs=$(ls $R/tier1-rust-$c-*.json | tail -1)
   jq -r -n --slurpfile t "$ts" --slurpfile r "$rs" --arg c "$c" '
@@ -3155,7 +3155,7 @@ slower.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/experiment/results
+git add docs/guides/results
 git commit -m "test(experiment): Record the Rust engine baseline at tier 1
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"

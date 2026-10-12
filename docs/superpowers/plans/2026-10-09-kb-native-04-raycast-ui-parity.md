@@ -22,7 +22,7 @@
 | `crates/kb-app/src/notes.rs`                             | Notes pane with red description callout quote, stats block, and metadata grid   | Task 4 |
 | `crates/kb-app/src/search_view.rs`                       | 3-tier launcher shell, decoupled header bar with back chevron and filter button | Task 5 |
 | `crates/kb-app/src/search_view.rs`                       | Docked bottom action bar with contextual badges and keycap shortcuts            | Task 6 |
-| `crates/kb-app/tests/ui.rs`, `docs/experiment/parity.md` | UI integration tests for new affordances and parity documentation update        | Task 7 |
+| `crates/kb-app/tests/ui.rs`, `docs/guides/parity.md`     | UI integration tests for new affordances and parity documentation update        | Task 7 |
 
 ---
 
@@ -562,7 +562,7 @@ git commit -m "feat(search_view): Add docked bottom action bar with physical key
 **Files:**
 
 - Modify: `crates/kb-app/tests/ui.rs`
-- Modify: `docs/experiment/parity.md`
+- Modify: `docs/guides/parity.md`
 
 - [ ] **Step 1: Add full integration test suite covering all 5 screens**
 
@@ -574,7 +574,7 @@ In `crates/kb-app/tests/ui.rs`, ensure tests cover:
 4. Split view toggle via ⌘D with red callout bar.
 5. Detail view push on Enter, title update on footer, and back navigation on Esc.
 
-- [ ] **Step 2: Update `docs/experiment/parity.md`**
+- [ ] **Step 2: Update `docs/guides/parity.md`**
 
 Update parity rows S05, S07, F01, and add the bottom action bar row to document the enhancements.
 
@@ -591,6 +591,6 @@ Expected: All tests pass, clippy clean, build succeeds, hk checks pass.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add crates/kb-app/tests/ui.rs docs/experiment/parity.md
+git add crates/kb-app/tests/ui.rs docs/guides/parity.md
 git commit -m "test(app): Verify Raycast UI parity and update parity documentation"
 ```

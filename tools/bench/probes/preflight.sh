@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks what a measurement session needs that can be checked from here, prints every miss, and
 # fails if there was one. Accessibility permission for the terminal and the kb extension running
-# in Raycast are the owner's (docs/experiment/methodology.md, "Session").
+# in Raycast are the owner's (docs/guides/methodology.md, "Session").
 # Usage: preflight.sh
 set -euo pipefail
 

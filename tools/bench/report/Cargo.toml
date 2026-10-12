@@ -1,6 +1,6 @@
 [package]
 name = "kb-report"
-description = "The benchmark kit's report: turns the experiment results into docs/experiment/report.md."
+description = "The benchmark kit's report: turns the experiment results into docs/guides/report.md."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
