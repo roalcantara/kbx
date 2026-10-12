@@ -223,7 +223,7 @@
   - **Tags**: design, plan8
 
 - [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
-  - **Comments**: 3kaC,QQca
+  - **Comments**: 3kaC,QQca,303s
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -484,5 +484,8 @@
   - **Task**: OKAo
 
 - QQca **-** 2026-10-12, v5: order Details ↵, Copy ⌘↵, Split ⌘D, Resize ⇧⌘F (was Toggle Size), Source ⌘O, More… ›; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,.
+  - **Task**: OKAo
+
+- 303s **-** 2026-10-12, v6: the popover's search placeholder reads Search. Simplifications closed.
   - **Task**: OKAo
 
