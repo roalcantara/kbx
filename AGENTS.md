@@ -41,7 +41,7 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 - Scripts that stay in `tools/` are TypeScript run by Bun, written inline in the tool's mise task file
   (`run = '''#!/usr/bin/env bun …'''`). A module file exists only for logic with unit tests (`bun test` beside it).
   npm packages are imported with a pinned version (`import x from "pkg@1.2.3"`), which `bun run` installs on first
-  use: no `package.json`. `bun test` does not, so a tested module imports none. No new Python or Node-only scripts (`tools/design/sample.py` and the design kit's `.mjs` predate this).
+  use: no `package.json`. `bun test` does not, so a tested module imports none. No Python or Node-only scripts.
 
 ## Naming conventions
 

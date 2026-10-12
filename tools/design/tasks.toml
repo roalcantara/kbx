@@ -1,14 +1,686 @@
 # The design kit (tools/design): measure Raycast, validate the palettes, generate the app theme, render the comparison
-# page.
+# page. The colour arithmetic they share, and its tests, are in color.ts; these are the entry points.
+
+["design:test"]
+description = "Test the design kit's colour arithmetic"
+run = "bun test tools/design"
 
 ["design:sample"]
-description = "Measure colours and sizes from the local Raycast screenshots (tools/reports) into tools/design/raycast.json"
-run = "uv run -q --with pillow python -I tools/design/sample.py && dprint fmt tools/design/raycast.json"
+description = "Measure colours and sizes from the local Raycast screenshots (tools/reports) into tools/design/raycast.json: readings, not a palette (the window is translucent, so surfaces depend on the wallpaper; accents and pills are not sampled)"
+run = [
+  '''
+#!/usr/bin/env bun
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { inflateSync } from 'node:zlib'
+
+const REPORTS = 'tools/reports'
+const OUT = 'tools/design/raycast.json'
+
+// [role, screen, box, mode]: the most common colour of a surface, the brightest pixel of a text.
+const ROLE_SPECS = [
+  ['window', '1-list-ray.png', [1500, 500, 1600, 560], 'most_common'],
+  ['header', '1-list-ray.png', [900, 30, 1000, 60], 'most_common'],
+  ['selection', '1-list-ray.png', [1250, 205, 1350, 255], 'most_common'],
+  ['divider', '7-bookmark-split-ray.png', [760, 400, 770, 600], 'brightest'],
+  ['text', '1-list-ray.png', [150, 210, 235, 250], 'brightest'],
+  ['textMuted', '1-list-ray.png', [265, 210, 780, 250], 'brightest']
+]
+// [name, screen, seed, scope]: the same-colour region around the seed, within the scope.
+const SIZE_SPECS = [
+  ['window', '1-list-ray.png', [1040, 560], [0, 0, 2000, 1250]],
+  ['selected_row', '1-list-ray.png', [1290, 228], [1000, 165, 1990, 300]],
+  ['tag_pill', '1-list-ray.png', [647, 249], [560, 220, 760, 285]],
+  ['footer_pill', '1-list-ray.png', [527, 1189], [460, 1150, 620, 1235]],
+  ['keycap', '5-actions-ray.png', [1668, 1198], [1640, 1170, 1735, 1235]]
+]
+
+// An 8-bit, non-interlaced RGB or RGBA PNG as RGB pixels, colour values as stored (no colour management).
+const decodePng = (file) => {
+  const buf = readFileSync(file)
+  let width = 0, height = 0, channels = 0
+  const idat = []
+  for (let at = 8; at < buf.length;) {
+    const length = buf.readUInt32BE(at)
+    const type = buf.toString('latin1', at + 4, at + 8)
+    const data = buf.subarray(at + 8, at + 8 + length)
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0)
+      height = data.readUInt32BE(4)
+      const [depth, colour, , , interlace] = data.subarray(8)
+      channels = { 2: 3, 6: 4 }[colour]
+      if (depth !== 8 || !channels || interlace) throw new Error(`${file}: only 8-bit, non-interlaced RGB or RGBA PNG files`)
+    }
+    if (type === 'IDAT') idat.push(data)
+    at += 12 + length
+  }
+  const raw = inflateSync(Buffer.concat(idat))
+  const stride = width * channels
+  const out = Buffer.alloc(stride * height)
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)]
+    for (let x = 0; x < stride; x++) {
+      const v = raw[y * (stride + 1) + 1 + x]
+      const a = x >= channels ? out[y * stride + x - channels] : 0
+      const b = y ? out[(y - 1) * stride + x] : 0
+      const c = x >= channels && y ? out[(y - 1) * stride + x - channels] : 0
+      const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c)
+      const pred = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][filter]
+      out[y * stride + x] = (v + pred) & 255
+    }
+  }
+  const at = (x, y) => {
+    const i = y * stride + x * channels
+    return [out[i], out[i + 1], out[i + 2]]
+  }
+  return { width, height, at }
+}
+
+const toHex = (c) => `#${c.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()}`
+const luminance = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+// Boxes are in the 2000 × 1250 reference frame, scaled to each screenshot.
+const scaleRect = (img, [x1, y1, x2, y2]) => {
+  const [kx, ky] = [img.width / 2000, img.height / 1250]
+  return [
+    clamp(Math.round(x1 * kx), 0, img.width - 1),
+    clamp(Math.round(y1 * ky), 0, img.height - 1),
+    clamp(Math.round(x2 * kx), 1, img.width),
+    clamp(Math.round(y2 * ky), 1, img.height)
+  ]
+}
+const scalePoint = (img, [x, y]) => [
+  clamp(Math.round(x * img.width / 2000), 0, img.width - 1),
+  clamp(Math.round(y * img.height / 1250), 0, img.height - 1)
+]
+
+const sampleRole = (img, [x1, y1, x2, y2], mode) => {
+  const counts = new Map()
+  let best
+  for (let y = y1; y < y2; y++) {
+    for (let x = x1; x < x2; x++) {
+      const c = img.at(x, y)
+      if (mode === 'brightest') {
+        if (!best || luminance(c) > luminance(best)) best = c
+      } else {
+        const key = c.join()
+        counts.set(key, (counts.get(key) ?? 0) + 1)
+      }
+    }
+  }
+  if (mode === 'brightest') return best
+  let top, n = 0
+  for (const [key, count] of counts) if (count > n) [top, n] = [key, count]
+  return top.split(',').map(Number)
+}
+
+const contiguousBox = (img, [sx, sy], [x1, y1, x2, y2], tol = 6) => {
+  const target = img.at(sx, sy)
+  const close = (c) => c.every((v, i) => Math.abs(v - target[i]) <= tol)
+  const seen = new Set([sy * img.width + sx])
+  const queue = [[sx, sy]]
+  let [minX, maxX, minY, maxY] = [sx, sx, sy, sy]
+  while (queue.length) {
+    const [x, y] = queue.shift()
+    ;[minX, maxX, minY, maxY] = [Math.min(minX, x), Math.max(maxX, x), Math.min(minY, y), Math.max(maxY, y)]
+    for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+      if (nx < x1 || ny < y1 || nx >= x2 || ny >= y2 || seen.has(ny * img.width + nx)) continue
+      if (close(img.at(nx, ny))) {
+        seen.add(ny * img.width + nx)
+        queue.push([nx, ny])
+      }
+    }
+  }
+  return [minX, minY, maxX + 1, maxY + 1]
+}
+
+const missing = [...new Set([...ROLE_SPECS, ...SIZE_SPECS].map((s) => s[1]))].filter((s) => !existsSync(`${REPORTS}/${s}`))
+if (missing.length) {
+  console.error(`Missing Raycast reference screenshots: ${missing.map((s) => `${REPORTS}/${s}`).join(', ')}`)
+  process.exit(1)
+}
+const images = new Map()
+const img = (screen) => images.get(screen) ?? images.set(screen, decodePng(`${REPORTS}/${screen}`)).get(screen)
+
+const roles = Object.fromEntries(ROLE_SPECS.map(([role, screen, box, mode]) => {
+  const picture = img(screen)
+  return [role, { hex: toHex(sampleRole(picture, scaleRect(picture, box), mode)), screen, box }]
+}))
+// Screenshots are Retina captures: two pixels per point. Corner radii are not estimated; a flood fill cannot see them.
+const sizes = Object.fromEntries(SIZE_SPECS.map(([name, screen, seed, scope]) => {
+  const picture = img(screen)
+  const [x1, y1, x2, y2] = contiguousBox(picture, scalePoint(picture, seed), scaleRect(picture, scope))
+  return [name, { w: Math.round((x2 - x1) / 2 * 100) / 100, h: Math.round((y2 - y1) / 2 * 100) / 100 }]
+}))
+const note = 'Readings from local Raycast screenshots, not a palette (mise run design:sample).'
+mkdirSync('tools/design', { recursive: true })
+writeFileSync(OUT, `${JSON.stringify({ note, roles, sizes }, null, 2)}\n`)
+console.log(`wrote ${OUT}`)
+''',
+  "dprint fmt tools/design/raycast.json",
+]
+
+["design:validate"]
+description = "Check each palette (WCAG 2.2 contrast of every text role and tag pill; OKLab ΔE between accents under normal, protan and deutan vision) into tools/design/validation.json; fail when DESIGN.md's palette table drifts"
+run = ['''
+#!/usr/bin/env bun
+import { readFileSync, writeFileSync } from 'node:fs'
+// mise runs an inline script from a temporary file, so modules are imported from the project root.
+const { ACCENTS, contrast, lin, pill, rgb } = await import(`${process.cwd()}/tools/design/color.ts`)
+
+const dir = 'tools/design/'
+const palettes = JSON.parse(readFileSync(`${dir}palettes.json`, 'utf8'))
+
+const CVD = {
+  normal: null,
+  protan: [
+    [0.152286, 1.052583, -0.204868],
+    [0.114503, 0.786281, 0.099216],
+    [-0.003882, -0.048116, 1.051998]
+  ],
+  deutan: [
+    [0.367322, 0.860646, -0.227968],
+    [0.280085, 0.672501, 0.047413],
+    [-0.01182, 0.04294, 0.968881]
+  ]
+}
+const simulate = (h, m) => {
+  const c = rgb(h).map(lin)
+  return m ? m.map((r) => Math.min(1, Math.max(0, r[0] * c[0] + r[1] * c[1] + r[2] * c[2]))) : c
+}
+const oklab = ([r, g, b]) => {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+  ]
+}
+const deltaE = (a, b, m) => {
+  const [p, q] = [oklab(simulate(a, m)), oklab(simulate(b, m))]
+  return 100 * Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2])
+}
+
+const check = (name, value, pass, warn) => ({
+  name,
+  value: Math.round(value * 100) / 100,
+  status: value >= pass ? 'pass' : warn !== undefined && value >= warn ? 'warn' : 'fail'
+})
+
+const results = palettes.map(({ id, roles: r }) => {
+  const checks = []
+  for (const surface of ['window', 'selection', 'raised', 'header']) {
+    checks.push(check(`text on ${surface}`, contrast(r.text, r[surface]), 4.5))
+    checks.push(check(`textMuted on ${surface}`, contrast(r.textMuted, r[surface]), 4.5))
+  }
+  checks.push(check('textFaint on window', contrast(r.textFaint, r.window), 3))
+  checks.push(check('divider on window', contrast(r.divider, r.window), 1.2))
+  for (const a of ACCENTS) {
+    const { background, text } = pill(r, a)
+    checks.push(check(`#${a} on its pill`, contrast(text, background), 4.5, 3))
+  }
+  for (const [vision, m] of Object.entries(CVD)) {
+    let worst = { value: Infinity }
+    for (let i = 0; i < ACCENTS.length; i++) {
+      for (let j = i + 1; j < ACCENTS.length; j++) {
+        const value = deltaE(r[ACCENTS[i]], r[ACCENTS[j]], m)
+        if (value < worst.value) worst = { value, pair: `${ACCENTS[i]}/${ACCENTS[j]}` }
+      }
+    }
+    // Tags always carry their #name, so 6-8 under colour-blind vision is a warning, not a failure.
+    const c = vision === 'normal'
+      ? check('accents apart (normal)', worst.value, 15)
+      : check(`accents apart (${vision})`, worst.value, 8, 6)
+    checks.push({ ...c, pair: worst.pair })
+  }
+  const failed = checks.filter((c) => c.status === 'fail').length
+  return { id, failed, warned: checks.filter((c) => c.status === 'warn').length, checks }
+})
+
+writeFileSync(`${dir}validation.json`, `${JSON.stringify(results, null, 2)}\n`)
+for (const { id, failed, warned } of results) {
+  console.log(`${id.padEnd(22)} ${failed ? `${failed} fail` : 'pass'}${warned ? `, ${warned} warn` : ''}`)
+}
+
+// DESIGN.md repeats the chosen palette's hexes for readers: they must match palettes.json.
+const chosen = palettes.find((p) => p.chosen)
+const design = readFileSync('DESIGN.md', 'utf8')
+const drift = Object.entries(chosen.roles).filter(([role, hex]) => {
+  const row = design.match(new RegExp(`^\\| \`${role}\`\\s*\\| \`(#[0-9A-Fa-f]{6})\``, 'm'))
+  return row?.[1].toUpperCase() !== hex.toUpperCase()
+})
+if (drift.length) {
+  console.error(`DESIGN.md's palette table differs from ${chosen.id}: ${drift.map(([r, h]) => `${r} ${h}`).join(', ')}`)
+  process.exit(1)
+}
+''', "dprint fmt tools/design/validation.json"]
+
+["design:theme"]
+description = "Write the app's GPUI Kit dark theme (kb.json), its accents and the tag-accent fixture from the chosen palette, or the one named"
+usage = 'arg "[palette]" help="a palette id of palettes.json; the chosen one by default"'
+run = ['''
+#!/usr/bin/env bun
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+// mise runs an inline script from a temporary file, so modules are imported from the project root.
+const { ACCENTS, LIGHT_ACCENTS, mix, pill, tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
+
+const root = process.cwd()
+const here = resolve(root, 'tools/design')
+const out = resolve(root, 'crates/kb-app/assets/themes/kb.json')
+
+const id = process.env.usage_palette
+const palettes = JSON.parse(readFileSync(resolve(here, 'palettes.json'), 'utf8'))
+const palette = palettes.find((p) => (id ? p.id === id : p.chosen))
+if (!palette) throw new Error(id ? `No palette ${id} in palettes.json.` : 'No palette in palettes.json is chosen.')
+const r = palette.roles
+
+// Role → GPUI Kit key (DESIGN.md, Color Palette & Roles). GPUI Kit has no orange or purple: they wait for Plan 7.
+const colors = {
+  background: r.window,
+  'list.background': r.window,
+  'list.even.background': r.window,
+  'list.head.background': r.window,
+  'table.background': r.window,
+  'title_bar.background': r.header,
+  'list.active.background': r.selection,
+  'accent.background': r.selection,
+  'secondary.hover.background': r.selection,
+  'secondary.active.background': r.selection,
+  'popover.background': r.raised,
+  'secondary.background': r.raised,
+  'muted.background': r.raised,
+  'description_list_label.background': r.raised,
+  border: r.divider,
+  'input.border': r.divider,
+  'list.active.border': r.divider,
+  'title_bar.border': r.divider,
+  'window.border': r.divider,
+  foreground: r.text,
+  caret: r.text,
+  'popover.foreground': r.text,
+  'accent.foreground': r.text,
+  'secondary.foreground': r.text,
+  'muted.foreground': r.textMuted,
+  'description_list_label.foreground': r.textMuted,
+  'selection.background': mix(r.blue, r.window, 0.35),
+  ring: r.blue,
+  'link.foreground': r.blue
+}
+// Base hues and their `.light` tints, the tag-pill fill. Cyan has no role: it takes blue.
+for (
+  const [hue, role] of Object.entries({
+    blue: 'blue',
+    cyan: 'blue',
+    green: 'green',
+    red: 'red',
+    yellow: 'yellow',
+    magenta: 'magenta'
+  })
+) {
+  colors[`base.${hue}`] = r[role]
+  colors[`base.${hue}.light`] = pill(r, role).background
+}
+
+const defaults = JSON.parse(readFileSync(defaultThemePath(), 'utf8')).themes.find((t) => t.mode === 'dark').colors
+const unknown = Object.keys(colors).filter((k) => !(k in defaults))
+if (unknown.length) throw new Error(`Not GPUI Kit dark theme keys: ${unknown.join(', ')}`)
+
+const theme = {
+  name: 'kb',
+  author: 'kb',
+  themes: [{ name: 'kb Dark', mode: 'dark', colors: Object.fromEntries(Object.entries(colors).sort()) }]
+}
+writeFileSync(out, `${JSON.stringify(theme, null, 2)}\n`)
+console.log(`wrote ${out.replace(`${root}/`, '')} from ${palette.id}`)
+
+// The seven accents GPUI Kit's theme has no keys for, with their tag pills, per appearance (accents.rs reads them).
+const accentsOut = resolve(root, 'crates/kb-app/assets/themes/accents.json')
+const accentSet = (roles) => Object.fromEntries(ACCENTS.map((a) => [a, { accent: roles[a], ...pill(roles, a) }]))
+writeFileSync(accentsOut, `${JSON.stringify({ dark: accentSet(r), light: accentSet(LIGHT_ACCENTS) }, null, 2)}\n`)
+console.log(`wrote ${accentsOut.replace(`${root}/`, '')}`)
+
+// Tag → accent by the Raycast extension's hash: the Rust hash is tested against it (presentation.rs).
+const fixtureOut = resolve(root, 'crates/kb-app/tests/fixtures/tag-accents.json')
+const sampleTags = [
+  'git',
+  'docker',
+  'kube',
+  'rust',
+  'kb',
+  'video',
+  'talks',
+  'docs',
+  'containers',
+  'mixed-case',
+  'aws',
+  'nu',
+  'linux',
+  'gradle',
+  'grails',
+  'schedule',
+  'ai',
+  'react',
+  'café'
+]
+mkdirSync(dirname(fixtureOut), { recursive: true })
+writeFileSync(fixtureOut, `${JSON.stringify(Object.fromEntries(sampleTags.map((t) => [t, tagAccent(t)])), null, 2)}\n`)
+console.log(`wrote ${fixtureOut.replace(`${root}/`, '')}`)
+
+// GPUI Kit's default-theme.json in the Cargo registry, at the version Cargo.lock pins.
+function defaultThemePath() {
+  const lock = readFileSync(resolve(root, 'Cargo.lock'), 'utf8')
+  const version = lock.match(/name = "gpui-component"\nversion = "([^"]+)"/)?.[1]
+  const home = process.env.CARGO_HOME ?? resolve(process.env.HOME, '.cargo')
+  const registry = resolve(home, 'registry', 'src')
+  const index = readdirSync(registry).find((d) => existsSync(resolve(registry, d, `gpui-component-${version}`)))
+  if (!index) throw new Error(`gpui-component ${version} is not in ${registry}: run cargo fetch.`)
+  return resolve(registry, index, `gpui-component-${version}`, 'src/theme/default-theme.json')
+}
+''', "dprint fmt crates/kb-app/assets/themes/*.json crates/kb-app/tests/fixtures/tag-accents.json"]
+
+["design:render"]
+description = "Render tmp/design/palettes.html: every palette as kb's list, popovers and split pane, from the sample corpus's goldens"
+run = '''
+#!/usr/bin/env bun
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+// mise runs an inline script from a temporary file, so modules are imported from the project root.
+const { MAX_TAGS, mix, pill, tagAccent, typeAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
+
+const root = process.cwd()
+const read = (path) => readFileSync(resolve(root, path), 'utf8')
+
+const palettes = JSON.parse(read('tools/design/palettes.json')).sort((a, b) => Number(!!b.chosen) - Number(!!a.chosen))
+const layout = JSON.parse(read('tools/design/layout.json'))
+const validation = new Map(JSON.parse(read('tools/design/validation.json')).map((v) => [v.id, v]))
+const htmlOut = resolve(root, 'tmp', 'design', 'palettes.html')
+
+const escape = (s) =>
+  String(s)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+// Only http(s) sources become links; anything else is shown as text.
+const link = (url) => (/^https?:\/\//.test(url) ? `<a href="${escape(url)}">${escape(url)}</a>` : escape(url))
+
+// The search view's geometry: the header's leading control sits on the row-icon axis, and the search text starts
+// where result titles do (DESIGN.md, Layout).
+const { panel, header, resultRow, tag, footer, popover, actionItem, filterControl, splitPane, metadata } =
+  layout.components
+const rowContentStart = resultRow.selectionInsetX + resultRow.horizontalInset
+if (header.horizontalInset !== rowContentStart) {
+  throw new Error(`Header control and row icons are off-axis: ${header.horizontalInset} != ${rowContentStart} points.`)
+}
+if (header.controlGap !== resultRow.iconToTitleGap) {
+  throw new Error(
+    `Search text and result titles are misaligned: gaps ${header.controlGap} != ${resultRow.iconToTitleGap}.`
+  )
+}
+
+// Rows in the empty query's order, from the TypeScript engine's goldens.
+const golden = 'crates/kb-domain/tests/fixtures/sample-goldens'
+const rows = new Map(read(`${golden}/rows.jsonl`).trim().split('\n').map((l) => JSON.parse(l)).map((r) => [r.id, r]))
+// An entry's tags from its raw YAML: `tag: x`, `tags: [x, y]` or a block list under `tags:`.
+const tagsOf = (yaml) => {
+  const [, value = '', block = ''] = yaml.match(/^tags?:[ \t]*(.*)\n((?:[ \t]+- .*\n?)*)/m) ?? []
+  const list = value.startsWith('[')
+    ? value.slice(1, -1).split(',')
+    : value
+    ? [value]
+    : block.split('\n').map((l) => l.replace(/^\s*- /, ''))
+  return list.map((t) => t.trim().toLowerCase()).filter(Boolean)
+}
+const entries = JSON.parse(read(`${golden}/queries.json`))
+  .find((q) => q.id === 'q01-empty')
+  .results.map(({ id }) => rows.get(id))
+  .map((r) => ({
+    title: r.title,
+    description: r.description,
+    typeKey: r.type.toLowerCase().replace(/s$/, ''),
+    type: r.type,
+    tags: tagsOf(r.raw_yaml),
+    links: JSON.parse(r.links_json || '[]').length,
+    source: r.source_rel_path
+  }))
+  .slice(0, 7)
+const selected = entries.findIndex((e) => e.tags.length && e.links)
+
+const references = [1, 2, 3, 4, 5, 6, 7, 8]
+  .map((n) =>
+    ['list', 'list-split', 'list-split-down', 'detail', 'actions', 'filter', 'bookmark-split', 'bookmark-detail'][n - 1]
+  )
+  .map((name, i) => `tools/reports/${i + 1}-${name}-ray.png`)
+  .filter((rel) => existsSync(resolve(root, rel)))
+
+const roleOrder = ['window', 'header', 'selection', 'raised', 'divider', 'text', 'textMuted', 'textFaint']
+
+const pills = (roles, tags) => {
+  const shown = tags.slice(0, MAX_TAGS).map((t) => {
+    const { background, text } = pill(roles, tagAccent(t))
+    return `<span class="pill" style="background:${background};color:${text}">#${escape(t)}</span>`
+  })
+  const more = tags.length - MAX_TAGS
+  return shown.join('') + (more > 0 ? `<span class="more">+${more}</span>` : '')
+}
+const listRow = (roles, e, i, compact) =>
+  `<div class="row ${i === selected ? 'sel' : ''}">
+    <span class="icon" style="background:${roles[typeAccent(e.typeKey)]}"></span>
+    <div class="text"><div class="title">${escape(e.title)}</div>${
+    compact ? '' : `<div class="sub">${escape(e.description)}</div>`
+  }</div>
+    <div class="tags">${
+    compact ? '' : pills(roles, e.tags) + (e.links ? `<span class="more">🔗 ${e.links}</span>` : '')
+  }</div>
+  </div>`
+const keycaps = (keys) => keys.map((k) => `<kbd>${escape(k)}</kbd>`).join('')
+const footerBar = (e) =>
+  `<div class="footer"><span class="fpill">${escape(e.title)}</span><span class="fpill">Open ${
+    keycaps(['↵'])
+  }</span><span class="fpill">Actions ${keycaps(['⌘', 'K'])}</span></div>`
+const headerBar = (filter) =>
+  `<div class="bar"><div class="query"><span class="lead">⌕</span><span class="placeholder">Search Knowledge Base…</span></div>${
+    filter ? '<div class="affordance">⏷ All Entries ⌄</div>' : ''
+  }</div>`
+
+const listScene = (roles) =>
+  `<div class="scene"><div class="panel">${headerBar(true)}<div class="list-body">${
+    entries.map((e, i) => listRow(roles, e, i, false)).join('')
+  }</div>${footerBar(entries[selected])}</div>
+    <div class="popup actions"><div class="popup-body">
+      <div class="action sel"><span>Show Details</span>${keycaps(['↵'])}</div>
+      <div class="action"><span>Open in Browser</span>${keycaps(['⌘', '↵'])}</div>
+      <div class="action"><span>Copy…</span><span class="keys">›</span></div>
+      <div class="action"><span>Open Source File</span>${keycaps(['⌘', 'O'])}</div>
+    </div><div class="popup-bar">Search for actions…</div></div>
+    <div class="popup filter"><div class="popup-body">
+      <div class="option"><span>✓</span>Bookmarks</div><div class="option"><span>○</span>Commands</div>
+      <div class="option"><span>✓</span>#docs</div><div class="option"><span>○</span>#git</div>
+    </div></div>
+  </div>`
+
+const splitScene = (roles) => {
+  const e = entries[selected]
+  const type = pill(roles, typeAccent(e.typeKey))
+  return `<div class="scene"><div class="panel">${headerBar(true)}<div class="split">
+    <div class="list-body">${entries.map((x, i) => listRow(roles, x, i, true)).join('')}</div>
+    <div class="detail">
+      <blockquote style="border-color:${roles.red}">${escape(e.description)}</blockquote>
+      <div class="card">
+        <div class="meta"><span>Type</span><span class="pill" style="background:${type.background};color:${type.text}">${
+    escape(e.type)
+  }</span></div>
+        <div class="meta"><span>Tags</span><span>${pills(roles, e.tags)}</span></div>
+        <div class="meta"><span>Links</span><span>${e.links}</span></div>
+        <div class="meta"><span>Source</span><span>📄 ${escape(e.source)}</span></div>
+      </div>
+    </div>
+  </div>${footerBar(e)}</div></div>`
+}
+
+const vars = (roles) =>
+  Object.entries({
+    ...Object.fromEntries(roleOrder.map((r) => [r, roles[r]])),
+    popupBorder: mix(roles.divider, roles.raised, 0.58),
+    zebra: mix(roles.text, roles.raised, 0.03)
+  })
+    .map(([k, v]) => `--${k}:${v}`)
+    .join(';')
+
+const results = (id) => {
+  const summary = validation.get(id)
+  if (!summary) return '<p class="hint">Not validated: run mise run design:validate.</p>'
+  const by = (status) => summary.checks.filter((c) => c.status === status)
+  const items = (checks) =>
+    checks.length
+      ? checks.map((c) => `<li>${escape(c.name)} (${c.value})${c.pair ? ` [${escape(c.pair)}]` : ''}</li>`).join('')
+      : '<li>none</li>'
+  const badge = summary.failed ? 'fail' : summary.warned ? 'warn' : 'pass'
+  return `<span class="badge ${badge}">${badge}</span>
+    <div class="status-grid"><div><h3>Fails</h3><ul>${items(by('fail'))}</ul></div><div><h3>Warns</h3><ul>${
+    items(by('warn'))
+  }</ul></div></div>`
+}
+
+const section = (p) =>
+  `<section class="palette" style="${vars(p.roles)}">
+    <div class="summary"><h2>${escape(p.name)}${p.chosen ? ' <small>chosen</small>' : ''}</h2>
+      <p class="hint">${link(p.source)}${(p.notes ?? []).map((n) => ` · ${escape(n)}`).join('')}</p>${
+    results(p.id)
+  }</div>
+    <div class="scenes">${listScene(p.roles)}${splitScene(p.roles)}</div>
+    <div class="swatches">${
+    Object.entries(p.roles)
+      .map(([role, hex]) =>
+        `<div class="swatch"><i style="background:${hex}"></i><b>${role}</b><span>${hex}</span></div>`
+      )
+      .join('')
+  }</div>
+  </section>`
+
+// Layout values are logical points; a macOS point is one CSS pixel.
+const pt = (v) => `${v}px`
+const page = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>kb palettes</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 24px; background: #0f1115; color: #e9edf3; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; }
+    .wrap { max-width: 1400px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    h2 { margin: 0; font-size: 18px; } h2 small { font-size: 12px; color: #9ef3bb; }
+    .hint { margin: 4px 0; color: #9ba4b2; font-size: 12px; } a { color: #9fc4ff; }
+    .refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 12px 0 24px; }
+    .refs img { width: 100%; border-radius: 8px; border: 1px solid #2d3440; }
+    .palette { margin: 0 0 40px; }
+    .summary { background: #171b22; border: 1px solid #2a303b; border-radius: 14px; padding: 12px; margin: 0 0 12px; }
+    .badge { border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+    .badge.pass { background: #1c3f2e; color: #9ef3bb; } .badge.warn { background: #46360f; color: #f1ce74; } .badge.fail { background: #472026; color: #f1a9b3; }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; font-size: 12px; }
+    .status-grid h3 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; color: #9fb0c7; } .status-grid ul { margin: 0; padding-left: 18px; }
+    .scenes { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 12px; }
+
+    .scene { position: relative; padding: ${pt(panel.outerInset)}; border-radius: 12px; background: #111; }
+    .panel { border: 1px solid color-mix(in oklab, var(--divider) 60%, transparent); border-radius: ${
+  pt(panel.cornerRadius)
+}; overflow: hidden; background: var(--window); color: var(--text); font-size: 13px; }
+    .bar { height: ${pt(header.height)}; padding: 0 ${
+  pt(header.horizontalInset)
+}; display: flex; justify-content: space-between; align-items: center; }
+    .query { display: flex; align-items: center; gap: ${pt(header.controlGap)}; }
+    .lead { width: ${pt(resultRow.iconColumn)}; text-align: center; color: var(--textMuted); font-size: 18px; }
+    .placeholder { color: var(--textFaint); font-size: 16px; }
+    .affordance { color: var(--textMuted); font-size: 12px; }
+    .list-body { padding: ${pt(layout.spacing.values.compact)} 0; }
+    .row { display: grid; grid-template-columns: ${pt(resultRow.iconColumn)} 1fr auto; column-gap: ${
+  pt(resultRow.iconToTitleGap)
+}; align-items: center; height: ${pt(resultRow.height)}; padding: 0 ${pt(resultRow.horizontalInset)}; margin: 0 ${
+  pt(resultRow.selectionInsetX)
+}; border-radius: ${pt(resultRow.selectionRadius)}; }
+    .row.sel { background: var(--selection); }
+    .icon { width: 16px; height: 16px; border-radius: 4px; justify-self: center; }
+    .text { min-width: 0; } .title { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { color: var(--textMuted); font-size: 12px; margin-top: ${
+  pt(resultRow.titleToDescriptionGap)
+}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tags { display: flex; gap: ${pt(tag.gap)}; align-items: center; }
+    .pill { border-radius: ${pt(tag.cornerRadius)}; padding: ${pt(tag.verticalPadding / 2)} ${
+  pt(tag.horizontalPadding / 2)
+}; font-size: 11px; font-weight: 500; margin-right: 4px; }
+    .more { color: var(--textMuted); font-size: 11px; }
+    .footer { display: flex; gap: ${pt(footer.pillGap)}; padding: ${pt(footer.panelInset)}; justify-content: flex-end; }
+    .footer .fpill:first-child { margin-right: auto; }
+    .fpill { display: inline-flex; align-items: center; gap: ${pt(footer.keycapGap)}; padding: ${
+  pt(footer.pillVerticalPadding / 2)
+} ${
+  pt(footer.pillHorizontalPadding)
+}; border-radius: 999px; background: var(--raised); border: 1px solid var(--popupBorder); color: var(--textMuted); font-size: 12px; }
+    kbd { font: 11px/1 inherit; min-width: 14px; text-align: center; padding: 3px 4px; border-radius: 5px; background: var(--selection); color: var(--text); }
+    .split { display: grid; grid-template-columns: ${splitPane.listFraction}fr ${splitPane.detailFraction}fr; min-height: 300px; }
+    .split .list-body { border-right: 1px solid var(--divider); }
+    .detail { padding: ${pt(layout.components.detail.contentInset)}; display: flex; flex-direction: column; gap: ${
+  pt(layout.components.detail.sectionGap)
+}; }
+    blockquote { margin: 0; padding-left: 10px; border-left: 3px solid; color: var(--textMuted); }
+    .card { border: 1px solid var(--divider); border-radius: 10px; overflow: hidden; }
+    .meta { display: flex; justify-content: space-between; gap: ${pt(metadata.labelValueGap)}; padding: ${
+  pt(metadata.rowGap / 2)
+} ${pt(metadata.contentInset)}; font-size: 12px; }
+    .meta:nth-child(odd) { background: var(--zebra); } .meta > span:first-child { color: var(--textMuted); }
+
+    .popup { position: absolute; border-radius: ${
+  pt(popover.cornerRadius)
+}; background: var(--raised); border: 1px solid var(--popupBorder); box-shadow: 0 16px 28px rgba(0,0,0,.56), 0 4px 10px rgba(0,0,0,.34); overflow: hidden; font-size: 12px; color: var(--text); }
+    .popup.actions { width: 260px; right: 24px; bottom: 64px; }
+    .popup.filter { width: 200px; right: 24px; top: 60px; }
+    .popup-body { padding: ${pt(popover.contentInset)}; }
+    .popup-bar { border-top: 1px solid var(--popupBorder); color: var(--textFaint); padding: 8px ${
+  pt(popover.contentInset)
+}; }
+    .action { height: ${pt(actionItem.height / 1.4)}; padding: 0 ${pt(actionItem.horizontalInset)}; border-radius: ${
+  pt(actionItem.cornerRadius)
+}; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+    .action > span:first-child { margin-right: auto; } .action.sel { background: var(--selection); } .keys { color: var(--textMuted); }
+    .option { display: flex; gap: ${pt(filterControl.optionGap)}; padding: 4px ${
+  pt(actionItem.horizontalInset)
+}; } .option span { width: ${pt(filterControl.selectedMarkColumn)}; color: var(--textMuted); }
+
+    .swatches { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+    .swatch { border: 1px solid #2e3642; border-radius: 8px; overflow: hidden; font-size: 11px; }
+    .swatch i { display: block; height: 18px; } .swatch b, .swatch span { display: block; padding: 2px 6px; } .swatch span { color: #aeb7c5; }
+  </style>
+</head>
+<body><div class="wrap">
+  <h1>kb palettes</h1>
+  <p class="hint">Each palette drawn as kb's list (with the actions and filter popovers) and split pane, on the sample corpus. Tag
+  colours hash over the accents as Raycast does; pills are the accent at 20% over the window. The chosen palette comes first.</p>
+  ${
+  references.length
+    ? `<div class="refs">${
+      references.map((rel) => `<img src="../../${rel}" alt="Raycast reference ${escape(rel)}" />`).join('')
+    }</div>`
+    : ''
+}
+  ${palettes.map(section).join('')}
+</div></body>
+</html>`
+
+mkdirSync(dirname(htmlOut), { recursive: true })
+writeFileSync(htmlOut, page)
+console.log(`wrote ${htmlOut}`)
+'''
 
 ["design:palettes"]
 description = "Validate the palettes, regenerate the app theme from the chosen one, and open the comparison page (tmp/design/palettes.html)"
 run = [
-  "node tools/design/validate.mjs && dprint fmt tools/design/validation.json",
-  "node tools/design/theme.mjs && dprint fmt crates/kb-app/assets/themes/*.json crates/kb-app/tests/fixtures/tag-accents.json",
-  "node tools/design/render.mjs && open tmp/design/palettes.html",
+  { task = "design:validate" },
+  { task = "design:theme" },
+  { task = "design:render" },
+  "open tmp/design/palettes.html",
 ]

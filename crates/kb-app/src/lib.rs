@@ -33,7 +33,7 @@ use crate::config::Config;
 /// The bundle identifier, shared by the `.app`'s `Info.plist` and GPUI's app identity.
 pub const APP_ID: &str = "dev.roalcantara.kb";
 
-/// kb's GPUI Kit theme: DESIGN.md's palette, written by `tools/design/theme.mjs`.
+/// kb's GPUI Kit theme: DESIGN.md's palette, written by `mise run design:theme`.
 const THEME: &str = include_str!("../assets/themes/kb.json");
 /// The dark theme's name in [`THEME`].
 const DARK_THEME: &str = "kb Dark";

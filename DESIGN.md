@@ -6,14 +6,14 @@ says how it looks. Read it before any UI change.
 
 Values live in one place each, and this file points at them:
 
-| What                                       | Source of truth                                                                  | Consumer                                                       |
-| ------------------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Palette roles (hex)                        | [`tools/design/palettes.json`](tools/design/palettes.json), the `chosen` palette | `theme.mjs` → [`kb.json`](crates/kb-app/assets/themes/kb.json) |
-| Derived colours (pills, tints), tag hashes | [`tools/design/color.mjs`](tools/design/color.mjs)                               | `validate.mjs`, `render.mjs`, `theme.mjs`                      |
-| Spacing, sizes, radii, alignment           | [`tools/design/layout.json`](tools/design/layout.json)                           | `render.mjs`; the app (Plan 7)                                 |
-| Validation results                         | [`tools/design/validation.json`](tools/design/validation.json)                   | the comparison page                                            |
+| What                                       | Source of truth                                                                  | Consumer                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Palette roles (hex)                        | [`tools/design/palettes.json`](tools/design/palettes.json), the `chosen` palette | `design:theme` → [`kb.json`](crates/kb-app/assets/themes/kb.json) |
+| Derived colours (pills, tints), tag hashes | [`tools/design/color.ts`](tools/design/color.ts)                                 | the `design:` tasks ([`tasks.toml`](tools/design/tasks.toml))     |
+| Spacing, sizes, radii, alignment           | [`tools/design/layout.json`](tools/design/layout.json)                           | `design:render`; the app (Plan 7)                                 |
+| Validation results                         | [`tools/design/validation.json`](tools/design/validation.json)                   | the comparison page                                               |
 
-The palette table below repeats the chosen hexes for readers; `validate.mjs` fails when it drifts from `palettes.json`.
+The palette table below repeats the chosen hexes for readers; `mise run design:validate` fails when it drifts from `palettes.json`.
 `mise run design:palettes` validates every palette, regenerates the theme and opens the comparison page
 (`tmp/design/palettes.html`).
 
@@ -151,7 +151,7 @@ The reference is eight local captures of Raycast's kb Search (list, split pane, 
 media), mapped to components in `layout.json` `screenCoverage`. They show the private corpus, so they stay in the
 gitignored `tools/reports/`; tracked files record only measurements and screen names. Raycast publishes no numeric
 spacing for its extension UI: `layout.json` values are estimates from the captures, normalised to the ramp, and
-[`raycast.json`](tools/design/raycast.json) holds the few colour and size readings `sample.py` can take reliably.
+[`raycast.json`](tools/design/raycast.json) holds the few colour and size readings `mise run design:sample` can take reliably.
 
 ## Appendix: findings → rules
 

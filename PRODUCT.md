@@ -48,7 +48,7 @@ Command"), no exclamation marks, no chatter.
 
 ## Accessibility & Inclusion
 
-- Text meets WCAG 2.2 AA contrast on every surface it sits on; `tools/design/validate.mjs` checks the palette.
+- Text meets WCAG 2.2 AA contrast on every surface it sits on; `mise run design:validate` checks the palette.
 - Nothing is told by colour alone: a tag carries its `#name`, a type its icon and tooltip.
 - Every control is named for assistive technology ([compliance checklist](docs/experiment/compliance.md)).
 

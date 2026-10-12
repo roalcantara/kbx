@@ -196,6 +196,26 @@
   - **Created**: 2026-10-11 13:53
   - **Tags**: app, tags
 
+- [x] r3TH **-** Port tools/design/sample.py and the design kit's .mjs scripts to Bun, inline in tools/design/tasks.toml (AGENTS.md)
+  - **Comments**: gHB7
+  - **Priority**: low
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: tools
+
+- [x] niEv **-** The notes pane is invisible to VoiceOver: GPUI Kit's TextView sets no accessibility role (0.7.1)
+  - **Comments**: qC0Z,ITyZ
+  - **Priority**: low
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/notes.rs#L1:1"
+  - **Tags**: a11y, upstream
+
+- [x] zfJD **-** GitHub Pages: a one-page site (a screenshot and the feature list); the repo is public, so Pages is available
+  - **Comments**: toCs,Uj0P
+  - **Priority**: low
+  - **Created**: 2026-10-10 04:46
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
+  - **Tags**: decision, pages, release
+
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
   - **Priority**: high
   - **Created**: 2026-10-11 15:37
@@ -250,18 +270,6 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/graph.ts#L1:1"
   - **Tags**: graph, quality, tools
 
-- [ ] r3TH **-** Port tools/design/sample.py and the design kit's .mjs scripts to Bun, inline in tools/design/tasks.toml (AGENTS.md)
-  - **Priority**: low
-  - **Created**: 2026-10-11 13:53
-  - **Tags**: tools
-
-- [ ] niEv **-** The notes pane is invisible to VoiceOver: GPUI Kit's TextView sets no accessibility role (0.7.1)
-  - **Comments**: qC0Z
-  - **Priority**: low
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/notes.rs#L1:1"
-  - **Tags**: a11y, upstream
-
 - [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
   - **Priority**: low
   - **Created**: 2026-10-10 02:42
@@ -292,13 +300,6 @@
   - **Created**: 2026-10-10 04:46
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/mise.toml#L1:1"
   - **Tags**: release
-
-- [ ] zfJD **-** GitHub Pages: a one-page site (a screenshot and the feature list); the repo is public, so Pages is available
-  - **Comments**: toCs
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
-  - **Tags**: decision, pages, release
 
 - [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
   - **Priority**: low
@@ -379,4 +380,13 @@
 
 - ubm7 **-** Done 2026-10-12 without a separate brainstorm: the image is a mask in the pill's text colour inside the pill; tags:images fills the folder from docs/tags.images.toml, brands from Simple Icons, concepts from Lucide; 375 of 563 tags have one.
   - **Task**: XQgR
+
+- gHB7 **-** Done 2026-10-12: color.ts (tested) and the design: tasks, inline Bun in tools/design/tasks.toml; the outputs regenerate byte for byte (raycast.json writes 1049 for 1049.0).
+  - **Task**: r3TH
+
+- ITyZ **-** Archived 2026-10-12 at the owner's request.
+  - **Task**: niEv
+
+- Uj0P **-** Archived 2026-10-12 at the owner's request.
+  - **Task**: zfJD
 

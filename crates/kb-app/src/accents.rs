@@ -1,5 +1,5 @@
 //! The seven accents of DESIGN.md, which GPUI Kit's theme has no keys for: each with its tag
-//! pill's fill and text, for the dark and light appearances. `tools/design/theme.mjs` writes them
+//! pill's fill and text, for the dark and light appearances. `mise run design:theme` writes them
 //! into `assets/themes/accents.json` from the chosen palette.
 
 use std::collections::HashMap;

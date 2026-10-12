@@ -16,7 +16,7 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
       by their path; list rows by the List's own index model, which is virtualized (`notes.rs`, `sync_view.rs`).
 - [x] Theme tokens replace visual literals: no hex, `rgb` or `hsla` in the app's code; colours come from the theme
       (`assets/themes/kb.json`) and the seven accents from `assets/themes/accents.json` (`accents::accent`), both
-      generated from DESIGN.md's palette by `tools/design/theme.mjs`. **Exception:** component geometry (header,
+      generated from DESIGN.md's palette by `mise run design:theme`. **Exception:** component geometry (header,
       rows, footer, popovers, the window sizes) is in points, the values of `tools/design/layout.json` as DESIGN.md
       states them; text sizes stay in the rem scale.
 - [x] Keyboard actions, focus and overlays work together: every action has a binding in a context
