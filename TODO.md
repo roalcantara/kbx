@@ -223,12 +223,13 @@
   - **Tags**: design, plan8
 
 - [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
-  - **Comments**: 3kaC,QQca,303s,1xKt,ARsG
+  - **Comments**: 3kaC,QQca,303s,1xKt,ARsG,jm7r
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
 - [~] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
+  - **Comments**: QbWV
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -249,6 +250,7 @@
   - **Tags**: design, plan8
 
 - [ ] 3XFj **-** Plan 8, 08-09 Actions pages in the companion: Links and Copy; owner approves
+  - **Comments**: 1AzQ
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -278,6 +280,11 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
+- [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
+  - **Priority**: high
+  - **Created**: 2026-10-12 19:39
+  - **Tags**: design, plan8
+
 - [ ] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
@@ -297,6 +304,11 @@
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
+
+- [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
+  - **Priority**: medium
+  - **Created**: 2026-10-12 19:39
+  - **Tags**: app, next
 
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
   - **Priority**: high
@@ -393,6 +405,11 @@
   - **Priority**: low
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
+
+- [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
+  - **Priority**: low
+  - **Created**: 2026-10-12 19:39
+  - **Tags**: app
 
 # Actors
 
@@ -494,4 +511,13 @@
 
 - ARsG **-** 2026-10-12, final (companion actions-final-v2): Raycast layout, 28 pt rows, search at the bottom, sections by a line. Main panel (218 pt): Details ↵, Copy ⌘↵ (Open on bookmarks), Preview ⌘D, Resize ⇧⌘F, Edit ⌘O, More… ›. More… is a submenu with no search of its own and a ‹ More header: LINKS (one row per link, opens it; only when the entry has links), COPY (URL ⇧⌘C on bookmarks, Title, Description, Notes, Path = the source file's absolute path; rows only when the entry has them), ADMINISTRATION (Refresh ⌘R, Configure ⇧⌘,). The main panel's search also finds More…'s rows, marked 'More'. Raw YAML copy dropped (Path + Edit instead). Shortcuts fire from the list wherever an action is listed.
   - **Task**: OKAo
+
+- jm7r **-** 2026-10-12, final (superseding the earlier v-notes): one action component for every screen, Raycast layout (28 pt rows, search at the bottom, sections by a line, at most two levels). Primary/secondary model: entry types define primary + optional secondary (Bookmark: Open in the default browser / Copy URL; Command, Cheat: Copy, later Paste / Copy; Note, Task, Other: Copy / none); screens map the key ladder ↵, ⌘↵, ⇧⌘↵: List ↵ Details, ⌘↵ entry primary, ⇧⌘↵ entry secondary; Detail ↵ entry primary, ⌘↵ entry secondary. Root panel: screen's keys, Resize ⇧⌘F, Links… › (only with links; each link row = the bookmark pair), More… ›. More… (no search of its own; the root's search finds its rows): COPY Description, Notes, Path (absolute) │ ADMINISTRATION Edit ⌘O, Refresh ⌘R, Configure ⇧⌘,. Dropped: Preview/Info rows and ⌘D (← → toggle them), Title copy (Copy does the job), raw YAML copy. Open: a footer hint for ← → (to settle with 04/05).
+  - **Task**: OKAo
+
+- 1AzQ **-** 2026-10-12: scope changed by the 02 decisions: the Links… and More… submenus (Raycast submenus, no search of their own), not the old Links and Copy pages.
+  - **Task**: 3XFj
+
+- QbWV **-** 2026-10-12: each screen also gets its ↵ / ⌘↵ pair from the catalog (proposed: no match ↵ Clear Search, ⌘↵ Clear Filters; no index ↵ Refresh, ⌘↵ Configure; filter ↵ Toggle, ⌘↵ Only this; rebuild report ↵ Back, stopped ↵ Retry, failed ↵ Retry, ⌘↵ Configure); confirm each in its companion pass.
+  - **Task**: w5fY
 
