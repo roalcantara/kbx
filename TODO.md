@@ -223,7 +223,7 @@
   - **Tags**: design, plan8
 
 - [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
-  - **Comments**: 3kaC
+  - **Comments**: 3kaC,QQca
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -481,5 +481,8 @@
   - **Task**: elwx
 
 - 3kaC **-** 2026-10-12: approved as v4 in the companion. One popover, 220 pt, no icons: Details ↵, Copy ⌘↵ (Open on bookmarks: their main action opens the URL; one name whatever the type), More… › (the page of other copies: title, description, notes, YAML), Split ⌘D, Source ⌘O, Toggle Size ⇧⌘F; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,. Dropped: Quit kb (⌘Q still quits), Copy YAML Snippet, Configure Filter, Run in Terminal (not now). Footer reads Details ↵. Goal for every popover: the smallest comfortable size, no redundant or rarely used rows.
+  - **Task**: OKAo
+
+- QQca **-** 2026-10-12, v5: order Details ↵, Copy ⌘↵, Split ⌘D, Resize ⇧⌘F (was Toggle Size), Source ⌘O, More… ›; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,.
   - **Task**: OKAo
 
