@@ -48,7 +48,7 @@ convention's name is `third_party`; ls-lint's directory rule (lowercase, digits,
 **D5. Product checks and features stay out of the kit.** The binary size budget is a gate: its file and check script
 become `tools/size/` (`budget`, `size.sh`), which the kit's `bench:size` also calls to record a result. `mise run setup`
 installs the product's tools; the kit's own setup is `mise run bench:setup`. `kb --trace` and `kb --sync` remain in kb-app: tested diagnostics that the probes use,
-not part of the kit. `docs/experiment/` stays in `docs/` as the record.
+not part of the kit. `docs/guides/` stays in `docs/` as the record.
 
 **D6. Local state is ignored in one block.** `graphify-out/`, `.code-review-graph/` and `.delta/` join `.gitignore`
 under one heading.

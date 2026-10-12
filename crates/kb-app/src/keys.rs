@@ -42,6 +42,14 @@ actions!(
         HideDetails,
         /// Switch the window between its compact and expanded sizes.
         ToggleWindowSize,
+        /// Scroll the detail screen's notes down a few lines.
+        ScrollNotesDown,
+        /// Scroll the detail screen's notes up a few lines.
+        ScrollNotesUp,
+        /// Scroll the detail screen's notes down a page.
+        PageNotesDown,
+        /// Scroll the detail screen's notes up a page.
+        PageNotesUp,
         /// Open the selected entry's detail screen (Return in the list, which the query field
         /// reports; no binding of its own).
         OpenDetail,
@@ -71,6 +79,11 @@ pub fn key_bindings() -> Vec<KeyBinding> {
         KeyBinding::new("right", ShowDetails, context),
         KeyBinding::new("left", HideDetails, context),
         KeyBinding::new("cmd-shift-f", ToggleWindowSize, context),
+        // The detail screen has no text field: the arrows scroll its notes, ⌘ a page at a time.
+        KeyBinding::new("down", ScrollNotesDown, Some(DETAIL_CONTEXT)),
+        KeyBinding::new("up", ScrollNotesUp, Some(DETAIL_CONTEXT)),
+        KeyBinding::new("cmd-down", PageNotesDown, Some(DETAIL_CONTEXT)),
+        KeyBinding::new("cmd-up", PageNotesUp, Some(DETAIL_CONTEXT)),
     ]
 }
 
@@ -87,7 +100,7 @@ mod tests {
 
     #[test]
     fn binds_every_shortcut_in_the_search_context() {
-        assert_eq!(key_bindings().len(), 13);
+        assert_eq!(key_bindings().len(), 17);
     }
 
     #[test]

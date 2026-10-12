@@ -2,7 +2,7 @@
 //! the left; the primary action and Actions on the right, one keycap per key.
 
 use gpui_kit::assets::IconName;
-use gpui_kit::component::button::{Button, ButtonVariants as _};
+use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
@@ -73,20 +73,19 @@ pub fn keycap_row(caps: Vec<String>, cx: &App) -> impl IntoElement {
     }))
 }
 
-/// A floating pill.
-fn pill(cx: &App) -> gpui_kit::Div {
-    let theme = cx.theme();
-    h_flex()
-        .h(px(30.))
-        .items_center()
-        .gap(px(8.))
-        .px(px(12.))
-        .rounded_full()
-        .bg(theme.popover)
-        .border_1()
-        .border_color(theme.border)
-        .shadow_sm()
-        .text_xs()
+/// A button drawn as its text and keys alone: no fill, even on hover (the footer, the filter).
+pub(super) fn plain_button(cx: &App) -> ButtonCustomVariant {
+    ButtonCustomVariant::new(cx)
+        .color(gpui_kit::transparent_black())
+        .hover(gpui_kit::transparent_black())
+        .active(gpui_kit::transparent_black())
+        .foreground(cx.theme().foreground)
+        .shadow(false)
+}
+
+/// A footer item: its text and keycaps, with neither fill nor line around them.
+fn pill(_: &App) -> gpui_kit::Div {
+    h_flex().h(px(30.)).items_center().gap(px(8.)).px(px(12.)).text_xs()
 }
 
 impl SearchView {
@@ -98,18 +97,20 @@ impl SearchView {
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let theme = cx.theme();
-        let (icon, tint, context) = match (&self.screen, selected) {
-            (Screen::Rebuild(_), _) => (
+        // What the screen is about, on the left: nothing on the list, whose search field says it already.
+        let context = match (&self.screen, selected) {
+            (Screen::Rebuild(_), _) => Some((
                 IconName::RefreshCw,
                 theme.muted_foreground,
                 "Rebuilding the Index…".to_owned(),
-            ),
+            )),
             (Screen::Detail, Some(entry)) => {
                 let badge = type_badge(&entry.entry_type);
-                (badge.icon, accent(badge.hue, cx).color, entry.title.clone())
+                Some((badge.icon, accent(badge.hue, cx).color, entry.title.clone()))
             }
-            _ => (IconName::BookOpen, theme.red, "Search Knowledge Base".to_owned()),
+            _ => None,
         };
+        let plain = plain_button(cx);
         let primary_label = if self.is_showing_detail() {
             selected.map_or("Run", |e| primary_action(e).title)
         } else {
@@ -124,19 +125,21 @@ impl SearchView {
             .justify_between()
             .gap(px(8.))
             .p(px(8.))
-            .child(
-                pill(cx)
-                    .min_w_0()
-                    .child(Icon::new(icon).small().text_color(tint))
-                    .child(div().truncate().max_w(px(320.)).child(context)),
-            )
+            .child(div().min_w_0().when_some(context, |left, (icon, tint, context)| {
+                left.child(
+                    pill(cx)
+                        .min_w_0()
+                        .child(Icon::new(icon).small().text_color(tint))
+                        .child(div().truncate().max_w(px(320.)).child(context)),
+                )
+            }))
             .child(
                 h_flex()
                     .gap(px(8.))
                     .child(
                         pill(cx).child(
                             Button::new("footer-primary-action")
-                                .ghost()
+                                .custom(plain)
                                 .xsmall()
                                 .label(primary_label)
                                 .child(keycap_row(enter, cx))
@@ -153,13 +156,11 @@ impl SearchView {
                         pill(cx).child(
                             self.actions_popover(
                                 Button::new("footer-open-actions")
-                                    .ghost()
+                                    .custom(plain)
                                     .xsmall()
                                     .label("Actions")
-                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx)))
-                                    .on_click(
-                                        cx.listener(|this, _, window, cx| this.open_actions(&OpenActions, window, cx)),
-                                    ),
+                                    // The popover opens on its trigger's click; a handler here would close it again.
+                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx))),
                                 cx,
                             ),
                         ),

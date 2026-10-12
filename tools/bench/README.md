@@ -2,7 +2,7 @@
 
 Everything that produces the experiment's measurements, kept apart from the product so it can be deleted as one unit.
 The product, its tests and the gate do not depend on it. What it produces lives elsewhere: results, report, methodology
-and parity matrix in [docs/experiment/](../../docs/experiment/).
+and parity matrix in [docs/guides/](../../docs/guides).
 
 | Path         | What                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------ |
@@ -10,15 +10,15 @@ and parity matrix in [docs/experiment/](../../docs/experiment/).
 | `kb-bench/`  | tier 1: the Rust engine benchmark (crate `kb-bench`)                                                   |
 | `ts/`        | tier 1 of the TypeScript engine, and the golden writer; `ts/kb` links to the Raycast repo (read only)  |
 | `probes/`    | tiers 2 and 3: memory, CPU, size, latency and ⌘↩ probes, and the CGEvent driver `probe.swift`          |
-| `report/`    | `docs/experiment/report.md` from the results (crate `kb-report`)                                       |
+| `report/`    | `docs/guides/report.md` from the results (crate `kb-report`)                                           |
 | `fixtures/`  | `queries.json`, the private corpus's manifest; `private*` is gitignored; `sample*` link to kb-domain's |
 
 ## Use
 
 ```bash
 mise run bench:setup     # link the TS engine, install the TS bench's dependencies
-mise run bench:session   # tiers 2 and 3 for both apps (docs/experiment/methodology.md, "Session")
-mise run report          # gate, golden parity, then docs/experiment/report.md
+mise run bench:session   # tiers 2 and 3 for both apps (docs/guides/methodology.md, "Session")
+mise run report          # gate, golden parity, then docs/guides/report.md
 ```
 
 ## Purge

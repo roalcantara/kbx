@@ -32,26 +32,26 @@ Half 1, MVP compliance and packaging, and the measurement infrastructure. The fu
 - Theme follows the system appearance; start-up failures are in-panel notifications; sentence-case labels; ⌘Q /
   "Quit kb"; `kb-app`'s public surface narrowed; every `#[allow]` is an `#[expect(…, reason)]`.
 - `kb.app` packaging (`cargo-packager`, `LSUIElement`, `dev.roalcantara.kb`), icon pipeline, ADR 0006,
-  `docs/experiment/compliance.md`.
+  `docs/guides/compliance.md`.
 - CGEvent probe, tier 2/3 probe scripts, `bench:memory`, `bench:e2e`, `bench:maint`, `xtask report`, `mise run report`.
 - Tier 1 results (`tier1-*-20261009T08*`) stay valid: `06190c7` changed only comments and doctests in `kb-domain`.
   Tier 1 is not re-run.
 
 ## File map
 
-| Path                                                                             | Responsibility                                            | Task   |
-| -------------------------------------------------------------------------------- | --------------------------------------------------------- | ------ |
-| `crates/kb-app/src/cli.rs` (new), `src/lib.rs`, `src/main.rs`                    | `kb [--trace \| --sync]`: argument parsing, headless sync | 1      |
-| `crates/kb-app/tests/sync_cli.rs` (new)                                          | the built binary syncs without a window                   | 1      |
-| `mise.toml`, `bench/probes/kb-home.sh` (new), four kb probes                     | `bench:home`; every kb probe runs under the synced home   | 2      |
-| `.gitignore`, `bench/probes/latency.sh`, `crates/xtask/src/report.rs`            | Raycast's hotkey from `KB_RAYCAST_HOTKEY`                 | 3      |
-| `bench/probes/manual-keystroke.sh` (new), `crates/xtask/src/report.rs`           | manual keystroke run as a result, shown in the report     | 4      |
-| `bench/probes/maint.sh`, `crates/xtask/src/report.rs`                            | depth, coverage, duplication, clippy rows                 | 5      |
-| `crates/xtask/src/report.rs`, `crates/xtask/src/main.rs`                         | link to `findings.md` under the Verdict                   | 6      |
-| `mise.toml`, `bench/probes/preflight.sh` (new)                                   | `bench:cpu`, `bench:size`, `bench:session`, preflight     | 7      |
-| `docs/experiment/methodology.md`, the experiment spec, `CONTEXT.md`, `README.md` | the session, home, hotkey, manual run, amendment          | 8      |
-| `docs/experiment/results/*.json`                                                 | the measurement session (owner)                           | 9, 10  |
-| `docs/experiment/report.md`, `findings.md`, `README.md`                          | report, findings, README summary                          | 11, 12 |
+| Path                                                                         | Responsibility                                            | Task   |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- | ------ |
+| `crates/kb-app/src/cli.rs` (new), `src/lib.rs`, `src/main.rs`                | `kb [--trace \| --sync]`: argument parsing, headless sync | 1      |
+| `crates/kb-app/tests/sync_cli.rs` (new)                                      | the built binary syncs without a window                   | 1      |
+| `mise.toml`, `bench/probes/kb-home.sh` (new), four kb probes                 | `bench:home`; every kb probe runs under the synced home   | 2      |
+| `.gitignore`, `bench/probes/latency.sh`, `crates/xtask/src/report.rs`        | Raycast's hotkey from `KB_RAYCAST_HOTKEY`                 | 3      |
+| `bench/probes/manual-keystroke.sh` (new), `crates/xtask/src/report.rs`       | manual keystroke run as a result, shown in the report     | 4      |
+| `bench/probes/maint.sh`, `crates/xtask/src/report.rs`                        | depth, coverage, duplication, clippy rows                 | 5      |
+| `crates/xtask/src/report.rs`, `crates/xtask/src/main.rs`                     | link to `findings.md` under the Verdict                   | 6      |
+| `mise.toml`, `bench/probes/preflight.sh` (new)                               | `bench:cpu`, `bench:size`, `bench:session`, preflight     | 7      |
+| `docs/guides/methodology.md`, the experiment spec, `CONTEXT.md`, `README.md` | the session, home, hotkey, manual run, amendment          | 8      |
+| `docs/guides/results/*.json`                                                 | the measurement session (owner)                           | 9, 10  |
+| `docs/guides/report.md`, `findings.md`, `README.md`                          | report, findings, README summary                          | 11, 12 |
 
 ---
 
@@ -500,7 +500,7 @@ git commit -m "feat(bench): Run the kb probes under a synced bench home"
 Append to `.gitignore`:
 
 ```gitignore
-# Machine-local settings, such as KB_RAYCAST_HOTKEY (docs/experiment/methodology.md).
+# Machine-local settings, such as KB_RAYCAST_HOTKEY (docs/guides/methodology.md).
 /mise.local.toml
 ```
 
@@ -531,7 +531,7 @@ with
 
 ```bash
 [ -n "${KB_RAYCAST_HOTKEY:-}" ] || {
-  echo "set KB_RAYCAST_HOTKEY to kb Search's hotkey in Raycast (docs/experiment/methodology.md, Tier 3)"
+  echo "set KB_RAYCAST_HOTKEY to kb Search's hotkey in Raycast (docs/guides/methodology.md, Tier 3)"
   exit 1
 }
 read -r code mods <<<"$KB_RAYCAST_HOTKEY"
@@ -914,7 +914,7 @@ Expected: FAIL to compile: `Inputs` has no field `findings`.
 In `Inputs`, after `verified`:
 
 ```rust
-/// Whether `docs/experiment/findings.md`, the hand-written reading of the report, exists.
+/// Whether `docs/guides/findings.md`, the hand-written reading of the report, exists.
 pub findings: bool,
 ```
 
@@ -963,7 +963,7 @@ Create `bench/probes/preflight.sh` (then `chmod +x`):
 #!/usr/bin/env bash
 # Checks what a measurement session needs that can be checked from here, prints every miss, and
 # fails if there was one. Accessibility permission for the terminal and the kb extension running
-# in Raycast are the owner's (docs/experiment/methodology.md, "Session").
+# in Raycast are the owner's (docs/guides/methodology.md, "Session").
 # Usage: preflight.sh
 set -euo pipefail
 
@@ -997,8 +997,8 @@ run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   case "${usage_app}" in
-  kb) mise run package && bench/probes/cpu-rs.sh docs/experiment/results ;;
-  raycast) bench/probes/cpu-ts.sh docs/experiment/results ;;
+  kb) mise run package && bench/probes/cpu-rs.sh docs/guides/results ;;
+  raycast) bench/probes/cpu-ts.sh docs/guides/results ;;
   *) echo "usage: mise run bench:cpu kb|raycast"; exit 2 ;;
   esac
 '''
@@ -1011,7 +1011,7 @@ run = '''
   set -euo pipefail
   case "${usage_app}" in
   kb) mise run size ;;
-  raycast) bench/probes/size-ts.sh "docs/experiment/results/tier2-ts-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
+  raycast) bench/probes/size-ts.sh "docs/guides/results/tier2-ts-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
   *) echo "usage: mise run bench:size kb|raycast"; exit 2 ;;
   esac
 '''
@@ -1052,7 +1052,7 @@ git commit -m "feat(bench): Add cpu, size and session tasks with a preflight"
 
 **Files:**
 
-- Modify: `docs/experiment/methodology.md` (Tier 2, Tier 3, new "Maintainability" and "Session" sections)
+- Modify: `docs/guides/methodology.md` (Tier 2, Tier 3, new "Maintainability" and "Session" sections)
 - Modify: `docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md` (`## Report`)
 - Modify: `CONTEXT.md` (Experiment table)
 - Modify: `README.md` (Development Workflow)
@@ -1073,7 +1073,7 @@ In "Tier 3 — perceived latency", replace the two bullets beginning "**Raycast 
 ```markdown
 - **Raycast keystroke → updated list** has no signal the probe reads and no trace. It is measured by hand: record the
   screen at 120 fps while typing the last letter of a query, and count frames from the key's echo in the field to the
-  list's change, for ten runs at least. `bench/probes/manual-keystroke.sh docs/experiment/results 120 <frames>...`
+  list's change, for ten runs at least. `bench/probes/manual-keystroke.sh docs/guides/results 120 <frames>...`
   records them as `tier3-raycast-keystroke-manual-<stamp>.json`, which the report reads.
 - **Raycast's hotkey.** The latency run opens the kb command by its own hotkey, not Raycast's root search: assign kb
   Search a hotkey in Raycast and set it in the gitignored `mise.local.toml` as
@@ -1114,7 +1114,7 @@ In `docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md`, `## 
 **Amendment (2026-10-10).** Item 1's charts and item 3's comparison with fallow's health are dropped: the tables carry
 the same numbers, and fallow has no Rust counterpart. Item 3 reports dependency depth, Rust line coverage (TypeScript's
 is not measured: the Raycast repo has no coverage provider and is never written to), jscpd duplication and the clippy
-warning count. Failed or unmeasured criteria are explained in the hand-written `docs/experiment/findings.md`, linked
+warning count. Failed or unmeasured criteria are explained in the hand-written `docs/guides/findings.md`, linked
 from the report. Design: `docs/superpowers/specs/2026-10-10-kb-native-05-measurement-and-report-design.md`.
 ```
 
@@ -1123,14 +1123,14 @@ from the report. Design: `docs/superpowers/specs/2026-10-10-kb-native-05-measure
 In `CONTEXT.md`, Experiment table, after the "Report" row add:
 
 ```markdown
-| Findings | The hand-written reading of the report: why a criterion failed or went unmeasured, and what would fix it. | `docs/experiment/findings.md` |
+| Findings | The hand-written reading of the report: why a criterion failed or went unmeasured, and what would fix it. | `docs/guides/findings.md` |
 ```
 
 In `README.md`, `## Development Workflow`, add rows to the command table for `bench:home`, `bench:size <app>`,
 `bench:cpu <app>` and `bench:session`, and before the "Commits follow…" line add a paragraph:
 
 ```markdown
-Measuring both apps is one sitting: set up what `docs/experiment/methodology.md` ("Session") asks, run
+Measuring both apps is one sitting: set up what `docs/guides/methodology.md` ("Session") asks, run
 `mise run bench:session`, record the manual keystroke run, commit the results, then `mise run report`.
 ```
 
@@ -1140,7 +1140,7 @@ Run: `dprint fmt && hk check --all`
 Expected: pass (dprint realigns the CONTEXT table).
 
 ```bash
-git add docs/experiment/methodology.md docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md CONTEXT.md README.md
+git add docs/guides/methodology.md docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md CONTEXT.md README.md
 git commit -m "docs: Describe the measurement session and amend the report scope"
 ```
 
@@ -1154,11 +1154,11 @@ Expected: every step passes. Hand over to the owner for Task 9.
 ### Task 9: Measurement session (owner at the machine)
 
 > **Paused 2026-10-10.** The first session (`44fedfa`) is archived in
-> `docs/experiment/results/archive/2026-10-10-pre-polish/`, with why: kb opened with the split pane (fixed, `1cc355b`),
+> `docs/guides/results/archive/2026-10-10-pre-polish/`, with why: kb opened with the split pane (fixed, `1cc355b`),
 > Raycast's queries went to its root search (fixed, `18be397`), and kb's interface gets a visual polish first. Resume
 > here after that polish, deciding first how Raycast's memory run starts (`TODO.md`).
 
-**Files:** results only, under `docs/experiment/results/`.
+**Files:** results only, under `docs/guides/results/`.
 
 - [ ] **Step 1: Prepare**
 
@@ -1186,7 +1186,7 @@ result is a new stamped file, and the report reads the latest of each kind.
 
 - [ ] **Step 3: Check the files**
 
-Run: `ls docs/experiment/results | grep "$(date -u +%Y%m%d)"`
+Run: `ls docs/guides/results | grep "$(date -u +%Y%m%d)"`
 Expected, all stamped today: `tier2-{rust,ts}-size-*`, `maint-{rust,ts}-*`, `tier2-rust-{rss,footprint}-all-{idle,open,after-100-queries}-*`,
 `tier2-ts-{rss,footprint}-{all,worker}-{idle,open,after-100-queries}-*`, `tier2-rust-cpu-all-*`, `tier2-ts-cpu-{all,worker}-*`,
 `tier3-kb-*`, `tier3-raycast-*`, `tier3-kb-action-*`, `tier3-raycast-action-*`. In `tier3-raycast-*.json`, `hotkey`
@@ -1202,13 +1202,13 @@ camera. For each run count frames from the letter's echo in the field to the lis
 
 - [ ] **Step 2: Write the result**
 
-Run: `tools/bench/probes/manual-keystroke.sh docs/experiment/results 120 <frames of run 1> … <frames of run 10>`
+Run: `tools/bench/probes/manual-keystroke.sh docs/guides/results 120 <frames of run 1> … <frames of run 10>`
 Expected: `keystroke-manual: p50 <ms> ms (IQR …, n 10)`.
 
 - [ ] **Step 3: Commit the results**
 
 ```bash
-git add docs/experiment/results
+git add docs/guides/results
 git commit -m "chore(results): Add the tier 2 and tier 3 session results"
 ```
 
@@ -1216,16 +1216,16 @@ git commit -m "chore(results): Add the tier 2 and tier 3 session results"
 
 **Files:**
 
-- Create: `docs/experiment/findings.md`, `docs/experiment/report.md`
+- Create: `docs/guides/findings.md`, `docs/guides/report.md`
 - Modify: `README.md` (new `## Findings` section)
 
 - [ ] **Step 1: Generate a first report to read**
 
 Run: `mise run report`
-Expected: the gate and golden parity pass, then "wrote …/docs/experiment/report.md". Read its Verdict: Footprint,
+Expected: the gate and golden parity pass, then "wrote …/docs/guides/report.md". Read its Verdict: Footprint,
 Output parity and Quality now have verdicts; Performance and UI/UX parity keep theirs.
 
-- [ ] **Step 2: Write `docs/experiment/findings.md`**
+- [ ] **Step 2: Write `docs/guides/findings.md`**
 
 Hand-written from the report just generated. Sections, each filled with this run's figures and file names:
 
@@ -1265,7 +1265,7 @@ In `README.md`, after `## Project Name and Description`, add:
 ## Findings
 
 <One sentence: the verdict.> Measured on <date> at commit `<hash>`; method in
-[methodology](docs/experiment/methodology.md).
+[methodology](docs/guides/methodology.md).
 
 | Measure                                     | Raycast | kb    | Target                 |
 | ------------------------------------------- | ------- | ----- | ---------------------- |
@@ -1274,7 +1274,7 @@ In `README.md`, after `## Project Name and Description`, add:
 | RSS after 100 queries                       | <MiB>   | <MiB> | ≤ 50%                  |
 | Artifact size                               | <MiB>   | <MiB> | —                      |
 
-Full figures: [report](docs/experiment/report.md). What they mean and what failed: [findings](docs/experiment/findings.md).
+Full figures: [report](docs/guides/report.md). What they mean and what failed: [findings](docs/guides/findings.md).
 ```
 
 Fill every `<…>` from the report.
@@ -1282,9 +1282,9 @@ Fill every `<…>` from the report.
 - [ ] **Step 4: Commit findings and README, then generate the final report**
 
 ```bash
-rm docs/experiment/report.md
-dprint fmt docs/experiment/findings.md README.md
-git add docs/experiment/findings.md README.md
+rm docs/guides/report.md
+dprint fmt docs/guides/findings.md README.md
+git add docs/guides/findings.md README.md
 git commit -m "docs: Add the experiment findings and a README summary"
 mise run report
 ```
@@ -1294,7 +1294,7 @@ Expected: the report's header cites the new `HEAD` without `-dirty`, and the Ver
 - [ ] **Step 5: Commit the report**
 
 ```bash
-git add docs/experiment/report.md
+git add docs/guides/report.md
 git commit -m "docs(report): Generate the experiment report"
 ```
 
@@ -1302,7 +1302,7 @@ git commit -m "docs(report): Generate the experiment report"
 
 - [ ] **Step 1: Check the deliverables**
 
-Run: `grep -c '<' docs/experiment/findings.md; grep -n 'not measured\|-dirty' docs/experiment/report.md; git status --short`
+Run: `grep -c '<' docs/guides/findings.md; grep -n 'not measured\|-dirty' docs/guides/report.md; git status --short`
 Expected: no `<…>` placeholders left in `findings.md` (any `<` count is from real content only); "not measured" only
 for criteria `findings.md` explains; a clean tree.
 

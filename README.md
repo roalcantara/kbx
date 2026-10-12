@@ -39,22 +39,23 @@ open ~/Applications/kb.app
 
 Then press **⌥K** anywhere to open the panel, and **⌘R** once to build the index from your sources.
 
-| Key  | Does                                                 |
-| ---- | ---------------------------------------------------- |
-| type | search titles, descriptions and notes                |
-| ↑ ↓  | move the selection                                   |
-| ↩    | show the entry; on the entry, run its main action    |
-| ⌘↩   | run the main action: open a bookmark, copy a command |
-| ⌘K   | all actions for the selected entry                   |
-| ⌘P   | filter by type and tag                               |
-| → ←  | show or hide the details pane (at the query's end)   |
-| ⌘R   | rebuild the index                                    |
-| ⌘⇧C  | copy a bookmark's URL                                |
-| ⌘O   | open the entry's source file                         |
-| ⌘⇧,  | open the preferences file                            |
-| ⌘⇧F  | switch between the compact and expanded window       |
-| Esc  | close a popover, go back, then hide the panel        |
-| ⌘Q   | quit kb                                              |
+| Key   | Does                                                 |
+| ----- | ---------------------------------------------------- |
+| type  | search titles, descriptions and notes                |
+| ↑ ↓   | move the selection; on an entry, scroll its notes    |
+| ⌘↑ ⌘↓ | on an entry, scroll its notes a page                 |
+| ↩     | show the entry; on the entry, run its main action    |
+| ⌘↩    | run the main action: open a bookmark, copy a command |
+| ⌘K    | all actions for the selected entry                   |
+| ⌘P    | filter by type and tag                               |
+| → ←   | show or hide the details pane (at the query's end)   |
+| ⌘R    | rebuild the index                                    |
+| ⌘⇧C   | copy a bookmark's URL                                |
+| ⌘O    | open the entry's source file                         |
+| ⌘⇧,   | open the preferences file                            |
+| ⌘⇧F   | switch between the compact and expanded window       |
+| Esc   | close a popover, go back, then hide the panel        |
+| ⌘Q    | quit kb                                              |
 
 kb has no Dock icon: it lives behind ⌥K until you quit it. To start it at login, add `~/Applications/kb.app` in
 System Settings › General › Login Items. If another app holds ⌥K, kb says so when it opens.
@@ -122,33 +123,34 @@ tools/                      developer tooling
 
 ## Development Workflow
 
-| Command                                 | Does                                                                  |
-| --------------------------------------- | --------------------------------------------------------------------- |
-| `mise run setup`                        | install everything                                                    |
-| `mise run graph setup`                  | initialize the code graphs for agents (CRG, Gortex, Graphify)         |
-| `mise doctor project`                   | verify toolchain, code graph health and secrets                       |
-| `mise run gate`                         | all gates in order; `--fast` runs tests and clippy only               |
-| `mise run fixtures`                     | copy the private corpus, verify its manifest, build the 10× copy      |
-| `mise run goldens`                      | write goldens from the TS engine                                      |
-| `mise run parity`                       | golden parity on the private corpus                                   |
-| `mise run bench:ts`                     | tier 1 benchmarks of the TS engine                                    |
-| `mise run bench:rs <corpus>`            | tier 1 benchmarks of kb-domain                                        |
-| `mise run bench:memory <app>`           | tier 2 memory of kb or raycast                                        |
-| `mise run bench:e2e <app>`              | tier 3 latency of kb or raycast                                       |
-| `mise run bench:maint`                  | lines, dependencies, tests and build time of both                     |
-| `mise run bench:home`                   | an isolated home over the private corpus, index synced by `kb --sync` |
-| `mise run bench:size <app>`             | tier 2 artifact size of kb or raycast                                 |
-| `mise run bench:cpu <app>`              | tier 2 cold-start CPU of kb or raycast                                |
-| `mise run bench:session`                | preflight, then every tier 2 and 3 run and maintainability, in order  |
-| `mise run package`                      | build and sign `kb.app`; `install` copies it to ~/Applications        |
-| `mise run show`                         | (re)start kb in the background with the panel showing, without ⌥K     |
-| `mise run images`                       | copy the Raycast extension's tag images into `~/.config/kb/images`    |
-| `mise run ci`                           | what CI checks: the gate on macOS, `ci:lint` and `ci:test` elsewhere  |
-| `mise run release -- --dry-run --no-ci` | preview the next release (`GITHUB_TOKEN=$(gh auth token)`)            |
-| `mise run report`                       | gate, parity, then `docs/experiment/report.md` from the results       |
-| `hk check --all`                        | every baseline step over the whole repository                         |
+| Command                                               | Does                                                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `mise run setup`                                      | install everything                                                             |
+| `mise run graph setup`                                | initialize the code graphs for agents (CRG, Gortex, Graphify)                  |
+| `mise doctor project`                                 | verify toolchain, code graph health and secrets                                |
+| `mise run gate`                                       | all gates in order; `--fast` runs tests and clippy only                        |
+| `mise run fixtures`                                   | copy the private corpus, verify its manifest, build the 10× copy               |
+| `mise run goldens`                                    | write goldens from the TS engine                                               |
+| `mise run parity`                                     | golden parity on the private corpus                                            |
+| `mise run bench:ts`                                   | tier 1 benchmarks of the TS engine                                             |
+| `mise run bench:rs <corpus>`                          | tier 1 benchmarks of kb-domain                                                 |
+| `mise run bench:memory <app>`                         | tier 2 memory of kb or raycast                                                 |
+| `mise run bench:e2e <app>`                            | tier 3 latency of kb or raycast                                                |
+| `mise run bench:maint`                                | lines, dependencies, tests and build time of both                              |
+| `mise run bench:home`                                 | an isolated home over the private corpus, index synced by `kb --sync`          |
+| `mise run bench:size <app>`                           | tier 2 artifact size of kb or raycast                                          |
+| `mise run bench:cpu <app>`                            | tier 2 cold-start CPU of kb or raycast                                         |
+| `mise run bench:session`                              | preflight, then every tier 2 and 3 run and maintainability, in order           |
+| `mise run package`                                    | build and sign `kb.app`; `install` copies it to ~/Applications                 |
+| `mise run show`                                       | (re)start kb in the background with the panel showing, without ⌥K              |
+| `mise run images`                                     | copy the Raycast extension's tag images into `~/.config/kb/images`             |
+| `mise run tags:suggest` / `tags:apply` / `tags:check` | propose, apply and check tag merges in your sources (tag conventions doctrine) |
+| `mise run ci`                                         | what CI checks: the gate on macOS, `ci:lint` and `ci:test` elsewhere           |
+| `mise run release -- --dry-run --no-ci`               | preview the next release (`GITHUB_TOKEN=$(gh auth token)`)                     |
+| `mise run report`                                     | gate, parity, then `docs/guides/report.md` from the results                    |
+| `hk check --all`                                      | every baseline step over the whole repository                                  |
 
-Measuring both apps is one sitting: set up what `docs/experiment/methodology.md` ("Session") asks, run
+Measuring both apps is one sitting: set up what `docs/guides/methodology.md` ("Session") asks, run
 `mise run bench:session`, record the manual keystroke run, commit the results, then `mise run report`.
 
 Commits follow Conventional Commits with a sentence-case subject; hk checks the message.

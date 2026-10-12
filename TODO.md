@@ -47,7 +47,7 @@
 - [x] bt8n **-** Plan 5 T8: methodology Session and Maintainability sections, and the spec's report amendment (44fedfa)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/methodology.md#L1:1"
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
   - **Tags**: docs, plan5
 
 - [x] Kkuw **-** kb opens on the list alone, as Raycast's kb Search does; ⌘D shows the split pane (1cc355b)
@@ -68,72 +68,28 @@
   - **Comments**: 7Tbq
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/results/archive/2026-10-10-pre-polish/README.md#L1:1"
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/results/archive/2026-10-10-pre-polish/README.md#L1:1"
   - **Tags**: bench, results
 
-- [ ] hU1X **-** Visual polish: bring kb's colours, typography and spacing up to Raycast's, with a spec, a plan, side-by-side screenshots and the GPUI Kit Design Guides
+- [x] hU1X **-** Visual polish: bring kb's colours, typography and spacing up to Raycast's, with a spec, a plan, side-by-side screenshots and the GPUI Kit Design Guides
   - **Comments**: lh5P,dW09
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
   - **Tags**: next, parity, ui
 
-- [ ] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kb (which memory.sh relaunches)
-  - **Comments**: HGSp
-  - **Priority**: high
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/memory.sh#L36:1"
-  - **Tags**: bench, decision, next
-
-- [ ] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
-  - **Comments**: TbBw
-  - **Priority**: high
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/plans/2026-10-09-kb-native-05-mvp-compliance-and-report.md#L1:1"
-  - **Tags**: bench, plan5
-
-- [ ] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/manual-keystroke.sh#L1:1"
-  - **Tags**: bench, plan5
-
-- [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/experiment/methodology.md#L1:1"
-  - **Tags**: plan5, report
-
-- [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Tags**: git, plan5
-
-- [ ] oCJR **-** Move bench:maint out of bench:session: it presses no keys, so it need not be in the hands-off window
-  - **Comments**: ouCi
+- [x] oCJR **-** Move bench:maint out of bench:session: it presses no keys, so it need not be in the hands-off window
+  - **Comments**: ouCi,gMCt
   - **Priority**: low
   - **Created**: 2026-10-10 02:29
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/tasks.toml#L1:1"
   - **Tags**: bench
 
-- [ ] EYAZ **-** Read KB_RAYCAST_DEEP_LINK in memory.sh, action.sh and cpu-ts.sh, or drop it from mise.local.toml
-  - **Comments**: S3cM
+- [x] EYAZ **-** Read KB_RAYCAST_DEEP_LINK in memory.sh, action.sh and cpu-ts.sh, or drop it from mise.local.toml
+  - **Comments**: S3cM,nLHf
   - **Priority**: low
   - **Created**: 2026-10-10 02:29
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/memory.sh#L13:1"
   - **Tags**: bench
-
-- [ ] niEv **-** The notes pane is invisible to VoiceOver: GPUI Kit's TextView sets no accessibility role (0.7.1)
-  - **Comments**: qC0Z
-  - **Priority**: low
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/notes.rs#L1:1"
-  - **Tags**: a11y, upstream
-
-- [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
-  - **Priority**: low
-  - **Created**: 2026-10-10 02:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/third-party/README.md#L1:1"
-  - **Tags**: deps, upstream
 
 - [x] tquG **-** Repository layout: three root folders (crates, docs, tools), the benchmark kit isolated in tools/bench, a root-layout hk guard
   - **Priority**: medium
@@ -141,14 +97,8 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-repository-layout-design.md#L1:1"
   - **Tags**: layout, tools
 
-- [ ] KDYD **-** Evaluate moving tool configs (mise, hk, dprint, typos, ls-lint, jscpd, gitleaks, mdschema, commitlint, cchk, taplo, ast-grep) into .config/
-  - **Comments**: JOrA
-  - **Priority**: low
-  - **Created**: 2026-10-10 03:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/README.md#L1:1"
-  - **Tags**: config, layout
-
-- [ ] jYHt **-** Decide whether to keep the benchmark kit after the report, or purge it (tools/bench/README.md, Purge)
+- [x] jYHt **-** Decide whether to keep the benchmark kit after the report, or purge it (tools/bench/README.md, Purge)
+  - **Comments**: EYc7
   - **Priority**: low
   - **Created**: 2026-10-10 03:42
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/README.md#L1:1"
@@ -160,53 +110,17 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
   - **Tags**: ci, release
 
-- [ ] zfJD **-** GitHub Pages: a one-page site (a screenshot and the feature list), once the repo is public or the plan allows Pages on private repos
-  - **Comments**: toCs
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
-  - **Tags**: decision, pages, release
-
-- [ ] Sdkb **-** Sign kb.app with a Developer ID and notarize it, so macOS opens it without asking
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0006-packaging.md#L1:1"
-  - **Tags**: release, signing
-
-- [ ] enBz **-** Release a universal binary (Apple silicon and Intel): today's zip is arm64 only
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/mise.toml#L1:1"
-  - **Tags**: release
-
-- [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
-  - **Tags**: linux, release
-
 - [x] TbiD **-** Code graph tools for agents: CRG, Gortex, Graphify
   - **Created**: 2026-10-10 06:58
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
   - **Tags**: graph, tools
 
-- [ ] BuLS **-** Run Graphify's semantic pass (mise run graph build graphify --force) once API keys are in fnox
+- [x] 3mTj **-** Decide whether CI should publish a graph report
+  - **Comments**: j6rR
   - **Priority**: low
   - **Created**: 2026-10-10 06:58
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
   - **Tags**: graph, tools
-
-- [ ] 3mTj **-** Decide whether CI should publish a graph report
-  - **Priority**: low
-  - **Created**: 2026-10-10 06:58
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
-  - **Tags**: graph, tools
-
-- [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types outside the benchmark kit (checked once with the kit's tsc, strict, 2026-10-10)
-  - **Priority**: low
-  - **Created**: 2026-10-10 07:17
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/graph.ts#L1:1"
-  - **Tags**: graph, quality, tools
 
 - [x] dN8d **-** Plan 6: design foundation: measure Raycast, pick a validated palette (comparison page), PRODUCT.md, DESIGN.md, apply the theme (68de3a8)
   - **Priority**: high
@@ -216,12 +130,6 @@
 
 - [x] eWka **-** Plan 7: components from DESIGN.md: anchored overlays, rows, split pane, footer, detail, media, ⌘⇧F size toggle; parity A01 and S12 (feat/components)
   - **Priority**: high
-  - **Created**: 2026-10-10 10:30
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-ui-polish-design.md#L1:1"
-  - **Tags**: design, ui
-
-- [ ] QTjG **-** A light palette in DESIGN.md (kb follows the system appearance; Plan 6 designs dark only)
-  - **Priority**: low
   - **Created**: 2026-10-10 10:30
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-ui-polish-design.md#L1:1"
   - **Tags**: design, ui
@@ -276,15 +184,128 @@
   - **Created**: 2026-10-11 09:30
   - **Tags**: app, plan7
 
-- [ ] bQVp **-** Run the Visual Pass (docs/experiment/visual-pass.md) on v0.4.0, compact and expanded; file failures
+- [x] Xvn5 **-** Review ~/Work/knowledge/docs/tags.proposed.toml (keep, edit, uncomment), save it as docs/tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
+  - **Comments**: HjbD
   - **Priority**: high
-  - **Created**: 2026-10-11 09:30
-  - **Tags**: app, plan7
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: tags
+
+- [x] XQgR **-** Tag icons: brainstorm the second sub-project (render tinted in a fixed box as Raycast's tintColor; fill gaps from Simple Icons and Lucide), after the tags are clean
+  - **Comments**: ubm7
+  - **Priority**: medium
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: app, tags
+
+- [x] r3TH **-** Port tools/design/sample.py and the design kit's .mjs scripts to Bun, inline in tools/design/tasks.toml (AGENTS.md)
+  - **Comments**: gHB7
+  - **Priority**: low
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: tools
+
+- [x] niEv **-** The notes pane is invisible to VoiceOver: GPUI Kit's TextView sets no accessibility role (0.7.1)
+  - **Comments**: qC0Z,ITyZ
+  - **Priority**: low
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/notes.rs#L1:1"
+  - **Tags**: a11y, upstream
+
+- [x] zfJD **-** GitHub Pages: a one-page site (a screenshot and the feature list); the repo is public, so Pages is available
+  - **Comments**: toCs,Uj0P
+  - **Priority**: low
+  - **Created**: 2026-10-10 04:46
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
+  - **Tags**: decision, pages, release
+
+- [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
+  - **Priority**: high
+  - **Created**: 2026-10-11 15:37
+  - **Tags**: tags
 
 - [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
-  - **Priority**: low
+  - **Comments**: 9Cpo
+  - **Priority**: medium
   - **Created**: 2026-10-11 09:30
   - **Tags**: plan7, report
+
+- [ ] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kb (which memory.sh relaunches)
+  - **Comments**: HGSp
+  - **Priority**: high
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/memory.sh#L36:1"
+  - **Tags**: bench, decision, next
+
+- [ ] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
+  - **Comments**: TbBw
+  - **Priority**: high
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/plans/2026-10-09-kb-native-05-mvp-compliance-and-report.md#L1:1"
+  - **Tags**: bench, plan5
+
+- [ ] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
+  - **Priority**: medium
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/manual-keystroke.sh#L1:1"
+  - **Tags**: bench, plan5
+
+- [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
+  - **Priority**: medium
+  - **Created**: 2026-10-10 02:29
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
+  - **Tags**: plan5, report
+
+- [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
+  - **Priority**: medium
+  - **Created**: 2026-10-10 02:29
+  - **Tags**: git, plan5
+
+- [ ] Y0HE **-** Purge the benchmark kit (tools/bench/README.md, Purge) once the Plan 5 report is merged
+  - **Comments**: 6165
+  - **Priority**: medium
+  - **Created**: 2026-10-11 12:51
+  - **Tags**: bench
+
+- [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types outside the benchmark kit (checked once with the kit's tsc, strict, 2026-10-10)
+  - **Priority**: low
+  - **Created**: 2026-10-10 07:17
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/graph.ts#L1:1"
+  - **Tags**: graph, quality, tools
+
+- [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
+  - **Priority**: low
+  - **Created**: 2026-10-10 02:42
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/third-party/README.md#L1:1"
+  - **Tags**: deps, upstream
+
+- [ ] BuLS **-** Run Graphify's semantic pass (mise run graph build graphify --force) once API keys are in fnox
+  - **Priority**: low
+  - **Created**: 2026-10-10 06:58
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
+  - **Tags**: graph, tools
+
+- [ ] KDYD **-** Evaluate moving tool configs (mise, hk, dprint, typos, ls-lint, jscpd, gitleaks, mdschema, commitlint, cchk, taplo, ast-grep) into .config/
+  - **Comments**: JOrA
+  - **Priority**: low
+  - **Created**: 2026-10-10 03:42
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/README.md#L1:1"
+  - **Tags**: config, layout
+
+- [ ] Sdkb **-** Sign kb.app with a Developer ID and notarize it, so macOS opens it without asking
+  - **Priority**: low
+  - **Created**: 2026-10-10 04:46
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0006-packaging.md#L1:1"
+  - **Tags**: release, signing
+
+- [ ] enBz **-** Release a universal binary (Apple silicon and Intel): today's zip is arm64 only
+  - **Priority**: low
+  - **Created**: 2026-10-10 04:46
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/mise.toml#L1:1"
+  - **Tags**: release
+
+- [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
+  - **Priority**: low
+  - **Created**: 2026-10-10 04:46
+  - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
+  - **Tags**: linux, release
 
 # Actors
 
@@ -315,7 +336,7 @@
 - HGSp **-** A rerun right after the session's CPU, latency and ⌘↩ runs read 505 MiB idle against 178 MiB earlier. Relaunching Raycast in memory.sh, as cpu-ts.sh does, was proposed and set aside for now. Owner: run Raycast's memory after the polish.
   - **Task**: Towo
 
-- TbBw **-** About 23 minutes hands-off. The first run is archived in docs/experiment/results/archive/2026-10-10-pre-polish/ with why.
+- TbBw **-** About 23 minutes hands-off. The first run is archived in docs/guides/results/archive/2026-10-10-pre-polish/ with why.
   - **Task**: pzxe
 
 - ouCi **-** Saves about 5 of the session's 23 hands-off minutes without changing any measurement.
@@ -324,7 +345,7 @@
 - S3cM **-** The three probes hard-code the same deeplink the variable holds.
   - **Task**: EYAZ
 
-- qC0Z **-** The only unchecked item of docs/experiment/compliance.md. Upstream fix; until then the row label carries the description.
+- qC0Z **-** The only unchecked item of docs/guides/compliance.md. Upstream fix; until then the row label carries the description.
   - **Task**: niEv
 
 - JOrA **-** Checked 2026-10-10 in a scratch worktree: mise finds .config/mise.toml; cargo deny fell back to its defaults (it reads deny.toml, .deny.toml or .cargo/deny.toml); dprint, typos, taplo and ast-grep were inconclusive. Cargo/rustc configs (Cargo.toml, rust-toolchain.toml, rustfmt.toml, clippy.toml, deny.toml) stay at the root, as in every surveyed repo. Survey: uv, ruff, rust-analyzer, Zed and Servo keep a .config/ folder.
@@ -335,4 +356,37 @@
 
 - dW09 **-** Superseded by Plan 6 (design foundation) and Plan 7 (components): docs/superpowers/specs/2026-10-10-ui-polish-design.md.
   - **Task**: hU1X
+
+- j6rR **-** Decision 2026-10-11: no. The code graphs are a local aid for agents (tools/graph/README.md); a published report would add CI time and a page nobody reads.
+  - **Task**: 3mTj
+
+- EYc7 **-** Decision 2026-10-11: purge it, after the report (Y0HE). The measurements, results and report stay in docs/guides.
+  - **Task**: jYHt
+
+- gMCt **-** Closed 2026-10-11, won't do: the benchmark kit is purged after the report (Y0HE); five minutes of one remaining session do not justify the change.
+  - **Task**: oCJR
+
+- nLHf **-** Closed 2026-10-11, won't do: nothing reads the variable, and it goes with the benchmark kit (Y0HE).
+  - **Task**: EYAZ
+
+- 6165 **-** Decided in jYHt. It goes after Plan 5's report so the session and the report can still run; tools/bench/README.md lists the steps.
+  - **Task**: Y0HE
+
+- 9Cpo **-** Before Plan 5's report (NRYN): the report compares both apps' task costs, so Raycast's T3 count must be measured, not assumed.
+  - **Task**: Bdaz
+
+- HjbD **-** Done 2026-10-12: 107 merges accepted (Stack Overflow master tags longer than the tag in use, and amazon/google, rejected), applied to 48 files; every tag follows the convention.
+  - **Task**: Xvn5
+
+- ubm7 **-** Done 2026-10-12 without a separate brainstorm: the image is a mask in the pill's text colour inside the pill; tags:images fills the folder from docs/tags.images.toml, brands from Simple Icons, concepts from Lucide; 375 of 563 tags have one.
+  - **Task**: XQgR
+
+- gHB7 **-** Done 2026-10-12: color.ts (tested) and the design: tasks, inline Bun in tools/design/tasks.toml; the outputs regenerate byte for byte (raycast.json writes 1049 for 1049.0).
+  - **Task**: r3TH
+
+- ITyZ **-** Archived 2026-10-12 at the owner's request.
+  - **Task**: niEv
+
+- Uj0P **-** Archived 2026-10-12 at the owner's request.
+  - **Task**: zfJD
 

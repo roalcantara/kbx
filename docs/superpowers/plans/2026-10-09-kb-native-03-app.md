@@ -76,8 +76,8 @@ hooks run on every commit — if one fixes files, review, `git add`, and commit 
 | `crates/kb-app/tests/ui.rs`                                                                 | UI integration tests                                       | 11   |
 | `bench/probes/size-rs.sh`, `tools/size-budget`, `mise.toml`, `hk.pkl`                       | size budget, `app` and `size` tasks                        | 12   |
 | —                                                                                           | scripted smoke run                                         | 13   |
-| `README.md`, `CONTEXT.md`, `docs/adr/000{3,4}-*.md`, `docs/experiment/parity.md`            | documents                                                  | 14   |
-| `docs/experiment/results/tier2-rust-size-*.json`                                            | close-out                                                  | 15   |
+| `README.md`, `CONTEXT.md`, `docs/adr/000{3,4}-*.md`, `docs/guides/parity.md`                | documents                                                  | 14   |
+| `docs/guides/results/tier2-rust-size-*.json`                                                | close-out                                                  | 15   |
 
 ---
 
@@ -2973,12 +2973,12 @@ run = '''
 '''
 
 [tasks.size]
-description = "Build the release binary, check it against tools/size-budget, and record it under docs/experiment/results"
+description = "Build the release binary, check it against tools/size-budget, and record it under docs/guides/results"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   cargo build --release --locked -p kb-app
-  bench/probes/size-rs.sh "docs/experiment/results/tier2-rust-size-$(date -u +%Y%m%dT%H%M%SZ).json"
+  bench/probes/size-rs.sh "docs/guides/results/tier2-rust-size-$(date -u +%Y%m%dT%H%M%SZ).json"
 '''
 ```
 
@@ -3090,14 +3090,14 @@ If any ⌥K line reads `onscreen=false`, stop: fact 4 of "Before you start" has 
 
 Open it with `HOME=$H target/release/kb`, press ⌥K, and check by eye, against the same entries in Raycast, the
 ten representative entries the spec's visual check names (code-heavy, tables, mermaid, bookmarks, tasks): code is
-highlighted, tables are tables, the split resizes. Note any difference in `docs/experiment/parity.md` (Task 14).
+highlighted, tables are tables, the split resizes. Note any difference in `docs/guides/parity.md` (Task 14).
 
 ### Task 14: Documents
 
 **Files:**
 
 - Modify: `README.md`, `CONTEXT.md`, `docs/adr/0003-native-mermaid.md`, `docs/adr/0004-resident-panel-and-hotkey.md`,
-  `docs/experiment/parity.md`
+  `docs/guides/parity.md`
 
 - [ ] **Step 1: README quickstart**
 
@@ -3194,9 +3194,9 @@ them and no synonyms. Locations marked _(Plan N)_ do not exist yet.
 | ---------- | ----------------------------------------------------------------------------------------------------- | --------------------------------- |
 | Corpus     | A set of source files a run measures: `sample` (committed), `private` and `private-10x` (local only). | `fixtures/`, `bench/ts/corpus.ts` |
 | Golden     | An output of the TypeScript engine the Rust engine must reproduce.                                    | `fixtures/*-goldens/`             |
-| Tier       | A measurement depth: 1 engine, 2 footprint, 3 perceived latency.                                      | `docs/experiment/methodology.md`  |
-| Result     | One run's JSON, in the shared schema, under `docs/experiment/results/`.                               | `bench/ts/bench.ts`               |
-| Parity row | One user-visible behaviour of the Raycast command and its status in the port.                         | `docs/experiment/parity.md`       |
+| Tier       | A measurement depth: 1 engine, 2 footprint, 3 perceived latency.                                      | `docs/guides/methodology.md`      |
+| Result     | One run's JSON, in the shared schema, under `docs/guides/results/`.                                   | `bench/ts/bench.ts`               |
+| Parity row | One user-visible behaviour of the Raycast command and its status in the port.                         | `docs/guides/parity.md`           |
 ```
 
 - [ ] **Step 3: ADRs**
@@ -3261,7 +3261,7 @@ Two platform details, found while building it:
 
 - [ ] **Step 4: The parity matrix**
 
-`docs/experiment/parity.md` in full — every row now has a status, its evidence, and a justification unless it is
+`docs/guides/parity.md` in full — every row now has a status, its evidence, and a justification unless it is
 Same. Add what Task 13 Step 5 found:
 
 ```markdown
@@ -3341,14 +3341,14 @@ The five tasks measured for task cost (keystrokes and tier 3 time) in Plan 4, on
 | T5 | Rebuild the index                                  |
 ```
 
-Run: `dprint check && typos && grep -cE '\| (Same|Adapted|Better) ' docs/experiment/parity.md`
+Run: `dprint check && typos && grep -cE '\| (Same|Adapted|Better) ' docs/guides/parity.md`
 
 Expected: clean; `31` — no row is Missing.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add README.md CONTEXT.md docs/adr docs/experiment/parity.md
+git add README.md CONTEXT.md docs/adr docs/guides/parity.md
 git commit -m "docs: Add the quickstart and record the app in the docs
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3366,10 +3366,10 @@ Expected: all pass; `coverage` reports 60 tests.
 
 Run: `mise run size`
 
-Expected: `kb: 27 MiB …`; one `docs/experiment/results/tier2-rust-size-*.json`.
+Expected: `kb: 27 MiB …`; one `docs/guides/results/tier2-rust-size-*.json`.
 
 ```bash
-git add docs/experiment/results
+git add docs/guides/results
 git commit -m "test(experiment): Record the release binary size
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"

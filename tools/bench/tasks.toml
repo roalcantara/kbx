@@ -62,9 +62,9 @@ run = '''
   bun run --cwd tools/bench/ts build
   node22=$(mise where node@22.22.2)/bin/node
   "$node22" tools/bench/ts/dist/bench.mjs --fixtures tools/bench/fixtures --corpus "$corpus" \
-    --out "docs/experiment/results/tier1-ts-node22-$corpus-$stamp.json"
+    --out "docs/guides/results/tier1-ts-node22-$corpus-$stamp.json"
   bun tools/bench/ts/bench.ts --fixtures tools/bench/fixtures --corpus "$corpus" \
-    --out "docs/experiment/results/tier1-ts-bun-$corpus-$stamp.json"
+    --out "docs/guides/results/tier1-ts-bun-$corpus-$stamp.json"
 '''
 
 [goldens]
@@ -108,7 +108,7 @@ run = '''
   fi
   cargo build --release --locked -p kb-bench
   target/release/kb-bench --fixtures tools/bench/fixtures --corpus "$corpus" --digest "$digest" --files "$files" \
-    --out "docs/experiment/results/tier1-rust-$corpus-$(date -u +%Y%m%dT%H%M%SZ).json"
+    --out "docs/guides/results/tier1-rust-$corpus-$(date -u +%Y%m%dT%H%M%SZ).json"
 '''
 
 [probes]
@@ -138,7 +138,7 @@ run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "${usage_app}" = kb ]; then mise run package; fi
-  tools/bench/probes/memory.sh "${usage_app}" docs/experiment/results
+  tools/bench/probes/memory.sh "${usage_app}" docs/guides/results
 '''
 
 ["bench:e2e"]
@@ -149,13 +149,13 @@ run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   if [ "${usage_app}" = kb ]; then mise run package; fi
-  tools/bench/probes/latency.sh "${usage_app}" docs/experiment/results
-  tools/bench/probes/action.sh "${usage_app}" docs/experiment/results
+  tools/bench/probes/latency.sh "${usage_app}" docs/guides/results
+  tools/bench/probes/action.sh "${usage_app}" docs/guides/results
 '''
 
 ["bench:maint"]
 description = "Maintainability: lines of code, dependencies, tests and build times of both implementations"
-run = "tools/bench/probes/maint.sh docs/experiment/results"
+run = "tools/bench/probes/maint.sh docs/guides/results"
 
 ["bench:cpu"]
 description = "Tier 2: cold-start CPU time of kb or Raycast, five runs"
@@ -165,8 +165,8 @@ run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   case "${usage_app}" in
-  kb) mise run package && tools/bench/probes/cpu-rs.sh docs/experiment/results ;;
-  raycast) tools/bench/probes/cpu-ts.sh docs/experiment/results ;;
+  kb) mise run package && tools/bench/probes/cpu-rs.sh docs/guides/results ;;
+  raycast) tools/bench/probes/cpu-ts.sh docs/guides/results ;;
   *) echo "usage: mise run bench:cpu kb|raycast"; exit 2 ;;
   esac
 '''
@@ -178,8 +178,8 @@ run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   case "${usage_app}" in
-  kb) cargo build --release --locked -p kb-app && tools/size/size.sh "docs/experiment/results/tier2-rust-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
-  raycast) tools/bench/probes/size-ts.sh "docs/experiment/results/tier2-ts-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
+  kb) cargo build --release --locked -p kb-app && tools/size/size.sh "docs/guides/results/tier2-rust-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
+  raycast) tools/bench/probes/size-ts.sh "docs/guides/results/tier2-ts-size-$(date -u +%Y%m%dT%H%M%SZ).json" ;;
   *) echo "usage: mise run bench:size kb|raycast"; exit 2 ;;
   esac
 '''
@@ -202,12 +202,12 @@ run = '''
 '''
 
 [report]
-description = "Run the gate and golden parity, then write docs/experiment/report.md from the results"
+description = "Run the gate and golden parity, then write docs/guides/report.md from the results"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   mise run gate
   mise run parity
   cargo run --quiet --locked -p kb-report -- report --verified
-  dprint fmt docs/experiment/report.md
+  dprint fmt docs/guides/report.md
 '''

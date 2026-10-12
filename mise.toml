@@ -4,6 +4,8 @@ min_version = "2026.9.13"
 # mise.lock records every tool's download and checksum for the machines that run this repo: Apple silicon
 # Macs and CI's Linux runners. Run `mise lock` after changing a tool: CI installs with --locked, and fails otherwise.
 lockfile_platforms = ["linux-x64", "macos-arm64"]
+# Rust comes from rust-toolchain.toml, the file rustup reads: one pin, its channel and components, for both.
+idiomatic_version_file_enable_tools = ["rust"]
 
 # Code graph health (tools/graph/README.md): mise doctor project.
 [doctor.checks.graph_crg_installed]
@@ -97,6 +99,7 @@ includes = [
   "tools/bench/tasks.toml",  # the benchmark kit: remove when purging it
   "tools/design/tasks.toml", # the design kit (tools/design)
   "tools/graph/tasks.toml",  # the code graph tools (tools/graph/README.md)
+  "tools/tags/tasks.toml",   # the tag tools (docs/doctrine/tag-conventions.doctrine.md)
 ]
 
 [tools]
@@ -122,8 +125,6 @@ pinact = "5.0.0"
 "pipx:commit-check" = "2.18.2"
 # Installs pipx tools from their locks in .mise/locks (mise needs uv >= 0.12.10 for that).
 uv = "0.12.21"
-# Must match rust-toolchain.toml (rustup reads that file; mise reads this pin).
-rust = "1.99.0"
 # The interpreter the pipx tools run on: mise probes `python` on PATH before installing one (2026.10.7).
 python = "3.13.16"
 pkl = "0.32.1"

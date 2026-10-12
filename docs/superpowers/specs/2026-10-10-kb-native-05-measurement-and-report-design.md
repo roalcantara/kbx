@@ -68,7 +68,7 @@ methodology when it is unset; the ⌘Space default goes.
 and the fallow health comparison are dropped — tables carry the same numbers, and fallow has no Rust counterpart to
 compare with.
 
-**D6. Findings outside the generated report.** `docs/experiment/findings.md` is hand-written after the report: for every
+**D6. Findings outside the generated report.** `docs/guides/findings.md` is hand-written after the report: for every
 criterion that failed or was not measured, why and what would fix it, plus the notable observations. `xtask` adds a
 link to it under the Verdict when the file exists. The README gets a `## Findings` section — the verdict, the headline
 figures (search p95 ratio, ⌘↩, RSS share, binary vs bundle size) and links to `report.md` and `findings.md`.

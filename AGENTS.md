@@ -17,12 +17,16 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 - `crates/third-party/`: patched external crates, outside the workspace
 - `tools/bench/`: the benchmark kit (TS and Rust benchmarks, probes, report); purgeable as a unit
 - `tools/graph/`: code graphs for agents (CRG, Gortex, Graphify); use them before a broad search: tools/graph/README.md
+- `tools/tags/`: the tag tools (suggest, apply, check) for the knowledge folder's tags; rules in
+  `docs/doctrine/tag-conventions.doctrine.md`
 - `docs/`: ADRs, experiment, specs and plans; `docs/doctrine/`: principles to load when a change matches their
-  `applies_to` (start with verify-what-users-see for any UI change)
+  `applies_to`
 - `PRODUCT.md`: what kb is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any
   UI change
 - `tools/design/`: the design kit: palettes, their validation, the app theme generator, the comparison page
 - `TODO.md`: done and pending work, kept with the `todo` CLI (pinned in `mise.toml`; usage in its REF comments)
+  Done tasks come first, pending ones after, in the order to do them; a decision or a won't-do is a comment on its
+  task, with the date.
 
 ## Core engineering rules
 
@@ -34,7 +38,10 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
   stay so. Only `tools/bench/fixtures/private.sha256` is committed.
 - Never write to the Raycast repository (`$KB_TS_REPO`).
 - Keep quality gates and thresholds unchanged unless the owner approves the change.
-- A UI change passes the Visual Pass before merge ([doctrine](docs/doctrine/verify-what-users-see.doctrine.md)).
+- Scripts that stay in `tools/` are TypeScript run by Bun, written inline in the tool's mise task file
+  (`run = '''#!/usr/bin/env bun …'''`). A module file exists only for logic with unit tests (`bun test` beside it).
+  npm packages are imported with a pinned version (`import x from "pkg@1.2.3"`), which `bun run` installs on first
+  use: no `package.json`. `bun test` does not, so a tested module imports none. No Python or Node-only scripts.
 
 ## Naming conventions
 

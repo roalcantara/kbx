@@ -1,0 +1,32 @@
+{
+  "name": "kb - Keyboard Knowledge Base",
+  "short_name": "kb",
+  "description": "A keyboard-first developer command palette and personal YAML knowledge base launcher.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#23273A",
+  "theme_color": "#24293E",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "categories": ["developer tools", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Search Commands",
+      "short_name": "Search",
+      "description": "Open knowledge base search query",
+      "url": "/?q=",
+      "icons": [{ "src": "/icons/search.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Recent Commands",
+      "short_name": "Recents",
+      "description": "View recently accessed commands and cheatsheets",
+      "url": "/?view=recent",
+      "icons": [{ "src": "/icons/recent.png", "sizes": "96x96" }]
+    }
+  ]
+}

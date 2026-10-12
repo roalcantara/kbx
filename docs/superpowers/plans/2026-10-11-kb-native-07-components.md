@@ -747,7 +747,7 @@ copies the title; ⌘K, the popover row for Open Source File shows the ⌘ O key
 ### Task 10: Filter dropdown
 
 **Files:** create `crates/kb-app/src/filter_dropdown.rs`; modify `filter.rs`, `search_view.rs`, `tests/ui.rs`,
-`docs/experiment/parity.md` (T3).
+`docs/guides/parity.md` (T3).
 
 - [ ] **Step 1: Failing tests.** `task_t3_filters_by_a_type_and_a_tag_with_two_picks` becomes one visit:
 
@@ -788,8 +788,8 @@ Run: FAIL.
       service | `api.ray.so` serves Raycast", "Tag images from `tag_images_path` | bundled in the extension | mixed
       licences stay out of the public repo", "Window keeps its centre through a patched GPUI | — | GPUI cannot move a
       window". §4 Actions popover: pages for Links and Copy….
-- [ ] `docs/experiment/parity.md`: A01 Same (keycaps); S12 Same (thumbnail); S09 and A06 Same (→ / ←); T3 updated.
-- [ ] `docs/experiment/compliance.md`: tick the Title Case item.
+- [ ] `docs/guides/parity.md`: A01 Same (keycaps); S12 Same (thumbnail); S09 and A06 Same (→ / ←); T3 updated.
+- [ ] `docs/guides/compliance.md`: tick the Title Case item.
 - [ ] `README.md`: a "Keys" table (↩, ⌘↩, → / ←, ⌘K, ⌘P, ⌘⇧C, ⌘O, ⌘R, ⌘⇧,, ⌘⇧F, ⌘Q, Esc); `tag_images_path` in
       the preferences example; `mise run images` in the Development Workflow table.
 - [ ] `CONTEXT.md`: **Tag image** (`tag_images.rs`) and **Size toggle** (`window_size.rs`).

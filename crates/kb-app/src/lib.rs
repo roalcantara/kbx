@@ -7,6 +7,7 @@
 #![warn(missing_docs)]
 
 mod accents;
+mod assets;
 pub mod cli;
 pub mod config;
 pub mod entry_list;
@@ -33,7 +34,7 @@ use crate::config::Config;
 /// The bundle identifier, shared by the `.app`'s `Info.plist` and GPUI's app identity.
 pub const APP_ID: &str = "dev.roalcantara.kb";
 
-/// kb's GPUI Kit theme: DESIGN.md's palette, written by `tools/design/theme.mjs`.
+/// kb's GPUI Kit theme: DESIGN.md's palette, written by `mise run design:theme`.
 const THEME: &str = include_str!("../assets/themes/kb.json");
 /// The dark theme's name in [`THEME`].
 const DARK_THEME: &str = "kb Dark";
@@ -57,7 +58,7 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
 /// `trace` logs the show and keystroke latencies to stderr (`kb --trace`).
 pub fn run(config: Config, notices: Vec<String>, trace: bool) {
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(assets::KbAssets)
         // Remote images (favicons, thumbnails) need a client; GPUI gives native apps none.
         .with_http_client(std::sync::Arc::new(http::CurlClient))
         .run(move |cx| {

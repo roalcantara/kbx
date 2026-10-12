@@ -37,7 +37,7 @@
       "divider": false
     },
     "resultRow": {
-      "height": 50,
+      "height": 56,
       "selectionInsetX": 8,
       "selectionInsetY": 2,
       "horizontalInset": 16,
@@ -47,7 +47,7 @@
       "selectionRadius": 12,
       "verticalGap": 0
     },
-    "tag": { "horizontalPadding": 10, "verticalPadding": 4, "gap": 8, "cornerRadius": 10 },
+    "tag": { "horizontalPadding": 10, "verticalPadding": 4, "gap": 8, "cornerRadius": 4 },
     "footer": { "panelInset": 8, "pillGap": 8, "pillHorizontalPadding": 12, "pillVerticalPadding": 8, "keycapGap": 4 },
     "popover": { "anchorGap": 8, "contentInset": 8, "sectionGap": 12, "cornerRadius": 16 },
     "actionItem": { "height": 40, "horizontalInset": 8, "cornerRadius": 8 },

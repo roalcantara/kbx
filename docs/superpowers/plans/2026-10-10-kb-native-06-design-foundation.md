@@ -29,7 +29,7 @@ generator, mise tasks) produces measured values and a comparison page; the chose
 | `tools/design/render.mjs`, `tools/design/tasks.toml`, `mise.toml`                                                        | comparison page; `mise run design:palettes`             | 5    |
 | `PRODUCT.md`, `DESIGN.md`                                                                                                | the product and the design system                       | 6, 7 |
 | `tools/design/theme.mjs`, `crates/kb-app/assets/themes/kb.json`, `crates/kb-app/src/lib.rs`, `crates/kb-app/tests/ui.rs` | kb's dark theme                                         | 8    |
-| `docs/experiment/compliance.md`, `AGENTS.md`, `README.md`, `TODO.md`                                                     | Title Case deviation, pointers, tasks                   | 9    |
+| `docs/guides/compliance.md`, `AGENTS.md`, `README.md`, `TODO.md`                                                         | Title Case deviation, pointers, tasks                   | 9    |
 
 ## Roles
 
@@ -245,7 +245,7 @@ run = "node tools/design/validate.mjs && node tools/design/render.mjs && open tm
     only on purpose, and record each adaptation in DESIGN.md; 3. overlays open where they are invoked; 4. never block
     typing; 5. the window is as large as the task needs (compact and expanded).
   - **Accessibility & Inclusion:** WCAG 2.2 AA contrast for text; nothing told by colour alone; every control named for
-    assistive technology (`docs/experiment/compliance.md`).
+    assistive technology (`docs/guides/compliance.md`).
   - **Offer:** free, personal use; no pricing.
   - **Boundaries:** reads source files, never writes them; one user; macOS first.
   - **Stack:** links to `AGENTS.md`, `CONTEXT.md`, `DESIGN.md` — no duplication.
@@ -302,7 +302,7 @@ run = "node tools/design/validate.mjs && node tools/design/render.mjs && open tm
 
 ### Task 9: Docs, TODO, hand-off
 
-- [ ] `docs/experiment/compliance.md`: the sentence-case item becomes "Copy follows Raycast's Title Case (DESIGN.md,
+- [ ] `docs/guides/compliance.md`: the sentence-case item becomes "Copy follows Raycast's Title Case (DESIGN.md,
       Adaptations; owner-approved deviation from the GPUI Kit Design Guides)", still checked.
 - [ ] `AGENTS.md` repository map: `PRODUCT.md` and `DESIGN.md` — read DESIGN.md before any UI change. README "Project
       Structure": both files and `tools/design/`.

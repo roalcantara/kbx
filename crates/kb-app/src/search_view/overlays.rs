@@ -11,12 +11,12 @@ use std::rc::Rc;
 
 use gpui_kit::assets::IconName;
 use gpui_kit::component::button::Button;
-use gpui_kit::component::command::{Command, CommandGroup, CommandItem};
+use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex};
 use gpui_kit::{
-    Anchor, AnyElement, App, ClipboardItem, Context, Div, Hsla, IntoElement as _, ParentElement as _, Styled as _,
-    WeakEntity, Window, div, px,
+    Anchor, AnyElement, App, ClipboardItem, Context, Div, Entity, Focusable as _, Hsla, IntoElement as _,
+    ParentElement as _, Styled as _, WeakEntity, Window, div, px,
 };
 use kb_domain::search::{FilterState, entry_types, tags};
 
@@ -25,8 +25,35 @@ use super::{Overlay, Screen, SearchView};
 use crate::filter::{FilterGroup, filter_groups};
 use crate::palette::{Page, PaletteCommand, PaletteContext, PaletteGroup, entry_palette, page};
 
+/// A popover's most height: about five rows, then it scrolls.
+const POPOVER_HEIGHT: f32 = 200.;
+
 /// Builds an overlay's content from the view, on every render of its popover.
 type Content = fn(&SearchView, &WeakEntity<SearchView>, &mut Window, &App) -> AnyElement;
+
+/// What tells one overlay's popover from the other.
+struct Spec {
+    id: &'static str,
+    anchor: Anchor,
+    overlay: Overlay,
+    content: Content,
+}
+
+/// Above the footer's Actions button, opening upwards.
+static ACTIONS: Spec = Spec {
+    id: "actions-popover",
+    anchor: Anchor::BottomRight,
+    overlay: Overlay::Actions(Page::Main),
+    content: actions_content,
+};
+
+/// Under the header's filter button.
+static FILTER: Spec = Spec {
+    id: "filter-popover",
+    anchor: Anchor::TopRight,
+    overlay: Overlay::Filter,
+    content: filter_content,
+};
 
 impl SearchView {
     /// Whether the actions popover is open.
@@ -39,6 +66,15 @@ impl SearchView {
     #[must_use]
     pub fn is_filter_open(&self) -> bool {
         self.overlay == Overlay::Filter
+    }
+
+    /// The search state of the open overlay, if any.
+    fn overlay_palette(&self) -> Option<&Entity<CommandState>> {
+        match self.overlay {
+            Overlay::None => None,
+            Overlay::Actions(_) => Some(&self.palette),
+            Overlay::Filter => Some(&self.filter_palette),
+        }
     }
 
     /// The labels of the actions popover's current page, by section, for tests.
@@ -54,14 +90,10 @@ impl SearchView {
     /// keyboard back to the screen.
     pub(super) fn show_overlay(&mut self, overlay: Overlay, window: &mut Window, cx: &mut Context<Self>) {
         self.overlay = overlay;
-        let palette = match overlay {
-            Overlay::None => {
-                self.focus_screen(window, cx);
-                cx.notify();
-                return;
-            }
-            Overlay::Actions(_) => self.palette.clone(),
-            Overlay::Filter => self.filter_palette.clone(),
+        let Some(palette) = self.overlay_palette().cloned() else {
+            self.focus_screen(window, cx);
+            cx.notify();
+            return;
         };
         palette.update(cx, |state, cx| state.set_query("", window, cx));
         window.defer(cx, move |window, cx| {
@@ -72,30 +104,43 @@ impl SearchView {
 
     /// The Actions button inside its popover.
     pub(super) fn actions_popover(&self, trigger: Button, cx: &mut Context<Self>) -> Popover {
-        let open = self.is_actions_open();
-        anchored(
-            "actions-popover",
-            Anchor::BottomRight,
-            open,
-            Overlay::Actions(Page::Main),
-            trigger,
-            actions_content,
-            cx,
-        )
+        self.anchored(&ACTIONS, trigger, cx)
     }
 
     /// The filter button inside its dropdown.
     pub(super) fn filter_popover(&self, trigger: Button, cx: &mut Context<Self>) -> Popover {
-        let open = self.is_filter_open();
-        anchored(
-            "filter-popover",
-            Anchor::TopRight,
-            open,
-            Overlay::Filter,
-            trigger,
-            filter_content,
-            cx,
-        )
+        self.anchored(&FILTER, trigger, cx)
+    }
+
+    /// `trigger` inside the popover `spec` describes, its search field taking the keyboard when
+    /// it opens.
+    fn anchored(&self, spec: &'static Spec, trigger: Button, cx: &mut Context<Self>) -> Popover {
+        let (open, search) = match spec.overlay {
+            Overlay::Filter => (self.is_filter_open(), &self.filter_palette),
+            _ => (self.is_actions_open(), &self.palette),
+        };
+        let view = cx.entity().downgrade();
+        let on_change = view.clone();
+        let overlay = spec.overlay;
+        let content = spec.content;
+        // Without a tracked handle the popover focuses one of its own when it opens, taking the
+        // keyboard away from its search field.
+        let focus = search.read(cx).focus_handle(cx);
+        Popover::new(spec.id)
+            // Rounder than GPUI Kit's default, as the prototype (tools/design/layout.json, popover).
+            .rounded(px(16.))
+            .anchor(spec.anchor)
+            .open(open)
+            .track_focus(&focus)
+            .on_open_change(move |open, window, cx| {
+                let next = if *open { overlay } else { Overlay::None };
+                let _ = on_change.update(cx, |this, cx| this.show_overlay(next, window, cx));
+            })
+            .trigger(trigger)
+            .content(move |_, window, cx| match view.upgrade() {
+                Some(entity) => content(entity.read(cx), &view, window, cx),
+                None => div().into_any_element(),
+            })
     }
 
     /// The actions popover's current page.
@@ -135,32 +180,6 @@ impl SearchView {
     }
 }
 
-/// `trigger` inside a popover showing `overlay` while `open`.
-fn anchored(
-    id: &'static str,
-    anchor: Anchor,
-    open: bool,
-    overlay: Overlay,
-    trigger: Button,
-    content: Content,
-    cx: &mut Context<SearchView>,
-) -> Popover {
-    let view = cx.entity().downgrade();
-    let on_change = view.clone();
-    Popover::new(id)
-        .anchor(anchor)
-        .open(open)
-        .on_open_change(move |open, window, cx| {
-            let next = if *open { overlay } else { Overlay::None };
-            let _ = on_change.update(cx, |this, cx| this.show_overlay(next, window, cx));
-        })
-        .trigger(trigger)
-        .content(move |_, window, cx| match view.upgrade() {
-            Some(entity) => content(entity.read(cx), &view, window, cx),
-            None => div().into_any_element(),
-        })
-}
-
 /// A row: its icon in `tint`, then its label; the caller appends what trails it.
 fn row(icon: IconName, tint: Hsla, label: &str) -> Div {
     h_flex()
@@ -178,10 +197,8 @@ fn actions_content(this: &SearchView, view: &WeakEntity<SearchView>, window: &mu
     let mut command = Command::new(&palette)
         .bordered(false)
         .placeholder("Search for Actions…")
-        .max_h(px(360.))
-        .w(px(340.))
-        // The search field under the rows, as Raycast's.
-        .flex_col_reverse();
+        .max_h(px(POPOVER_HEIGHT))
+        .w(px(340.));
     for group in groups {
         let mut items = Vec::new();
         let mut row_commands = Vec::new();
@@ -191,14 +208,20 @@ fn actions_content(this: &SearchView, view: &WeakEntity<SearchView>, window: &mu
                 _ => palette_row.keys.iter().map(|key| (*key).to_owned()).collect(),
             };
             let drills_in = matches!(palette_row.command, PaletteCommand::OpenPage(_));
-            let (label, icon) = (palette_row.label.clone(), palette_row.icon);
+            let label = palette_row.label.clone();
             items.push(CommandItem::new().label(palette_row.label).child(move |_, cx| {
                 let muted = cx.theme().muted_foreground;
-                row(icon, muted, &label).child(if drills_in {
-                    div().text_color(muted).child("›").into_any_element()
-                } else {
-                    keycap_row(keys.clone(), cx).into_any_element()
-                })
+                // Label and keys alone, without an icon, as the prototype.
+                h_flex()
+                    .w_full()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(div().flex_1().min_w_0().truncate().child(label.clone()))
+                    .child(if drills_in {
+                        div().text_color(muted).child("›").into_any_element()
+                    } else {
+                        keycap_row(keys.clone(), cx).into_any_element()
+                    })
             }));
             row_commands.push(palette_row.command);
         }
@@ -250,7 +273,7 @@ fn filter_content(this: &SearchView, view: &WeakEntity<SearchView>, _: &mut Wind
     let mut command = Command::new(&palette)
         .bordered(false)
         .placeholder("Filter by Type or Tag…")
-        .max_h(px(360.))
+        .max_h(px(POPOVER_HEIGHT))
         .w(px(280.));
     for group in groups {
         let mut items = Vec::new();

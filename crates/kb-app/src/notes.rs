@@ -5,8 +5,8 @@ use gpui_kit::component::text::TextView;
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, App, InteractiveElement as _, IntoElement, ParentElement as _, SharedString,
-    StatefulInteractiveElement as _, Styled as _, div, px, relative,
+    AnyElement, App, InteractiveElement as _, IntoElement, ParentElement as _, Pixels, ScrollHandle, SharedString,
+    StatefulInteractiveElement, Styled as _, div, px, relative,
 };
 use kb_domain::entry::Entry;
 
@@ -25,8 +25,14 @@ pub enum PaneLayout {
 
 /// The notes, rendered from the index's Markdown with highlighted code blocks, and the metadata
 /// card when `show_metadata`.
-pub fn notes_pane(entry: &Entry, show_metadata: bool, layout: PaneLayout, cx: &App) -> AnyElement {
-    let notes = notes_column(entry, cx);
+pub fn notes_pane(
+    entry: &Entry,
+    show_metadata: bool,
+    layout: PaneLayout,
+    scroll: Option<&ScrollHandle>,
+    cx: &App,
+) -> AnyElement {
+    let notes = notes_column(entry, scroll, cx);
     let card = show_metadata.then(|| div().p(px(12.)).child(metadata_card(entry, cx)));
     match layout {
         PaneLayout::Split => v_flex()
@@ -41,8 +47,11 @@ pub fn notes_pane(entry: &Entry, show_metadata: bool, layout: PaneLayout, cx: &A
             .items_start()
             .child(notes)
             .when_some(card, |pane, card| {
+                // Scrolls within the pane, so a long card never runs under the footer.
                 pane.child(
-                    card.w(relative(1. / 3.))
+                    card.id("metadata-column")
+                        .overflow_y_scroll()
+                        .w(relative(1. / 3.))
                         .flex_none()
                         .h_full()
                         .border_l_1()
@@ -53,9 +62,23 @@ pub fn notes_pane(entry: &Entry, show_metadata: bool, layout: PaneLayout, cx: &A
     }
 }
 
-/// The notes, scrolling: what precedes the description, the description quote with its red bar,
-/// then the rest.
-fn notes_column(entry: &Entry, cx: &App) -> impl IntoElement {
+/// The notes' next scroll offset after moving `delta` down (negative: up), kept between the top (0)
+/// and the bottom (`-max`). A scroll offset grows more negative as the content moves up.
+#[must_use]
+pub fn next_offset(current: Pixels, delta: Pixels, max: Pixels) -> Pixels {
+    let next = current - delta;
+    if next > px(0.) {
+        px(0.)
+    } else if next < -max {
+        -max
+    } else {
+        next
+    }
+}
+
+/// The notes, scrolling, by the keyboard too when `scroll` tracks them: what precedes the
+/// description, the description quote with its red bar, then the rest.
+fn notes_column(entry: &Entry, scroll: Option<&ScrollHandle>, cx: &App) -> impl IntoElement {
     let markdown = notes_markdown(entry);
     let parts = split_description(markdown, entry.description.as_deref());
     // Keyed by the entry: a TextView keeps its parse while its id is unchanged.
@@ -67,6 +90,7 @@ fn notes_column(entry: &Entry, cx: &App) -> impl IntoElement {
         .min_h_0()
         .h_full()
         .overflow_y_scroll()
+        .when_some(scroll, StatefulInteractiveElement::track_scroll)
         .p(px(16.))
         .when(!parts.before.trim().is_empty(), |column| {
             column.child(TextView::markdown(id("before"), parts.before.to_owned()))
@@ -83,4 +107,25 @@ fn notes_column(entry: &Entry, cx: &App) -> impl IntoElement {
             )
         })
         .child(TextView::markdown(id("after"), parts.after.to_owned()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scrolls_within_the_notes_and_stops_at_their_ends() {
+        assert_eq!(next_offset(px(0.), px(40.), px(100.)), px(-40.));
+        assert_eq!(
+            next_offset(px(-80.), px(40.), px(100.)),
+            px(-100.),
+            "stops at the bottom"
+        );
+        assert_eq!(next_offset(px(-20.), px(-40.), px(100.)), px(0.), "stops at the top");
+        assert_eq!(
+            next_offset(px(0.), px(40.), px(0.)),
+            px(0.),
+            "short notes do not scroll"
+        );
+    }
 }

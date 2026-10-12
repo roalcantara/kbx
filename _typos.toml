@@ -7,9 +7,16 @@ extend-exclude = [
   "tools/bench/ts/kb",
   "tools/bench/ts/node_modules/",
   "*.lock",
-  "docs/experiment/results/",
+  "docs/guides/results/",
 ]
 
 [default.extend-words]
 # A status of the todo CLI (TODO.md): French for "in progress".
 cours = "cours"
+# Tag names a naive "drop the s" once produced; docs/doctrine/tag-conventions.doctrine.md quotes them as examples.
+maco = "maco"
+kubernete = "kubernete"
+postgre = "postgre"
+serverles = "serverles"
+# A misspelt tag the tag tools must catch (tools/tags tests).
+postgress = "postgress"

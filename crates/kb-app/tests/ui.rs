@@ -223,6 +223,29 @@ fn opens_the_detail_screen_on_enter_and_returns_on_escape(cx: &mut TestAppContex
 }
 
 #[gpui_kit::test]
+fn scrolls_the_detail_screen_with_the_arrow_keys(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "enter");
+    // A short window, so the notes overflow it.
+    act(cx, window, |window, _| window.resize(size(px(500.), px(140.))));
+    act(cx, window, |_, _| {});
+    press(cx, window, "cmd-down");
+    let paged = cx.read(|cx| view.read(cx).detail_scroll_offset());
+    assert!(paged < px(0.), "⌘↓ scrolls down a page: {paged:?}");
+    press(cx, window, "up");
+    assert!(
+        cx.read(|cx| view.read(cx).detail_scroll_offset()) > paged,
+        "↑ scrolls back up"
+    );
+    press(cx, window, "cmd-up");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).detail_scroll_offset()),
+        px(0.),
+        "⌘↑ goes back to the top"
+    );
+}
+
+#[gpui_kit::test]
 fn runs_the_primary_action_with_enter_on_the_detail_screen(cx: &mut TestAppContext) {
     let (_home, window, _view) = open_with_query(cx, "explicit");
     press(cx, window, "enter");
@@ -275,6 +298,17 @@ fn opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d(cx: &mut TestAp
     assert!(!cx.read(|cx| view.read(cx).is_showing_details()));
     press(cx, window, "cmd-d");
     assert!(cx.read(|cx| view.read(cx).is_showing_details()));
+}
+
+#[gpui_kit::test]
+fn shows_titles_alone_beside_the_split_pane(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    let compact = |cx: &mut TestAppContext| cx.read(|cx| view.read(cx).list().read(cx).delegate().is_compact());
+    assert!(!compact(cx));
+    press(cx, window, "cmd-d");
+    assert!(compact(cx));
+    press(cx, window, "cmd-d");
+    assert!(!compact(cx));
 }
 
 #[gpui_kit::test]
@@ -355,7 +389,7 @@ fn the_action_bar_opens_details_and_runs_the_primary_action(cx: &mut TestAppCont
     assert_eq!(copied.as_deref(), Some("kubectl get pods -A"));
 }
 
-// Task cost (docs/experiment/parity.md, "Tasks"): each test presses exactly the keys the matrix
+// Task cost (docs/guides/parity.md, "Tasks"): each test presses exactly the keys the matrix
 // counts for its task once the panel is shown.
 
 #[gpui_kit::test]
@@ -413,4 +447,17 @@ fn task_t5_rebuilds_the_index_with_one_chord(cx: &mut TestAppContext) {
     let (window, view) = open(cx, sample_config(home.path()));
     press(cx, window, "cmd-r");
     assert!(cx.read(|cx| view.read(cx).is_rebuilding()));
+}
+
+#[gpui_kit::test]
+fn opens_the_actions_and_the_filter_with_a_click(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    click(cx, window, "footer-open-actions");
+    assert!(
+        cx.read(|cx| view.read(cx).is_actions_open()),
+        "a click opens the actions"
+    );
+    press(cx, window, "escape");
+    click(cx, window, "filter-button");
+    assert!(cx.read(|cx| view.read(cx).is_filter_open()), "a click opens the filter");
 }
