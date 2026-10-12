@@ -47,8 +47,11 @@ pub fn notes_pane(
             .items_start()
             .child(notes)
             .when_some(card, |pane, card| {
+                // Scrolls within the pane, so a long card never runs under the footer.
                 pane.child(
-                    card.w(relative(1. / 3.))
+                    card.id("metadata-column")
+                        .overflow_y_scroll()
+                        .w(relative(1. / 3.))
                         .flex_none()
                         .h_full()
                         .border_l_1()

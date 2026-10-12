@@ -260,10 +260,9 @@ pub fn split_description<'a>(markdown: &'a str, description: Option<&'a str>) ->
 #[must_use]
 pub fn metadata(entry: &Entry) -> Vec<(&'static str, String)> {
     let mut rows = Vec::new();
-    match type_key(&entry.entry_type) {
-        TypeKey::Bookmark => rows.push(("URL", entry.primary_content.clone())),
-        TypeKey::Command => rows.push(("Command", entry.primary_content.clone())),
-        _ => {}
+    // A bookmark's URL; a command has none, as the notes show it as a code block.
+    if type_key(&entry.entry_type) == TypeKey::Bookmark {
+        rows.push(("URL", entry.primary_content.clone()));
     }
     rows.push(("Type", type_label(&entry.entry_type)));
     if let Some(status) = &entry.task_status {
@@ -279,13 +278,11 @@ pub fn metadata(entry: &Entry) -> Vec<(&'static str, String)> {
             entry.tags.iter().map(|t| format!("#{t}")).collect::<Vec<_>>().join(" "),
         ));
     }
-    if !entry.links.is_empty() {
-        let titles: Vec<&str> = entry
-            .links
-            .iter()
-            .map(|l| l.title.as_deref().unwrap_or(&l.url))
-            .collect();
-        rows.push(("Links", titles.join(", ")));
+    // One link by its title; several by their count, which the Links page of the actions lists.
+    match entry.links.as_slice() {
+        [] => {}
+        [link] => rows.push(("Links", link.title.clone().unwrap_or_else(|| link.url.clone()))),
+        links => rows.push(("Links", format!("{} links", links.len()))),
     }
     rows.push(("Source", entry.source_rel_path.clone()));
     rows
@@ -355,6 +352,13 @@ mod tests {
     }
 
     #[test]
+    fn leaves_a_command_to_the_notes_code_block() {
+        let command = entry("commands", "ls -la", "desc: List all\n");
+        let labels: Vec<&str> = metadata(&command).iter().map(|(label, _)| *label).collect();
+        assert_eq!(labels, ["Type", "Source"]);
+    }
+
+    #[test]
     fn lists_metadata_in_raycast_order_without_the_description_the_notes_quote() {
         let mut task = entry(
             "tasks",
@@ -368,7 +372,7 @@ mod tests {
         let labels: Vec<&str> = metadata(&task).iter().map(|(label, _)| *label).collect();
         assert_eq!(labels, ["Type", "Status", "Priority", "Tags", "Links", "Source"]);
         assert_eq!(metadata(&task)[3].1, "#rust #kb");
-        assert_eq!(metadata(&task)[4].1, "Spec, https://u.example");
+        assert_eq!(metadata(&task)[4].1, "2 links", "the Links page lists them");
         assert_eq!(
             metadata(&entry("bookmarks", "https://b.example", "title: B\n"))[0],
             ("URL", "https://b.example".into())

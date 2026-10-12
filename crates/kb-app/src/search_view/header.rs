@@ -99,7 +99,8 @@ impl SearchView {
                                     cx.stop_propagation();
                                 }
                             }))
-                            .child(Input::new(&self.query_input).cleanable(true).appearance(false))
+                            // No inner padding, so the query starts where row titles do (DESIGN.md, Header).
+                            .child(Input::new(&self.query_input).cleanable(true).appearance(false).p_0())
                 }),
             )
             .when(parts.filter, |header| {
