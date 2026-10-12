@@ -216,6 +216,87 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
   - **Tags**: decision, pages, release
 
+- [x] elwx **-** Plan 8, 01 List in the companion: the owner's screen as reference, every chip and keycap 20 pt, one keycap component, chip state (live, rest) sets fill and text; approved as v5
+  - **Comments**: jBhm
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [~] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] sTbE **-** Plan 8, 05-06 Detail in the companion: drawn from the rules (no Stitch screen), with and without metadata; owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] 3XFj **-** Plan 8, 08-09 Actions pages in the companion: Links and Copy; owner approves
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] n4kx **-** Plan 8, 10 No index in the companion; owner approves
+  - **Priority**: medium
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] prlL **-** Plan 8, 11-14 Rebuild in the companion: running, report, stopped, failed; owner approves
+  - **Priority**: medium
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] ER8Q **-** Plan 8, 15-16 Bookmark media in the companion: thumbnail and favicon, split and detail; owner approves
+  - **Priority**: medium
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] nNln **-** Plan 8: add a realistic showcase corpus to the repo (committed YAML) that the prototypes and design:shots both use
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] r58y **-** Plan 8: rebuild the prototypes in docs/guides/design from the approved companion screens, on the showcase corpus (replaces the 0fcaddc set)
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] pMDV **-** Plan 8: write the plan from the spec
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] VHnE **-** Plan 8: review the plan until no findings remain
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [ ] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
+  - **Priority**: high
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
   - **Priority**: high
   - **Created**: 2026-10-11 15:37
@@ -307,6 +388,11 @@
   - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
   - **Tags**: linux, release
 
+- [ ] MOB4 **-** Plan 8, 17 Toast: restyle the notice (the owner is not happy with it); copy feedback lands meanwhile
+  - **Priority**: low
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
 # Actors
 
 # Comments
@@ -389,4 +475,7 @@
 
 - Uj0P **-** Archived 2026-10-12 at the owner's request.
   - **Task**: zfJD
+
+- jBhm **-** 2026-10-12: decided with the owner in the brainstorming companion (v1→v5): their Stitch screens are the reference, not the generated DESIGN.md text; the earlier spec (27918b2) and prototypes (0fcaddc) are superseded. Rules: Catppuccin Macchiato, 14 pt window, hairlines, Inter + JetBrains Mono; every chip and keycap 20 pt; one keycap (one cap per shortcut, mono 11, muted on mantle; the toast's keeps the grey fill); chip live (mantle, muted text) on keycaps and the selected row, rest (grey) elsewhere; magnifier on the list, back chevron elsewhere; no deploy/api chip; tag icons from the tag-images folder; type colours as drawn; Lucide for Material; ⌘V hint; ⌘1–⌘9 row shortcuts built.
+  - **Task**: elwx
 
