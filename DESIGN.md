@@ -69,7 +69,7 @@ chrome a step smaller) rather than pixel readings, which the screenshots cannot 
 | Element                        | Size     | Weight             | Colour                          |
 | ------------------------------ | -------- | ------------------ | ------------------------------- |
 | Search field                   | 18 (lg)  | Regular            | `text`; placeholder `textFaint` |
-| Row title                      | 14 (sm)  | Medium             | `text`                          |
+| Row title                      | 14 (sm)  | Regular            | `text`                          |
 | Row description                | 12 (xs)  | Regular            | description shade (below)       |
 | Tag pill                       | 12 (xs)  | Medium             | pill text                       |
 | Section header (list, popover) | 12 (xs)  | Semibold           | `textMuted`                     |
@@ -92,11 +92,10 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
   also draws placeholders in it. The selection is an inset, rounded `selection` fill, never a full-width bar: GPUI
   Kit draws the list highlight translucent (at most 20% opaque), so the theme gives it the tint that shows as
   `selection` over the window (`color.ts`, `tint`), as every GPUI Kit theme gives that key an accent at low opacity.
-- **Tag pill:** filled (no outline), corner radius 4 as Raycast's, `#name` in pill text on the pill fill. **Tag image** (D4): a tag with an image
-  in the tag-images folder (`<tag>.svg`; `tag_images_path`, default `~/.config/kb/images`, filled by
-  `mise run tags:images`) shows the image in its pill instead, drawn as a mask in the pill text colour (Raycast's
-  `tintColor`), its name in the tooltip. Brands are Simple Icons logos, concepts Lucide icons, so every image has
-  the same size, weight and contrast.
+- **Tag pill:** filled (no outline), corner radius 4 as Raycast's, `#name` in pill text on the pill fill. **Tag image** (D4): a tag with an image in the tag-images folder (`<tag>.svg`;
+  `tag_images_path`, default `~/.config/kb/images`, filled by `mise run tags:images`) shows the image instead of the
+  pill, in an invisible 16-point square so every image has the same size; its name in the tooltip. A brand's logo
+  keeps its colours; a shape (Lucide, or a logo too dark for the window) takes the muted text colour.
 - **Split pane** (D3): the list takes about ⅓ of the width, the detail pane ⅔; one `divider` line between them.
 - **Metadata card:** rows with the label left (`textMuted`) and the value right-aligned (`text`); alternate rows a
   shade lighter; Type and Tags as pills; Source with a file icon; URLs with an open-link ↗ icon.
@@ -108,7 +107,8 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
   action and Actions on the right, one keycap per key (`⌘` `K`, not `⌘K`).
 - **Actions popover:** anchored above the footer's Actions button and opening upwards; Show Details (↵) first, then
   the primary action (⌘↵); each row shows its keys, one keycap per key; "Links" and "Copy…" open as pages in place
-  (Esc comes back); the search field at the bottom. Rows carry no icons; corners of 16, as the filter dropdown's.
+  (Esc comes back); the search field on top, a line under it (GPUI Kit's `Command`). Rows carry no icons; corners of
+  16; at most 200 high, about five rows, then it scrolls; the filter dropdown alike.
   The search field's magnifier is GPUI Kit's `Command` own, so it stays.
 - **Filter dropdown:** anchored under the filter button; a "Filters" section with the count and Clear All Filters while
   any is active; types and tags with ✓ / ○; it stays open while picking.
@@ -119,7 +119,7 @@ owner-approved departure from the GPUI Kit Design Guides' sentence case. Message
   the panel stays centred. The window is resizable in both.
 - **Spacing:** the 4-point ramp of `layout.json` (`tight` 4, `compact` 8, `inset` 12, `standard` 16, `relaxed` 24,
   `section` 32). Native code maps points through GPUI's rem helpers so the layout scales with the interface.
-- **Geometry** (`layout.json` `components`): header 56 high; rows 50; selection inset 8 with radius 12; panel radius
+- **Geometry** (`layout.json` `components`): header 56 high; rows 56; selection inset 8 with radius 12; panel radius
   28; popover radius 16. The comparison page refuses to render if the header control leaves the row-icon axis or the
   search text leaves the title edge.
 - Group with whitespace; add a divider only at a real pane or section boundary.

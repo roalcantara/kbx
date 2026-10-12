@@ -10,7 +10,7 @@ use gpui_kit::component::tooltip::Tooltip;
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, App, Context, FontWeight, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
+    AnyElement, App, Context, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
     StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, svg,
 };
 use kb_domain::Connection;
@@ -169,7 +169,7 @@ impl EntryList {
             // Inset and rounded, as Raycast's selection (tools/design/layout.json, resultRow).
             .mx(px(8.))
             .px(px(16.))
-            .h(px(50.))
+            .h(px(56.))
             .rounded(px(12.))
             .child(
                 h_flex()
@@ -198,7 +198,6 @@ impl EntryList {
                                 div()
                                     .truncate()
                                     .text_sm()
-                                    .font_weight(FontWeight::MEDIUM)
                                     .text_color(cx.theme().foreground)
                                     .child(entry.title.clone()),
                             )
@@ -226,28 +225,34 @@ impl EntryList {
             )
     }
 
-    /// A tag: its filled pill, holding its image when the tag-images folder has one. The image is drawn as a mask in
-    /// the pill's text colour (Raycast's `tintColor`), so every image has the pill's size and contrast whatever its
-    /// own colours and margins.
+    /// A tag: its image when the tag-images folder has one, else its filled pill. The image sits in
+    /// an invisible square, so every image has the same size whatever its own margins; a brand's
+    /// colours are its own, a shape takes the muted text colour.
     fn render_tag(&self, tag: &str, cx: &App) -> AnyElement {
-        let accent = accent(tag_hue(tag), cx);
-        let pill = Tag::custom(accent.pill, accent.pill_text, accent.pill)
-            .xsmall()
-            .rounded(px(TAG_RADIUS));
-        let Some(path) = self.tag_images.get(tag) else {
-            return pill.child(format!("#{tag}")).into_any_element();
+        let Some(image) = self.tag_images.image(tag) else {
+            let accent = accent(tag_hue(tag), cx);
+            return Tag::custom(accent.pill, accent.pill_text, accent.pill)
+                .xsmall()
+                .rounded(px(TAG_RADIUS))
+                .child(format!("#{tag}"))
+                .into_any_element();
         };
         let name = format!("#{tag}");
+        let path = image.path.clone();
+        let drawn = if image.coloured {
+            img(path).size_full().into_any_element()
+        } else {
+            svg()
+                .external_path(path.to_string_lossy().into_owned())
+                .size_full()
+                .text_color(cx.theme().muted_foreground)
+                .into_any_element()
+        };
         div()
             .id(SharedString::from(format!("tag-{tag}")))
-            .child(
-                pill.child(
-                    svg()
-                        .external_path(path.to_string_lossy().into_owned())
-                        .size_3()
-                        .text_color(accent.pill_text),
-                ),
-            )
+            .flex_none()
+            .size_4()
+            .child(drawn)
             .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
             .into_any_element()
     }

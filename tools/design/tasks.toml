@@ -673,7 +673,7 @@ const page = `<!doctype html>
 }; border-radius: ${pt(resultRow.selectionRadius)}; }
     .row.sel { background: var(--selection); }
     .icon { width: 16px; height: 16px; border-radius: 4px; justify-self: center; }
-    .text { min-width: 0; } .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .text { min-width: 0; } .title { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sub { color: var(--description); font-size: 12px; margin-top: ${
   pt(resultRow.titleToDescriptionGap)
 }; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

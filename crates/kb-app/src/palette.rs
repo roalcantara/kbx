@@ -131,7 +131,8 @@ pub fn entry_palette(entry: Option<&Entry>, context: PaletteContext) -> Vec<Pale
         if type_key(&entry.entry_type) == TypeKey::Bookmark {
             source.push(row("Copy URL", IconName::Copy, PaletteCommand::Run(Box::new(CopyUrl))));
         }
-        let noun = if context.detail { "Metadata" } else { "Details" };
+        // "Details Pane", so the row reads apart from Show Details (↵), which opens the detail screen.
+        let noun = if context.detail { "Metadata" } else { "Details Pane" };
         // The row carries → or ←, as Raycast's; ⌘D toggles too, unlisted.
         source.push(if context.showing_details {
             row(
@@ -272,7 +273,7 @@ mod tests {
                 ("", vec!["Show Details", "Open in Browser"]),
                 (
                     "Source & Clipboard",
-                    vec!["Copy URL", "Show Details", "Open Source File"]
+                    vec!["Copy URL", "Show Details Pane", "Open Source File"]
                 ),
                 ("", vec!["Links", "Copy…"]),
                 ("Administration", ADMINISTRATION.to_vec()),
@@ -327,7 +328,7 @@ mod tests {
         );
         assert_eq!(
             labels(&groups)[1],
-            ("Source & Clipboard", vec!["Hide Details", "Open Source File"])
+            ("Source & Clipboard", vec!["Hide Details Pane", "Open Source File"])
         );
         assert_eq!(labels(&groups)[2], ("", vec!["Copy…"]));
     }

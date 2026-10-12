@@ -112,7 +112,12 @@ const existing = new Set(readdirSync(dir).filter((f) => f.endsWith('.svg')).map(
 const mapFile = join(tagsDir(), 'tags.images.toml')
 const map = existsSync(mapFile) ? Bun.TOML.parse(readFileSync(mapFile, 'utf8')) : {}
 
-const brands = new Map(Object.values(simpleIcons).filter((i) => i?.slug).map((i) => [i.slug, i.svg]))
+const brands = new Map(Object.values(simpleIcons).filter((i) => i?.slug).map((i) => [i.slug, i]))
+// A logo keeps its brand colour (kb draws a coloured image as it is), unless the colour is too dark to read on kb's
+// window: then it stays a shape, which kb draws in its muted text colour.
+const { contrast } = await import(`${process.cwd()}/tools/design/color.ts`)
+const window = JSON.parse(readFileSync('tools/design/palettes.json', 'utf8')).find((p) => p.chosen).roles.window
+const logo = ({ svg, hex }) => (contrast(`#${hex}`, window) >= 3 ? svg.replace('<svg ', `<svg fill="#${hex}" `) : svg)
 // Lucide exports PascalCase names; its icon names are kebab-case, digits split off (Gamepad2 → gamepad-2, Grid3x3 → grid-3x3).
 const kebab = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/(?<!\d)([a-zA-Z])(\d)/g, '$1-$2').toLowerCase()
 const icons = new Map(Object.entries(lucide).filter(([k, v]) => /^[A-Z]/.test(k) && typeof v === 'string').map(([k, v]) => [kebab(k), v]))
@@ -132,7 +137,7 @@ for (const tag of tags) {
   added.push(`${tag} ← ${source.kind}:${source.name}`)
   if (!write) continue
   if (source.kind === 'file') copyFileSync(join(dir, source.name), target)
-  else writeFileSync(target, (source.kind === 'lucide' ? icons : brands).get(source.name))
+  else writeFileSync(target, source.kind === 'lucide' ? icons.get(source.name) : logo(brands.get(source.name)))
 }
 if (errors.length) { console.error(errors.join('\n')); process.exit(1) }
 

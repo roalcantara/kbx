@@ -25,6 +25,9 @@ use super::{Overlay, Screen, SearchView};
 use crate::filter::{FilterGroup, filter_groups};
 use crate::palette::{Page, PaletteCommand, PaletteContext, PaletteGroup, entry_palette, page};
 
+/// A popover's most height: about five rows, then it scrolls.
+const POPOVER_HEIGHT: f32 = 200.;
+
 /// Builds an overlay's content from the view, on every render of its popover.
 type Content = fn(&SearchView, &WeakEntity<SearchView>, &mut Window, &App) -> AnyElement;
 
@@ -194,10 +197,8 @@ fn actions_content(this: &SearchView, view: &WeakEntity<SearchView>, window: &mu
     let mut command = Command::new(&palette)
         .bordered(false)
         .placeholder("Search for Actions…")
-        .max_h(px(360.))
-        .w(px(340.))
-        // The search field under the rows, as Raycast's.
-        .flex_col_reverse();
+        .max_h(px(POPOVER_HEIGHT))
+        .w(px(340.));
     for group in groups {
         let mut items = Vec::new();
         let mut row_commands = Vec::new();
@@ -272,7 +273,7 @@ fn filter_content(this: &SearchView, view: &WeakEntity<SearchView>, _: &mut Wind
     let mut command = Command::new(&palette)
         .bordered(false)
         .placeholder("Filter by Type or Tag…")
-        .max_h(px(360.))
+        .max_h(px(POPOVER_HEIGHT))
         .w(px(280.));
     for group in groups {
         let mut items = Vec::new();
