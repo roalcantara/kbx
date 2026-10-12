@@ -223,7 +223,7 @@
   - **Tags**: design, plan8
 
 - [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
-  - **Comments**: 3kaC,QQca,303s,1xKt
+  - **Comments**: 3kaC,QQca,303s,1xKt,ARsG
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -490,5 +490,8 @@
   - **Task**: OKAo
 
 - 1xKt **-** 2026-10-12, v7 labels (one word each, Raycast's words where it has one): Details ↵, Copy ⌘↵ (Open on bookmarks), Preview ⌘D (the split pane), Resize ⇧⌘F, Edit ⌘O (opens the entry's YAML in the editor), More… ›; ADMINISTRATION: Refresh ⌘R (the sync; CONTEXT.md keeps 'Sync'), Configure ⇧⌘, (Raycast's 'Configure Extension'). The popover is closed.
+  - **Task**: OKAo
+
+- ARsG **-** 2026-10-12, final (companion actions-final-v2): Raycast layout, 28 pt rows, search at the bottom, sections by a line. Main panel (218 pt): Details ↵, Copy ⌘↵ (Open on bookmarks), Preview ⌘D, Resize ⇧⌘F, Edit ⌘O, More… ›. More… is a submenu with no search of its own and a ‹ More header: LINKS (one row per link, opens it; only when the entry has links), COPY (URL ⇧⌘C on bookmarks, Title, Description, Notes, Path = the source file's absolute path; rows only when the entry has them), ADMINISTRATION (Refresh ⌘R, Configure ⇧⌘,). The main panel's search also finds More…'s rows, marked 'More'. Raw YAML copy dropped (Path + Edit instead). Shortcuts fire from the list wherever an action is listed.
   - **Task**: OKAo
 
