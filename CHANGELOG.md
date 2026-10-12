@@ -2,6 +2,27 @@
 
 Every release of kb, written by semantic-release from the commit messages (docs/adr/0007-releases.md).
 
+## [0.5.0](https://github.com/roalcantara/kbx/compare/v0.4.0...v0.5.0) (2026-10-12)
+
+### Features
+
+* **app:** Scroll the detail screen's notes from the keyboard ([639c3ee](https://github.com/roalcantara/kbx/commit/639c3ee08472c95a7d6d566aea9b679804952bc6))
+* **app:** Tint tag images inside their pill ([bad8591](https://github.com/roalcantara/kbx/commit/bad8591bd1e996c532b2444ff62b132f13f65f79))
+* **domain:** Read file:// notes from their files ([62d7b69](https://github.com/roalcantara/kbx/commit/62d7b69ba673102ce4f45cc3f7457b21300fdef9))
+* **tools:** Add the tag tools: suggest, apply and check ([7a3f30f](https://github.com/roalcantara/kbx/commit/7a3f30fcabb9634a66d82739f341ed275ac5167f))
+* **tools:** Shorten, cluster, split and drop tags ([6b978f5](https://github.com/roalcantara/kbx/commit/6b978f5766712c28d238e6d7d98f58c0b10c068f))
+
+### Bug Fixes
+
+* **app:** Calm the footer, rows, popovers and tag images ([dbf8cf0](https://github.com/roalcantara/kbx/commit/dbf8cf05398a52f9147b3eb608a19e239afd558a))
+* **app:** Draw the icons the default bundle left out ([b3cae0f](https://github.com/roalcantara/kbx/commit/b3cae0f391efab2e6ff3a2396aa789c72d461a47))
+* **app:** Focus each popup's search field when it opens ([e2e3e96](https://github.com/roalcantara/kbx/commit/e2e3e96410a6dd9c6a5aa2e76c44eca6f9fd9e38))
+* **app:** Give code in the notes its own contrast ([5b013da](https://github.com/roalcantara/kbx/commit/5b013dae9bf05bf1bcf5382b2b6167223acdaac2))
+* **app:** Match the list, footer and popovers to the prototype ([bf9ce8a](https://github.com/roalcantara/kbx/commit/bf9ce8adc07d33345a16ba3f38826d4b6593043a))
+* **app:** Open the filter and actions on a click ([0f4d7cd](https://github.com/roalcantara/kbx/commit/0f4d7cd2eea4f838f144c14e54eb0907097bfd80))
+* **tools:** Keep tag guesses from feeding each other ([e7c561d](https://github.com/roalcantara/kbx/commit/e7c561d0ca4540e50709f27aac9bb862063f2198))
+* **tools:** Merge a renamed singular into its plural ([d38d664](https://github.com/roalcantara/kbx/commit/d38d66419a724d84cbddfb9d35835c5d8fea7ab2))
+
 ## [0.4.0](https://github.com/roalcantara/kbx/compare/v0.3.1...v0.4.0) (2026-10-11)
 
 ### Features
