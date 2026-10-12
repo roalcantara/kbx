@@ -20,7 +20,7 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 - `tools/tags/`: the tag tools (suggest, apply, check) for the knowledge folder's tags; rules in
   `docs/doctrine/tag-conventions.doctrine.md`
 - `docs/`: ADRs, experiment, specs and plans; `docs/doctrine/`: principles to load when a change matches their
-  `applies_to` (start with verify-what-users-see for any UI change)
+  `applies_to`
 - `PRODUCT.md`: what kb is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any
   UI change
 - `tools/design/`: the design kit: palettes, their validation, the app theme generator, the comparison page
@@ -42,7 +42,6 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
   (`run = '''#!/usr/bin/env bun …'''`). A module file exists only for logic with unit tests (`bun test` beside it).
   npm packages are imported with a pinned version (`import x from "pkg@1.2.3"`), which `bun run` installs on first
   use: no `package.json`. `bun test` does not, so a tested module imports none. No new Python or Node-only scripts (`tools/design/sample.py` and the design kit's `.mjs` predate this).
-- A UI change passes the Visual Pass before merge ([doctrine](docs/doctrine/verify-what-users-see.doctrine.md)).
 
 ## Naming conventions
 

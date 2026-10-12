@@ -184,17 +184,6 @@
   - **Created**: 2026-10-11 09:30
   - **Tags**: app, plan7
 
-- [ ] bQVp **-** Run the Visual Pass (docs/experiment/visual-pass.md) on v0.4.0, compact and expanded; file failures
-  - **Priority**: high
-  - **Created**: 2026-10-11 09:30
-  - **Tags**: app, plan7
-
-- [ ] Mw5p **-** Automate the Visual Pass's 'To automate next' list (docs/experiment/visual-pass.md): Title Case labels; every key shown in the popups and footer runs its action; Esc clears search text; the filter resets on restart; the size holds after hiding; ⌘⇧C, ⌘O and ⌘⇧, run their actions
-  - **Comments**: yMdG
-  - **Priority**: high
-  - **Created**: 2026-10-11 12:51
-  - **Tags**: app, visual-pass
-
 - [ ] Xvn5 **-** Review ~/Work/knowledge/docs/tags.proposed.toml (keep, edit, uncomment), save it as docs/tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
   - **Priority**: high
   - **Created**: 2026-10-11 13:53
@@ -376,9 +365,6 @@
 
 - nLHf **-** Closed 2026-10-11, won't do: nothing reads the variable, and it goes with the benchmark kit (Y0HE).
   - **Task**: EYAZ
-
-- yMdG **-** Each item moves from the Visual Pass's manual checks to its 'Already automated' appendix as its test lands, so the manual pass keeps shrinking to what only a person can judge.
-  - **Task**: Mw5p
 
 - 6165 **-** Decided in jYHt. It goes after Plan 5's report so the session and the report can still run; tools/bench/README.md lists the steps.
   - **Task**: Y0HE
