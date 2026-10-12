@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 05 Detail</title>
+<!-- State: Return on "docker ps -a": its notes full width; the header keeps only the back chevron; the footer names the entry and offers its primary action. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header back-only></kb-header>
+  <div class="content">
+    <div class="detail">
+      <div class="notes">
+        <div class="codeblock"><span class="f">docker</span> ps <span class="p">-a</span></div>
+        <div class="quote">List every container, stopped ones too.</div>
+        <div class="notes-body"><p>Add <code>--format '{{.Names}}'</code> to print names only.</p></div>
+        <div class="source">Source: <code class="code-sm">commands.yml</code></div>
+      </div>
+    </div>
+  </div>
+  <kb-footer context-type="commands" context="docker ps -a" primary="Copy Command Snippet"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

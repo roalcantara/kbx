@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 11 Rebuild, running</title>
+<!-- State: ⌘R: the sync runs on the background executor and reports each file; Esc stops it and keeps the previous index. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header back-only></kb-header>
+  <div class="content">
+    <div class="rebuild">
+      <div class="state-title headline-sm"><span class="glyph"><i data-lucide="refresh-cw"></i></span>Rebuilding the index…</div>
+      <div class="progress"><div class="bar" style="width:57%"></div></div>
+      <span class="body-md muted">4 of 7 files, 9 entries · commands.yml</span>
+      <span class="body-sm faint">Press Esc to stop.</span>
+    </div>
+  </div>
+  <kb-footer status="busy"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

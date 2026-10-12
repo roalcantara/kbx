@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 06 Detail with metadata</title>
+<!-- State: 05, then →: the metadata in a column on the right, a third of the width. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header back-only></kb-header>
+  <div class="content">
+    <div class="detail">
+      <div class="notes">
+        <div class="codeblock"><span class="f">docker</span> ps <span class="p">-a</span></div>
+        <div class="quote">List every container, stopped ones too.</div>
+        <div class="notes-body"><p>Add <code>--format '{{.Names}}'</code> to print names only.</p></div>
+        <div class="source">Source: <code class="code-sm">commands.yml</code></div>
+      </div>
+      <div class="meta-column"><div class="card"><div class="meta"><span class="label">Type</span><span class="value"><span class="tag green">Commands</span></span></div><div class="meta"><span class="label">Tags</span><span class="value"><kb-tag name="docker"></kb-tag><kb-tag name="containers"></kb-tag></span></div><div class="meta"><span class="label">Source</span><span class="value"><i data-lucide="file"></i>commands.yml</span></div></div></div>
+    </div>
+  </div>
+  <kb-footer context-type="commands" context="docker ps -a" primary="Copy Command Snippet"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

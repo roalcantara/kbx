@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 09 Actions, Copy page</title>
+<!-- State: "docker ps -a" selected (list scrolled to it), ⌘K, then Copy… ›: the entry's copy rows; Esc returns to the main page. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header></kb-header>
+  <div class="content">
+    <div class="list">
+      <kb-row type="bookmarks" title="Example docs" desc="Uses the long spelling of the description field." tags="docs" links="3" favicon="https://icons.duckduckgo.com/ip3/example.com.ico"></kb-row>
+      <kb-row type="cheats" title="Interactive rebase" tags="git"></kb-row>
+      <kb-row type="notes" title="List notes"></kb-row>
+      <kb-row type="commands" title="Run with the explicit cmd field"></kb-row>
+      <kb-row type="tasks" title="Write the report"></kb-row>
+      <kb-row type="commands" title="docker ps -a" desc="List every container, stopped ones too." tags="docker,containers" selected></kb-row>
+      <kb-row type="tasks" title="port-engine" tags="rust,kb"></kb-row>
+    </div>
+    <div class="popover actions">
+      <div class="search"><i data-lucide="search"></i><span class="body-lg">Search for Actions…</span></div>
+      <div class="items">
+        <kb-section label="Copy…"></kb-section>
+        <kb-action icon="copy" label="Copy Title" selected></kb-action>
+        <kb-action icon="copy" label="Copy Description"></kb-action>
+        <kb-action icon="copy" label="Copy Notes"></kb-action>
+        <kb-action icon="copy" label="Copy Raw YAML"></kb-action>
+      </div>
+    </div>
+  </div>
+  <kb-footer status="ready" count="12" primary="Show Details"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

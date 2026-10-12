@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 08 Actions, Links page</title>
+<!-- State: "Example docs" selected, ⌘K, then Links ›: one section per link, each with Open and Copy URL; Esc returns to the main page. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header></kb-header>
+  <div class="content">
+    <div class="list">
+      <kb-row type="bookmarks" title="A conference talk" desc="A YouTube bookmark, so its notes open with the video thumbnail." tags="video,talks" favicon="https://icons.duckduckgo.com/ip3/www.youtube.com.ico"></kb-row>
+      <kb-row type="notes" title="A note without notes"></kb-row>
+      <kb-row type="commands" title="All pods" tags="kube"></kb-row>
+      <kb-row type="snippets" title="An entry of an unknown type" tags="mixed-case"></kb-row>
+      <kb-row type="notes" title="Café ☕ notes"></kb-row>
+      <kb-row type="bookmarks" title="Example docs" desc="Uses the long spelling of the description field." tags="docs" links="3" favicon="https://icons.duckduckgo.com/ip3/example.com.ico" selected></kb-row>
+      <kb-row type="cheats" title="Interactive rebase" tags="git"></kb-row>
+      <kb-row type="notes" title="List notes"></kb-row>
+      <kb-row type="commands" title="Run with the explicit cmd field"></kb-row>
+      <kb-row type="tasks" title="Write the report"></kb-row>
+      <kb-row type="commands" title="docker ps -a" desc="List every container, stopped ones too." tags="docker,containers"></kb-row>
+      <kb-row type="tasks" title="port-engine" tags="rust,kb"></kb-row>
+    </div>
+    <div class="popover actions">
+      <div class="search"><i data-lucide="search"></i><span class="body-lg">Search for Actions…</span></div>
+      <div class="items">
+        <kb-section label="https://example.com/changelog" verbatim></kb-section>
+        <kb-action icon="external-link" label="Open https://example.com/changelog" selected></kb-action>
+        <kb-action icon="copy" label="Copy URL"></kb-action>
+        <kb-section label="Guide" verbatim></kb-section>
+        <kb-action icon="external-link" label="Open Guide"></kb-action>
+        <kb-action icon="copy" label="Copy URL"></kb-action>
+        <kb-section label="API" verbatim></kb-section>
+        <kb-action icon="external-link" label="Open API"></kb-action>
+        <kb-action icon="copy" label="Copy URL"></kb-action>
+      </div>
+    </div>
+  </div>
+  <kb-footer status="ready" count="12" primary="Show Details"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 07 Filter</title>
+<!-- State: ⌘P, Commands picked: the dropdown under its trigger stays open; the trigger names the filter and turns its chevron up; the list behind shows the three commands. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header filter="Commands" open></kb-header>
+  <div class="content">
+    <div class="list">
+      <kb-row type="commands" title="All pods" tags="kube" selected></kb-row>
+      <kb-row type="commands" title="Run with the explicit cmd field"></kb-row>
+      <kb-row type="commands" title="docker ps -a" desc="List every container, stopped ones too." tags="docker,containers"></kb-row>
+    </div>
+    <div class="popover filter">
+      <div class="search"><i data-lucide="search"></i><span class="body-lg">Filter by Type or Tag…</span></div>
+      <div class="items">
+        <kb-section label="1 Filter"></kb-section>
+        <kb-action icon="x" label="Clear All Filters"></kb-action>
+        <kb-section label="Types"></kb-section>
+        <kb-action mark="off" label="Bookmarks"></kb-action>
+        <kb-action mark="off" label="Cheats"></kb-action>
+        <kb-action mark="on" label="Commands" selected></kb-action>
+        <kb-action mark="off" label="Notes"></kb-action>
+        <kb-action mark="off" label="Snippets"></kb-action>
+        <kb-action mark="off" label="Tasks"></kb-action>
+        <kb-section label="Tags"></kb-section>
+        <kb-action mark="off" label="#containers"></kb-action>
+      </div>
+    </div>
+  </div>
+  <kb-footer status="ready" count="3" primary="Show Details"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

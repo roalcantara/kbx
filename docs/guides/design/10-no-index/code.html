@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 10 No index</title>
+<!-- State: the first launch, before any rebuild: no index, so no entries; ⌘R rebuilds it. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header></kb-header>
+  <div class="content">
+    <div class="empty">
+      <span class="badge"><i data-lucide="database"></i></span>
+      <span class="headline-sm">No entries indexed yet</span>
+      <span class="body-md muted">Press <kb-keys keys="⌘ R"></kb-keys> to rebuild the index from your sources.</span>
+    </div>
+  </div>
+  <kb-footer status="none"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>

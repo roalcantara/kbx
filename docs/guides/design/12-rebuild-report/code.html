@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb — 12 Rebuild, report</title>
+<!-- State: the rebuild finished: the summary, then each file worth a look, failed files first with their excerpt. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/tokens.css">
+<link rel="stylesheet" href="../shared/prototype.css">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="panel">
+  <kb-header back-only></kb-header>
+  <div class="content">
+    <div class="rebuild">
+      <div class="state-title headline-sm"><span class="glyph green"><i data-lucide="circle-check"></i></span>12 entries from 8 files in 0.1 s, 2 failed</div>
+      <div class="report">
+        <div class="file"><div class="line body-md"><span class="path">errors/broken.yml</span><span class="muted">Failed: Flow sequence in block collection must be sufficiently indented and end with a ]</span></div><div class="codeblock">  desc: [this flow sequence is never closed
+^</div></div>
+        <div class="file"><div class="line body-md"><span class="path">errors/list-type.yml</span><span class="muted">Failed: type block "commands" is a list; it must be a map of keys to entries</span></div></div>
+        <div class="file"><div class="line body-md"><span class="path">bookmarks.yml</span><span class="muted">Skipped, not a map: bookmarks/not-a-map</span></div></div>
+      </div>
+      <span class="body-sm faint">Press Esc to return to the list.</span>
+    </div>
+  </div>
+  <kb-footer status="ready" count="12"></kb-footer>
+</div>
+<script src="../shared/prototype.js"></script>
+</body>
+</html>
