@@ -241,6 +241,7 @@
   - **Tags**: design, plan8
 
 - [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
+  - **Comments**: oVNz,xpAF
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -527,4 +528,10 @@
 
 - knER **-** 2026-10-12: folded into 03 (same Raycast empty view): a database icon, 'No entries indexed yet', 'Press Refresh to build the index from your sources.'; status '● No index'; footer Refresh ↵.
   - **Task**: n4kx
+
+- oVNz **-** 2026-10-12, command hero (owner): native card B (mantle box, JetBrains Mono, no window bar, no ❯), lines broken at the operators (&&, ||, |) when the chain is wider than the pane. Buy, don't build: formatting by fmt-rs =0.1.0 (MIT, pure Rust, no deps; tried on real commands; vendor into crates/third-party if abandoned); colours by GPUI Kit's SyntaxHighlighter with the tree-sitter-bash grammar kb already enables (function, constant = flags, string, property = vars, embedded, operator, number, comment; plain values stay text colour) mapped to the design tokens; drawn as GPUI StyledText in a CommandCard component. Used as the hero of commands and of cheats with a snippet; Markdown code in notes keeps TextView. Replaces the fabrix SVG idea (owner's earlier Raycast workaround).
+  - **Task**: Z64Y
+
+- xpAF **-** 2026-10-12, pane template (owner, to render next): split and detail share one component; slots Header (title left, tags right), Hero, Summary (description), Body (notes); per-type fill from the catalog (command: no title, hero CommandCard; bookmark: URL title, hero YouTube thumbnail, og:image later; cheat: title, hero snippet card when present; note: title; task: task, hero status+priority badges; other: title); empty slots collapse; no type badge or path in the pane; Links only in the Links… submenu. Footer: left context (status line on the list, [type] file ⌥⌘C copy-path when a pane or detail is open), right the screen's ↵ / ⌘↵ / ⇧⌘↵ actions and Actions ⌘K. Stored notes_markdown stays (TS goldens); kb-domain adds a body-only Markdown function.
+  - **Task**: Z64Y
 
