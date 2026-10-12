@@ -1,6 +1,6 @@
 # The new design system (Plan 8) — design
 
-- Status: draft, for the owner's review
+- Status: draft, for the owner's review (revised: Catppuccin Macchiato, D13–D14)
 - Date: 2026-10-12
 - Branch: `feat/design-system`
 - Plan: [2026-10-12-kb-native-08-design-system.md](../plans/2026-10-12-kb-native-08-design-system.md)
@@ -24,9 +24,9 @@ and copies of kit files.
 
 | Finding | Detail                                                                                                                                                                                                                                                                                                                           | Consequence                                                                                                |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| F1      | The new DESIGN.md's kb roles (`surface-window` `#23273A` … `accent-red` `#E04F50`) are the current palette, hex for hex.                                                                                                                                                                                                         | The validated palette stays; no colour re-validation is needed beyond the gate.                            |
+| F1      | The new DESIGN.md's text names Tokyo Night Storm and repeats the current palette hex for hex (`surface-window` `#23273A` … `accent-red` `#E04F50`); its screens 01–03 are Catppuccin Macchiato.                                                                                                                                  | The owner chose Catppuccin Macchiato (D13).                                                                |
 | F2      | Its front matter also carries ~50 Material 3 roles (`surface` `#0e1224`, `primary`, `on-primary-container`…) no kb surface uses.                                                                                                                                                                                                 | They are dropped (D5).                                                                                     |
-| F3      | The screens disagree with the text: `01`–`03` are coloured in Catppuccin Macchiato (`#24273A`, mauve `#C6A0F6`, sky, mint, peach) with radii 14 / 6 / 4; `04-split` uses the Tokyo Night Storm hexes; the text says radii 28 / 16 / 12 / 8 / 6 / 4.                                                                              | The text wins (D1); the screens give anatomy only.                                                         |
+| F3      | The screens disagree with the text: `01`–`03` are coloured in Catppuccin Macchiato (`#24273A`, mauve `#C6A0F6`, sky, mint, peach) with radii 14 / 6 / 4; `04-split` uses the Tokyo Night Storm hexes; the text says radii 28 / 16 / 12 / 8 / 6 / 4.                                                                              | The text wins on geometry, the screens on colour (D1).                                                     |
 | F4      | New typography: Inter for the interface, JetBrains Mono for code, a ten-role scale (`headline-lg` 24/600 … `label-xs` 11/600 uppercase, `code-sm` 12), with line heights and letter spacing.                                                                                                                                     | Fonts are bundled (D3); GPUI has no letter spacing (Deviations).                                           |
 | F5      | `layout.json`, `color.ts`, `color.test.ts` and `palettes.json` in the folder are byte-identical copies of `tools/design/`'s; `manifest.json` is a web-app manifest (PWA icons, `start_url`); `icon.png` is an app icon candidate.                                                                                                | Copies and the manifest are deleted (D4).                                                                  |
 | F6      | The screens add anatomy the text doesn't describe: tinted icon tiles, an accent bar on the selected row, a ↵ keycap on the selected row, icons on action rows, a status line (`● Ready • 12 results`), a copy toast, a rich empty state, ⌘1–⌘9 quick picks, ⌘N Create Entry, a title block and metadata tiles in the split pane. | The owner picked which land (D2).                                                                          |
@@ -39,8 +39,9 @@ and copies of kit files.
 
 The owner's, 2026-10-12.
 
-**D1. The text is canonical.** Where the new DESIGN.md's text and its screens disagree, the text wins. Screens show
-layout and anatomy, read in the Tokyo Night Storm palette. Colours stay those of F1; radii are the text's.
+**D1. The text is canonical, except colour.** Where the new DESIGN.md's text and its screens disagree, the text wins
+on geometry, type and anatomy (radii 28 / 16 / 12 / 8 / 6 / 4, not the screens' 14 / 6 / 4). Colour follows the screens:
+the palette is Catppuccin Macchiato (D13), and the text's Tokyo Night Storm hexes are replaced.
 
 **D2. Product surface that lands.** From F6: the status line, copy feedback, tinted icon tiles, the accent bar on the
 selected row, the ↵ keycap on the selected row, icons on action rows. Not landing: the rich empty state, ⌘1–⌘9 quick
@@ -75,10 +76,43 @@ reference for how kb behaves (keys, actions, flows: `docs/guides/parity.md`). PR
 **D10. Verification by committed screenshots.** A task runs kb on the committed sample corpus, drives it, and commits
 its screens beside the reference screens.
 
-**D11. Accent bar colour.** The selected row's bar is purple (`#A362F2`), whatever the entry's type.
+**D11. Accent bar colour.** The selected row's bar is `accent-purple`, Catppuccin's mauve (`#C6A0F6`), as the screens
+draw it, whatever the entry's type.
 
 **D12. A change map closes the work.** The last task records every file the design system reaches, so a later design
 change starts from a checklist instead of a search.
+
+**D13. The palette is Catppuccin Macchiato**, its canonical hexes ([catppuccin.com/palette](https://catppuccin.com/palette)),
+mapped to kb's roles as the screens use them:
+
+| Role (front matter) | Catppuccin | Hex       | Job                                                  |
+| ------------------- | ---------- | --------- | ---------------------------------------------------- |
+| `surface-window`    | base       | `#24273A` | The panel, the list, the detail pane                 |
+| `surface-header`    | base       | `#24273A` | The header: seamless with the window, as the screens |
+| `surface-selection` | surface0   | `#363A4F` | The selected row, the selected popover item          |
+| `surface-raised`    | mantle     | `#1E2030` | Popovers and notices: a step below, edge and shadow  |
+| `border-divider`    | surface0   | `#363A4F` | Pane boundaries, popover and card edges              |
+| `text-primary`      | text       | `#CAD3F5` | Titles, values, search text                          |
+| `text-muted`        | subtext0   | `#A5ADCB` | Descriptions, labels, shortcut hints                 |
+| `text-faint`        | overlay0   | `#6E738D` | The placeholder, tertiary hints                      |
+| `accent-blue`       | blue       | `#8AADF4` | Cheats; tags                                         |
+| `accent-green`      | green      | `#A6DA95` | Commands; tags; the Ready dot                        |
+| `accent-orange`     | peach      | `#F5A97F` | Notes; tags                                          |
+| `accent-purple`     | mauve      | `#C6A0F6` | Bookmarks; tags; the selection bar                   |
+| `accent-magenta`    | pink       | `#F5BDE6` | Tasks; tags                                          |
+| `accent-yellow`     | yellow     | `#EED49F` | Tags; the Rebuilding dot                             |
+| `accent-red`        | red        | `#ED8796` | Tags; the notes' description bar                     |
+
+Checked with kb's rules (2026-10-12): text 7.55–10.85 and muted text 5.03–7.24 on every surface; faint text 3.15 on
+the window; divider 1.31; every tag pill 4.50–6.07 (pill text lifted where needed, red to `#E892A4`); the description
+shade `#A0A7C5`. Accent separation fails: the closest pair, blue / purple, is ΔE 8.5 apart in normal vision (15
+required), 1.2 under protan and 2.8 under deutan (8 required). No subset of genuine Catppuccin colours passes; a tuned
+set passes but moves accents up to ΔE 8.2, and the owner chose the canonical hexes.
+
+**D14. Accent separation becomes advisory (a gate change, owner-approved 2026-10-12).** `design:validate`'s three
+"accents apart" checks report `warn` instead of `fail` below their thresholds, for every palette. Colour is never the
+only cue: a tag carries its `#name`, a type its icon and tooltip (PRODUCT.md, Accessibility). Every other threshold is
+unchanged.
 
 ## Scope
 
@@ -92,11 +126,11 @@ Out: the rich empty state, ⌘1–⌘9, ⌘N, a light palette, a new app icon, b
 
 ### 1. DESIGN.md and its tokens
 
-The root `DESIGN.md` becomes the new one, edited to D1–D11:
+The root `DESIGN.md` becomes the new one, edited to D1–D14:
 
 - **Front matter** (YAML), the only place a token's value is written. The keys follow the new system's names; values
   are the text's:
-  - `name: Tokyo Night Storm Flat Separated`
+  - `name: Catppuccin Macchiato`
   - `colors`: `surface-window`, `surface-header`, `surface-raised`, `surface-selection`, `border-divider`,
     `text-primary`, `text-muted`, `text-faint`, and the seven `accent-*`. Nothing else.
   - `typography`: the ten roles of F4 (`fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing` kept for
@@ -117,7 +151,7 @@ The root `DESIGN.md` becomes the new one, edited to D1–D11:
 **Deviations** (replaces Adaptations). What kb does differently from the GPUI Kit Design Guides, and from Raycast where
 it matters, each with its reason: Inter instead of the platform font (the system's choice; owner-approved); uppercase
 `label-xs` section headers (owner-approved; the guides advise against uppercase); Title Case (kept); no letter spacing
-(GPUI has none); always dark (D6); notices autohide after GPUI Kit's fixed 5 seconds; and the rows of today's
+(GPUI has none); always dark (D6); accent separation advisory (D14); notices autohide after GPUI Kit's fixed 5 seconds; and the rows of today's
 Adaptations table that still hold (opaque surfaces, favicons from DuckDuckGo, tag images from a local folder, images
 by `curl`, the patched GPUI that keeps the window centred, the two window sizes, → / ← only at the caret's end).
 
@@ -130,7 +164,9 @@ by `curl`, the patched GPUI that keeps the window centred, the two window sizes,
   it parses the front matter's YAML subset itself: maps, quoted and bare scalars, lists of scalars. The test covers that
   subset and the real DESIGN.md.
 - `design:validate` reads the colours from the front matter (no longer from `palettes.json`'s `chosen`), and checks the
-  rest of `palettes.json` as alternatives. The palette-table drift check stays, against the front matter.
+  rest of `palettes.json` as alternatives. The palette-table drift check stays, against the front matter. The "accents
+  apart" checks warn instead of failing (D14). `palettes.json` drops its `catppuccin-macchiato` entry (the front matter
+  holds it now, with D13's roles) and keeps Tokyo Night Storm Flat Separated as an alternative.
 - `design:theme` reads the front matter and writes:
   - `crates/kb-app/assets/themes/kb.json`: as today, plus `font.family` `Inter`, `mono_font.family`
     `JetBrains Mono`; dark only.
@@ -222,24 +258,24 @@ Screens: `list`, `list-selected-tags` (a row with tags and links), `split`, `det
 it says so and stops when it lacks them. Shots are committed; they hold only the sample corpus.
 
 The final review compares each shot with the reference screen of the same anatomy (`tools/design/reference/`), read in
-the palette of D1. Differences either get fixed or become a Deviation with its reason.
+the same palette, Catppuccin Macchiato. Differences either get fixed or become a Deviation with its reason.
 
 ### 7. Documents
 
-| Document                           | Change                                                                                                                                                                                                     |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DESIGN.md`                        | Replaced (section 1).                                                                                                                                                                                      |
-| `PRODUCT.md`                       | Principle 2 (D9); Brand Personality's "looks and speaks like Raycast" becomes "speaks like Raycast; looks as DESIGN.md says"; accessibility line points at the new validation.                             |
-| `AGENTS.md`                        | The `tools/design/` entry (front matter as source, shots, reference screens); "Read DESIGN.md before any UI change" stays.                                                                                 |
-| `CONTEXT.md`                       | Colour palette row (lives in DESIGN.md's front matter); new rows **Design token**, **Status line**, **Notice**; Tag image row unchanged.                                                                   |
-| `README.md`                        | Project structure (`docs/guides/design` gone; `tools/design/reference`, `shots`); a current screenshot.                                                                                                    |
-| `docs/guides/parity.md`            | Footer row (status line instead of the entry: Adapted, with reason); new Better rows: copy feedback, result count; appearance row (always dark: Adapted).                                                  |
-| `docs/guides/compliance.md`        | "Follows the system appearance" becomes "always dark", with reason; "theme tokens replace visual literals" extends to type, radii and spacing; fonts bundled.                                              |
-| `tools/bench/README.md`            | Tier 2 size note: the bundled fonts add to the binary; the next session measures it.                                                                                                                       |
-| `crates/third-party/README.md`     | Unchanged (no new patch).                                                                                                                                                                                  |
-| Source comments citing DESIGN.md   | Updated to the new section names and token names (`accents.rs`, `entry_list.rs`, `http.rs`, `lib.rs`, `metadata.rs`, `notes.rs`, `presentation.rs`, `search_view*.rs`, `tag_images.rs`, `window_size.rs`). |
-| `TODO.md`                          | Plan 8 tasks, done as they land.                                                                                                                                                                           |
-| `tools/design/CHANGE-MAP.md` (new) | Section 8.                                                                                                                                                                                                 |
+| Document                           | Change                                                                                                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DESIGN.md`                        | Replaced (section 1).                                                                                                                                                                                                          |
+| `PRODUCT.md`                       | Principle 2 (D9); Brand Personality's "looks and speaks like Raycast" becomes "speaks like Raycast; looks as DESIGN.md says"; accessibility line says accent separation is advisory (D14), since colour is never the only cue. |
+| `AGENTS.md`                        | The `tools/design/` entry (front matter as source, shots, reference screens); "Read DESIGN.md before any UI change" stays.                                                                                                     |
+| `CONTEXT.md`                       | Colour palette row (lives in DESIGN.md's front matter); new rows **Design token**, **Status line**, **Notice**; Tag image row unchanged.                                                                                       |
+| `README.md`                        | Project structure (`docs/guides/design` gone; `tools/design/reference`, `shots`); a current screenshot.                                                                                                                        |
+| `docs/guides/parity.md`            | Footer row (status line instead of the entry: Adapted, with reason); new Better rows: copy feedback, result count; appearance row (always dark: Adapted).                                                                      |
+| `docs/guides/compliance.md`        | "Follows the system appearance" becomes "always dark", with reason; "theme tokens replace visual literals" extends to type, radii and spacing; fonts bundled.                                                                  |
+| `tools/bench/README.md`            | Tier 2 size note: the bundled fonts add to the binary; the next session measures it.                                                                                                                                           |
+| `crates/third-party/README.md`     | Unchanged (no new patch).                                                                                                                                                                                                      |
+| Source comments citing DESIGN.md   | Updated to the new section names and token names (`accents.rs`, `entry_list.rs`, `http.rs`, `lib.rs`, `metadata.rs`, `notes.rs`, `presentation.rs`, `search_view*.rs`, `tag_images.rs`, `window_size.rs`).                     |
+| `TODO.md`                          | Plan 8 tasks, done as they land.                                                                                                                                                                                               |
+| `tools/design/CHANGE-MAP.md` (new) | Section 8.                                                                                                                                                                                                                     |
 
 ### 8. The change map
 
@@ -255,9 +291,9 @@ The plan follows approach B: tokens first, then components, then features, then 
 `mise run gate` green and, from phase 1 on, `mise run design:shots` committed, so each phase's visual change is
 reviewable on its own.
 
-1. **The system lands.** DESIGN.md replaced; `tokens.ts`; the kit reads the front matter; `design.json`; fonts
+1. **The system lands.** DESIGN.md replaced, in Catppuccin Macchiato (D13, D14); `tokens.ts`; the kit reads the front matter; `design.json`; fonts
    bundled and loaded; always dark; `design.rs`; `design:shots`; `docs/guides/design/` removed, screens moved. The app
-   looks nearly the same, in Inter.
+   turns Catppuccin Macchiato, in Inter.
 2. **Components.** Typography roles everywhere; rows (tile, bar, ↵); popovers (icons, rows 40, keycaps); footer
    keycaps; metadata, notes, sync screen through tokens.
 3. **Features.** `count` in `kb-domain`; status line; notice defaults and types; copy feedback.
@@ -265,10 +301,10 @@ reviewable on its own.
 
 ## Acceptance criteria
 
-1. `DESIGN.md` at the root is the new system edited to D1–D12; `docs/guides/design/` does not exist; the reference
+1. `DESIGN.md` at the root is the new system edited to D1–D14; `docs/guides/design/` does not exist; the reference
    screens are under `tools/design/reference/`.
 2. Every design value is written once, in DESIGN.md's front matter; `layout.json` and `accents.json` do not exist;
-   `design:validate` passes and fails on a drifted table (checked by editing a hex in a scratch copy).
+   `design:validate` passes (accent separation as warnings, D14) and fails on a drifted table (checked by editing a hex in a scratch copy).
 3. `kb.json` and `design.json` are generated by `design:theme`; regenerating them leaves no diff.
 4. kb renders in Inter, notes code in JetBrains Mono; it stays dark in the light appearance.
 5. No view in `crates/kb-app/src` has a literal colour, font size, font weight, radius or spacing; a test or an
@@ -280,18 +316,20 @@ reviewable on its own.
 8. Each copy shows "Copied to Clipboard" bottom-right; existing notices appear there with their types.
 9. `tools/design/shots/` holds every screen of section 6 in both sizes, taken from the final commit.
 10. The documents of section 7 are updated; `tools/design/CHANGE-MAP.md` exists and is linked.
-11. `mise run gate` passes with the gates and thresholds unchanged.
+11. kb draws Catppuccin Macchiato (D13): the front matter's colours, `kb.json` and `design.json` agree.
+12. `mise run gate` passes; the only threshold change is D14's.
 
 ## Risks
 
-| Risk                                                                                     | Mitigation                                                                                                                      |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| GPUI Kit components (List, Command, Notification, TextView) draw text in their own sizes | Set the theme's base font and `font.family`; where a component ignores them, restyle through its builder or record a Deviation. |
-| Inter's metrics change row and header heights                                            | Heights are tokens, not content-driven; shots show any clipping.                                                                |
-| `design:shots` needs macOS permissions and a free ⌥K                                     | The task checks both and says what to grant; it never kills an app other than kb.                                               |
-| The front-matter parser misreads YAML                                                    | It accepts only the subset DESIGN.md uses and fails loudly on anything else; tested on the real file.                           |
-| Bundled fonts grow the binary (tier 2 size)                                              | Static weights only (five files); the next measurement session records it; noted in `tools/bench/README.md`.                    |
-| The count query adds work per query                                                      | It runs after the page, off the keystroke path, and is dropped when stale; tier 1's search cases are unaffected.                |
+| Risk                                                                                     | Mitigation                                                                                                                         |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| GPUI Kit components (List, Command, Notification, TextView) draw text in their own sizes | Set the theme's base font and `font.family`; where a component ignores them, restyle through its builder or record a Deviation.    |
+| Inter's metrics change row and header heights                                            | Heights are tokens, not content-driven; shots show any clipping.                                                                   |
+| `design:shots` needs macOS permissions and a free ⌥K                                     | The task checks both and says what to grant; it never kills an app other than kb.                                                  |
+| The front-matter parser misreads YAML                                                    | It accepts only the subset DESIGN.md uses and fails loudly on anything else; tested on the real file.                              |
+| Bundled fonts grow the binary (tier 2 size)                                              | Static weights only (five files); the next measurement session records it; noted in `tools/bench/README.md`.                       |
+| The count query adds work per query                                                      | It runs after the page, off the keystroke path, and is dropped when stale; tier 1's search cases are unaffected.                   |
+| Catppuccin's accents are close under colour-blind vision (D14)                           | Tags keep their `#name` and types their icon; the type tint is never the only cue; `design:validate` keeps reporting the warnings. |
 
 ## Doctrine check
 
