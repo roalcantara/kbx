@@ -228,13 +228,19 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [~] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
-  - **Comments**: QbWV
+- [x] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
+  - **Comments**: QbWV,GxRT
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
+- [x] n4kx **-** Plan 8, 10 No index in the companion; owner approves
+  - **Comments**: knER
+  - **Priority**: medium
+  - **Created**: 2026-10-12 17:19
+  - **Tags**: design, plan8
+
+- [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -252,11 +258,6 @@
 - [ ] 3XFj **-** Plan 8, 08-09 Actions pages in the companion: Links and Copy; owner approves
   - **Comments**: 1AzQ
   - **Priority**: high
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
-
-- [ ] n4kx **-** Plan 8, 10 No index in the companion; owner approves
-  - **Priority**: medium
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
@@ -520,4 +521,10 @@
 
 - QbWV **-** 2026-10-12: each screen also gets its ↵ / ⌘↵ pair from the catalog (proposed: no match ↵ Clear Search, ⌘↵ Clear Filters; no index ↵ Refresh, ⌘↵ Configure; filter ↵ Toggle, ⌘↵ Only this; rebuild report ↵ Back, stopped ↵ Retry, failed ↵ Retry, ⌘↵ Configure); confirm each in its companion pass.
   - **Task**: w5fY
+
+- GxRT **-** 2026-10-12, approved v2: Raycast's empty view as is (List.EmptyView): one large search icon, 'No matching entries found', 'No entries match "<query>"' (query in mauve mono; '… with this filter' when one is set); no badge circle, no hint chips, no ⌘N (kb never writes sources). Footer: status 'Ready • 0 results', primary Refresh ↵ (Raycast's Rebuild Index…); Esc clears the query as everywhere. Supersedes the ↵ Clear Search proposal. Builds on the toolkit's Empty already used.
+  - **Task**: w5fY
+
+- knER **-** 2026-10-12: folded into 03 (same Raycast empty view): a database icon, 'No entries indexed yet', 'Press Refresh to build the index from your sources.'; status '● No index'; footer Refresh ↵.
+  - **Task**: n4kx
 
