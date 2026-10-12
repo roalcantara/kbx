@@ -222,12 +222,13 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [~] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
+- [x] OKAo **-** Plan 8, 02 Actions in the companion: the 01 rules on the actions popover; owner approves
+  - **Comments**: 3kaC
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
+- [~] w5fY **-** Plan 8, 03 Empty in the companion: the no-match state; owner approves
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -478,4 +479,7 @@
 
 - jBhm **-** 2026-10-12: decided with the owner in the brainstorming companion (v1→v5): their Stitch screens are the reference, not the generated DESIGN.md text; the earlier spec (27918b2) and prototypes (0fcaddc) are superseded. Rules: Catppuccin Macchiato, 14 pt window, hairlines, Inter + JetBrains Mono; every chip and keycap 20 pt; one keycap (one cap per shortcut, mono 11, muted on mantle; the toast's keeps the grey fill); chip live (mantle, muted text) on keycaps and the selected row, rest (grey) elsewhere; magnifier on the list, back chevron elsewhere; no deploy/api chip; tag icons from the tag-images folder; type colours as drawn; Lucide for Material; ⌘V hint; ⌘1–⌘9 row shortcuts built.
   - **Task**: elwx
+
+- 3kaC **-** 2026-10-12: approved as v4 in the companion. One popover, 220 pt, no icons: Details ↵, Copy ⌘↵ (Open on bookmarks: their main action opens the URL; one name whatever the type), More… › (the page of other copies: title, description, notes, YAML), Split ⌘D, Source ⌘O, Toggle Size ⇧⌘F; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,. Dropped: Quit kb (⌘Q still quits), Copy YAML Snippet, Configure Filter, Run in Terminal (not now). Footer reads Details ↵. Goal for every popover: the smallest comfortable size, no redundant or rarely used rows.
+  - **Task**: OKAo
 
