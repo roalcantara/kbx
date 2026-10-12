@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { normalize, type Proposal, propose, resolveAliases, rewrite, violations } from './tags.ts'
+import { imageSource, normalize, type Proposal, propose, resolveAliases, rewrite, violations } from './tags.ts'
 
 const byAlias = (proposals: Proposal[]) =>
   Object.fromEntries(proposals.map((p) => [p.alias, [p.preferred.join(' + '), p.signal]]))
@@ -179,5 +179,30 @@ describe('tag lines', () => {
   test('leave text without aliases byte for byte', () => {
     const text = 'a:\n  tags: [shell]   # spacing kept\n'
     expect(rewrite(text, aliases)).toBe(text)
+  })
+})
+
+describe('tag images', () => {
+  const library = { brands: new Set(['github', 'medium']), icons: new Set(['terminal', 'bot']) }
+
+  test('follow the map, then a same-name logo, then an existing image, then a same-name icon', () => {
+    const map = { shell: 'lucide:terminal', medium: '-', gh: 'simple-icons:github', k8s: 'file:kubernetes.svg' }
+    const pick = (tag: string, existing: string[] = []) => imageSource(tag, map, new Set(existing), library)
+    expect(pick('linux', ['linux'])).toEqual({ kind: 'keep' })
+    expect(pick('shell', ['shell'])).toEqual({ kind: 'lucide', name: 'terminal' })
+    expect(pick('github', ['github'])).toEqual({ kind: 'simple-icons', name: 'github' })
+    expect(pick('bot', ['bot'])).toEqual({ kind: 'keep' })
+    expect(pick('shell')).toEqual({ kind: 'lucide', name: 'terminal' })
+    expect(pick('gh')).toEqual({ kind: 'simple-icons', name: 'github' })
+    expect(pick('k8s')).toEqual({ kind: 'file', name: 'kubernetes.svg' })
+    expect(pick('medium')).toEqual({ kind: 'none' })
+    expect(pick('github')).toEqual({ kind: 'simple-icons', name: 'github' })
+    expect(pick('bot')).toEqual({ kind: 'lucide', name: 'bot' })
+    expect(pick('fabric')).toBeUndefined()
+  })
+
+  test('report a mapped name the library lacks', () => {
+    expect(() => imageSource('x', { x: 'lucide:nope' }, new Set(), library)).toThrow('lucide:nope')
+    expect(() => imageSource('x', { x: 'emoji:y' }, new Set(), library)).toThrow('emoji:y')
   })
 })

@@ -43,4 +43,7 @@ and `kubernetes` into `kubernete`. Established conventions already settle these 
   reason. It reads, beside the index, Stack Overflow's synonyms, Wikipedia's abbreviations, Wikidata's concepts and
   the knowledge folder's `docs/tags.semantic.toml` (one-off judgements, e.g. an LLM pass), all as suggestions. Keep, edit or delete each block, save it as `tags.toml` (an alias under several tables becomes all of them; under `["-"]`, it is dropped), then `mise run tags:apply` shows the diff and
   `mise run tags:apply -- --write` rewrites the tag lines. The knowledge folder must be a clean git work tree.
+- Images: `mise run tags:images` shows which tags get which image, from the knowledge folder's
+  `docs/tags.images.toml` (a brand's Simple Icons logo, else a Lucide icon); `-- --write` copies them into the
+  tag-images folder, and `tmp/tags/images.html` previews them as kb draws them.
 - kb itself never writes source files: these tools do, only when asked.

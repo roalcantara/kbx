@@ -443,3 +443,37 @@ export const proposalsToml = (proposals: Proposal[], uses: Uses, loose: string[]
     ''
   ].join('\n')
 }
+
+/** Where a tag's image comes from: the folder already has it, none (a text pill), another file in the folder, or a
+ * Simple Icons logo or Lucide icon by name. */
+export type ImageSource =
+  | { kind: 'keep' }
+  | { kind: 'none' }
+  | { kind: 'file' | 'simple-icons' | 'lucide'; name: string }
+
+/** The names Simple Icons (slugs) and Lucide (kebab-case) have. */
+export type IconLibrary = { brands: Set<string>; icons: Set<string> }
+
+/** The image for `tag`: the reviewed map's (`docs/tags.images.toml`), else the Simple Icons logo of the same name (brands
+ * look alike that way), else the one the folder has, else the Lucide icon of the same name; `undefined` when there is
+ * none. Throws on a mapped name the library lacks, so a typo is caught. */
+export const imageSource = (
+  tag: string,
+  map: Record<string, string>,
+  existing: Set<string>,
+  library: IconLibrary
+): ImageSource | undefined => {
+  const mapped = map[tag]
+  if (mapped === '-') return { kind: 'none' }
+  if (mapped !== undefined) {
+    const [kind, name = ''] = mapped.split(/:(.*)/s)
+    if (kind === 'file') return { kind, name }
+    if (kind === 'simple-icons' && library.brands.has(name)) return { kind, name }
+    if (kind === 'lucide' && library.icons.has(name)) return { kind, name }
+    throw new Error(`${tag}: no image ${mapped}`)
+  }
+  if (library.brands.has(tag)) return { kind: 'simple-icons', name: tag }
+  if (existing.has(tag)) return { kind: 'keep' }
+  if (library.icons.has(tag)) return { kind: 'lucide', name: tag }
+  return undefined
+}

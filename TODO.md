@@ -184,20 +184,22 @@
   - **Created**: 2026-10-11 09:30
   - **Tags**: app, plan7
 
-- [ ] Xvn5 **-** Review ~/Work/knowledge/docs/tags.proposed.toml (keep, edit, uncomment), save it as docs/tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
+- [x] Xvn5 **-** Review ~/Work/knowledge/docs/tags.proposed.toml (keep, edit, uncomment), save it as docs/tags.toml, git init and commit the knowledge folder, then run mise run tags:apply and tags:apply --write
+  - **Comments**: HjbD
   - **Priority**: high
   - **Created**: 2026-10-11 13:53
   - **Tags**: tags
+
+- [x] XQgR **-** Tag icons: brainstorm the second sub-project (render tinted in a fixed box as Raycast's tintColor; fill gaps from Simple Icons and Lucide), after the tags are clean
+  - **Comments**: ubm7
+  - **Priority**: medium
+  - **Created**: 2026-10-11 13:53
+  - **Tags**: app, tags
 
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
   - **Priority**: high
   - **Created**: 2026-10-11 15:37
   - **Tags**: tags
-
-- [ ] XQgR **-** Tag icons: brainstorm the second sub-project (render tinted in a fixed box as Raycast's tintColor; fill gaps from Simple Icons and Lucide), after the tags are clean
-  - **Priority**: medium
-  - **Created**: 2026-10-11 13:53
-  - **Tags**: app, tags
 
 - [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
   - **Comments**: 9Cpo
@@ -371,4 +373,10 @@
 
 - 9Cpo **-** Before Plan 5's report (NRYN): the report compares both apps' task costs, so Raycast's T3 count must be measured, not assumed.
   - **Task**: Bdaz
+
+- HjbD **-** Done 2026-10-12: 107 merges accepted (Stack Overflow master tags longer than the tag in use, and amazon/google, rejected), applied to 48 files; every tag follows the convention.
+  - **Task**: Xvn5
+
+- ubm7 **-** Done 2026-10-12 without a separate brainstorm: the image is a mask in the pill's text colour inside the pill; tags:images fills the folder from docs/tags.images.toml, brands from Simple Icons, concepts from Lucide; 375 of 563 tags have one.
+  - **Task**: XQgR
 

@@ -90,3 +90,63 @@ const problems = Object.keys(uses).sort().flatMap((tag) => {
 console.log(problems.length ? problems.join('\n') : 'every tag follows the convention')
 process.exit(problems.length ? 1 : 0)
 '''
+
+["tags:images"]
+description = "Fill the tag-images folder from docs/tags.images.toml, Simple Icons and Lucide: a plan by default, --write to copy; writes a preview page"
+usage = 'flag "--write" help="write the images instead of printing the plan"'
+run = '''
+#!/usr/bin/env bun
+import * as simpleIcons from 'simple-icons@15.0.0'
+import * as lucide from 'lucide-static@0.469.0'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+// mise runs an inline script from a temporary file, so the module is imported from the project root.
+const { imageSource, readIndex, tagsDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
+
+const home = process.env.HOME
+const config = join(home, '.config/kb/config.toml')
+const configured = existsSync(config) ? Bun.TOML.parse(readFileSync(config, 'utf8')).tag_images_path : undefined
+const dir = (configured ?? '~/.config/kb/images').replace(/^~/, home)
+mkdirSync(dir, { recursive: true })
+const existing = new Set(readdirSync(dir).filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4).toLowerCase()))
+const mapFile = join(tagsDir(), 'tags.images.toml')
+const map = existsSync(mapFile) ? Bun.TOML.parse(readFileSync(mapFile, 'utf8')) : {}
+
+const brands = new Map(Object.values(simpleIcons).filter((i) => i?.slug).map((i) => [i.slug, i.svg]))
+// Lucide exports PascalCase names; its icon names are kebab-case, digits split off (Gamepad2 → gamepad-2, Grid3x3 → grid-3x3).
+const kebab = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/(?<!\d)([a-zA-Z])(\d)/g, '$1-$2').toLowerCase()
+const icons = new Map(Object.entries(lucide).filter(([k, v]) => /^[A-Z]/.test(k) && typeof v === 'string').map(([k, v]) => [kebab(k), v]))
+const library = { brands: new Set(brands.keys()), icons: new Set(icons.keys()) }
+
+const { uses } = readIndex()
+const tags = Object.keys(uses).sort((a, b) => uses[b] - uses[a] || a.localeCompare(b))
+const write = process.env.usage_write === 'true'
+const added = [], missing = [], errors = []
+for (const tag of tags) {
+  let source
+  try { source = imageSource(tag, map, existing, library) } catch (e) { errors.push(e.message); continue }
+  if (!source) { missing.push(`${tag} (${uses[tag]})`); continue }
+  if (source.kind === 'keep' || source.kind === 'none') continue
+  const target = join(dir, `${tag}.svg`)
+  if (source.kind === 'file' && !existsSync(join(dir, source.name))) { errors.push(`${tag}: no ${source.name} in ${dir}`); continue }
+  added.push(`${tag} ← ${source.kind}:${source.name}`)
+  if (!write) continue
+  if (source.kind === 'file') copyFileSync(join(dir, source.name), target)
+  else writeFileSync(target, (source.kind === 'lucide' ? icons : brands).get(source.name))
+}
+if (errors.length) { console.error(errors.join('\n')); process.exit(1) }
+
+// The preview draws each image as kb does: a mask in one colour, in a pill.
+const shown = write ? tags.filter((t) => existsSync(join(dir, `${t}.svg`))) : tags.filter((t) => existing.has(t))
+const cell = (t) => `<figure><span style="-webkit-mask-image:url('file://${join(dir, t)}.svg')"></span><figcaption>#${t}</figcaption></figure>`
+mkdirSync('tmp/tags', { recursive: true })
+writeFileSync('tmp/tags/images.html', `<!doctype html><meta charset="utf-8"><title>Tag images</title><style>
+body{background:#0f1420;color:#c8d0e0;font:12px system-ui;display:flex;flex-wrap:wrap;gap:8px;padding:16px}
+figure{margin:0;width:96px;text-align:center}figcaption{margin-top:4px;overflow:hidden;text-overflow:ellipsis}
+span{display:block;margin:auto;width:16px;height:16px;padding:3px 8px;background:#9bb4ff;-webkit-mask-size:16px;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;outline:1px solid #2a3350;border-radius:10px}
+</style>${shown.map(cell).join('')}`)
+
+console.log(`${added.length} images ${write ? 'written' : 'to write (--write writes them)'}:\n  ${added.join('\n  ')}`)
+console.log(`${missing.length} tags without an image (text pills; map them in ${mapFile}):\n  ${missing.join(', ')}`)
+console.log(`preview: ${process.cwd()}/tmp/tags/images.html`)
+'''
