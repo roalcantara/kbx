@@ -90,7 +90,8 @@ pub fn metadata_card(entry: &Entry, cx: &App) -> impl IntoElement {
 
 fn render_value(label: &'static str, value: MetaValue, cx: &App) -> gpui_kit::AnyElement {
     match value {
-        MetaValue::Text(text) => div().child(text).into_any_element(),
+        // Wraps within the value column instead of running over the label.
+        MetaValue::Text(text) => div().w_full().min_w_0().text_right().child(text).into_any_element(),
         MetaValue::Pills(pills) => h_flex()
             .flex_wrap()
             .justify_end()

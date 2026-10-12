@@ -272,9 +272,7 @@ pub fn metadata(entry: &Entry) -> Vec<(&'static str, String)> {
     if let Some(priority) = &entry.task_priority {
         rows.push(("Priority", priority.clone()));
     }
-    if let Some(description) = &entry.description {
-        rows.push(("Description", description.clone()));
-    }
+    // No Description row: the notes open with it, as a quote.
     if !entry.tags.is_empty() {
         rows.push((
             "Tags",
@@ -357,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    fn lists_metadata_in_raycast_order() {
+    fn lists_metadata_in_raycast_order_without_the_description_the_notes_quote() {
         let mut task = entry(
             "tasks",
             "port",
@@ -368,12 +366,9 @@ mod tests {
             url: "https://u.example".into(),
         });
         let labels: Vec<&str> = metadata(&task).iter().map(|(label, _)| *label).collect();
-        assert_eq!(
-            labels,
-            ["Type", "Status", "Priority", "Description", "Tags", "Links", "Source"]
-        );
-        assert_eq!(metadata(&task)[4].1, "#rust #kb");
-        assert_eq!(metadata(&task)[5].1, "Spec, https://u.example");
+        assert_eq!(labels, ["Type", "Status", "Priority", "Tags", "Links", "Source"]);
+        assert_eq!(metadata(&task)[3].1, "#rust #kb");
+        assert_eq!(metadata(&task)[4].1, "Spec, https://u.example");
         assert_eq!(
             metadata(&entry("bookmarks", "https://b.example", "title: B\n"))[0],
             ("URL", "https://b.example".into())

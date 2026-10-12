@@ -448,3 +448,16 @@ fn task_t5_rebuilds_the_index_with_one_chord(cx: &mut TestAppContext) {
     press(cx, window, "cmd-r");
     assert!(cx.read(|cx| view.read(cx).is_rebuilding()));
 }
+
+#[gpui_kit::test]
+fn opens_the_actions_and_the_filter_with_a_click(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    click(cx, window, "footer-open-actions");
+    assert!(
+        cx.read(|cx| view.read(cx).is_actions_open()),
+        "a click opens the actions"
+    );
+    press(cx, window, "escape");
+    click(cx, window, "filter-button");
+    assert!(cx.read(|cx| view.read(cx).is_filter_open()), "a click opens the filter");
+}

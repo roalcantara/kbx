@@ -73,6 +73,16 @@ pub fn keycap_row(caps: Vec<String>, cx: &App) -> impl IntoElement {
     }))
 }
 
+/// A button drawn as its text and keys alone: no fill, even on hover (the footer, the filter).
+pub(super) fn plain_button(cx: &App) -> ButtonCustomVariant {
+    ButtonCustomVariant::new(cx)
+        .color(gpui_kit::transparent_black())
+        .hover(gpui_kit::transparent_black())
+        .active(gpui_kit::transparent_black())
+        .foreground(cx.theme().foreground)
+        .shadow(false)
+}
+
 /// A footer item: its text and keycaps, with neither fill nor line around them.
 fn pill(_: &App) -> gpui_kit::Div {
     h_flex().h(px(30.)).items_center().gap(px(8.)).px(px(12.)).text_xs()
@@ -100,13 +110,7 @@ impl SearchView {
             }
             _ => None,
         };
-        // Text and keycaps alone: no fill, even on hover.
-        let plain = ButtonCustomVariant::new(cx)
-            .color(gpui_kit::transparent_black())
-            .hover(gpui_kit::transparent_black())
-            .active(gpui_kit::transparent_black())
-            .foreground(cx.theme().foreground)
-            .shadow(false);
+        let plain = plain_button(cx);
         let primary_label = if self.is_showing_detail() {
             selected.map_or("Run", |e| primary_action(e).title)
         } else {
@@ -155,10 +159,8 @@ impl SearchView {
                                     .custom(plain)
                                     .xsmall()
                                     .label("Actions")
-                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx)))
-                                    .on_click(
-                                        cx.listener(|this, _, window, cx| this.open_actions(&OpenActions, window, cx)),
-                                    ),
+                                    // The popover opens on its trigger's click; a handler here would close it again.
+                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx))),
                                 cx,
                             ),
                         ),

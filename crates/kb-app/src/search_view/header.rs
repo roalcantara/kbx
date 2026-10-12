@@ -11,7 +11,7 @@ use gpui_kit::{Context, InteractiveElement as _, IntoElement, ParentElement as _
 
 use super::{Overlay, SearchView};
 use crate::filter::filter_summary;
-use crate::keys::{Back, HideDetails, OpenFilter, ShowDetails};
+use crate::keys::{Back, HideDetails, ShowDetails};
 
 /// The header's height, in points (`tools/design/layout.json`, header).
 const HEIGHT: f32 = 56.;
@@ -106,12 +106,12 @@ impl SearchView {
                 header.child(
                     self.filter_popover(
                         Button::new("filter-button")
-                            .ghost()
+                            .custom(super::footer::plain_button(cx))
                             .small()
                             .icon(IconName::Funnel)
                             .label(filter_label)
-                            .child(Icon::new(chevron).xsmall())
-                            .on_click(cx.listener(|this, _, window, cx| this.open_filter(&OpenFilter, window, cx))),
+                            // The popover opens on its trigger's click; a handler here would close it again.
+                            .child(Icon::new(chevron).xsmall()),
                         cx,
                     ),
                 )
