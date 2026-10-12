@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_blank" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"window-bg":"#24273A","selected-bg":"#363A4F","hover-bg":"#2F334A","accent-mauve":"#C6A0F6","accent-sky":"#8AADF4","accent-mint":"#A6DA95","accent-peach":"#F5A97F","text-primary":"#CAD3F5","text-muted":"#A5ADCB","text-faint":"#6E738D","toast-bg":"#181926","badge-bg":"#2E3248","background":"#181926"},"borderRadius":{"DEFAULT":"0.25rem","md":"0.375rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"fontFamily":{"headline-sm":["Inter"],"label-sm":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"body-sm":["Inter"],"label-xs":["Inter"],"body-md":["Inter"],"code-sm":["JetBrains Mono"],"label-md":["Inter"]}}}}</script></head><body class="bg-background font-body-md text-text-primary min-h-screen flex items-center justify-center p-4 selection:bg-accent-mauve/20 selection:text-accent-mauve"><main class="w-full max-w-[860px] mx-auto"><div class="flex flex-col w-full relative">
+<!-- Window Container: Raycast / Alfred Style Command Palette (Catppuccin Macchiato) -->
+<div class="w-full bg-window-bg rounded-[14px] shadow-[0_24px_64px_rgba(0,0,0,0.55),0_0_0_1px_rgba(202,211,245,0.08)] overflow-hidden flex flex-col relative select-none">
+<!-- Top Search Bar Header (Seamless with window body) -->
+<header class="h-[56px] px-6 bg-transparent flex items-center justify-between relative z-10 border-b border-text-faint/10">
+<div class="flex items-center gap-3 flex-1 min-w-0">
+<span class="material-symbols-outlined text-text-faint text-[20px] select-none">search</span>
+<div class="flex items-center flex-1 min-w-0">
+<input aria-label="Search entries" class="bg-transparent text-text-primary font-body-lg text-[15px] placeholder-text-faint focus:outline-none w-auto pr-1" placeholder="Type a command, cheat, or bookmark..." type="text" value="/k8s"/>
+<span class="inline-block w-[1.5px] h-4 bg-accent-mauve animate-pulse ml-0.5"></span>
+</div>
+</div>
+<!-- Right Accessory: Filter Pill -->
+<div class="flex items-center gap-2 pl-3">
+<div class="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-badge-bg text-text-muted hover:text-text-primary transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[15px] text-text-faint group-hover:text-text-muted">tune</span>
+<span class="font-label-sm text-[12px] font-medium">All Entries</span>
+<span class="flex items-center gap-0.5 ml-1 bg-window-bg/80 px-1.5 py-0.5 rounded font-code-sm text-text-faint text-[10px]">
+<span>⌘</span><span>P</span>
+</span>
+</div>
+</div>
+</header>
+<!-- Main Results Stream: Single Continuous Flat List (No section category headers) -->
+<div class="flex flex-col max-h-[460px] overflow-y-auto px-2 py-2 space-y-1 relative">
+<!-- Item 1: Selected Row (/k8s-rollout-restart) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] bg-selected-bg cursor-pointer transition-colors">
+<!-- 2.5px Mauve Left Selection Indicator Bar -->
+<div class="absolute left-0 top-1.5 bottom-1.5 w-[2.5px] bg-accent-mauve rounded-full shadow-[0_0_8px_rgba(198,160,246,0.6)]"></div>
+<!-- Left semantic icon (Command: Mint) -->
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-mint/15 text-accent-mint">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+</div>
+<!-- Center: Title & Description -->
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-[13px] font-medium text-text-primary truncate">/k8s-rollout-restart</span>
+<span class="px-1.5 py-0.5 rounded-[4px] bg-window-bg font-code-sm text-accent-mint text-[11px] leading-tight font-medium">deploy/api</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Gracefully roll out new pods with zero downtime restart strategy</span>
+</div>
+<!-- Right Accessories -->
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: Icon-only for tags with icons (k8s), text-only for tags without icons (#devops) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-window-bg flex items-center justify-center text-accent-sky" title="k8s">
+<span class="material-symbols-outlined text-[14px]">hub</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-window-bg text-text-muted font-label-xs text-[11px]">#devops</span>
+</div>
+<!-- Link Counter -->
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-window-bg text-text-faint font-code-sm text-[11px]">
+<span class="material-symbols-outlined text-[12px]">north_east</span>
+<span>2</span>
+</div>
+<!-- Keycap Shortcut -->
+<div class="flex items-center gap-1">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-window-bg text-text-primary font-code-sm text-[11px] min-w-[20px] text-center shadow-sm">↵</kbd>
+</div>
+</div>
+</div>
+<!-- Item 2: Unselected (/docker-prune-all) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-mint/15 text-accent-mint">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-[13px] font-medium text-text-primary truncate">/docker-prune-all</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Remove unused containers, dangling networks, dangling images, and volumes</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: docker has icon (icon-only), #cleanup has no icon (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-sky" title="docker">
+<span class="material-symbols-outlined text-[14px]">deployed_code</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#cleanup</span>
+</div>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px]">
+<span class="material-symbols-outlined text-[12px]">north_east</span>
+<span>1</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘2</kbd>
+</div>
+</div>
+</div>
+<!-- Item 3: Unselected (/git-undo-commit) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-mint/15 text-accent-mint">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-[13px] font-medium text-text-primary truncate">/git-undo-commit</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Undo last git commit while preserving staged changes in index</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: git has icon (icon-only), #vcs has no icon (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-peach" title="git">
+<span class="material-symbols-outlined text-[14px]">commit</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#vcs</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘3</kbd>
+</div>
+</div>
+</div>
+<!-- Item 4: Cheatsheet (Mauve) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-mauve/15 text-accent-mauve">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-[13px] font-medium text-text-primary truncate">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Cert-manager annotations, cluster issuer configs, and TLS secrets matrix</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: k8s has icon (icon-only), #networking and #yaml have no icons (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-sky" title="k8s">
+<span class="material-symbols-outlined text-[14px]">hub</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#networking</span>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#yaml</span>
+</div>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px]">
+<span class="material-symbols-outlined text-[12px]">north_east</span>
+<span>4</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘4</kbd>
+</div>
+</div>
+</div>
+<!-- Item 5: Cheatsheet (Mauve) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-mauve/15 text-accent-mauve">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-[13px] font-medium text-text-primary truncate">Rust Memory Safety &amp; Lifetimes Reference</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Borrow checker rules, Rc&lt;RefCell&gt; patterns, and unsafe block guidelines</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: rust has icon (icon-only), #systems has no icon (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-peach" title="rust">
+<span class="material-symbols-outlined text-[14px]">settings</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#systems</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘5</kbd>
+</div>
+</div>
+</div>
+<!-- Item 6: Bookmark (Sky) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-sky/15 text-accent-sky">
+<span class="material-symbols-outlined text-[16px]">bookmark</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-[13px] font-medium text-text-primary truncate">/tcm-constitution-analyzer</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Personal clinical diagnosis taxonomy &amp; syndrome differentiation trees</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: health has icon (icon-only), #tcm has no icon (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-mint" title="health">
+<span class="material-symbols-outlined text-[14px]">spa</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#tcm</span>
+</div>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px]">
+<span class="material-symbols-outlined text-[12px]">north_east</span>
+<span>3</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘6</kbd>
+</div>
+</div>
+</div>
+<!-- Item 7: Note (Peach) -->
+<div class="group relative flex items-center h-[56px] px-3.5 rounded-[6px] hover:bg-hover-bg cursor-pointer transition-colors">
+<div class="w-6 flex items-center justify-center shrink-0 mr-3">
+<div class="w-6 h-6 rounded flex items-center justify-center bg-accent-peach/15 text-accent-peach">
+<span class="material-symbols-outlined text-[16px]">sticky_note_2</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0 justify-center">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-[13px] font-medium text-text-primary truncate">AWS EKS VPC CNI Subnet Exhaustion Playbook</span>
+</div>
+<span class="font-body-sm text-[12px] text-text-muted truncate mt-0.5">Remediation steps for secondary CIDR assignment and prefix delegation flags</span>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-3">
+<!-- Tags: aws has icon (icon-only), #eks has no icon (text-only) -->
+<div class="flex items-center gap-1.5">
+<div class="w-[20px] h-[20px] rounded-[4px] bg-badge-bg flex items-center justify-center text-accent-peach" title="aws">
+<span class="material-symbols-outlined text-[14px]">cloud</span>
+</div>
+<span class="px-2 py-0.5 rounded-[4px] bg-badge-bg text-text-muted font-label-xs text-[11px]">#eks</span>
+</div>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px]">
+<span class="material-symbols-outlined text-[12px]">north_east</span>
+<span>5</span>
+</div>
+<div class="flex items-center gap-1 opacity-60 group-hover:opacity-100">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-faint font-code-sm text-[11px] min-w-[20px] text-center">⌘7</kbd>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Footer Status Bar (Seamless with window body) -->
+<footer class="h-10 px-6 bg-transparent flex items-center justify-between font-label-xs text-[11px] text-text-faint border-t border-text-faint/10">
+<div class="flex items-center gap-2">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-accent-mint shadow-[0_0_6px_rgba(166,218,149,0.7)]"></span>
+<span class="text-text-muted">Ready</span>
+<span>•</span>
+<span>12 results</span>
+</div>
+<div class="flex items-center gap-5">
+<div class="flex items-center gap-1.5">
+<span class="text-text-muted font-normal">Show Details</span>
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-primary font-code-sm text-[11px] shadow-sm">↵</kbd>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-text-muted font-normal">Actions</span>
+<div class="flex items-center gap-0.5">
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-primary font-code-sm text-[11px] shadow-sm">⌘</kbd>
+<kbd class="px-1.5 py-0.5 rounded-[4px] bg-badge-bg text-text-primary font-code-sm text-[11px] shadow-sm">K</kbd>
+</div>
+</div>
+</div>
+</footer>
+<!-- High Contrast Toast Feedback (Bottom Right floating) -->
+<div class="absolute bottom-12 right-4 z-30 transition-all duration-200 transform translate-y-0 opacity-100" id="toast-notification">
+<div class="bg-toast-bg rounded-lg shadow-[0_12px_32px_rgba(0,0,0,0.65),0_0_0_1px_rgba(198,160,246,0.3)] px-3.5 py-2.5 flex items-center gap-3 relative overflow-hidden">
+<!-- Top subtle highlight line -->
+<div class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-accent-mauve/40 to-transparent pointer-events-none"></div>
+<!-- Sharp Emerald / Mint Success Badge -->
+<div class="w-5 h-5 rounded-full bg-accent-mint/20 border border-accent-mint/40 flex items-center justify-center shrink-0 text-accent-mint shadow-[0_0_8px_rgba(166,218,149,0.25)]">
+<span class="material-symbols-outlined text-[13px] font-semibold">check</span>
+</div>
+<!-- Content -->
+<div class="flex items-center gap-2 pr-1">
+<span class="font-body-sm text-[12px] text-text-primary font-medium tracking-tight">Copied command to clipboard</span>
+<span class="flex items-center gap-0.5 bg-selected-bg/90 border border-white/5 px-1.5 py-0.5 rounded-[4px] font-code-sm text-text-primary text-[10px]">
+<span class="text-accent-mauve">⌥</span><span>V</span><span class="text-text-muted ml-0.5">to paste</span>
+</span>
+</div>
+<!-- Dismiss button -->
+<button aria-label="Dismiss notification" class="text-text-faint hover:text-text-primary transition-colors p-0.5 rounded flex items-center justify-center" onclick="document.getElementById('toast-notification').classList.add('opacity-0', 'translate-y-2'); setTimeout(() =&gt; document.getElementById('toast-notification').remove(), 250);" title="Dismiss">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+</div>
+</div>
+</div></main></body></html>
