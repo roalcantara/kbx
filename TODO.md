@@ -200,7 +200,7 @@
   - **Created**: 2026-10-11 13:53
   - **Tags**: tags
 
-- [ ] bVkg **-** Regenerate skills.yml from dots' script/catalog_global_skills.py with the reviewed docs/skills.tags.toml (type skills, no skills tag, 105 tags), after the tag review (Xvn5); review and commit the script in dots
+- [ ] bVkg **-** Reconcile skills.yml's tags (cheats tagged skills) with docs/skills.tags.toml, 408 differ, by hand or a tags-only merge: never regenerate over its curated descs and commands; review and commit the script in dots
   - **Priority**: high
   - **Created**: 2026-10-11 15:37
   - **Tags**: tags
