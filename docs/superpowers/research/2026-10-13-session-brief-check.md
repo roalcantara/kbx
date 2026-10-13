@@ -63,3 +63,61 @@ parts (state, pending work, active plans).
 
 Refined question for rung 1: does a **state-only** brief (git log and status, pending TODO tasks, active plans,
 recent decisions; no repository overview) save 20% of total tokens on the next kb task, with no more corrections?
+
+# Restated card (owner, 2026-10-13)
+
+The preflight's question was too narrow (one artifact, pass or fail) and its method too heavy for the stakes: a global
+command is one file, cheap and reversible, so it needs good priors and judgement in use, not a measured bar.
+
+- Question: which start-of-session context do practitioners and vendors recommend, and report as worth its tokens, and
+  what is the cheapest way to automate it for any coding agent?
+- Method: a 15-minute sweep of vendor docs, known practitioners, skill registries and forums.
+- Acceptance: a practice is adopted when at least three independent credible sources agree; contradictions are recorded,
+  with the controlled studies above as the tiebreaker.
+
+# Rung 1 (15 minutes): practitioner and vendor sweep
+
+## Data
+
+| Source                                                                                                                                                                                                                                                                           | Kind                 | What it does at session start                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Anthropic, [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) (2025-11-26)                                                                                                                         | vendor               | `pwd`; read `git log` and `claude-progress.txt`; pick the highest-priority unfinished feature; run `init.sh` and a basic test     |
+| Anthropic, Effective context engineering for AI agents (2025-09; via [summary](https://agentic-ai.readthedocs.io/en/latest/ContextEngineering/anthropic/))                                                                                                                       | vendor               | keep lightweight pointers (paths, URLs), load just in time; structured notes outside the window                                   |
+| Yegge, Beads ([pkg.go.dev](https://pkg.go.dev/github.com/steveyegge/beads@v0.21.1), [summary](https://www.morphllm.com/beads-agent-memory))                                                                                                                                      | practitioner         | query the tracker for the highest-priority **unblocked** work; long Markdown plans waste context on finished items                |
+| Huntley, Ralph loop ([summary](https://howaiworks.ai/blog/geoffrey-huntley-ralph-agentic-coding-loop))                                                                                                                                                                           | practitioner         | fresh context each loop; read the prioritised `fix_plan.md`; one task per loop; bloated specs push the agent into the "dumb zone" |
+| Cline memory bank ([docs](https://docs.cline.bot/features)); Cursor port ([Lullabot](https://www.lullabot.com/articles/supercharge-your-ai-coding-cursor-rules-and-memory-banks))                                                                                                | vendor, practitioner | read `activeContext.md` and `progress.md`; keep them to current state, not a log                                                  |
+| Handoff skills ([skills.sh](https://www.skills.sh/ferueda/agent-skills/handoff-work), [tessl](https://tessl.io/registry/skills/github/lucianghinda/superpowers-ruby/handoff), [GovZero](https://gzkit.readthedocs.io/en/latest/governance/GovZero/session-handoff-obligations/)) | practitioner         | the previous session writes what the next needs (goal, decisions, state, next step, do-not-repeat); stale handoffs are the risk   |
+| Aider repo map ([guide](https://fast.io/resources/aider-token-limit/))                                                                                                                                                                                                           | tool                 | a repository map capped at about 1k tokens by default                                                                             |
+
+All read 2026-10-13. None reports a measured token or time effect; Anthropic's claim is qualitative ("saves Claude some
+tokens in every session").
+
+## What it shows
+
+Practices with three or more independent sources, adopted:
+
+1. **Recent history plus a short state note.** `git log` and a progress or state file: Anthropic harness, Cline memory
+   bank, Ralph, handoff skills.
+2. **The next ready task, not the whole plan.** Beads (unblocked work only), Anthropic (highest-priority unfinished
+   feature), Ralph (one task per loop).
+3. **Lean, current state, never a log.** Cline docs, handoff skills, Yegge, Ralph.
+4. **Pointers, not contents; no overviews.** Anthropic context engineering (just-in-time), Gloaguen ("repository
+   overviews … are not helpful"), Aider (overview capped small).
+5. **Written at the end, read at the start.** Anthropic (progress update with each commit), Cline, Ralph, handoff
+   skills: the state the repository cannot derive (why, what is half done, what not to retry) comes from the last
+   session.
+
+Single source, not adopted: run the app and a basic test before new work (Anthropic). In kb, `mise run gate` costs
+minutes; the agent runs it when its task needs it.
+
+## Gate
+
+| Signal                                          | Fires? | Sound?                                                     |
+| ----------------------------------------------- | ------ | ---------------------------------------------------------- |
+| Kill: no practice has three independent sources | No     | Yes                                                        |
+| Kill: sources contradict the controlled studies | No     | Yes: both say overviews cost and state or conventions help |
+
+## Verdict
+
+Holds, refined: automate a **small, state-only brief, plus a handoff written at the end**. In kb most of the state is
+derivable (`git`, the `todo` CLI, plan checkboxes); the handoff carries only what is not.
