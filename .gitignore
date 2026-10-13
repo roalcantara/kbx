@@ -36,3 +36,5 @@
 
 # Screenshots and notes of the private corpus (spec 2026-10-10-ui-polish D9): local only.
 /tools/reports/
+
+/.mise/locks/

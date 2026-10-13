@@ -103,28 +103,28 @@ includes = [
 ]
 
 [tools]
-jactionlint = "1.8.2"
+jactionlint = "2.1.0"
 "aqua:gitleaks/gitleaks" = "8.30.1"
 "aqua:jackchuka/mdschema" = "0.15.5"
-ast-grep = "0.45.3"
-bun = "1.4.2"
-cargo-binstall = "1.25.2"
+ast-grep = "0.50.0"
+bun = "1.4.3"
+cargo-binstall = "1.25.3"
 "cargo:cargo-deny" = "0.20.2"
 "cargo:cargo-llvm-cov" = "0.9.1"
 "cargo:cargo-machete" = "0.9.2"
 # Packages kb.app, so macOS only.
 "cargo:cargo-packager" = { version = "0.11.8", os = ["macos"] }
-"cargo:cargo-nextest" = "0.9.146"
+"cargo:cargo-nextest" = "0.9.148"
 "cargo:https://github.com/RayanBO/todo/" = "tag:v0.2.9"
-dprint = "0.61.0"
-hk = "2.5.0"
+dprint = "0.63.0"
+hk = { version = "2.6.0", workflow = "release.yml" }
 jq = "1.8.2"
 ls-lint = "2.3.1"
-"npm:jscpd" = "5.4.0"
+"npm:jscpd" = "5.4.1"
 pinact = "5.0.0"
-"pipx:commit-check" = "2.18.2"
+"pipx:commit-check" = "2.18.3"
 # Installs pipx tools from their locks in .mise/locks (mise needs uv >= 0.12.10 for that).
-uv = "0.12.21"
+uv = "0.13.0"
 # The interpreter the pipx tools run on: mise probes `python` on PATH before installing one (2026.10.7).
 python = "3.13.16"
 pkl = "0.32.1"
@@ -135,12 +135,12 @@ tokei = "15.0.0"
 typos = "1.51.1"
 zizmor = "1.30.1"
 "npm:quick-commitlint" = { version = "0.1.2", allow_low_downloads = true }
-node = ["26.11.1", "22.22.2"]
+node = "26.11.1"
 
 # Code graphs for agents (tools/graph/README.md)
-"github:zzet/gortex" = "0.64.7"
+"github:zzet/gortex" = "0.64.8"
 "pipx:code-review-graph" = "2.3.9"
-"pipx:graphifyy" = "0.9.79"
+"pipx:graphifyy" = "0.9.88"
 # Secrets for Graphify's LLM pass (and GITHUB_TOKEN), resolved from password-store (.fnox.toml)
 fnox = "1.39.0"
 
@@ -312,4 +312,32 @@ run = '''
   rm -rf ~/Applications/kb.app
   cp -R target/packager/kb.app ~/Applications/
   echo "installed ~/Applications/kb.app; open it, then press ⌥K"
+'''
+
+[tasks.outdated]
+description = "Check for outdated dependencies"
+usage = '''
+  flag "--mise" help="ONLY Mise outdated check"
+'''
+run = '''
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  if [ "${usage_mise:-true}" = "true" ]; then
+    mise outdated --local --bump
+  fi
+'''
+
+[tasks.bump]
+description = "Bump outdated dependencies"
+usage = '''
+  flag "--mise" help="ONLY Mise outdated dependencies bump"
+'''
+run = '''
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  if [ "${usage_mise:-true}" = "true" ]; then
+    mise upgrade --local --bump
+  fi
 '''
