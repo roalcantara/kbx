@@ -6,7 +6,7 @@ use std::fs;
 use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::list::{List, ListEvent, ListState};
-use gpui_kit::component::{ActiveTheme as _, IndexPath, Theme, WindowExt as _, h_flex, v_flex};
+use gpui_kit::component::{ActiveTheme as _, IndexPath, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
     IntoElement, ParentElement, Pixels, Render, ScrollHandle, Styled as _, Subscription, Window, div, point, px,
@@ -33,6 +33,7 @@ use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
+use crate::ui::design::{design, pt};
 use crate::window_size::{COMPACT, WindowSize};
 
 /// What fills the panel.
@@ -111,10 +112,6 @@ impl SearchView {
         let filter_palette = cx.new(|cx| CommandState::new(window, cx));
         let list_sub = cx.subscribe_in(&list, window, Self::on_list_event);
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
-        // The theme follows the system's light or dark appearance while the panel is open.
-        let appearance = cx.observe_window_appearance(window, |_, window, cx| {
-            Theme::sync_system_appearance(Some(window), cx);
-        });
         Self {
             config,
             list,
@@ -129,7 +126,7 @@ impl SearchView {
             window_size: WindowSize::default(),
             detail_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
-            subscriptions: vec![list_sub, input_sub, appearance],
+            subscriptions: vec![list_sub, input_sub],
         }
     }
 
@@ -511,6 +508,7 @@ impl SearchView {
 
 impl Render for SearchView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tokens = design();
         let selected = self.list.read(cx).delegate().selected_entry().cloned();
         // Rows show their titles alone while the split pane is open beside them.
         let compact = matches!(self.screen, Screen::Search) && self.show_details && selected.is_some();
@@ -544,8 +542,12 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::back))
             .on_action(|_: &Quit, _, cx| cx.quit())
             .size_full()
-            .bg(cx.theme().background)
-            .text_color(cx.theme().foreground)
+            .rounded(pt(tokens.rounded.window))
+            .bg(tokens.colors.window)
+            .border_1()
+            .border_color(tokens.colors.ring)
+            .overflow_hidden()
+            .text_color(tokens.colors.text)
             .child(self.render_header(cx))
             .child(
                 div()

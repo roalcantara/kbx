@@ -9,8 +9,8 @@ use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState};
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::{
-    ActivationPolicy, App, AppContext as _, AsyncApp, Bounds, Entity, Subscription, WindowBounds, WindowKind,
-    WindowOptions,
+    ActivationPolicy, App, AppContext as _, AsyncApp, Bounds, Entity, Subscription, WindowBackgroundAppearance,
+    WindowBounds, WindowKind, WindowOptions,
 };
 
 use crate::config::Config;
@@ -45,6 +45,8 @@ pub fn window_options(cx: &App) -> WindowOptions {
         is_minimizable: false,
         focus: true,
         show: true,
+        // GPUI's windows are square: the panel draws its own rounded surface on a clear window (D1).
+        window_background: WindowBackgroundAppearance::Transparent,
         ..WindowOptions::default()
     }
 }

@@ -8,8 +8,7 @@ use std::path::Path;
 use std::sync::atomic::AtomicBool;
 use std::time::Duration;
 
-use gpui_kit::WindowAppearance;
-use gpui_kit::component::{ActiveTheme as _, Theme, ThemeMode};
+use gpui_kit::component::{ActiveTheme as _, ThemeMode};
 use gpui_kit::test::TestWindowExt as _;
 use gpui_kit::{
     AnyWindowHandle, App, AppContext as _, Bounds, Entity, Point, TestAppContext, Window, WindowBounds, WindowOptions,
@@ -79,15 +78,13 @@ fn titles(view: &Entity<SearchView>, cx: &mut TestAppContext) -> Vec<String> {
 }
 
 #[gpui_kit::test]
-fn follows_the_system_appearance(cx: &mut gpui_kit::TestAppContext) {
+fn is_always_dark_in_the_design_fonts(cx: &mut gpui_kit::TestAppContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);
         kb_app::init_theme(cx);
-        let dark = matches!(
-            cx.window_appearance(),
-            WindowAppearance::Dark | WindowAppearance::VibrantDark
-        );
-        assert_eq!(cx.theme().mode, if dark { ThemeMode::Dark } else { ThemeMode::Light });
+        assert_eq!(cx.theme().mode, ThemeMode::Dark);
+        assert_eq!(cx.theme().font_family.as_ref(), "Inter");
+        assert_eq!(cx.theme().mono_font_family.as_ref(), "JetBrains Mono");
     });
 }
 
@@ -96,7 +93,6 @@ fn draws_gpui_kit_components_in_the_design_tokens(cx: &mut gpui_kit::TestAppCont
     cx.update(|cx| {
         gpui_kit::init(cx);
         kb_app::init_theme(cx);
-        Theme::change(ThemeMode::Dark, None, cx);
         let theme: serde_json::Value = serde_json::from_str(include_str!("../assets/themes/kb.json")).unwrap();
         let popover = theme["themes"][0]["colors"]["popover.background"].as_str().unwrap();
         let popover = u32::from_str_radix(popover.trim_start_matches('#'), 16).unwrap();

@@ -28,7 +28,7 @@ mod trace;
 mod ui;
 pub mod window_size;
 
-use gpui_kit::component::{Theme, ThemeRegistry};
+use gpui_kit::component::{Theme, ThemeMode, ThemeRegistry};
 
 use crate::config::Config;
 
@@ -40,9 +40,9 @@ const THEME: &str = include_str!("../assets/themes/kb.json");
 /// The dark theme's name in [`THEME`].
 const DARK_THEME: &str = "kb Dark";
 
-/// Follows the system's light or dark appearance: kb's palette when dark, GPUI Kit's default
-/// light theme when light. Every colour the app draws comes from the theme, so both work;
-/// `SearchView` re-syncs whenever the appearance changes.
+/// kb's GPUI Kit theme, always dark (D1): the tokens' colours (`kb.json`, written by
+/// `mise run design:theme`), Inter and `JetBrains` Mono, and GPUI Kit's base font size kept at the
+/// 16 points the design module counts rems in.
 pub fn init_theme(cx: &mut gpui_kit::App) {
     let registry = ThemeRegistry::global_mut(cx);
     // The theme is compiled in and a UI test loads it: should it ever fail, the default dark stays.
@@ -51,7 +51,12 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
     {
         Theme::global_mut(cx).dark_theme = dark;
     }
-    Theme::sync_system_appearance(None, cx);
+    Theme::change(ThemeMode::Dark, None, cx);
+    let typography = &ui::design::design().typography;
+    let theme = Theme::global_mut(cx);
+    theme.font_family = typography.ui.clone().into();
+    theme.mono_font_family = typography.mono.clone().into();
+    theme.font_size = gpui_kit::px(ui::design::POINTS_PER_REM);
 }
 
 /// Starts the app and blocks until it quits. `notices` are shown in the panel once it opens:
