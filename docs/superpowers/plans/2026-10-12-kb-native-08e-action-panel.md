@@ -28,17 +28,17 @@ copy, apply_filter, key_screen}`).
 
 ## File structure
 
-| File                                       | Change  | Responsibility                                                 |
-| ------------------------------------------ | ------- | -------------------------------------------------------------- |
-| `crates/kb-app/src/ui/action_panel.rs`     | create  | `PanelPage`, `PanelSection`, `PanelRow`, `RowLead`, `matches`, `panel` |
-| `crates/kb-app/src/actions.rs`             | create  | `PanelCommand`, `Submenu`, `Page`, the page builders           |
-| `crates/kb-app/src/palette.rs`             | delete  | Replaced by `actions.rs`                                       |
-| `crates/kb-app/src/filter.rs`              | modify  | Keeps `filter_summary` only; the choices move to `actions.rs`   |
-| `crates/kb-app/src/search_view/panel.rs`   | create  | The overlay: state, keys, confirm, popovers                    |
-| `crates/kb-app/src/search_view/overlays.rs`| delete  | Replaced by `panel.rs`                                         |
-| `crates/kb-app/src/search_view.rs`         | modify  | `Overlay`, the shared search field, `back`                     |
-| `crates/kb-app/src/keys.rs`                | modify  | `CopyUrl` goes                                                 |
-| `crates/kb-app/tests/ui.rs`                | modify  | Panel and filter tests                                         |
+| File                                        | Change | Responsibility                                                         |
+| ------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| `crates/kb-app/src/ui/action_panel.rs`      | create | `PanelPage`, `PanelSection`, `PanelRow`, `RowLead`, `matches`, `panel` |
+| `crates/kb-app/src/actions.rs`              | create | `PanelCommand`, `Submenu`, `Page`, the page builders                   |
+| `crates/kb-app/src/palette.rs`              | delete | Replaced by `actions.rs`                                               |
+| `crates/kb-app/src/filter.rs`               | modify | Keeps `filter_summary` only; the choices move to `actions.rs`          |
+| `crates/kb-app/src/search_view/panel.rs`    | create | The overlay: state, keys, confirm, popovers                            |
+| `crates/kb-app/src/search_view/overlays.rs` | delete | Replaced by `panel.rs`                                                 |
+| `crates/kb-app/src/search_view.rs`          | modify | `Overlay`, the shared search field, `back`                             |
+| `crates/kb-app/src/keys.rs`                 | modify | `CopyUrl` goes                                                         |
+| `crates/kb-app/tests/ui.rs`                 | modify | Panel and filter tests                                                 |
 
 ---
 
@@ -616,15 +616,15 @@ pub fn trim_url(url: &str, max: usize) -> String {
 with its test in `presentation.rs`'s `tests` module:
 
 ```rust
-    #[test]
-    fn trims_a_url_to_its_host_and_last_segment() {
-        assert_eq!(trim_url("https://www.github.com/tokio-rs/mini-redis?tab=1#x", 32), "github.com/tokio-rs/mini-redis");
-        assert_eq!(
-            trim_url("https://doc.rust-lang.org/std/task/struct.Waker.html", 32),
-            "doc.rust-lang.org/…/struct.Waker.html"
-        );
-        assert_eq!(trim_url("https://tokio.rs/", 32), "tokio.rs");
-    }
+#[test]
+fn trims_a_url_to_its_host_and_last_segment() {
+    assert_eq!(trim_url("https://www.github.com/tokio-rs/mini-redis?tab=1#x", 32), "github.com/tokio-rs/mini-redis");
+    assert_eq!(
+        trim_url("https://doc.rust-lang.org/std/task/struct.Waker.html", 32),
+        "doc.rust-lang.org/…/struct.Waker.html"
+    );
+    assert_eq!(trim_url("https://tokio.rs/", 32), "tokio.rs");
+}
 ```
 
 - [ ] **Step 3: Run the tests.**
@@ -894,35 +894,36 @@ enum Overlay {
 }
 ```
 
-  - replace the fields `palette: Entity<CommandState>, filter_palette: Entity<CommandState>,` with
-    `panel_query: Entity<InputState>, panel_selected: usize,`; in `new`, replace the two `CommandState::new` lines
-    with:
+- replace the fields `palette: Entity<CommandState>, filter_palette: Entity<CommandState>,` with
+  `panel_query: Entity<InputState>, panel_selected: usize,`; in `new`, replace the two `CommandState::new` lines
+  with:
 
 ```rust
-        let panel_query = cx.new(|cx| InputState::new(window, cx).placeholder(catalog.panel.search.clone()));
-        let panel_sub = cx.subscribe_in(&panel_query, window, Self::on_panel_query_event);
+let panel_query = cx.new(|cx| InputState::new(window, cx).placeholder(catalog.panel.search.clone()));
+let panel_sub = cx.subscribe_in(&panel_query, window, Self::on_panel_query_event);
 ```
 
     (place them after `let catalog = Rc::new(catalog);`), add `panel_sub` to `subscriptions`, and set
     `panel_query, panel_selected: 0,` in the returned `Self`;
-  - change `mod overlays;` to `mod panel;`, and remove the `CommandState` and `Page` imports;
-  - in `back`, replace the first `match self.overlay { … }` with:
+
+- change `mod overlays;` to `mod panel;`, and remove the `CommandState` and `Page` imports;
+- in `back`, replace the first `match self.overlay { … }` with:
 
 ```rust
-        // Esc clears the panel's search, then leaves a submenu, then closes the panel (Raycast).
-        if self.overlay != Overlay::None {
-            if !self.panel_query.read(cx).value().is_empty() {
-                return self.set_panel_query("", window, cx);
-            }
-            let next = match self.overlay {
-                Overlay::Actions(Some(_)) => Overlay::Actions(None),
-                _ => Overlay::None,
-            };
-            return self.show_overlay(next, window, cx);
-        }
+// Esc clears the panel's search, then leaves a submenu, then closes the panel (Raycast).
+if self.overlay != Overlay::None {
+    if !self.panel_query.read(cx).value().is_empty() {
+        return self.set_panel_query("", window, cx);
+    }
+    let next = match self.overlay {
+        Overlay::Actions(Some(_)) => Overlay::Actions(None),
+        _ => Overlay::None,
+    };
+    return self.show_overlay(next, window, cx);
+}
 ```
 
-  - in `open_actions`, `Overlay::Actions(Page::Main)` becomes `Overlay::Actions(None)`.
+- in `open_actions`, `Overlay::Actions(Page::Main)` becomes `Overlay::Actions(None)`.
 
 - [ ] **Step 4: The panel module.** Create `crates/kb-app/src/search_view/panel.rs`:
 
@@ -1144,14 +1145,14 @@ impl SearchView {
 }
 ```
 
-  `EntryList` needs a `tag_images()` accessor: add to `entry_list.rs`:
+`EntryList` needs a `tag_images()` accessor: add to `entry_list.rs`:
 
 ```rust
-    /// The tag-images folder's images, for the filter's rows.
-    #[must_use]
-    pub fn tag_images(&self) -> &TagImages {
-        &self.tag_images
-    }
+/// The tag-images folder's images, for the filter's rows.
+#[must_use]
+pub fn tag_images(&self) -> &TagImages {
+    &self.tag_images
+}
 ```
 
 - [ ] **Step 5: Remove what the panel replaces.**
@@ -1160,14 +1161,14 @@ impl SearchView {
 git rm crates/kb-app/src/palette.rs crates/kb-app/src/search_view/overlays.rs
 ```
 
-  - In `lib.rs`, delete `pub mod palette;`.
-  - In `keys.rs`, delete `CopyUrl` from `actions!` (D7: the bookmark's Copy is its secondary, ⇧⌘↵).
-  - In `search_view.rs`, delete `copy_url` and its `on_action` line and `CopyUrl` from the imports; delete
-    `apply_filter`'s doc-less duplicate if the compiler reports one; remove `actions_labels` (replaced by
-    `panel_labels`).
-  - In `filter.rs`, delete `FilterChoice`, `FilterGroup`, `toggled`, `filter_groups` and their tests (moved to
-    `actions.rs`); keep `filter_summary` and its test.
-  - In `actions.rs`, delete the `#![expect(dead_code, …)]` line of Task 1.
+- In `lib.rs`, delete `pub mod palette;`.
+- In `keys.rs`, delete `CopyUrl` from `actions!` (D7: the bookmark's Copy is its secondary, ⇧⌘↵).
+- In `search_view.rs`, delete `copy_url` and its `on_action` line and `CopyUrl` from the imports; delete
+  `apply_filter`'s doc-less duplicate if the compiler reports one; remove `actions_labels` (replaced by
+  `panel_labels`).
+- In `filter.rs`, delete `FilterChoice`, `FilterGroup`, `toggled`, `filter_groups` and their tests (moved to
+  `actions.rs`); keep `filter_summary` and its test.
+- In `actions.rs`, delete the `#![expect(dead_code, …)]` line of Task 1.
 
 - [ ] **Step 6: Run every kb-app test.**
 

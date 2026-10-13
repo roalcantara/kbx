@@ -25,26 +25,26 @@ GPUI Kit's list paints nothing of its own). `Catalog::keys_for` resolves a scree
 
 ## File structure
 
-| File                                       | Change | Responsibility                                                    |
-| ------------------------------------------ | ------ | ----------------------------------------------------------------- |
-| `crates/kb-app/src/ui/design.rs`           | modify | `glow`, `pixels`                                                  |
-| `crates/kb-app/src/ui/keycap.rs`           | create | `ChipState`, `caps`, `keycap`                                     |
-| `crates/kb-app/src/ui/chip.rs`             | create | `pill`, `link_chip`, `icon_chip`                                  |
-| `crates/kb-app/src/ui/tile.rs`             | create | `tile`, `favicon`, `TileSize`                                     |
-| `crates/kb-app/src/ui/row.rs`              | create | `Row`                                                             |
-| `crates/kb-app/src/ui/header.rs`           | create | `header`, `lead_icon`, `filter_pill`                              |
-| `crates/kb-app/src/ui/footer.rs`           | create | `footer`, `status`, `entry_status`, `key_item`, `Dot`             |
-| `crates/kb-app/src/ui/notice.rs`           | create | `copied`, `configure`                                             |
-| `crates/kb-app/src/ui.rs`                  | modify | the new modules                                                   |
-| `crates/kb-app/src/catalog.rs`             | modify | `KeyItem`, `Catalog::keys_for`                                    |
-| `crates/kb-app/src/presentation.rs`        | modify | `row_tags(tags, max)`, `row_label(entry, type_label)`             |
-| `crates/kb-app/src/entry_list.rs`          | modify | Renders `Row`; holds the catalog                                  |
-| `crates/kb-app/src/keys.rs`                | modify | Ladder actions, `RunSecondary`, `RunRow1`…`RunRow9`               |
-| `crates/kb-app/src/search_view.rs`         | modify | `ladder`, `run_action`, `copy`, `run_row`; test accessors          |
-| `crates/kb-app/src/search_view/header.rs`  | modify | Composes `ui::header`                                             |
-| `crates/kb-app/src/search_view/footer.rs`  | modify | Composes `ui::footer`                                             |
-| `crates/kb-app/src/lib.rs`                 | modify | Notice placement                                                  |
-| `crates/kb-app/tests/ui.rs`                | modify | Ladder, ⌘n, status line, notice, header tests                     |
+| File                                      | Change | Responsibility                                            |
+| ----------------------------------------- | ------ | --------------------------------------------------------- |
+| `crates/kb-app/src/ui/design.rs`          | modify | `glow`, `pixels`                                          |
+| `crates/kb-app/src/ui/keycap.rs`          | create | `ChipState`, `caps`, `keycap`                             |
+| `crates/kb-app/src/ui/chip.rs`            | create | `pill`, `link_chip`, `icon_chip`                          |
+| `crates/kb-app/src/ui/tile.rs`            | create | `tile`, `favicon`, `TileSize`                             |
+| `crates/kb-app/src/ui/row.rs`             | create | `Row`                                                     |
+| `crates/kb-app/src/ui/header.rs`          | create | `header`, `lead_icon`, `filter_pill`                      |
+| `crates/kb-app/src/ui/footer.rs`          | create | `footer`, `status`, `entry_status`, `key_item`, `Dot`     |
+| `crates/kb-app/src/ui/notice.rs`          | create | `copied`, `configure`                                     |
+| `crates/kb-app/src/ui.rs`                 | modify | the new modules                                           |
+| `crates/kb-app/src/catalog.rs`            | modify | `KeyItem`, `Catalog::keys_for`                            |
+| `crates/kb-app/src/presentation.rs`       | modify | `row_tags(tags, max)`, `row_label(entry, type_label)`     |
+| `crates/kb-app/src/entry_list.rs`         | modify | Renders `Row`; holds the catalog                          |
+| `crates/kb-app/src/keys.rs`               | modify | Ladder actions, `RunSecondary`, `RunRow1`…`RunRow9`       |
+| `crates/kb-app/src/search_view.rs`        | modify | `ladder`, `run_action`, `copy`, `run_row`; test accessors |
+| `crates/kb-app/src/search_view/header.rs` | modify | Composes `ui::header`                                     |
+| `crates/kb-app/src/search_view/footer.rs` | modify | Composes `ui::footer`                                     |
+| `crates/kb-app/src/lib.rs`                | modify | Notice placement                                          |
+| `crates/kb-app/tests/ui.rs`               | modify | Ladder, ⌘n, status line, notice, header tests             |
 
 ---
 
@@ -632,8 +632,8 @@ pub fn row_tags(tags: &[String], max: usize) -> (&[String], usize) {
 }
 ```
 
-  - delete `pub const MAX_ROW_TAGS: usize = 3;` and its doc comment;
-  - replace `row_label` with:
+- delete `pub const MAX_ROW_TAGS: usize = 3;` and its doc comment;
+- replace `row_label` with:
 
 ```rust
 /// What assistive technology reads for a list row: its visible text, in reading order, because
@@ -653,8 +653,8 @@ pub fn row_label(entry: &Entry, type_label: &str) -> String {
 }
 ```
 
-  - in its tests: `collapses_tags_after_three` calls become `row_tags(&tags, 3)` and `row_tags(&tags[..2], 3)`;
-    `names_a_row_by_its_visible_text` calls `row_label(&command, "Commands")`.
+- in its tests: `collapses_tags_after_three` calls become `row_tags(&tags, 3)` and `row_tags(&tags[..2], 3)`;
+  `names_a_row_by_its_visible_text` calls `row_label(&command, "Commands")`.
 
 - [ ] **Step 4: Draw the list with rows.** In `crates/kb-app/src/entry_list.rs`:
 
@@ -685,11 +685,11 @@ use crate::ui::row::Row;
 use crate::ui::tile::{TileSize, favicon, tile};
 ```
 
-  - delete `pub const TAG_RADIUS: f32 = 4.;` and its comment (8f removes `metadata.rs`, its last user; until then
-    change `metadata.rs`'s `use crate::entry_list::TAG_RADIUS;` to `const TAG_RADIUS: f32 = 4.;` defined in
-    `metadata.rs` itself, with the comment `// Removed with this module in Plan 8f.`);
-  - add the field `catalog: Rc<Catalog>,` after `compact: bool,` in `EntryList`, `catalog: Rc::new(Catalog::default()),`
-    in `new`'s struct literal, and replace 8c's `with_types` with:
+- delete `pub const TAG_RADIUS: f32 = 4.;` and its comment (8f removes `metadata.rs`, its last user; until then
+  change `metadata.rs`'s `use crate::entry_list::TAG_RADIUS;` to `const TAG_RADIUS: f32 = 4.;` defined in
+  `metadata.rs` itself, with the comment `// Removed with this module in Plan 8f.`);
+- add the field `catalog: Rc<Catalog>,` after `compact: bool,` in `EntryList`, `catalog: Rc::new(Catalog::default()),`
+  in `new`'s struct literal, and replace 8c's `with_types` with:
 
 ```rust
     /// Shows only the catalog's types (D6), drawn as the catalog says.
@@ -721,7 +721,7 @@ use crate::ui::tile::{TileSize, favicon, tile};
     }
 ```
 
-  - replace `render_row` and `render_tag` with:
+- replace `render_row` and `render_tag` with:
 
 ```rust
     /// A row as `01-list.html` draws it.
@@ -789,13 +789,13 @@ use crate::ui::tile::{TileSize, favicon, tile};
     }
 ```
 
-  - in `impl ListDelegate for EntryList`, change `type Item = ListItem;` to `type Item = Row;` and `render_item` to:
+- in `impl ListDelegate for EntryList`, change `type Item = ListItem;` to `type Item = Row;` and `render_item` to:
 
 ```rust
-    fn render_item(&mut self, ix: IndexPath, _: &mut Window, _: &mut Context<ListState<Self>>) -> Option<Row> {
-        let entry = self.entries.get(ix.row)?;
-        Some(self.render_row(entry, ix.row, Some(ix) == self.selected))
-    }
+fn render_item(&mut self, ix: IndexPath, _: &mut Window, _: &mut Context<ListState<Self>>) -> Option<Row> {
+    let entry = self.entries.get(ix.row)?;
+    Some(self.render_row(entry, ix.row, Some(ix) == self.selected))
+}
 ```
 
 - [ ] **Step 5: Give the list the catalog.** In `search_view.rs`, `SearchView::new`: build `let catalog = Rc::new(catalog);`
@@ -1048,21 +1048,21 @@ pub fn filter_summary(filter: &FilterState, catalog: &Catalog) -> String {
 ```
 
 ```rust
-    #[test]
-    fn summarizes_the_filter() {
-        let catalog = Catalog::default();
-        assert_eq!(filter_summary(&FilterState::default(), &catalog), "All Entries");
-        assert_eq!(
-            filter_summary(
-                &FilterState {
-                    types: strings(&["commands"]),
-                    tags: strings(&["git"])
-                },
-                &catalog
-            ),
-            "Commands, #git"
-        );
-    }
+#[test]
+fn summarizes_the_filter() {
+    let catalog = Catalog::default();
+    assert_eq!(filter_summary(&FilterState::default(), &catalog), "All Entries");
+    assert_eq!(
+        filter_summary(
+            &FilterState {
+                types: strings(&["commands"]),
+                tags: strings(&["git"])
+            },
+            &catalog
+        ),
+        "Commands, #git"
+    );
+}
 ```
 
 and add `use crate::catalog::Catalog;` at the top of `filter.rs`.
@@ -1095,31 +1095,31 @@ git commit -m "feat(ui): Draw the header with the magnifier and the filter pill"
 - [ ] **Step 1: Write the failing tests.** Append to `catalog.rs`'s `tests` module:
 
 ```rust
-    #[test]
-    fn resolves_a_screen_s_keys_for_the_selected_entry() {
-        let catalog = Catalog::default();
-        let labels = |screen, kind: &str| {
-            catalog
-                .keys_for(screen, catalog.types.get(kind))
-                .into_iter()
-                .map(|item| (item.label, item.caps, item.action))
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(
-            labels(Screen::List, "bookmarks"),
-            [
-                ("Details".into(), "↵".into(), "details".into()),
-                ("Open".into(), "⌘↵".into(), "open".into()),
-                ("Copy".into(), "⇧⌘↵".into(), "copy".into())
-            ]
-        );
-        assert_eq!(
-            labels(Screen::Detail, "commands"),
-            [("Copy".into(), "↵".into(), "copy".into())],
-            "a command has no secondary"
-        );
-        assert_eq!(catalog.keys_for(Screen::Refreshing, None)[0].caps, "esc");
-    }
+#[test]
+fn resolves_a_screen_s_keys_for_the_selected_entry() {
+    let catalog = Catalog::default();
+    let labels = |screen, kind: &str| {
+        catalog
+            .keys_for(screen, catalog.types.get(kind))
+            .into_iter()
+            .map(|item| (item.label, item.caps, item.action))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        labels(Screen::List, "bookmarks"),
+        [
+            ("Details".into(), "↵".into(), "details".into()),
+            ("Open".into(), "⌘↵".into(), "open".into()),
+            ("Copy".into(), "⇧⌘↵".into(), "copy".into())
+        ]
+    );
+    assert_eq!(
+        labels(Screen::Detail, "commands"),
+        [("Copy".into(), "↵".into(), "copy".into())],
+        "a command has no secondary"
+    );
+    assert_eq!(catalog.keys_for(Screen::Refreshing, None)[0].caps, "esc");
+}
 ```
 
 Append to `crates/kb-app/tests/ui.rs`:
@@ -1165,29 +1165,29 @@ pub struct KeyItem {
 and to `impl Catalog`:
 
 ```rust
-    /// `screen`'s keys in footer order, each resolved to an action: `entry.primary` and
-    /// `entry.secondary` become `kind`'s actions; a key whose action the entry lacks is left out.
-    #[must_use]
-    pub fn keys_for(&self, screen: Screen, kind: Option<&EntryType>) -> Vec<KeyItem> {
-        let keys = self.screen(screen);
-        SCREEN_KEYS
-            .iter()
-            .filter_map(|key| {
-                let value = keys.get(*key)?;
-                let action = match value.as_str() {
-                    ENTRY_PRIMARY => kind?.primary.clone(),
-                    ENTRY_SECONDARY => kind?.secondary.clone()?,
-                    id => id.to_owned(),
-                };
-                Some(KeyItem {
-                    keys: key,
-                    caps: crate::ui::keycap::caps(key),
-                    label: self.label(&action).to_owned(),
-                    action,
-                })
+/// `screen`'s keys in footer order, each resolved to an action: `entry.primary` and
+/// `entry.secondary` become `kind`'s actions; a key whose action the entry lacks is left out.
+#[must_use]
+pub fn keys_for(&self, screen: Screen, kind: Option<&EntryType>) -> Vec<KeyItem> {
+    let keys = self.screen(screen);
+    SCREEN_KEYS
+        .iter()
+        .filter_map(|key| {
+            let value = keys.get(*key)?;
+            let action = match value.as_str() {
+                ENTRY_PRIMARY => kind?.primary.clone(),
+                ENTRY_SECONDARY => kind?.secondary.clone()?,
+                id => id.to_owned(),
+            };
+            Some(KeyItem {
+                keys: key,
+                caps: crate::ui::keycap::caps(key),
+                label: self.label(&action).to_owned(),
+                action,
             })
-            .collect()
-    }
+        })
+        .collect()
+}
 ```
 
 Run: `cargo nextest run -p kb-app catalog`
@@ -1197,29 +1197,29 @@ Expected: PASS.
   - in `actions!`, add after `RunPrimary`:
 
 ```rust
-        /// Run the selected entry's secondary action.
-        RunSecondary,
-        /// The screen's ↵ (its catalog key `enter`).
-        ScreenEnter,
-        /// The screen's ⌘↵.
-        ScreenCmdEnter,
-        /// The screen's ⇧⌘↵.
-        ScreenShiftCmdEnter,
+/// Run the selected entry's secondary action.
+RunSecondary,
+/// The screen's ↵ (its catalog key `enter`).
+ScreenEnter,
+/// The screen's ⌘↵.
+ScreenCmdEnter,
+/// The screen's ⇧⌘↵.
+ScreenShiftCmdEnter,
 ```
 
-  - in `key_bindings`, replace `KeyBinding::new("enter", RunPrimary, Some(DETAIL_CONTEXT)),` and its comment with:
+- in `key_bindings`, replace `KeyBinding::new("enter", RunPrimary, Some(DETAIL_CONTEXT)),` and its comment with:
 
 ```rust
-        // The list's ↵ and ⌘↵ come from the query field (it reports Enter, then propagates it), so
-        // the ladder is bound here only where no text field has the keyboard: the detail screen.
-        KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
-        KeyBinding::new("cmd-enter", ScreenCmdEnter, Some(DETAIL_CONTEXT)),
-        // The query field does not bind ⇧⌘↵, so it reaches the panel everywhere.
-        KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, context),
+// The list's ↵ and ⌘↵ come from the query field (it reports Enter, then propagates it), so
+// the ladder is bound here only where no text field has the keyboard: the detail screen.
+KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
+KeyBinding::new("cmd-enter", ScreenCmdEnter, Some(DETAIL_CONTEXT)),
+// The query field does not bind ⇧⌘↵, so it reaches the panel everywhere.
+KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, context),
 ```
 
-  - update the count test: `assert_eq!(bindings.len(), 18);` (7 catalog + 11 fixed) and its comment to
-    `// 7 keyed catalog actions + enter, cmd-enter (detail), shift-cmd-enter, escape, cmd-q, right, left, down, up, cmd-down, cmd-up.`
+- update the count test: `assert_eq!(bindings.len(), 18);` (7 catalog + 11 fixed) and its comment to
+  `// 7 keyed catalog actions + enter, cmd-enter (detail), shift-cmd-enter, escape, cmd-q, right, left, down, up, cmd-down, cmd-up.`
 
 - [ ] **Step 4: Run the ladder.** In `search_view.rs`:
   - add `RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter` to the `use crate::keys::{…}` list and
@@ -1309,28 +1309,28 @@ Expected: PASS.
     }
 ```
 
-  - in `copy_url` and `copy_path`, replace `cx.write_to_clipboard(ClipboardItem::new_string(url));` (and `path`)
-    with `self.copy(url, window, cx);` (and `path`); rename their `_: &mut Window` parameter to `window`;
-  - in `on_query_input_event`, replace the `InputEvent::PressEnter { secondary, .. }` arm's body with
-    `self.ladder(if *secondary { "cmd-enter" } else { "enter" }, window, cx);`;
-  - in `on_list_event`, replace the `ListEvent::Confirm(_)` arm's body with:
+- in `copy_url` and `copy_path`, replace `cx.write_to_clipboard(ClipboardItem::new_string(url));` (and `path`)
+  with `self.copy(url, window, cx);` (and `path`); rename their `_: &mut Window` parameter to `window`;
+- in `on_query_input_event`, replace the `InputEvent::PressEnter { secondary, .. }` arm's body with
+  `self.ladder(if *secondary { "cmd-enter" } else { "enter" }, window, cx);`;
+- in `on_list_event`, replace the `ListEvent::Confirm(_)` arm's body with:
 
 ```rust
-                let keys = if self.list.read(cx).delegate().is_secondary_confirm() { "cmd-enter" } else { "enter" };
-                self.ladder(keys, window, cx);
+let keys = if self.list.read(cx).delegate().is_secondary_confirm() { "cmd-enter" } else { "enter" };
+self.ladder(keys, window, cx);
 ```
 
-  - in `render`, add after `.on_action(cx.listener(Self::run_primary))`:
+- in `render`, add after `.on_action(cx.listener(Self::run_primary))`:
 
 ```rust
-            .on_action(cx.listener(Self::run_secondary))
-            .on_action(cx.listener(Self::screen_enter))
-            .on_action(cx.listener(Self::screen_cmd_enter))
-            .on_action(cx.listener(Self::screen_shift_cmd_enter))
+.on_action(cx.listener(Self::run_secondary))
+.on_action(cx.listener(Self::screen_enter))
+.on_action(cx.listener(Self::screen_cmd_enter))
+.on_action(cx.listener(Self::screen_shift_cmd_enter))
 ```
 
-  - add the imports `Rebuild`, `OpenPreferences`, `ToggleWindowSize`, `OpenSourceFile`, `CopyPath` if missing;
-    remove `PrimaryKind`, `primary_action` from the `presentation` import if now unused.
+- add the imports `Rebuild`, `OpenPreferences`, `ToggleWindowSize`, `OpenSourceFile`, `CopyPath` if missing;
+  remove `PrimaryKind`, `primary_action` from the `presentation` import if now unused.
 
 - [ ] **Step 5: Write the footer component.** Create `crates/kb-app/src/ui/footer.rs`:
 
@@ -1651,72 +1651,72 @@ Expected: FAIL: nothing is copied.
   - add to `actions!`, after `OpenDetail`:
 
 ```rust
-        /// Run row 1's primary action (list) or open link 1 (detail screen).
-        RunRow1,
-        /// Row or link 2.
-        RunRow2,
-        /// Row or link 3.
-        RunRow3,
-        /// Row or link 4.
-        RunRow4,
-        /// Row or link 5.
-        RunRow5,
-        /// Row or link 6.
-        RunRow6,
-        /// Row or link 7.
-        RunRow7,
-        /// Row or link 8.
-        RunRow8,
-        /// Row or link 9.
-        RunRow9,
+/// Run row 1's primary action (list) or open link 1 (detail screen).
+RunRow1,
+/// Row or link 2.
+RunRow2,
+/// Row or link 3.
+RunRow3,
+/// Row or link 4.
+RunRow4,
+/// Row or link 5.
+RunRow5,
+/// Row or link 6.
+RunRow6,
+/// Row or link 7.
+RunRow7,
+/// Row or link 8.
+RunRow8,
+/// Row or link 9.
+RunRow9,
 ```
 
-  - in `key_bindings`'s `bindings.extend([…])`, append:
+- in `key_bindings`'s `bindings.extend([…])`, append:
 
 ```rust
-        // ⌘1–⌘9: row n's primary action in the list; link n on the detail screen (R7).
-        KeyBinding::new("cmd-1", RunRow1, context),
-        KeyBinding::new("cmd-2", RunRow2, context),
-        KeyBinding::new("cmd-3", RunRow3, context),
-        KeyBinding::new("cmd-4", RunRow4, context),
-        KeyBinding::new("cmd-5", RunRow5, context),
-        KeyBinding::new("cmd-6", RunRow6, context),
-        KeyBinding::new("cmd-7", RunRow7, context),
-        KeyBinding::new("cmd-8", RunRow8, context),
-        KeyBinding::new("cmd-9", RunRow9, context),
+// ⌘1–⌘9: row n's primary action in the list; link n on the detail screen (R7).
+KeyBinding::new("cmd-1", RunRow1, context),
+KeyBinding::new("cmd-2", RunRow2, context),
+KeyBinding::new("cmd-3", RunRow3, context),
+KeyBinding::new("cmd-4", RunRow4, context),
+KeyBinding::new("cmd-5", RunRow5, context),
+KeyBinding::new("cmd-6", RunRow6, context),
+KeyBinding::new("cmd-7", RunRow7, context),
+KeyBinding::new("cmd-8", RunRow8, context),
+KeyBinding::new("cmd-9", RunRow9, context),
 ```
 
-  - the count test becomes `assert_eq!(bindings.len(), 27);` with `+ cmd-1…cmd-9` added to its comment.
+- the count test becomes `assert_eq!(bindings.len(), 27);` with `+ cmd-1…cmd-9` added to its comment.
 
 - [ ] **Step 3: Run row n.** In `search_view.rs`, add `RunRow1, …, RunRow9` to the keys import and these methods:
 
 ```rust
-    /// ⌘n: selects row n − 1 and runs its primary action (R7); the detail screen's links come in 8f.
-    fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
-        if !matches!(self.screen, Screen::Search) {
-            return;
-        }
-        let exists = self.list.read(cx).delegate().entries().len() >= n;
-        if !exists {
-            return;
-        }
-        self.list.update(cx, |list, cx| list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx));
-        self.run_entry(false, window, cx);
+/// ⌘n: selects row n − 1 and runs its primary action (R7); the detail screen's links come in 8f.
+fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
+    if !matches!(self.screen, Screen::Search) {
+        return;
     }
+    let exists = self.list.read(cx).delegate().entries().len() >= n;
+    if !exists {
+        return;
+    }
+    self.list.update(cx, |list, cx| list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx));
+    self.run_entry(false, window, cx);
+}
 ```
 
 and in `render`, after the ladder `on_action` lines:
 
 ```rust
-            .on_action(cx.listener(|this, _: &RunRow1, window, cx| this.run_row(1, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow2, window, cx| this.run_row(2, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow3, window, cx| this.run_row(3, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow4, window, cx| this.run_row(4, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow5, window, cx| this.run_row(5, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow6, window, cx| this.run_row(6, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow7, window, cx| this.run_row(7, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow8, window, cx| this.run_row(8, window, cx)))
-            .on_action(cx.listener(|this, _: &RunRow9, window, cx| this.run_row(9, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow1, window, cx| this.run_row(1, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow2, window, cx| this.run_row(2, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow3, window, cx| this.run_row(3, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow4, window, cx| this.run_row(4, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow5, window, cx| this.run_row(5, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow6, window, cx| this.run_row(6, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow7, window, cx| this.run_row(7, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow8, window, cx| this.run_row(8, window, cx)))
+.on_action(cx.listener(|this, _: &RunRow9, window, cx| this.run_row(9, window, cx)))
 ```
 
 - [ ] **Step 4: Run every kb-app test.**
@@ -1744,10 +1744,10 @@ git commit -m "feat(app): Run the first nine rows' primary actions with ⌘1–�
       `copies_a_command_with_its_primary_action`: after its `assert_eq!(copied…)` add
 
 ```rust
-    assert_eq!(
-        cx.read(|cx| _view.read(cx).last_notice().map(str::to_owned)).as_deref(),
-        Some("Copied to clipboard")
-    );
+assert_eq!(
+    cx.read(|cx| _view.read(cx).last_notice().map(str::to_owned)).as_deref(),
+    Some("Copied to clipboard")
+);
 ```
 
 (rename `_view` to `view` in that test's `let` and in the new lines).
@@ -1856,18 +1856,18 @@ Add `pub mod notice;` to `ui.rs` (sorted, after `pub mod keycap;`).
     }
 ```
 
-  In `search_view/overlays.rs`, `run`, replace
-  `PaletteCommand::Copy(text) => cx.write_to_clipboard(ClipboardItem::new_string(text.clone())),` with:
+In `search_view/overlays.rs`, `run`, replace
+`PaletteCommand::Copy(text) => cx.write_to_clipboard(ClipboardItem::new_string(text.clone())),` with:
 
 ```rust
-        PaletteCommand::Copy(text) => {
-            let text = text.clone();
-            let _ = view.update(cx, |this, cx| this.copy(text, window, cx));
-        }
+PaletteCommand::Copy(text) => {
+    let text = text.clone();
+    let _ = view.update(cx, |this, cx| this.copy(text, window, cx));
+}
 ```
 
-  and change `fn copy` in `search_view.rs` to `pub(super) fn copy`. Remove `ClipboardItem` from `overlays.rs`'s
-  imports if now unused.
+and change `fn copy` in `search_view.rs` to `pub(super) fn copy`. Remove `ClipboardItem` from `overlays.rs`'s
+imports if now unused.
 
 - [ ] **Step 5: Run every kb-app test.**
 

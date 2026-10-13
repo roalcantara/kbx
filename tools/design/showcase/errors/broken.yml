@@ -1,0 +1,3 @@
+# Showcase corpus: a file that fails to parse, so the refresh report shows a failed file.
+commands:
+  broken: [unclosed

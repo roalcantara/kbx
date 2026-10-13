@@ -1,0 +1,15 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+cheats:
+  rust-lifetimes:
+    title: Rust Memory Safety & Lifetimes Reference
+    desc: Borrow checker rules, Rc<RefCell> patterns, and unsafe block guidelines
+    tags: [rust, systems]
+    notes: |
+      ### Borrowing
+
+      - One `&mut` or any number of `&`, never both.
+      - A reference never outlives its owner.
+
+      ### Shared mutation
+
+      - `Rc<RefCell<T>>` on one thread, `Arc<Mutex<T>>` across threads.

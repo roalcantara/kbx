@@ -1,0 +1,25 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+cheats:
+  k8s-ingress-tls:
+    title: Kubernetes Ingress & TLS Spec Cheatsheet
+    cheat: kubectl get ingress -A -o wide
+    desc: Cert-manager annotations, cluster issuer configs, and TLS secrets matrix
+    tags: [k8s, networking, yaml]
+    links:
+      - Ingress: https://kubernetes.io/docs/concepts/services-networking/ingress/
+      - cert-manager annotations: https://cert-manager.io/docs/usage/ingress/
+      - ClusterIssuer: https://cert-manager.io/docs/concepts/issuer/
+      - TLS secrets: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+    notes: |
+      ### Annotations that matter
+
+      - **cert-manager.io/cluster-issuer**: which issuer signs the certificate.
+      - **nginx.ingress.kubernetes.io/ssl-redirect**: force HTTPS.
+
+      ```yaml
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+      ```

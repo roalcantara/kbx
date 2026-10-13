@@ -1,0 +1,22 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+bookmarks:
+  https://tokio.rs/tokio/tutorial/async:
+    title: Tokio Tutorial — Async in Depth
+    desc: tokio.rs · How futures, wakers and the executor fit together
+    tags: [rust, async]
+    links:
+      - Async in depth: https://tokio.rs/tokio/tutorial/async
+      - Async book: https://rust-lang.github.io/async-book/
+      - mini-redis: https://github.com/tokio-rs/mini-redis
+      - Waker: https://doc.rust-lang.org/std/task/struct.Waker.html
+    notes: |
+      - Read after the **Spawning** chapter.
+      - Its mini-executor example is the clearest explanation of `Waker` there is.
+  https://www.youtube.com/watch?v=aqz-KE-bpKQ:
+    title: Async Rust in Depth
+    desc: A conference talk on how futures, wakers and the executor fit together.
+    tags: [async]
+    notes: |
+      - Pinning, wakers and the executor, with diagrams.
+      - Pairs with the Tokio tutorial's **Async in depth** chapter.
+  not-a-map: a bookmark whose value is a string, so the refresh report shows it skipped

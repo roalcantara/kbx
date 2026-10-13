@@ -23,26 +23,26 @@ every task" first.
 
 ## File structure
 
-| File                                                   | Change         | Responsibility                                                                 |
-| ------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------ |
-| `tools/design/showcase/**/*.yml`                       | create         | The showcase corpus                                                            |
-| `tools/design/showcase-images/*.svg`                   | create         | Stand-in tag images                                                            |
-| `crates/kb-app/tests/showcase.rs`                      | create         | The showcase syncs to what the pages show                                      |
-| `DESIGN.md`                                            | rewrite        | Front matter (tokens) and prose                                                |
-| `crates/kb-app/src/ui.rs`, `crates/kb-app/src/ui/design.rs` | create    | The design module                                                              |
-| `crates/kb-app/src/lib.rs`                             | modify         | `mod ui`; fonts, theme fonts, always dark                                      |
-| `crates/kb-app/src/accents.rs`                         | modify         | Accents from the tokens (removed in 8g)                                        |
-| `crates/kb-app/assets/themes/accents.json`             | delete         | Replaced by the tokens                                                         |
-| `crates/kb-app/assets/fonts/*`                         | create         | Bundled fonts and licences                                                     |
-| `tools/design/color.ts`, `tools/design/color.test.ts`  | modify         | `frontMatter()`; tests                                                         |
-| `tools/design/tasks.toml`                              | modify         | `design:validate`, `design:theme` from the front matter; render/palettes gone  |
-| `tools/design/layout.json`                             | delete         | Superseded by the front matter                                                 |
-| `tools/design/palettes.json`                           | modify         | No `chosen`; alternatives only                                                 |
-| `crates/kb-app/assets/themes/kb.json`                  | regenerate     | GPUI Kit's theme from the tokens                                               |
-| `crates/kb-app/src/panel.rs`                           | modify         | Transparent window background                                                  |
-| `crates/kb-app/src/search_view.rs`                     | modify         | Rounded root on the window colour; no appearance observer                      |
-| `crates/kb-app/tests/ui.rs`                            | modify         | Always-dark and token tests replace the appearance tests                       |
-| `PRODUCT.md`                                           | modify         | O1's contrast rule (Task 4)                                                    |
+| File                                                        | Change     | Responsibility                                                                |
+| ----------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `tools/design/showcase/**/*.yml`                            | create     | The showcase corpus                                                           |
+| `tools/design/showcase-images/*.svg`                        | create     | Stand-in tag images                                                           |
+| `crates/kb-app/tests/showcase.rs`                           | create     | The showcase syncs to what the pages show                                     |
+| `DESIGN.md`                                                 | rewrite    | Front matter (tokens) and prose                                               |
+| `crates/kb-app/src/ui.rs`, `crates/kb-app/src/ui/design.rs` | create     | The design module                                                             |
+| `crates/kb-app/src/lib.rs`                                  | modify     | `mod ui`; fonts, theme fonts, always dark                                     |
+| `crates/kb-app/src/accents.rs`                              | modify     | Accents from the tokens (removed in 8g)                                       |
+| `crates/kb-app/assets/themes/accents.json`                  | delete     | Replaced by the tokens                                                        |
+| `crates/kb-app/assets/fonts/*`                              | create     | Bundled fonts and licences                                                    |
+| `tools/design/color.ts`, `tools/design/color.test.ts`       | modify     | `frontMatter()`; tests                                                        |
+| `tools/design/tasks.toml`                                   | modify     | `design:validate`, `design:theme` from the front matter; render/palettes gone |
+| `tools/design/layout.json`                                  | delete     | Superseded by the front matter                                                |
+| `tools/design/palettes.json`                                | modify     | No `chosen`; alternatives only                                                |
+| `crates/kb-app/assets/themes/kb.json`                       | regenerate | GPUI Kit's theme from the tokens                                              |
+| `crates/kb-app/src/panel.rs`                                | modify     | Transparent window background                                                 |
+| `crates/kb-app/src/search_view.rs`                          | modify     | Rounded root on the window colour; no appearance observer                     |
+| `crates/kb-app/tests/ui.rs`                                 | modify     | Always-dark and token tests replace the appearance tests                      |
+| `PRODUCT.md`                                                | modify     | O1's contrast rule (Task 4)                                                   |
 
 ---
 
@@ -163,7 +163,7 @@ commands:
 
 `tools/design/showcase/cheats/kubernetes.yml`:
 
-```yaml
+````yaml
 # Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
 cheats:
   k8s-ingress-tls:
@@ -189,7 +189,7 @@ cheats:
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt
       ```
-```
+````
 
 `tools/design/showcase/cheats/rust.yml`:
 
@@ -316,7 +316,7 @@ git commit -m "test(design): Add the showcase corpus the approved pages show" -m
 
 - [ ] **Step 1: Replace DESIGN.md with exactly this content.**
 
-````markdown
+```markdown
 ---
 # The design tokens: the only place a design value is written (spec D18). The app reads this front matter at start
 # (crates/kb-app/src/ui/design.rs); `mise run design:theme` writes GPUI Kit's theme from it; `design:validate` checks it.
@@ -423,12 +423,12 @@ for behaviour. Read this file before any UI change.
 
 Every value lives in one place:
 
-| What                                   | Where                                                                    | Read by                                         |
-| -------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------- |
-| Colours, type, radii, spacing, sizes   | This file's front matter (the design tokens)                             | the app (`ui/design.rs`); `design:theme`, `design:validate` |
+| What                                   | Where                                                                    | Read by                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Colours, type, radii, spacing, sizes   | This file's front matter (the design tokens)                             | the app (`ui/design.rs`); `design:theme`, `design:validate`     |
 | Entry types, actions, keys, words      | [`crates/kb-app/assets/catalog.toml`](crates/kb-app/assets/catalog.toml) | the app (`catalog.rs`); `~/.config/kb/config.toml` overrides it |
-| GPUI Kit's theme                       | [`kb.json`](crates/kb-app/assets/themes/kb.json), generated               | GPUI Kit's own components                       |
-| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)               | whoever changes a value                         |
+| GPUI Kit's theme                       | [`kb.json`](crates/kb-app/assets/themes/kb.json), generated              | GPUI Kit's own components                                       |
+| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)               | whoever changes a value                                         |
 
 `mise run design:theme` regenerates `kb.json` after a colour changes; `mise run design:validate` checks contrast;
 `mise run design:shots` captures the app on the showcase corpus for comparison with the approved pages.
@@ -444,20 +444,20 @@ a tag's identity (its icon), and state (the status dot). Always dark: kb has one
 
 The roles, by name (the hexes are in the front matter):
 
-| Role       | Job                                                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| `window`   | The panel                                                                                       |
-| `mantle`   | Live chips and keycaps; popovers; command cards and the link hero                              |
-| `crust`    | The notice                                                                                      |
-| `selected` | The selected row and panel row; popover and card borders                                        |
-| `hover`    | A hovered row                                                                                   |
-| `badge`    | Rest chips; the filter pill; keycaps on the darker popover and notice surfaces                  |
-| `code`     | Code blocks in the notes                                                                        |
-| `edge`     | Hairlines (faint at 10 %)                                                                       |
-| `ring`     | The panel's 1 pt outline (text at 8 %)                                                          |
-| `text`     | Titles, the query, values                                                                       |
-| `muted`    | Descriptions, labels, live chip text, keycap text                                               |
-| `faint`    | Tertiary text: placeholders, counts, section labels, URLs, rest link chips; icons in the header |
+| Role       | Job                                                                                                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `window`   | The panel                                                                                                                                                              |
+| `mantle`   | Live chips and keycaps; popovers; command cards and the link hero                                                                                                      |
+| `crust`    | The notice                                                                                                                                                             |
+| `selected` | The selected row and panel row; popover and card borders                                                                                                               |
+| `hover`    | A hovered row                                                                                                                                                          |
+| `badge`    | Rest chips; the filter pill; keycaps on the darker popover and notice surfaces                                                                                         |
+| `code`     | Code blocks in the notes                                                                                                                                               |
+| `edge`     | Hairlines (faint at 10 %)                                                                                                                                              |
+| `ring`     | The panel's 1 pt outline (text at 8 %)                                                                                                                                 |
+| `text`     | Titles, the query, values                                                                                                                                              |
+| `muted`    | Descriptions, labels, live chip text, keycap text                                                                                                                      |
+| `faint`    | Tertiary text: placeholders, counts, section labels, URLs, rest link chips; icons in the header                                                                        |
 | accents    | `mauve` (selection bar, caret, Cheat Sheets), `blue` (Bookmarks, links), `green` (Commands, ready), `pink` (Tasks), `peach`, `yellow`, `red` (the quote bar, failures) |
 
 - **Type tiles:** a type's accent at 15 % behind its icon in the accent (24 pt in rows, 20 in the footer and the pane
@@ -530,7 +530,7 @@ Where kb departs from the owner's Stitch screens or from Raycast, and why:
 
 `tools/design/shots/` holds the app captured on the showcase corpus by `mise run design:shots`, one PNG per screen,
 compact and expanded; `tools/design/CHECKLISTS.md` records each screen's checklist against its approved page.
-````
+```
 
 - [ ] **Step 2: Format and check.**
 
@@ -1125,7 +1125,7 @@ Expected: PASS.
 - [ ] **Step 5: Replace the `design:validate` task.** In `tools/design/tasks.toml`, replace the whole
       `["design:validate"]` table (from its header to the line before `["design:theme"]`) with:
 
-````toml
+```toml
 ["design:validate"]
 description = "Check the design tokens in DESIGN.md (WCAG 2.2 contrast of every text role on its surfaces; accents apart under normal, protan and deutan vision, as warnings, D19) and the comparison palettes in palettes.json, into tools/design/validation.json; fail when a token check fails"
 run = ['''
@@ -1230,7 +1230,7 @@ if (tokenFailed.length) {
   process.exit(1)
 }
 ''', "dprint fmt tools/design/validation.json"]
-````
+```
 
 If O1 was **B**, change the line `const FAINT_RULE = 'tertiary'` to `const FAINT_RULE = 'aa'`.
 
@@ -1281,20 +1281,20 @@ regenerate `crates/kb-app/assets/themes/kb.json`; delete `crates/kb-app/assets/t
 - [ ] **Step 1: Write the failing test.** Append to the `tests` module of `crates/kb-app/src/ui/design.rs`:
 
 ```rust
-    #[test]
-    fn gives_gpui_kit_the_tokens() {
-        let theme: serde_json::Value =
-            serde_json::from_str(include_str!("../../assets/themes/kb.json")).unwrap();
-        let colors = &theme["themes"][0]["colors"];
-        let token = |key: &str| hex(colors[key].as_str().unwrap()).unwrap();
-        let c = &design().colors;
-        assert_eq!(token("popover.background"), c.mantle);
-        assert_eq!(token("foreground"), c.text);
-        assert_eq!(token("muted.foreground"), c.muted);
-        assert_eq!(token("border"), c.selected);
-        assert_eq!(token("caret"), c.mauve);
-        assert_eq!(token("background").a, 0., "the window draws its own rounded surface");
-    }
+#[test]
+fn gives_gpui_kit_the_tokens() {
+    let theme: serde_json::Value =
+        serde_json::from_str(include_str!("../../assets/themes/kb.json")).unwrap();
+    let colors = &theme["themes"][0]["colors"];
+    let token = |key: &str| hex(colors[key].as_str().unwrap()).unwrap();
+    let c = &design().colors;
+    assert_eq!(token("popover.background"), c.mantle);
+    assert_eq!(token("foreground"), c.text);
+    assert_eq!(token("muted.foreground"), c.muted);
+    assert_eq!(token("border"), c.selected);
+    assert_eq!(token("caret"), c.mauve);
+    assert_eq!(token("background").a, 0., "the window draws its own rounded surface");
+}
 ```
 
 Run: `cargo nextest run -p kb-app ui::design::tests::gives_gpui_kit_the_tokens`
@@ -1303,7 +1303,7 @@ Expected: FAIL: `popover.background` is `#24293E`.
 - [ ] **Step 2: Replace the `design:theme` task.** In `tools/design/tasks.toml`, replace the whole `["design:theme"]`
       table (from its header to the line before `["design:render"]`) with:
 
-````toml
+```toml
 ["design:theme"]
 description = "Write GPUI Kit's dark theme (crates/kb-app/assets/themes/kb.json) and the tag-accent fixture from the design tokens in DESIGN.md"
 run = [
@@ -1440,7 +1440,7 @@ function defaultThemePath() {
 ''',
   "dprint fmt crates/kb-app/assets/themes/kb.json crates/kb-app/tests/fixtures/tag-accents.json",
 ]
-````
+```
 
 - [ ] **Step 3: Remove what the old design used.** Delete the `["design:render"]` and `["design:palettes"]` tables
       from `tools/design/tasks.toml` (each from its header to the line before the next `[` header), and:
@@ -1632,13 +1632,13 @@ pub fn load_fonts(cx: &gpui_kit::App) -> gpui_kit::Result<()> {
       `init_theme(cx);` with:
 
 ```rust
-            if let Err(error) = ui::design::load_fonts(cx) {
-                #[expect(clippy::print_stderr, reason = "a font failed to load before any window exists")]
-                {
-                    eprintln!("kb: {error}");
-                }
-            }
-            init_theme(cx);
+if let Err(error) = ui::design::load_fonts(cx) {
+    #[expect(clippy::print_stderr, reason = "a font failed to load before any window exists")]
+    {
+        eprintln!("kb: {error}");
+    }
+}
+init_theme(cx);
 ```
 
 - [ ] **Step 5: Run the tests and see them pass.**
@@ -1731,21 +1731,21 @@ Expected: PASS.
 In `crates/kb-app/src/search_view.rs`, in `render`, replace
 
 ```rust
-            .size_full()
-            .bg(cx.theme().background)
-            .text_color(cx.theme().foreground)
+.size_full()
+.bg(cx.theme().background)
+.text_color(cx.theme().foreground)
 ```
 
 with
 
 ```rust
-            .size_full()
-            .rounded(pt(tokens.rounded.window))
-            .bg(tokens.colors.window)
-            .border_1()
-            .border_color(tokens.colors.ring)
-            .overflow_hidden()
-            .text_color(tokens.colors.text)
+.size_full()
+.rounded(pt(tokens.rounded.window))
+.bg(tokens.colors.window)
+.border_1()
+.border_color(tokens.colors.ring)
+.overflow_hidden()
+.text_color(tokens.colors.text)
 ```
 
 and add, as the first line of `render`, `let tokens = design();`, plus the import

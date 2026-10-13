@@ -1,0 +1,14 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+commands:
+  /k8s-rollout-restart:
+    cmd: kubectl rollout restart deployment/api --namespace production && kubectl rollout status deployment/api -n production --timeout=120s
+    desc: Gracefully roll out new pods with zero downtime restart strategy
+    tags: [k8s, devops]
+    links:
+      - Rollout docs: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/
+      - kubectl reference: https://kubernetes.io/docs/reference/kubectl/
+    notes: |
+      ### When to use
+
+      - After a ConfigMap or Secret change the pods don't pick up.
+      - **Zero downtime** needs a readiness probe and `maxUnavailable: 0`.

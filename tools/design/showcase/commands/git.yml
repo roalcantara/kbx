@@ -1,0 +1,8 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+commands:
+  /git-undo-commit:
+    cmd: git reset --soft HEAD~1
+    desc: Undo last git commit while preserving staged changes in index
+    tags: [git, vcs]
+    notes: |
+      The commit's changes stay staged, so `git commit` makes it again after a fix.

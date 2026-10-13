@@ -23,17 +23,17 @@ the whole catalog still validates. `keys::key_bindings(&Catalog)` binds the cata
 
 ## File structure
 
-| File                                    | Change  | Responsibility                                                         |
-| --------------------------------------- | ------- | ---------------------------------------------------------------------- |
-| `crates/kb-app/assets/catalog.toml`     | create  | What kb offers                                                         |
-| `crates/kb-app/src/catalog.rs`          | create  | Types, validation, overrides, message templates                        |
-| `crates/kb-app/src/config.rs`           | modify  | Splits config.toml into locations, catalog overrides and notices       |
-| `crates/kb-app/src/assets.rs`           | modify  | `has_icon`; the catalog's icons bundled                                |
-| `crates/kb-app/src/keys.rs`             | modify  | Bindings from the catalog; `CopyPath`                                  |
-| `crates/kb-app/src/panel.rs`            | modify  | Builds the catalog, binds its keys, shows its notices                  |
-| `crates/kb-app/src/search_view.rs`      | modify  | Holds the catalog; Configure writes the defaults; Copy Path            |
-| `crates/kb-app/src/lib.rs`              | modify  | `pub mod catalog`                                                      |
-| `crates/kb-app/tests/ui.rs`             | modify  | Builds the catalog in the test window                                  |
+| File                                | Change | Responsibility                                                   |
+| ----------------------------------- | ------ | ---------------------------------------------------------------- |
+| `crates/kb-app/assets/catalog.toml` | create | What kb offers                                                   |
+| `crates/kb-app/src/catalog.rs`      | create | Types, validation, overrides, message templates                  |
+| `crates/kb-app/src/config.rs`       | modify | Splits config.toml into locations, catalog overrides and notices |
+| `crates/kb-app/src/assets.rs`       | modify | `has_icon`; the catalog's icons bundled                          |
+| `crates/kb-app/src/keys.rs`         | modify | Bindings from the catalog; `CopyPath`                            |
+| `crates/kb-app/src/panel.rs`        | modify | Builds the catalog, binds its keys, shows its notices            |
+| `crates/kb-app/src/search_view.rs`  | modify | Holds the catalog; Configure writes the defaults; Copy Path      |
+| `crates/kb-app/src/lib.rs`          | modify | `pub mod catalog`                                                |
+| `crates/kb-app/tests/ui.rs`         | modify | Builds the catalog in the test window                            |
 
 ---
 
@@ -925,7 +925,7 @@ Add these accessors after `preferences()`:
 
 Update the module comment's example (lines 3–8) to:
 
-```rust
+````rust
 //! The preferences are one optional TOML file, `~/.config/kb/config.toml`: the two locations, and
 //! any key of the catalog (`assets/catalog.toml`) to override:
 //!
@@ -936,7 +936,7 @@ Update the module comment's example (lines 3–8) to:
 //! [actions.copy]
 //! label = "Yank"
 //! ```
-```
+````
 
 - [ ] **Step 3: Run the tests and see them pass.**
 
@@ -998,31 +998,31 @@ Expected: FAIL to compile: no function `load`.
 - [ ] **Step 2: Write `load`.** Add to `impl Catalog`:
 
 ```rust
-    /// The shipped catalog with `overrides` (config.toml's catalog tables) applied one leaf at a
-    /// time: a leaf is kept only if the whole catalog still validates; a rejected leaf becomes a
-    /// notice and keeps its default (spec D18). Colours (`types.*.tint`) are not overridable.
-    #[must_use]
-    pub fn load(overrides: &toml::Table) -> (Self, Vec<String>) {
-        let defaults = Self::default();
-        #[expect(clippy::expect_used, reason = "the compiled-in catalog is checked by a unit test")]
-        let mut merged: toml::Table = toml::from_str(CATALOG).expect("catalog.toml is TOML");
-        let mut notices = Vec::new();
-        for (path, value) in leaves(overrides) {
-            let name = path.join(".");
-            if path.first().map(String::as_str) == Some("types") && path.last().map(String::as_str) == Some("tint") {
-                notices.push(format!("Ignored {name} in config.toml: colours live in DESIGN.md"));
-                continue;
-            }
-            let mut candidate = merged.clone();
-            set_leaf(&mut candidate, &path, value);
-            match Self::from_table(candidate.clone()) {
-                Ok(_) => merged = candidate,
-                Err(error) => notices.push(format!("Ignored {name} in config.toml: {error}")),
-            }
+/// The shipped catalog with `overrides` (config.toml's catalog tables) applied one leaf at a
+/// time: a leaf is kept only if the whole catalog still validates; a rejected leaf becomes a
+/// notice and keeps its default (spec D18). Colours (`types.*.tint`) are not overridable.
+#[must_use]
+pub fn load(overrides: &toml::Table) -> (Self, Vec<String>) {
+    let defaults = Self::default();
+    #[expect(clippy::expect_used, reason = "the compiled-in catalog is checked by a unit test")]
+    let mut merged: toml::Table = toml::from_str(CATALOG).expect("catalog.toml is TOML");
+    let mut notices = Vec::new();
+    for (path, value) in leaves(overrides) {
+        let name = path.join(".");
+        if path.first().map(String::as_str) == Some("types") && path.last().map(String::as_str) == Some("tint") {
+            notices.push(format!("Ignored {name} in config.toml: colours live in DESIGN.md"));
+            continue;
         }
-        // Every kept leaf left the catalog valid, so this cannot fail; the defaults are the fallback.
-        (Self::from_table(merged).unwrap_or(defaults), notices)
+        let mut candidate = merged.clone();
+        set_leaf(&mut candidate, &path, value);
+        match Self::from_table(candidate.clone()) {
+            Ok(_) => merged = candidate,
+            Err(error) => notices.push(format!("Ignored {name} in config.toml: {error}")),
+        }
     }
+    // Every kept leaf left the catalog valid, so this cannot fail; the defaults are the fallback.
+    (Self::from_table(merged).unwrap_or(defaults), notices)
+}
 ```
 
 and these free functions after `fill`:
@@ -1123,11 +1123,11 @@ Expected: FAIL to compile: `key_bindings` takes no argument.
     `jm7r`), and add, after `OpenSourceFile`:
 
 ```rust
-        /// Copy the selected entry's source file path, absolute.
-        CopyPath,
+/// Copy the selected entry's source file path, absolute.
+CopyPath,
 ```
 
-  - Replace `key_bindings` with:
+- Replace `key_bindings` with:
 
 ```rust
 /// The panel's key bindings: every keyed action of the catalog, then the keys kb fixes (Esc, ⌘Q,
@@ -1173,10 +1173,10 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
 }
 ```
 
-  - Add `use crate::catalog::Catalog;` to the imports, and update the module comment's first line to
-    `//! The commands as typed Actions, and their key bindings: the catalog's keys, plus Esc, ⌘Q and the arrows.`
-  - The list `CopyUrl, … cmd-shift-c` binding is gone with the old list; `CopyUrl` stays an Action (the palette's
-    "Copy URL" row still dispatches it) until 8e removes it.
+- Add `use crate::catalog::Catalog;` to the imports, and update the module comment's first line to
+  `//! The commands as typed Actions, and their key bindings: the catalog's keys, plus Esc, ⌘Q and the arrows.`
+- The list `CopyUrl, … cmd-shift-c` binding is gone with the old list; `CopyUrl` stays an Action (the palette's
+  "Copy URL" row still dispatches it) until 8e removes it.
 
 - [ ] **Step 3: Remove ⌘D's handler and add Copy Path's.** In `search_view.rs`:
   - delete the method `toggle_details` and its `.on_action(cx.listener(Self::toggle_details))` line, and remove
@@ -1184,20 +1184,20 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
   - add this method after `copy_url`:
 
 ```rust
-    fn copy_path(&mut self, _: &CopyPath, _: &mut Window, cx: &mut Context<Self>) {
-        let path = self
-            .list
-            .read(cx)
-            .delegate()
-            .selected_entry()
-            .map(|e| e.source_file.clone());
-        if let Some(path) = path {
-            cx.write_to_clipboard(ClipboardItem::new_string(path));
-        }
+fn copy_path(&mut self, _: &CopyPath, _: &mut Window, cx: &mut Context<Self>) {
+    let path = self
+        .list
+        .read(cx)
+        .delegate()
+        .selected_entry()
+        .map(|e| e.source_file.clone());
+    if let Some(path) = path {
+        cx.write_to_clipboard(ClipboardItem::new_string(path));
     }
+}
 ```
 
-  - add `.on_action(cx.listener(Self::copy_path))` after `.on_action(cx.listener(Self::copy_url))` in `render`.
+- add `.on_action(cx.listener(Self::copy_path))` after `.on_action(cx.listener(Self::copy_url))` in `render`.
 
 In `crates/kb-app/tests/ui.rs`, the tests `opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d` and
 `shows_titles_alone_beside_the_split_pane` press `cmd-d`; change each `press(cx, window, "cmd-d")` to
@@ -1270,16 +1270,16 @@ git commit -m "feat(app): Bind keys from the catalog; add Copy Path (⌥⌘C)" \
 - [ ] **Step 1: Write the failing test.** Append to `catalog.rs`'s `tests` module:
 
 ```rust
-    #[test]
-    fn writes_a_preferences_file_with_every_default_commented_out() {
-        let text = preferences_template(Path::new("/home/me/knowledge"));
-        assert!(text.starts_with("# kb preferences"), "{text}");
-        assert!(text.contains("\nsources_path = \"/home/me/knowledge\"\n"), "{text}");
-        assert!(text.contains("\n# [types.bookmarks]\n"), "{text}");
-        assert!(text.contains("\n# label = \"Bookmarks\"\n"), "{text}");
-        let active: toml::Table = toml::from_str(&text).unwrap();
-        assert_eq!(active.keys().collect::<Vec<_>>(), ["sources_path"], "only the location is live");
-    }
+#[test]
+fn writes_a_preferences_file_with_every_default_commented_out() {
+    let text = preferences_template(Path::new("/home/me/knowledge"));
+    assert!(text.starts_with("# kb preferences"), "{text}");
+    assert!(text.contains("\nsources_path = \"/home/me/knowledge\"\n"), "{text}");
+    assert!(text.contains("\n# [types.bookmarks]\n"), "{text}");
+    assert!(text.contains("\n# label = \"Bookmarks\"\n"), "{text}");
+    let active: toml::Table = toml::from_str(&text).unwrap();
+    assert_eq!(active.keys().collect::<Vec<_>>(), ["sources_path"], "only the location is live");
+}
 ```
 
 and add `use std::path::Path;` at the top of the `tests` module.

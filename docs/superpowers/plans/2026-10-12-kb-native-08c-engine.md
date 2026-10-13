@@ -22,15 +22,15 @@ narrows every query to the index's types the catalog names.
 
 ## File structure
 
-| File                                  | Change | Responsibility                                                  |
-| ------------------------------------- | ------ | --------------------------------------------------------------- |
-| `crates/kb-domain/src/search.rs`      | modify | `count`, `build_count_sql`, `tags_for_types`                    |
-| `crates/kb-domain/tests/goldens.rs`   | modify | `count` against the goldens' full result sets                   |
-| `crates/kb-domain/src/markdown.rs`    | modify | `notes_body`                                                    |
-| `crates/kb-app/src/entry_list.rs`     | modify | The four types; the true count                                  |
-| `crates/kb-app/src/search_view.rs`    | modify | Passes the catalog's types to the list                          |
-| `crates/kb-app/src/search_view/overlays.rs` | modify | Filter choices from the visible types and their tags     |
-| `crates/kb-app/tests/ui.rs`           | modify | Expectations over the sample corpus's four types                |
+| File                                        | Change | Responsibility                                       |
+| ------------------------------------------- | ------ | ---------------------------------------------------- |
+| `crates/kb-domain/src/search.rs`            | modify | `count`, `build_count_sql`, `tags_for_types`         |
+| `crates/kb-domain/tests/goldens.rs`         | modify | `count` against the goldens' full result sets        |
+| `crates/kb-domain/src/markdown.rs`          | modify | `notes_body`                                         |
+| `crates/kb-app/src/entry_list.rs`           | modify | The four types; the true count                       |
+| `crates/kb-app/src/search_view.rs`          | modify | Passes the catalog's types to the list               |
+| `crates/kb-app/src/search_view/overlays.rs` | modify | Filter choices from the visible types and their tags |
+| `crates/kb-app/tests/ui.rs`                 | modify | Expectations over the sample corpus's four types     |
 
 ---
 
@@ -41,16 +41,16 @@ narrows every query to the index's types the catalog names.
 - [ ] **Step 1: Write the failing tests.** Append to the `tests` module of `search.rs`:
 
 ```rust
-    #[test]
-    fn counts_with_the_page_query_s_filter_and_no_window() {
-        let sql = build_count_sql(&query("docker", &["commands"], &["infra"]));
-        assert_eq!(
-            sql.sql,
-            "SELECT COUNT(*) FROM entries_fts(?) fts CROSS JOIN entries e ON e.rowid = fts.rowid WHERE e.type IN (?) AND EXISTS (SELECT 1 FROM entry_tags WHERE entry_id = e.id AND tag = ?)"
-        );
-        assert_eq!(sql.params.len(), 3);
-        assert_eq!(build_count_sql(&query("", &[], &[])).sql, "SELECT COUNT(*) FROM entries e");
-    }
+#[test]
+fn counts_with_the_page_query_s_filter_and_no_window() {
+    let sql = build_count_sql(&query("docker", &["commands"], &["infra"]));
+    assert_eq!(
+        sql.sql,
+        "SELECT COUNT(*) FROM entries_fts(?) fts CROSS JOIN entries e ON e.rowid = fts.rowid WHERE e.type IN (?) AND EXISTS (SELECT 1 FROM entry_tags WHERE entry_id = e.id AND tag = ?)"
+    );
+    assert_eq!(sql.params.len(), 3);
+    assert_eq!(build_count_sql(&query("", &[], &[])).sql, "SELECT COUNT(*) FROM entries e");
+}
 ```
 
 Append to `crates/kb-domain/tests/goldens.rs`:
@@ -202,22 +202,22 @@ git commit -m "feat(domain): Count a query's matches" \
 - [ ] **Step 1: Write the failing test.** Append to the `tests` module of `search.rs`:
 
 ```rust
-    #[test]
-    fn lists_only_the_tags_of_the_chosen_types() {
-        let dir = tempfile::tempdir().unwrap();
-        let (sources, database) = (dir.path().join("s"), dir.path().join("kb.db"));
-        std::fs::create_dir(&sources).unwrap();
-        std::fs::write(
-            sources.join("a.yml"),
-            "commands:\n  ls:\n    tags: [shell]\nnotes:\n  n:\n    tags: [diary]\n",
-        )
+#[test]
+fn lists_only_the_tags_of_the_chosen_types() {
+    let dir = tempfile::tempdir().unwrap();
+    let (sources, database) = (dir.path().join("s"), dir.path().join("kb.db"));
+    std::fs::create_dir(&sources).unwrap();
+    std::fs::write(
+        sources.join("a.yml"),
+        "commands:\n  ls:\n    tags: [shell]\nnotes:\n  n:\n    tags: [diary]\n",
+    )
+    .unwrap();
+    crate::sync::sync_knowledge_base(&sources, &database, &std::sync::atomic::AtomicBool::new(false), |_| {})
         .unwrap();
-        crate::sync::sync_knowledge_base(&sources, &database, &std::sync::atomic::AtomicBool::new(false), |_| {})
-            .unwrap();
-        let connection = crate::sync::open_readonly(&database).unwrap();
-        assert_eq!(tags_for_types(&connection, &["commands".into()]).unwrap(), ["shell"]);
-        assert_eq!(tags_for_types(&connection, &[]).unwrap(), ["diary", "shell"]);
-    }
+    let connection = crate::sync::open_readonly(&database).unwrap();
+    assert_eq!(tags_for_types(&connection, &["commands".into()]).unwrap(), ["shell"]);
+    assert_eq!(tags_for_types(&connection, &[]).unwrap(), ["diary", "shell"]);
+}
 ```
 
 Run: `cargo nextest run -p kb-domain search`
@@ -470,16 +470,16 @@ Expected: FAIL to compile: no method `count` / `visible_types`.
   - add three fields to `EntryList` after `filter: FilterState,`:
 
 ```rust
-    /// The catalog's entry types (D6); other types never show.
-    known_types: Vec<String>,
-    /// The index's types the catalog knows: what an empty type filter means.
-    visible_types: Vec<String>,
-    /// How many entries the query and filter match, whatever the page.
-    count: usize,
+/// The catalog's entry types (D6); other types never show.
+known_types: Vec<String>,
+/// The index's types the catalog knows: what an empty type filter means.
+visible_types: Vec<String>,
+/// How many entries the query and filter match, whatever the page.
+count: usize,
 ```
 
-  - in `EntryList::new`, add `known_types: Vec::new(), visible_types: Vec::new(), count: 0,` to the struct literal;
-  - add this builder after `with_tag_images`:
+- in `EntryList::new`, add `known_types: Vec::new(), visible_types: Vec::new(), count: 0,` to the struct literal;
+- add this builder after `with_tag_images`:
 
 ```rust
     /// Shows only `types` (the catalog's), as the sources write them, lowercase.
@@ -503,64 +503,64 @@ Expected: FAIL to compile: no method `count` / `visible_types`.
     }
 ```
 
-  - replace `refresh` with:
+- replace `refresh` with:
 
 ```rust
-    /// Runs the query for the current text, filter and page window, over the visible types only.
-    fn refresh(&mut self) {
-        let Some(connection) = &self.connection else {
-            self.entries.clear();
-            self.visible_types.clear();
-            self.count = 0;
-            return;
-        };
-        self.visible_types = entry_types(connection)
-            .unwrap_or_default()
-            .into_iter()
-            .filter(|t| self.known_types.contains(&t.trim().to_lowercase()))
-            .collect();
-        let types = if self.filter.types.is_empty() {
-            self.visible_types.clone()
-        } else {
-            self.filter.types.clone()
-        };
-        if types.is_empty() {
-            self.entries.clear();
-            self.count = 0;
-            return;
-        }
-        let query = SearchQuery {
-            text: self.query.clone(),
-            filter: FilterState {
-                types,
-                tags: self.filter.tags.clone(),
-            },
-            limit: self.limit,
-            offset: 0,
-        };
-        // A failed query keeps the previous results on screen rather than emptying the list.
-        if let Ok(rows) = search(connection, &query) {
-            self.entries = rows.iter().map(row_to_entry).collect();
-        }
-        if let Ok(matched) = count(connection, &query) {
-            self.count = matched;
-        }
+/// Runs the query for the current text, filter and page window, over the visible types only.
+fn refresh(&mut self) {
+    let Some(connection) = &self.connection else {
+        self.entries.clear();
+        self.visible_types.clear();
+        self.count = 0;
+        return;
+    };
+    self.visible_types = entry_types(connection)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|t| self.known_types.contains(&t.trim().to_lowercase()))
+        .collect();
+    let types = if self.filter.types.is_empty() {
+        self.visible_types.clone()
+    } else {
+        self.filter.types.clone()
+    };
+    if types.is_empty() {
+        self.entries.clear();
+        self.count = 0;
+        return;
     }
+    let query = SearchQuery {
+        text: self.query.clone(),
+        filter: FilterState {
+            types,
+            tags: self.filter.tags.clone(),
+        },
+        limit: self.limit,
+        offset: 0,
+    };
+    // A failed query keeps the previous results on screen rather than emptying the list.
+    if let Ok(rows) = search(connection, &query) {
+        self.entries = rows.iter().map(row_to_entry).collect();
+    }
+    if let Ok(matched) = count(connection, &query) {
+        self.count = matched;
+    }
+}
 ```
 
 - [ ] **Step 3: Give the list the catalog's types.** In `search_view.rs`, `SearchView::new`, change the list
       construction to:
 
 ```rust
-        let types: Vec<String> = catalog.types.keys().cloned().collect();
-        let list = cx.new(|cx| {
-            ListState::new(
-                EntryList::new(connection).with_tag_images(tag_images).with_types(types),
-                window,
-                cx,
-            )
-            .searchable(false)
-        });
+let types: Vec<String> = catalog.types.keys().cloned().collect();
+let list = cx.new(|cx| {
+    ListState::new(
+        EntryList::new(connection).with_tag_images(tag_images).with_types(types),
+        window,
+        cx,
+    )
+    .searchable(false)
+});
 ```
 
 (This must sit before `catalog` moves into `Rc::new`; place `let types = …` right after `let tag_images = …`.)
@@ -569,16 +569,16 @@ Expected: FAIL to compile: no method `count` / `visible_types`.
       `crates/kb-app/src/search_view/overlays.rs`, replace the body of `filter_sections` with:
 
 ```rust
-        let delegate = self.list.read(cx).delegate();
-        let Some(connection) = delegate.connection() else {
-            return Vec::new();
-        };
-        let types = delegate.visible_types().to_vec();
-        // A failed read offers no choices rather than stale ones; the list shows the index.
-        match tags_for_types(connection, &types) {
-            Ok(tags) => filter_groups(&types, &tags, delegate.filter()),
-            Err(_) => Vec::new(),
-        }
+let delegate = self.list.read(cx).delegate();
+let Some(connection) = delegate.connection() else {
+    return Vec::new();
+};
+let types = delegate.visible_types().to_vec();
+// A failed read offers no choices rather than stale ones; the list shows the index.
+match tags_for_types(connection, &types) {
+    Ok(tags) => filter_groups(&types, &tags, delegate.filter()),
+    Err(_) => Vec::new(),
+}
 ```
 
 and change `use kb_domain::search::{FilterState, entry_types, tags};` to

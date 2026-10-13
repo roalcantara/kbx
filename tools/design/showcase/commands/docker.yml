@@ -1,0 +1,10 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+commands:
+  /docker-prune-all:
+    cmd: docker system prune --all --volumes --force | tee /tmp/docker-prune.log
+    desc: Remove unused containers, dangling networks, dangling images, and volumes
+    tags: [docker, cleanup]
+    links:
+      - docker system prune: https://docs.docker.com/reference/cli/docker/system/prune/
+    notes: |
+      Frees disk space on a build machine. `--volumes` also removes named volumes no container uses.

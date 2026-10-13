@@ -1,0 +1,6 @@
+# Showcase corpus (tools/design/showcase): an entry of a type kb ignores (notes), so the app shows it nowhere.
+notes:
+  eks-subnets:
+    title: AWS EKS VPC CNI Subnet Exhaustion Playbook
+    desc: Remediation steps for secondary CIDR assignment and prefix delegation flags
+    tags: [aws, eks]

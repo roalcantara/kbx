@@ -1,0 +1,14 @@
+# Showcase corpus (tools/design/showcase): the entries the approved pages show. Not the engine's fixture.
+tasks:
+  design-system:
+    title: Ship the new design system
+    task: Land Plan 8 and compare every screen with its approved page
+    status: in-progress
+    priority: high
+    tags: [kb, design]
+  findings:
+    title: Write the findings
+    task: Read the report and write why each criterion failed or went unmeasured
+    status: todo
+    priority: medium
+    tags: [kb]
