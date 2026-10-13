@@ -38,8 +38,8 @@ pub enum Layout {
 pub enum HeroKind {
     /// A command card of this command.
     Card(String),
-    /// A `YouTube` thumbnail.
-    Thumbnail(String),
+    /// A `YouTube` thumbnail (`url`, `fallback`).
+    Thumbnail(String, String),
     /// The URL as a link line (`↗ host/path`).
     LinkLine(String),
     /// A task's status and priority chips.
@@ -55,7 +55,10 @@ pub fn hero_of(entry: &Entry, kind: Option<&EntryType>) -> HeroKind {
         Some(Hero::Command) => HeroKind::Card(entry.primary_content.clone()),
         Some(Hero::Snippet) => snippet(entry).map_or(HeroKind::None, HeroKind::Card),
         Some(Hero::Media) => match kb_domain::markdown::youtube_video_id(&entry.primary_content) {
-            Some(id) => HeroKind::Thumbnail(format!("https://img.youtube.com/vi/{id}/maxresdefault.jpg")),
+            Some(id) => HeroKind::Thumbnail(
+                format!("https://img.youtube.com/vi/{id}/maxresdefault.jpg"),
+                format!("https://img.youtube.com/vi/{id}/hqdefault.jpg"),
+            ),
             None => HeroKind::LinkLine(entry.primary_content.clone()),
         },
         Some(Hero::Task) => {
@@ -251,7 +254,7 @@ impl RenderOnce for EntryView {
                         .into_any_element(),
                 )
             }
-            HeroKind::Thumbnail(url) => {
+            HeroKind::Thumbnail(url, fallback) => {
                 let height = if detail {
                     d.components.hero.thumb_detail
                 } else {
@@ -264,7 +267,17 @@ impl RenderOnce for EntryView {
                         .flex_none()
                         .rounded(pt(d.rounded.hero))
                         .overflow_hidden()
-                        .child(img(url).size_full().object_fit(gpui_kit::ObjectFit::Cover))
+                        .child(
+                            img(url)
+                                .size_full()
+                                .object_fit(gpui_kit::ObjectFit::Cover)
+                                .with_fallback(move || {
+                                    img(fallback.clone())
+                                        .size_full()
+                                        .object_fit(gpui_kit::ObjectFit::Cover)
+                                        .into_any_element()
+                                }),
+                        )
                         .into_any_element(),
                 )
             }
@@ -460,7 +473,10 @@ mod tests {
         );
         assert_eq!(
             hero("bookmarks", "https://www.youtube.com/watch?v=aqz-KE-bpKQ", "title: t\n"),
-            HeroKind::Thumbnail("https://img.youtube.com/vi/aqz-KE-bpKQ/maxresdefault.jpg".into())
+            HeroKind::Thumbnail(
+                "https://img.youtube.com/vi/aqz-KE-bpKQ/maxresdefault.jpg".into(),
+                "https://img.youtube.com/vi/aqz-KE-bpKQ/hqdefault.jpg".into(),
+            )
         );
         assert_eq!(
             hero("bookmarks", "https://tokio.rs/tokio/tutorial", "title: t\n"),
