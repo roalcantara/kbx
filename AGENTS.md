@@ -73,3 +73,7 @@ It runs, in order, stopping at the first failure: `cargo nextest run`, `cargo cl
 ## Commits
 
 Conventional Commits with a sentence-case subject, at most 72 characters.
+
+Stage your own files with `git add <paths>`, then run `git commit`: never `git commit <paths>` (the pre-commit hook's
+fixes would leave the index stale) and never `git commit -a` (other agents may have work in progress). To format
+before a gate run, use `hk fix --all`; `hk check --all` and `mise run gate` only check.
