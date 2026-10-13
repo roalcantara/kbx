@@ -1,6 +1,6 @@
 # AI-agent features: Raycast versus the Rust/GPUI launchers — design
 
-- Status: for the owner's review
+- Status: approved by the owner, 2026-10-13
 - Date: 2026-10-13
 - Kind: an investigation, executed by other agents; it writes reports, never code
 - Inputs: [2026-10-13-asyar-claims-review.md](../research/2026-10-13-asyar-claims-review.md) (the GPUI launchers
@@ -29,9 +29,10 @@ fills are visible, and the candidates are ranked.
 | I5  | **An independent auditor** rebuilds the list from the same sources without reading phase 1's reasoning, then diffs; whatever relevant feature it adds goes in before the freeze.                                                                                                                                                                                                                                                                                           |
 | I6  | **Columns: Raycast and the Rust/GPUI launchers only.** A launcher counts only if its `Cargo.toml` depends on a GPUI (`gpui`, `gpui-pre`, `gpui-ce`, a Zed git `gpui`, or `gpui-component`/`gpui-kit`).                                                                                                                                                                                                                                                                     |
 | I7  | **Ports are scored from their source, not run.** Each cell cites `repo@commit:path:line`. Whether to build and run the top candidates is decided after the report (owner).                                                                                                                                                                                                                                                                                                 |
+| I8  | **Maturity does not exclude.** A young or small project is scored like any other; maturity is a column, not a filter (owner: reading an immature port beats building a copy).                                                                                                                                                                                                                                                                                              |
 | I9  | **The topic is agent orchestration, refined in phase 1** (owner, 2026-10-13). A feature enters the taxonomy only if it involves at least one of: more than one agent or model at once; a workflow longer than one prompt and one answer; observing or controlling agents while they run (state, cost, logs, needs-input). Everything else is listed once as "simple integration, out of topic", with its reason, and never scored; the auditor may challenge the boundary. |
 | I10 | **Phase 1 first asks whether Raycast ships native agents or orchestration.** If it does, its duplicate rule covers them and H1 is about refusals; if not, the topic is open ground and H1 is about what its extension API cannot host (no persistent background process, no embedded terminal).                                                                                                                                                                            |
-| I8  | **Maturity does not exclude.** A young or small project is scored like any other; maturity is a column, not a filter (owner: reading an immature port beats building a copy).                                                                                                                                                                                                                                                                                              |
+| I11 | **A human gate closes every phase** (owner, 2026-10-13). The agent stops, shows the owner a one-screen summary (what it found, what it decided, open questions, changes it proposes for the next phase) and waits. The owner approves, adjusts or stops; the answer and its date are recorded in the phase output under `## Gate`. No phase starts before the previous gate is passed.                                                                                     |
 
 ## Scope
 
@@ -93,16 +94,17 @@ The recommendation names adopt, fork or build, and the conditions under which it
 
 ### Effort limits
 
-Phases 1–4 run in order; phase 5 fans out, at most 15 ports, chosen by activity. The taxonomy is capped at 40
+Phases 1–4 run in order, each closed by its gate (I11); phase 5 fans out after the census gate and is closed by one gate after the last port; at most 15 ports, chosen by activity. The taxonomy is capped at 40
 features plus 10 from the audit.
 
 ## Acceptance criteria
 
 1. `02-audit.md` shows the auditor's independent list, the diff and the frozen list.
-2. Every cell of the matrix has a status and a citation, or "unknown".
-3. H1–H4 each end with refuted, holds, or refined, and what was searched.
-4. `06-report.md` ranks the candidates, recommends adopt, fork or build, and lists the ports worth running next.
-5. No code was written; no port's code was copied.
+1. Every phase output ends with a `## Gate` section holding the owner's decision and its date.
+1. Every cell of the matrix has a status and a citation, or "unknown".
+1. H1–H4 each end with refuted, holds, or refined, and what was searched.
+1. `06-report.md` ranks the candidates, recommends adopt, fork or build, and lists the ports worth running next.
+1. No code was written; no port's code was copied.
 
 ## Risks
 
