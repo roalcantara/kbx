@@ -136,7 +136,27 @@ impl SearchView {
     fn confirm(&mut self, ix: usize, secondary: bool, window: &mut Window, cx: &mut Context<Self>) {
         let page = self.current_page(cx);
         let visible = matches(&page.page, &self.panel_query.read(cx).value());
-        let Some(command) = visible.get(ix).and_then(|&(s, r)| page.command(s, r)).cloned() else {
+        let target_ix = if secondary {
+            // ⌘↵: if the selected row is a Filter or Link row, ⌘↵ acts on it (Only / Copy link).
+            // Otherwise, ⌘↵ runs the visible row whose caps show ⌘↵ (Raycast parity).
+            let is_special = visible
+                .get(ix)
+                .and_then(|&(s, r)| page.command(s, r))
+                .is_some_and(|c| matches!(c, PanelCommand::Filter { .. } | PanelCommand::Link(_)));
+            if is_special {
+                Some(ix)
+            } else {
+                let cmd_enter_caps = crate::ui::keycap::caps("cmd-enter");
+                visible
+                    .iter()
+                    .position(|&(s, r)| page.page.sections[s].rows[r].caps.as_deref() == Some(&cmd_enter_caps))
+                    .or(Some(ix))
+            }
+        } else {
+            Some(ix)
+        };
+        let Some(target_ix) = target_ix else { return };
+        let Some(command) = visible.get(target_ix).and_then(|&(s, r)| page.command(s, r)).cloned() else {
             return;
         };
         match command {
@@ -164,7 +184,7 @@ impl SearchView {
                 } else {
                     // The toggle can add or drop the Clear All section, so the row is found again
                     // by its labels; index 0 would be Clear All, one ↵ away from losing the filter.
-                    let picked = visible.get(ix).map(|&(s, r)| {
+                    let picked = visible.get(target_ix).map(|&(s, r)| {
                         let section = &page.page.sections[s];
                         (section.label.clone(), section.rows[r].label.clone())
                     });
@@ -180,6 +200,19 @@ impl SearchView {
                         .unwrap_or(0);
                 }
             }
+        }
+    }
+
+    /// Runs the visible row whose caps show `chord` (e.g. ⇧⌘↵).
+    fn confirm_chord(&mut self, chord: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let page = self.current_page(cx);
+        let visible = matches(&page.page, &self.panel_query.read(cx).value());
+        let chord_caps = crate::ui::keycap::caps(chord);
+        if let Some(target_ix) = visible
+            .iter()
+            .position(|&(s, r)| page.page.sections[s].rows[r].caps.as_deref() == Some(&chord_caps))
+        {
+            self.confirm(target_ix, false, window, cx);
         }
     }
 
@@ -265,6 +298,10 @@ impl SearchView {
             // and never reach the popover's own `Confirm`/`Cancel`, which would toggle it shut.
             .on_action(cx.listener(|this, event: &Confirm, window, cx| {
                 this.confirm(this.panel_selected, event.secondary, window, cx);
+                cx.stop_propagation();
+            }))
+            .on_action(cx.listener(|this, _: &crate::keys::ScreenShiftCmdEnter, window, cx| {
+                this.confirm_chord("shift-cmd-enter", window, cx);
                 cx.stop_propagation();
             }))
             .on_action(cx.listener(|this, event: &Back, window, cx| {

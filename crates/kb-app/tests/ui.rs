@@ -198,6 +198,35 @@ fn lists_the_root_actions_for_a_bookmark_with_links(cx: &mut TestAppContext) {
         [["Details", "Open", "Copy", "Resize", "Links…", "More…"]]
     );
 }
+#[gpui_kit::test]
+fn runs_the_row_matching_cmd_enter_or_shift_cmd_enter_in_the_panel(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "example");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    // Row 0 is "Details", row 1 is "Open" (caps ⌘↵), row 2 is "Copy" (caps ⇧⌘↵).
+    // With row 0 selected, ⌘↵ runs row 1 ("Open"), not row 0.
+    press(cx, window, "cmd-enter");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.opened_url().as_deref(),
+        Some("https://example.com/docs"),
+        "⌘↵ in panel ran the row with ⌘↵ caps (Open)"
+    );
+    assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
+
+    // Now test ⇧⌘↵: with row 0 selected, ⇧⌘↵ runs row 2 ("Copy").
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    press(cx, window, "shift-cmd-enter");
+    cx.run_until_parked();
+    let copied = cx.read_from_clipboard().and_then(|item| item.text());
+    assert_eq!(
+        copied.as_deref(),
+        Some("https://example.com/docs"),
+        "⇧⌘↵ in panel ran the row with ⇧⌘↵ caps (Copy)"
+    );
+    assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
+}
 
 #[gpui_kit::test]
 fn copies_the_path_found_from_the_root_s_search(cx: &mut TestAppContext) {

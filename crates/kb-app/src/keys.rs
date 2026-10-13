@@ -143,6 +143,7 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         // submenus too, where the search field (and its input context) is gone.
         KeyBinding::new("enter", Confirm { secondary: false }, Some(PANEL_CONTEXT)),
         KeyBinding::new("secondary-enter", Confirm { secondary: true }, Some(PANEL_CONTEXT)),
+        KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, Some(PANEL_CONTEXT)),
         KeyBinding::new("escape", Back, Some(PANEL_CONTEXT)),
         KeyBinding::new("up", MoveUp, Some(PANEL_CONTEXT)),
         KeyBinding::new("down", MoveDown, Some(PANEL_CONTEXT)),
@@ -166,9 +167,8 @@ mod tests {
     #[test]
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
-        // 7 keyed catalog actions + enter, cmd-enter (detail), shift-cmd-enter, escape, cmd-q, right, left,
-        // down, up, cmd-down, cmd-up, cmd-1…cmd-9, and the panel's enter, secondary-enter, escape, up, down.
-        assert_eq!(bindings.len(), 32);
+        // down, up, cmd-down, cmd-up, cmd-1…cmd-9, and the panel's enter, secondary-enter, shift-cmd-enter, escape, up, down.
+        assert_eq!(bindings.len(), 33);
     }
 
     #[test]
