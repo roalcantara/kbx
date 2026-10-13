@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>kb · real render</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; } body { background: #11121a; color: #cad3f5; font-family: -apple-system, Inter, sans-serif; padding: 28px; }
+.page { max-width: 1800px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; } h1 { font-size: 22px; font-weight: 600; }
+.lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 1100px; } .lead b { color: #cad3f5; }
+.grid { display: grid; grid-template-columns: repeat(2, 860px); gap: 24px; } .cell { display: flex; flex-direction: column; gap: 6px; }
+.cap { font-size: 13px; color: #a5adcb; } .cap b { color: #cad3f5; } img { width: 860px; height: 520px; border-radius: 12px; display: block; }
+</style></head><body><div class="page">
+<div><h1>kb, really rendered by GPUI (not HTML)</h1><p class="lead">A throwaway spike built against kb's own GPUI Kit 0.7.1, patches and toolchain, at the real panel size
+(860 × 520, shown 1:1): Catppuccin Macchiato, Inter + JetBrains Mono, the v3 entry template, the command card (<b>fmt-rs</b> → GPUI Kit's bash highlighter →
+pre-wrapped at spaces with a hanging indent, operators glued, ligatures off, GPUI Kit's <b>Clipboard</b> copy button), the notes rendered by GPUI Kit's
+Markdown view, and the new footer. Screenshots taken by window.</p></div>
+<div class="grid">
+<div class="cell"><span class="cap"><b>Split · command</b> — list 34 %, the pane: header · command card · quote · notes</span><img src="spike-split-command.png"></div>
+<div class="cell"><span class="cap"><b>Detail · command</b> — same template, full width; the chain fits on two lines</span><img src="spike-detail-command.png"></div>
+<div class="cell"><span class="cap"><b>Split · bookmark without a thumbnail</b> — hero is the URL link line</span><img src="spike-split-bookmark.png"></div>
+<div class="cell"><span class="cap"><b>Detail · cheat sheet</b> — snippet card, quote, notes with a YAML code block</span><img src="spike-detail-cheat.png"></div>
+</div></div></body></html>

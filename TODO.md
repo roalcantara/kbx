@@ -252,7 +252,8 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [~] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
+- [x] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
+  - **Comments**: qUan
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -282,6 +283,14 @@
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
+
+- [ ] 7lTb **-** Narrow the entry types to Bookmarks, Cheat Sheets, Commands and Tasks across the app; any other type is ignored (owner, 2026-10-12)
+  - **Comments**: Bo3f
+  - **Priority**: high
+  - **Created**: 2026-10-12 23:09
+  - **Tags**: app, plan8
+
+# Actors
 
 - [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
   - **Priority**: high
@@ -425,8 +434,6 @@
   - **Created**: 2026-10-12 22:58
   - **Tags**: watch
 
-# Actors
-
 # Comments
 
 - REF1 **-** Source and docs: https://github.com/RayanBO/todo · https://rayanbo.github.io/todo/documentation (pinned in mise.toml as cargo:https://github.com/RayanBO/todo/)
@@ -567,4 +574,10 @@
 
 - m0LI **-** 2026-10-12: folded into 04 (same component at full width). Still to settle in the spec: the metadata column's look (→).
   - **Task**: sTbE
+
+- qUan **-** 2026-10-12, approved (brainstorm 07-filter.html): the action component reused under the filter pill; search at the top (rule: the search sits next to the control that opened it); 28 pt rows; TYPES with their tile, TAGS with their icon or #; only chosen rows show ✓; picking keeps it open; with filters set a 'n filters · Clear All' row leads and the pill names the filters (Commands, #k8s; truncated); footer: Toggle ↵ · Only ⌘↵ · Actions ⌘K. Types offered: Bookmarks, Cheat Sheets, Commands, Tasks only (owner).
+  - **Task**: kzv4
+
+- Bo3f **-** 2026-10-12, where to ignore them: (a) in the app (catalog lists the four types; list, filter and counts skip the rest) keeps kb-domain and the index identical to the TypeScript engine, so the goldens and the experiment's parity hold; (b) at sync (unknown types skipped, the sync report says so) is cleaner but changes the engine's output, which the TS goldens check (CONTEXT.md: 'Unknown keys are kept, not rejected'). Recommended: (a) in Plan 8, (b) after the experiment's report. Also update: CONTEXT.md (Entry type), the catalog, the type tints (Notes' peach and Other's hash fall away), the template rows for notes, parity.md, and the sample and showcase corpora.
+  - **Task**: 7lTb
 

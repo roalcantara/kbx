@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb · chips</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 920px; }
+  .lead b { color: #cad3f5; }
+  .options { display: flex; flex-direction: column; gap: 16px; }
+  .option { background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 12px; padding: 16px 20px; cursor: pointer; display: grid; grid-template-columns: 560px 1fr; grid-template-rows: auto auto 1fr; column-gap: 28px; row-gap: 6px; align-items: start; } .option .zoom { grid-column: 1; grid-row: 1 / 4; } .option .tagline, .option h3, .option p { grid-column: 2; }
+  .option.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .option h3 { font-size: 15px; font-weight: 600; }
+  .option p { color: #a5adcb; font-size: 13px; line-height: 19px; }
+  .tagline { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #6e738d; }
+  .zoom { zoom: 2; border-radius: 6px; overflow: hidden; }
+
+  /* Two rows of kb's list, at 2x, so chip sizes and fills are easy to compare */
+  .kb { --window: #24273a; --selected: #363a4f; --badge: #2e3248; --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
+        --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95;
+        --chip-h: 20px; background: var(--window); padding: 4px; display: flex; flex-direction: column; gap: 4px; width: 260px;
+        font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+  .kb .r { position: relative; height: 40px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 10px; border-radius: 6px; }
+  .kb .r.sel { background: var(--selected); }
+  .kb .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); }
+  .kb .tags { display: flex; gap: 6px; align-items: center; }
+  .kb .chip { height: var(--chip-h); display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; flex: none; }
+  .kb .ti { width: var(--chip-h); color: var(--blue); }
+  .kb .ti svg { width: 14px; height: 14px; }
+  .kb .tp { padding: 0 8px; font-size: 11px; line-height: 16px; font-weight: 600; color: var(--muted); }
+  .kb .lc { padding: 0 6px; gap: 4px; font: 400 11px/16px 'JetBrains Mono', monospace; color: var(--faint); }
+  .kb .lc svg { width: 12px; height: 12px; }
+  .kb kbd { min-width: var(--chip-h); padding: 0 6px; font: 400 11px/16px 'JetBrains Mono', monospace; }
+  .kb .key-on { color: var(--text); } .kb .key-off { color: var(--faint); }
+
+  /* A: as drawn: the badge fill, and the window fill on the selected row */
+  .a .chip { background: var(--badge); }
+  .a .r.sel .chip { background: var(--window); }
+  /* B: one translucent lift over whatever is beneath, so chips read the same on both rows */
+  .b .chip { background: rgba(202, 211, 245, 0.07); }
+  /* My first proposal, for reference: unequal heights and an invented border */
+  .old .ti { background: var(--badge); height: 20px; } .old .tp, .old .lc { background: var(--badge); height: 18px; }
+  .old .r.sel .ti, .old .r.sel .tp, .old .r.sel .lc, .old .r.sel kbd { background: var(--window); }
+  .old kbd { height: 18px; background: var(--badge); } .old kbd.dim { height: 20px; background: transparent; border: 1px solid rgba(110,115,141,.25); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <h1>Why the chips look different sizes</h1>
+    <p class="lead">In <b>your design</b> every chip is the same height (20 pt) in both rows. The selected row's chips only <i>look</i> smaller: there they are
+    <b>darker</b> than the row (they read as holes), elsewhere they are <b>lighter</b> than the background (they read as raised, and light shapes on dark look bigger).
+    In <b>my first proposal</b> they really were different: text chips came out 18 pt beside 20 pt icon chips, and I gave ⌘2 a border your design doesn't have.
+    Below, both fixed to one chip height (20 pt), compared at 2×.</p>
+  </div>
+
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="old" style="cursor:default">
+      <span class="tagline">For reference</span>
+      <h3>My first proposal</h3>
+      <div class="zoom"><div class="kb old">
+        <div class="r sel"><span class="tags"><span class="chip ti"><i data-lucide="network"></i></span><span class="chip tp">#devops</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>2</span><kbd class="chip key-on">↵</kbd></div>
+        <div class="r"><span class="tags"><span class="chip ti"><i data-lucide="box"></i></span><span class="chip tp">#cleanup</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>1</span><kbd class="chip dim key-off">⌘2</kbd></div>
+      </div></div>
+      <p>Text chips 18 pt, icon chips 20 pt; ⌘2 outlined. Both wrong.</p>
+    </div>
+
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <span class="tagline">Option A</span>
+      <h3>As you drew it, sizes fixed</h3>
+      <div class="zoom"><div class="kb a">
+        <div class="r sel"><span class="tags"><span class="chip ti"><i data-lucide="network"></i></span><span class="chip tp">#devops</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>2</span><kbd class="chip key-on">↵</kbd></div>
+        <div class="r"><span class="tags"><span class="chip ti"><i data-lucide="box"></i></span><span class="chip tp">#cleanup</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>1</span><kbd class="chip key-off">⌘2</kbd></div>
+      </div></div>
+      <p>Every chip 20 pt. Fills exactly as your design: darker on the selected row, lighter elsewhere. The size illusion stays.</p>
+    </div>
+
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <span class="tagline">Option B · my suggestion</span>
+      <h3>One translucent fill</h3>
+      <div class="zoom"><div class="kb b">
+        <div class="r sel"><span class="tags"><span class="chip ti"><i data-lucide="network"></i></span><span class="chip tp">#devops</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>2</span><kbd class="chip key-on">↵</kbd></div>
+        <div class="r"><span class="tags"><span class="chip ti"><i data-lucide="box"></i></span><span class="chip tp">#cleanup</span></span><span class="chip lc"><i data-lucide="arrow-up-right"></i>1</span><kbd class="chip key-off">⌘2</kbd></div>
+      </div></div>
+      <p>Every chip 20 pt, and one fill: the text colour at 7% over whatever is beneath. Chips stay a step lighter than their row in both states, so they look the same size everywhere.</p>
+    </div>
+  </div>
+</div>
+<script>lucide.createIcons()</script>
+</body>
+</html>

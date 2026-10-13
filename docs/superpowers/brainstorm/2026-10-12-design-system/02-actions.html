@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb · Actions · one rule v2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  h1 { font-size: 22px; font-weight: 600; } h2 { font-size: 16px; font-weight: 600; }
+  .lead, .note { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 1100px; }
+  .lead b, .note b { color: #cad3f5; }
+  .rule { background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 12px; padding: 14px 18px; font-size: 14px; line-height: 22px; color: #a5adcb; }
+  .rule b { color: #cad3f5; }
+  .option { background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; }
+  .option.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .tagline { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6e738d; }
+  .option h3 { font-size: 15px; font-weight: 600; }
+  .option li { color: #a5adcb; font-size: 13px; line-height: 19px; } .option ul { padding-left: 16px; display: flex; flex-direction: column; gap: 3px; }
+  .stage { background: #24273a; border-radius: 10px; padding: 16px; display: flex; gap: 14px; align-items: flex-end; overflow-x: auto; }
+  .col { display: flex; flex-direction: column; gap: 5px; align-items: center; flex: none; }
+  .cap { font-size: 11px; color: #a5adcb; text-align: center; max-width: 190px; }
+  .h { font: 600 12px Inter; color: #a6da95; }
+  .group { display: flex; gap: 14px; align-items: flex-end; padding: 0 6px; border-right: 1px dashed #3a3e55; }
+  .group:last-child { border-right: none; }
+  .gname { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #c6a0f6; align-self: flex-start; }
+
+  .pop { --selected: #363a4f; --badge: #2e3248; --mantle: #1e2030; --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d; --edge: rgba(110,115,141,.10);
+         width: 190px; display: flex; flex-direction: column; overflow: hidden; background: var(--mantle); border: 1px solid var(--selected); border-radius: 14px;
+         box-shadow: 0 20px 48px rgba(0,0,0,.65), 0 0 0 1px rgba(202,211,245,.08); color: var(--text); -webkit-font-smoothing: antialiased; }
+  .pop .ps { height: 36px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--faint); border-top: 1px solid var(--edge); }
+  .pop .ps svg { width: 16px; height: 16px; } .pop .ps .ph { flex: 1; font-size: 12px; }
+  .pop .pl { padding: 6px; display: flex; flex-direction: column; }
+  .pop .sec { padding: 6px 10px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--faint); }
+  .pop .a { height: 28px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 6px; }
+  .pop .a.sel { background: var(--selected); }
+  .pop .lb { flex: 1; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pop .dr { width: 14px; height: 14px; color: var(--faint); flex: none; }
+  .pop kbd { height: 18px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;
+             background: var(--badge); color: var(--faint); font: 400 11px/16px 'JetBrains Mono', monospace; flex: none; }
+  .pop .a.sel kbd { background: var(--mantle); color: var(--muted); }
+  .pop .hr { height: 1px; background: var(--edge); margin: 4px; flex: none; }
+  .pop .crumb { height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 11px; font-weight: 600; color: var(--faint); border-bottom: 1px solid var(--edge); }
+  .pop .crumb svg { width: 12px; height: 12px; }
+  .ft { width: 190px; display: flex; justify-content: space-between; font-size: 11px; color: #a5adcb; padding: 4px 2px; }
+  .ft kbd { height: 18px; padding: 0 5px; border-radius: 4px; background: #1e2030; color: #a5adcb; font: 400 11px/18px 'JetBrains Mono', monospace; display: inline-block; margin-left: 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <h1>Actions — one rule for the whole app (v3)</h1>
+    <p class="lead">One component builds every action panel from a list. Below: the list view's panel for a command with links and for a bookmark, the detail view's
+    panel, and the two submenus. Each panel's footer line shows what kb's footer would show.</p>
+  </div>
+  <div class="rule"><b>The rule (Raycast's):</b> the panel's <b>first action is ↵ (primary)</b>, its <b>second is ⌘↵ (secondary)</b>, by position, in every view.
+  The footer shows <b>the primary's name ↵</b> and <b>Actions ⌘K</b>. Other actions keep their own shortcut. <b>Links… ›</b> appears only when the entry has links;
+  each link row opens it with ↵. At most two levels: the root, then one submenu (Links… or More…). Shortcuts fire from the view wherever an action is listed.</div>
+
+  <div class="option" data-choice="v3">
+    <span class="tagline">v3 · as you asked</span>
+    <h3>Preview and Info off the menus (← →); Edit to More…; Resize in the root</h3>
+    <div class="stage">
+      <div class="group"><span class="gname">List</span>
+        <div class="col"><div class="pop" id="c1"><div class="pl"><div class="a sel"><span class="lb">Details</span><kbd>↵</kbd></div><div class="a"><span class="lb">Copy</span><kbd>⌘↵</kbd></div><div class="a"><span class="lb">Resize</span><kbd>⇧⌘F</kbd></div><div class="a"><span class="lb">Links…</span><i class="dr" data-lucide="chevron-right"></i></div><div class="a"><span class="lb">More…</span><i class="dr" data-lucide="chevron-right"></i></div></div><div class="ps"><i data-lucide="search"></i><span class="ph">Search</span></div></div><div class="ft"><span>Details<kbd>↵</kbd></span><span>Actions<kbd>⌘K</kbd></span></div><span class="cap">a command with links</span><span class="h" data-for="c1"></span></div>
+        <div class="col"><div class="pop" id="c2"><div class="pl"><div class="a sel"><span class="lb">Details</span><kbd>↵</kbd></div><div class="a"><span class="lb">Open</span><kbd>⌘↵</kbd></div><div class="a"><span class="lb">Resize</span><kbd>⇧⌘F</kbd></div><div class="a"><span class="lb">More…</span><i class="dr" data-lucide="chevron-right"></i></div></div><div class="ps"><i data-lucide="search"></i><span class="ph">Search</span></div></div><div class="ft"><span>Details<kbd>↵</kbd></span><span>Actions<kbd>⌘K</kbd></span></div><span class="cap">a bookmark, no links</span><span class="h" data-for="c2"></span></div>
+      </div>
+      <div class="group"><span class="gname">Detail</span>
+        <div class="col"><div class="pop" id="c3"><div class="pl"><div class="a sel"><span class="lb">Copy</span><kbd>↵</kbd></div><div class="a"><span class="lb">Resize</span><kbd>⇧⌘F</kbd></div><div class="a"><span class="lb">Links…</span><i class="dr" data-lucide="chevron-right"></i></div><div class="a"><span class="lb">More…</span><i class="dr" data-lucide="chevron-right"></i></div></div><div class="ps"><i data-lucide="search"></i><span class="ph">Search</span></div></div><div class="ft"><span>Copy<kbd>↵</kbd></span><span>Actions<kbd>⌘K</kbd></span></div><span class="cap">the same command, opened (⌘↵ copies too, see the notes)</span><span class="h" data-for="c3"></span></div>
+      </div>
+      <div class="group"><span class="gname">Submenus</span>
+        <div class="col"><div class="pop" id="c4"><div class="crumb"><i data-lucide="chevron-left"></i>Links</div><div class="pl"><div class="a sel"><span class="lb">Rollout docs</span><kbd>↵</kbd></div><div class="a"><span class="lb">kubectl reference</span></div></div></div><span class="cap">Links…: ↵ opens the row's link</span><span class="h" data-for="c4"></span></div>
+        <div class="col"><div class="pop" id="c5"><div class="crumb"><i data-lucide="chevron-left"></i>More</div><div class="pl"><div class="sec">Copy</div><div class="a sel"><span class="lb">Description</span><kbd>↵</kbd></div><div class="a"><span class="lb">Notes</span></div><div class="a"><span class="lb">Path</span></div><div class="hr"></div><div class="sec">Administration</div><div class="a"><span class="lb">Edit</span><kbd>⌘O</kbd></div><div class="a"><span class="lb">Refresh</span><kbd>⌘R</kbd></div><div class="a"><span class="lb">Configure</span><kbd>⇧⌘,</kbd></div></div></div><span class="cap">More… (a bookmark adds URL ⇧⌘C first)</span><span class="h" data-for="c5"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  lucide.createIcons()
+  document.fonts.ready.then(() => {
+    for (const h of document.querySelectorAll('.h')) h.textContent = `${Math.round(document.getElementById(h.dataset.for).getBoundingClientRect().height)} pt`
+  })
+</script>
+</body>
+</html>

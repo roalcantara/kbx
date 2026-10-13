@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb · 03 Empty · proposal v2 (Raycast)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+<style>
+  /* Page chrome (not the design) */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 900px; }
+  .stage { display: grid; grid-template-columns: 900px 1fr; gap: 28px; align-items: start; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { font: 500 13px Inter; color: #a5adcb; background: #24273a; border: 1px solid #363a4f; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  .tabs button.on { color: #11121a; background: #c6a0f6; border-color: #c6a0f6; }
+  .tabs label { margin-left: auto; font-size: 13px; color: #a5adcb; display: flex; align-items: center; gap: 6px; }
+  .frame { position: relative; width: 900px; height: 560px; display: flex; align-items: center; justify-content: center; background: radial-gradient(#2a2d40, #14151f); border-radius: 12px; }
+  .frame img { width: 900px; height: auto; display: block; border-radius: 12px; }
+  .view { display: none; } .view.on { display: flex; }
+  .legend { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 19px; }
+  .legend h2 { font-size: 15px; font-weight: 600; margin: 6px 0 2px; }
+  .note { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; }
+  .note b { color: #cad3f5; font-weight: 600; }
+  .note p { color: #a5adcb; }
+  .num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 11px Inter; color: #11121a; }
+  .num.keep { background: #a6da95; } .num.adjust { background: #eed49f; } .num.ask { background: #f5a97f; }
+  .key { display: flex; gap: 14px; font-size: 12px; color: #a5adcb; }
+  .key span { display: flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .questions h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .questions .q { margin-bottom: 18px; }
+  .questions .q p { color: #a5adcb; font-size: 13px; margin-bottom: 8px; }
+  .questions .opts { display: flex; gap: 10px; }
+  .questions .opt { flex: 1; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; line-height: 18px; color: #a5adcb; }
+  .questions .opt b { color: #cad3f5; display: block; margin-bottom: 2px; }
+  .questions .opt.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .marker { position: absolute; z-index: 50; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 10px Inter; color: #11121a; box-shadow: 0 0 0 2px #11121a; pointer-events: none; }
+  .hide-markers .marker { display: none; }
+
+  /* ===== The proposal: kb's 01 List, in your design's values (Catppuccin Macchiato) ===== */
+  .kb { --window: #24273a; --selected: #363a4f; --hover: #2f334a; --badge: #2e3248; --toast: #181926; --mantle: #1e2030;
+        --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
+        --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95; --peach: #f5a97f; --pink: #f5bde6; --yellow: #eed49f; --red: #ed8796;
+        --edge: rgba(110, 115, 141, 0.10);
+        position: relative; width: 860px; height: 520px; display: flex; flex-direction: column; overflow: hidden;
+        background: var(--window); border-radius: 14px; font-family: Inter, sans-serif; color: var(--text);
+        box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(202,211,245,.08); -webkit-font-smoothing: antialiased; }
+  .kb svg { stroke-width: 2; flex: none; }
+  .kb .mono { font-family: 'JetBrains Mono', monospace; }
+  .kb .hd { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--edge); }
+  .kb .hd .glass { width: 20px; height: 20px; color: var(--faint); }
+  .kb .hd .q { flex: 1; font-size: 15px; display: flex; align-items: center; }
+  .kb .hd .caret { width: 1.5px; height: 16px; background: var(--mauve); margin-left: 2px; }
+  .kb .fp { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; }
+  .kb .fp svg { width: 15px; height: 15px; color: var(--faint); }
+
+  .kb .ls { flex: 1; min-height: 0; padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+  .kb .r { position: relative; height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 6px; }
+  .kb .r.sel { background: var(--selected); }
+  .kb .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); box-shadow: 0 0 8px rgba(198,160,246,.6); }
+  .kb .tile { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .kb .tile svg { width: 16px; height: 16px; }
+  .kb .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .kb .tt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .ds { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .tr { flex: none; display: flex; align-items: center; gap: 12px; }
+  .kb .tags { display: flex; align-items: center; gap: 6px; }
+  .kb .ti { width: 20px; height: 20px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; }
+  .kb .r.sel .ti, .kb .r.sel .tp, .kb .r.sel .lc { background: var(--mantle); } .kb .r.sel .tp, .kb .r.sel .lc { color: var(--muted); }
+  .kb .ti svg { width: 14px; height: 14px; }
+  .kb .tp { height: 20px; display: inline-flex; align-items: center; line-height: 16px; padding: 0 8px; border-radius: 4px; background: var(--badge); color: var(--muted); font-size: 11px; font-weight: 600; }
+  .kb .lc { height: 20px; display: flex; align-items: center; gap: 4px; padding: 0 6px; line-height: 16px; border-radius: 4px; background: var(--badge); color: var(--faint); font: 400 11px 'JetBrains Mono', monospace; }
+  .kb .lc svg { width: 12px; height: 12px; }
+  .kb kbd, .kb .mini { height: 20px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--mantle); color: var(--muted); font: 400 11px/16px 'JetBrains Mono', monospace; margin: 0; box-shadow: none; }
+
+  .kb .ft { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--edge); font-size: 11px; color: var(--faint); }
+  .kb .ft .l, .kb .ft .rt, .kb .ft .it { display: flex; align-items: center; gap: 8px; }
+  .kb .ft .rt { gap: 20px; } .kb .ft .it { gap: 6px; color: var(--muted); }
+  .kb .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(166,218,149,.7); }
+  .kb .toast { position: absolute; right: 16px; bottom: 48px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--toast); box-shadow: 0 12px 32px rgba(0,0,0,.65), 0 0 0 1px rgba(198,160,246,.3); font-size: 13px; font-weight: 500; }
+  .kb .toast .ok { width: 20px; height: 20px; border-radius: 50%; background: rgba(166,218,149,.2); border: 1px solid rgba(166,218,149,.4); color: var(--green); display: flex; align-items: center; justify-content: center; }
+  .kb .toast .ok svg { width: 13px; height: 13px; }
+  .kb .toast .hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 400; } .kb .toast .hint kbd { background: var(--badge); }
+  .kb .toast .x { color: var(--faint); } .kb .toast .x svg { width: 15px; height: 15px; }
+
+  .kb .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 16px; }
+  .kb .badge { width: 56px; height: 56px; color: var(--faint); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .kb .badge svg { width: 56px; height: 56px; stroke-width: 1.75; }
+  .kb .et { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .kb .ed { font-size: 13px; color: var(--muted); max-width: 420px; }
+  .kb .ed .q { font-family: 'JetBrains Mono', monospace; color: var(--mauve); }
+  .kb .hints { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 520px; }
+  .kb .hint { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 11px; }
+  .kb .hd .q2 { flex: 1; font-size: 15px; display: flex; align-items: center; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <h1>03 · Empty — your design, made into kb <span style="font-size:13px;color:#a6da95;font-weight:500">v2: Raycast's empty view, as is</span></h1>
+    <p class="lead">Left: switch between <b>your design</b> (the Stitch screen) and <b>the proposal</b> (the same screen built from your design's
+    own values, with realistic data in kb's shapes). Everything is kept as you drew it unless a note on the right says otherwise.
+    The circled numbers point at each spot that needed a decision.</p>
+  </div>
+
+  <div class="stage">
+    <div>
+      <div class="tabs">
+        <button data-show="mine" onclick="show('mine', this)">Your design</button>
+        <button class="on" data-show="prop" onclick="show('prop', this)">Proposal</button>
+        <label><input type="checkbox" checked onchange="document.body.classList.toggle('hide-markers', !this.checked)"> numbers</label>
+      </div>
+      <div class="frame">
+        <div class="view" id="mine"><img src="requested-03.png" alt="Your design"></div>
+        <div class="view on" id="prop">
+          <div class="kb">
+            <div class="hd">
+              <i class="glass" data-lucide="search"></i>
+              <div class="q">/terraform-plan<span class="caret"></span></div>
+              <div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div>
+            </div>
+            <div class="empty">
+              <span class="badge"><i data-lucide="search"></i></span>
+              <div class="et">No matching entries found</div>
+              <div class="ed">No entries match “<span class="q">/terraform-plan</span>”.</div>
+                          </div>
+            <div class="ft">
+              <div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>0 results</span></div>
+              <div class="rt"><span class="it">Refresh<kbd>↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div>
+            </div>
+            </div>
+        </div>
+        <div class="view" id="prop2">
+          <div class="kb">
+            <div class="hd">
+              <i class="glass" data-lucide="search"></i>
+              <div class="q">/terraform-plan<span class="caret"></span></div>
+              <div class="fp"><i data-lucide="sliders-horizontal"></i>Commands<kbd>⌘P</kbd></div>
+            </div>
+            <div class="empty">
+              <span class="badge"><i data-lucide="search"></i></span>
+              <div class="et">No matching entries found</div>
+              <div class="ed">No entries match “<span class="q">/terraform-plan</span>” with this filter.</div>
+                          </div>
+            <div class="ft">
+              <div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>0 results</span></div>
+              <div class="rt"><span class="it">Refresh<kbd>↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <h2>v2: Raycast's empty view</h2>
+      <div class="note"><span class="num keep">✓</span><p><b>As Raycast draws it</b> (your screenshot): one large icon, a title, one sentence; nothing else in the middle. In your design's colours, with your header and status line.</p></div>
+      <div class="note"><span class="num keep">↵</span><p><b>Raycast's primary here: Refresh</b> (its <i>Rebuild Index…</i>). If nothing matches, a stale index is the one cause kb can fix; clearing the query is Esc, as everywhere.</p></div>
+      <div class="note"><span class="num keep">0</span><p><b>Nothing new to build</b>: kb's empty state is already the toolkit's <i>Empty</i> (title + sentence); this adds the icon and the tokens.</p></div>
+    </div>
+  </div>
+</div>
+<script>
+  function show(id, btn) {
+    for (const v of document.querySelectorAll('.view')) v.classList.toggle('on', v.id === id)
+    for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b === btn)
+  }
+  lucide.createIcons()
+</script>
+</body>
+</html>

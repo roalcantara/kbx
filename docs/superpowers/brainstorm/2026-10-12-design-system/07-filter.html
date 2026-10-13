@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>kb · 07 Filter · proposal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script><style>
+  /* Page chrome (not the design) */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 900px; }
+  .stage { display: grid; grid-template-columns: 900px 1fr; gap: 28px; align-items: start; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { font: 500 13px Inter; color: #a5adcb; background: #24273a; border: 1px solid #363a4f; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  .tabs button.on { color: #11121a; background: #c6a0f6; border-color: #c6a0f6; }
+  .tabs label { margin-left: auto; font-size: 13px; color: #a5adcb; display: flex; align-items: center; gap: 6px; }
+  .frame { position: relative; width: 900px; height: 560px; display: flex; align-items: center; justify-content: center; background: radial-gradient(#2a2d40, #14151f); border-radius: 12px; }
+  .frame img { width: 900px; height: auto; display: block; border-radius: 12px; }
+  .view { display: none; } .view.on { display: flex; }
+  .legend { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 19px; }
+  .legend h2 { font-size: 15px; font-weight: 600; margin: 6px 0 2px; }
+  .note { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; }
+  .note b { color: #cad3f5; font-weight: 600; }
+  .note p { color: #a5adcb; }
+  .num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 11px Inter; color: #11121a; }
+  .num.keep { background: #a6da95; } .num.adjust { background: #eed49f; } .num.ask { background: #f5a97f; }
+  .key { display: flex; gap: 14px; font-size: 12px; color: #a5adcb; }
+  .key span { display: flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .questions h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .questions .q { margin-bottom: 18px; }
+  .questions .q p { color: #a5adcb; font-size: 13px; margin-bottom: 8px; }
+  .questions .opts { display: flex; gap: 10px; }
+  .questions .opt { flex: 1; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; line-height: 18px; color: #a5adcb; }
+  .questions .opt b { color: #cad3f5; display: block; margin-bottom: 2px; }
+  .questions .opt.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .marker { position: absolute; z-index: 50; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 10px Inter; color: #11121a; box-shadow: 0 0 0 2px #11121a; pointer-events: none; }
+  .hide-markers .marker { display: none; }
+
+  /* ===== The proposal: kb's 01 List, in your design's values (Catppuccin Macchiato) ===== */
+  .kb { --window: #24273a; --selected: #363a4f; --hover: #2f334a; --badge: #2e3248; --toast: #181926; --mantle: #1e2030;
+        --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
+        --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95; --peach: #f5a97f; --pink: #f5bde6; --yellow: #eed49f; --red: #ed8796;
+        --edge: rgba(110, 115, 141, 0.10);
+        position: relative; width: 860px; height: 520px; display: flex; flex-direction: column; overflow: hidden;
+        background: var(--window); border-radius: 14px; font-family: Inter, sans-serif; color: var(--text);
+        box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(202,211,245,.08); -webkit-font-smoothing: antialiased; }
+  .kb svg { stroke-width: 2; flex: none; }
+  .kb .mono { font-family: 'JetBrains Mono', monospace; }
+  .kb .hd { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--edge); }
+  .kb .hd .glass { width: 20px; height: 20px; color: var(--faint); }
+  .kb .hd .q { flex: 1; font-size: 15px; display: flex; align-items: center; }
+  .kb .hd .caret { width: 1.5px; height: 16px; background: var(--mauve); margin-left: 2px; }
+  .kb .fp { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; }
+  .kb .fp svg { width: 15px; height: 15px; color: var(--faint); }
+
+  .kb .ls { flex: 1; min-height: 0; padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+  .kb .r { position: relative; height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 6px; }
+  .kb .r.sel { background: var(--selected); }
+  .kb .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); box-shadow: 0 0 8px rgba(198,160,246,.6); }
+  .kb .tile { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .kb .tile svg { width: 16px; height: 16px; }
+  .kb .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .kb .tt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .ds { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .tr { flex: none; display: flex; align-items: center; gap: 12px; }
+  .kb .tags { display: flex; align-items: center; gap: 6px; }
+  .kb .ti { width: 20px; height: 20px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; }
+  .kb .r.sel .ti, .kb .r.sel .tp, .kb .r.sel .lc { background: var(--mantle); } .kb .r.sel .tp, .kb .r.sel .lc { color: var(--muted); }
+  .kb .ti svg { width: 14px; height: 14px; }
+  .kb .tp { height: 20px; display: inline-flex; align-items: center; line-height: 16px; padding: 0 8px; border-radius: 4px; background: var(--badge); color: var(--muted); font-size: 11px; font-weight: 600; }
+  .kb .lc { height: 20px; display: flex; align-items: center; gap: 4px; padding: 0 6px; line-height: 16px; border-radius: 4px; background: var(--badge); color: var(--faint); font: 400 11px 'JetBrains Mono', monospace; }
+  .kb .lc svg { width: 12px; height: 12px; }
+  .kb kbd, .kb .mini { height: 20px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--mantle); color: var(--muted); font: 400 11px/16px 'JetBrains Mono', monospace; margin: 0; box-shadow: none; }
+
+  .kb .ft { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--edge); font-size: 11px; color: var(--faint); }
+  .kb .ft .l, .kb .ft .rt, .kb .ft .it { display: flex; align-items: center; gap: 8px; }
+  .kb .ft .rt { gap: 20px; } .kb .ft .it { gap: 6px; color: var(--muted); }
+  .kb .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(166,218,149,.7); }
+  .kb .toast { position: absolute; right: 16px; bottom: 48px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--toast); box-shadow: 0 12px 32px rgba(0,0,0,.65), 0 0 0 1px rgba(198,160,246,.3); font-size: 13px; font-weight: 500; }
+  .kb .toast .ok { width: 20px; height: 20px; border-radius: 50%; background: rgba(166,218,149,.2); border: 1px solid rgba(166,218,149,.4); color: var(--green); display: flex; align-items: center; justify-content: center; }
+  .kb .toast .ok svg { width: 13px; height: 13px; }
+  .kb .toast .hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 400; } .kb .toast .hint kbd { background: var(--badge); }
+  .kb .toast .x { color: var(--faint); } .kb .toast .x svg { width: 15px; height: 15px; }
+
+.kb { position: relative; }
+.kb .pop { position: absolute; z-index: 30; right: 24px; top: 50px; width: 230px; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--mantle); border: 1px solid var(--selected); border-radius: 14px; box-shadow: 0 20px 48px rgba(0,0,0,.65), 0 0 0 1px rgba(202,211,245,.08); }
+.kb .ps { height: 36px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--faint); border-bottom: 1px solid var(--edge); }
+.kb .ps svg { width: 16px; height: 16px; } .kb .ps .ph { flex: 1; font-size: 12px; }
+.kb .pl { padding: 6px; display: flex; flex-direction: column; max-height: 300px; overflow: hidden; }
+.kb .sec { padding: 6px 10px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--faint); }
+.kb .a { height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 6px; }
+.kb .a.sel { background: var(--selected); }
+.kb .a .lb { flex: 1; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb .a .ck { width: 14px; height: 14px; color: var(--green); }
+.kb .a .tile { width: 18px; height: 18px; } .kb .a .tile svg { width: 12px; height: 12px; }
+.kb .a .ti { width: 18px; height: 18px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; }
+.kb .a .ti svg { width: 12px; height: 12px; } .kb .a .hash { width: 18px; text-align: center; color: var(--faint); font-size: 12px; font-weight: 600; }
+.kb .hr { height: 1px; background: var(--edge); margin: 4px; flex: none; }
+.kb .a.clear .lb { color: var(--muted); }
+.stage2 { display: flex; gap: 18px; } .zz { zoom: .7; } .cap { font-size: 12px; color: #a5adcb; margin-bottom: 6px; }
+</style></head><body><div class="page">
+<div><h1>07 · Filter — drawn from the rules</h1><p class="lead">No Stitch screen exists, so this is the actions panel's component reused: <b>28 pt rows,
+sections, keycaps, mantle surface</b>. It opens under the filter pill and its <b>search sits at the top, next to the pill</b> (the actions panel's search sits at
+the bottom, next to its button: one rule, "search next to its trigger"). Types carry their tile, tags their icon (or #). Only chosen rows show a <b>✓</b>;
+the rest show nothing (less noise than ✓ / ○). Picking keeps it open. The footer names the filter's keys: <b>Toggle ↵ · Only ⌘↵</b> (pick just this one and close).</p></div>
+<div class="stage2"><div><div class="cap">Nothing chosen yet (⌘P)</div><div class="zz"><div class="kb"><div class="hd"><i class="glass" data-lucide="search"></i><div class="q"><span class="caret"></span></div>
+<div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div></div>
+<div class="ls"><div class="r sel"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods</span></span><span class="tr"><kbd>↵</kbd></span></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/docker-prune-all</span><span class="ds">Remove unused containers</span></span><span class="tr"><kbd>⌘2</kbd></span></div><div class="r"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="tx"><span class="tt">Tokio Tutorial — Async in Depth</span><span class="ds">tokio.rs · tutorial</span></span><span class="tr"><kbd>⌘3</kbd></span></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span><span class="ds">Cert-manager annotations</span></span><span class="tr"><kbd>⌘4</kbd></span></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Rust Memory Safety &amp; Lifetimes</span><span class="ds">Borrow checker rules</span></span><span class="tr"><kbd>⌘5</kbd></span></div><div class="r"><span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span><span class="tx"><span class="tt">AWS EKS VPC CNI Subnet Playbook</span><span class="ds">Secondary CIDR remediation</span></span><span class="tr"><kbd>⌘6</kbd></span></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/git-undo-commit</span><span class="ds">Undo last git commit</span></span><span class="tr"><kbd>⌘7</kbd></span></div></div><div class="pop"><div class="ps"><i data-lucide="search"></i><span class="ph">Search</span></div><div class="pl"><div class="sec">Types</div><div class="a"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="lb">Bookmarks</span></div><div class="a"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="lb">Cheat Sheets</span></div><div class="a sel"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="lb">Commands</span></div><div class="a"><span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span><span class="lb">Notes</span></div><div class="a"><span class="tile" style="background:rgba(245,189,230,.15);color:var(--pink)"><i data-lucide="circle-check"></i></span><span class="lb">Tasks</span></div><div class="hr"></div><div class="sec">Tags</div><div class="a"><span class="ti" style="color:var(--blue)"><i data-lucide="network"></i></span><span class="lb">k8s</span></div><div class="a"><span class="hash">#</span><span class="lb">devops</span></div><div class="a"><span class="ti" style="color:var(--blue)"><i data-lucide="box"></i></span><span class="lb">docker</span></div><div class="a"><span class="ti" style="color:var(--peach)"><i data-lucide="git-commit-horizontal"></i></span><span class="lb">git</span></div><div class="a"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="lb">rust</span></div></div></div>
+<div class="ft"><div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>12 results</span></div><div class="rt"><span class="it">Toggle<kbd>↵</kbd></span><span class="it">Only<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div>
+<div><div class="cap">Commands and #k8s chosen: a "2 filters / Clear All" row appears, the pill names them</div><div class="zz"><div class="kb"><div class="hd"><i class="glass" data-lucide="search"></i><div class="q"><span class="caret"></span></div>
+<div class="fp"><i data-lucide="sliders-horizontal"></i>Commands, #k8s<kbd>⌘P</kbd></div></div>
+<div class="ls"><div class="r sel"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods</span></span><span class="tr"><kbd>↵</kbd></span></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-drain-node</span><span class="ds">Cordon and drain a node before maintenance</span></span><span class="tr"><kbd>⌘2</kbd></span></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-port-forward</span><span class="ds">Forward a local port to a pod</span></span><span class="tr"><kbd>⌘3</kbd></span></div></div><div class="pop"><div class="ps"><i data-lucide="search"></i><span class="ph">Search</span></div><div class="pl"><div class="sec">2 filters</div><div class="a clear"><span class="hash"><i data-lucide="x" style="width:12px;height:12px"></i></span><span class="lb">Clear All</span></div><div class="hr"></div><div class="sec">Types</div><div class="a"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="lb">Bookmarks</span></div><div class="a"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="lb">Cheat Sheets</span></div><div class="a"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="lb">Commands</span><i class="ck" data-lucide="check"></i></div><div class="a"><span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span><span class="lb">Notes</span></div><div class="a"><span class="tile" style="background:rgba(245,189,230,.15);color:var(--pink)"><i data-lucide="circle-check"></i></span><span class="lb">Tasks</span></div><div class="hr"></div><div class="sec">Tags</div><div class="a sel"><span class="ti" style="color:var(--blue)"><i data-lucide="network"></i></span><span class="lb">k8s</span><i class="ck" data-lucide="check"></i></div><div class="a"><span class="hash">#</span><span class="lb">devops</span></div><div class="a"><span class="ti" style="color:var(--blue)"><i data-lucide="box"></i></span><span class="lb">docker</span></div><div class="a"><span class="ti" style="color:var(--peach)"><i data-lucide="git-commit-horizontal"></i></span><span class="lb">git</span></div><div class="a"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="lb">rust</span></div></div></div>
+<div class="ft"><div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>3 results</span></div><div class="rt"><span class="it">Toggle<kbd>↵</kbd></span><span class="it">Only<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div></div>
+</div><script>lucide.createIcons()</script></body></html>
