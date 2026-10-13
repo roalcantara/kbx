@@ -121,3 +121,16 @@ minutes; the agent runs it when its task needs it.
 
 Holds, refined: automate a **small, state-only brief, plus a handoff written at the end**. In kb most of the state is
 derivable (`git`, the `todo` CLI, plan checkboxes); the handoff carries only what is not.
+
+## Built
+
+Two global commands, judged in use from here (owner, 2026-10-13):
+
+- `~/.agents/commands/wip/resume.md`: one bounded shell probe (git, the task list, the branch's handoff note) and a
+  brief of at most 30 lines; reads nothing else until the operator confirms the task. On kb it prints 25 lines
+  (1.4 kB, about 400 tokens).
+- `~/.agents/commands/wip/handoff.md`: replaces the branch's note at `$(git rev-parse --git-common-dir)/wip/`, never
+  committed, holding only what git and the task list cannot tell.
+
+The dry run dropped one probe: plans with unticked boxes. In kb executors do not tick them (8a shows 47 open after its
+execution) and superseded plans still match, so the task list is the source; the probe runs only where none exists.
