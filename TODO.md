@@ -241,7 +241,7 @@
   - **Tags**: design, plan8
 
 - [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
-  - **Comments**: oVNz,xpAF,QU41,dNCU
+  - **Comments**: oVNz,xpAF,QU41,dNCU,nkjz
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -413,6 +413,11 @@
   - **Created**: 2026-10-12 19:39
   - **Tags**: app
 
+- [ ] rPyR **-** Notes code blocks: render fenced code in the Body with GPUI Kit's read-only code Editor (line numbers, Clipboard copy), as dbflux's SQL preview does, instead of TextView's code block; needs the notes Markdown split around code blocks
+  - **Priority**: low
+  - **Created**: 2026-10-12 22:15
+  - **Tags**: app, design
+
 # Actors
 
 # Comments
@@ -539,5 +544,8 @@
   - **Task**: Z64Y
 
 - dNCU **-** 2026-10-12, template v3 (owner, supersedes v2's per-type header): four fixed slots for every entry, only the hero varies by type. 1 Header: [the row's icon: favicon for bookmarks, type tile otherwise] the title (title field, else the key), one line trimmed, tags right. 2 Hero by type: command → CommandCard; bookmark → thumbnail (YouTube; og:image later) else the URL as a link line (↗ host/path); cheat → snippet card when it has one; task → status + priority badges; note, other → none. 3 Quote: the description (desc or description), whole, red bar; omitted when absent. 4 Body: the notes. Split = the same component, hero capped. Footer left: type tile + file + ⌥⌘C.
+  - **Task**: Z64Y
+
+- nkjz **-** 2026-10-12, command card decided after a full-screen GPUI spike (real renders) and a survey (paperoll, probe, pasta, Loungy, markraft, dbflux): the hero is option (b), StyledText + GPUI Kit's bash highlighter, as pasta does: fmt-rs breaks at operators to the card's real column count; kb pre-wraps at spaces with a hanging indent, operators glued, tokens never split; ligatures off; 12 pt in the split, 13 pt in detail; GPUI Kit's Clipboard button in the corner; no line numbers. Register bash with an extended highlight query (dbflux-style, LanguageRegistry::register) so argument values get their own colour; test each token's colour role. Fixes from the spike: notes headings take the type tokens (TextView styles), the quote's italic needs Inter Italic bundled (or drop italic), favicons come from kb's curl client.
   - **Task**: Z64Y
 
