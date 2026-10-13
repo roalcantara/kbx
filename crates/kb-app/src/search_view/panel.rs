@@ -16,9 +16,13 @@ use kb_domain::search::tags_for_types;
 
 use super::{Overlay, Screen, SearchView};
 use crate::actions::{Page, PanelCommand, Submenu, filter_page, links_page, more_page, root_page, search_page};
+use crate::catalog::Screen as CatalogScreen;
 use crate::keys::Back;
 use crate::ui::action_panel::{OnRow, matches, panel};
 use crate::ui::design::{design, pt};
+
+/// A section's label and its rows' (label, caps) pairs, for tests.
+pub type PanelSectionDetails = (Option<String>, Vec<(String, Option<String>)>);
 
 impl SearchView {
     /// Whether the action panel is open.
@@ -49,6 +53,22 @@ impl SearchView {
             }
         }
         out
+    }
+
+    /// The open page's visible rows (label, caps, section label) by section, for tests.
+    #[must_use]
+    pub fn panel_row_details(&self, cx: &App) -> Vec<PanelSectionDetails> {
+        let page = self.current_page(cx);
+        page.page
+            .sections
+            .iter()
+            .map(|s| {
+                (
+                    s.label.clone(),
+                    s.rows.iter().map(|r| (r.label.clone(), r.caps.clone())).collect(),
+                )
+            })
+            .collect()
     }
 
     /// The open overlay's page.
@@ -168,10 +188,15 @@ impl SearchView {
             }
             PanelCommand::Link(url) => {
                 self.show_overlay(Overlay::None, window, cx);
-                if secondary {
-                    self.copy(url, window, cx);
-                } else {
-                    cx.open_url(&url);
+                let link_action = self
+                    .catalog
+                    .keys_for(CatalogScreen::Links, None)
+                    .into_iter()
+                    .find(|k| k.keys == if secondary { "cmd-enter" } else { "enter" })
+                    .map(|k| k.action);
+                match link_action.as_deref() {
+                    Some("copy-link") => self.copy(url, window, cx),
+                    _ => cx.open_url(&url),
                 }
             }
             PanelCommand::Copy(text) => {
@@ -179,7 +204,13 @@ impl SearchView {
                 self.copy(text, window, cx);
             }
             PanelCommand::Filter { toggle, only } => {
-                if secondary {
+                let filter_action = self
+                    .catalog
+                    .keys_for(CatalogScreen::Filter, None)
+                    .into_iter()
+                    .find(|k| k.keys == if secondary { "cmd-enter" } else { "enter" })
+                    .map(|k| k.action);
+                if filter_action.as_deref() == Some("only") {
                     self.apply_filter(only, cx);
                     self.show_overlay(Overlay::None, window, cx);
                 } else {

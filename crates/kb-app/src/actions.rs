@@ -168,6 +168,11 @@ pub fn links_page(catalog: &Catalog, entry: &Entry) -> Page {
         reason = "a token of a few dozen characters"
     )]
     let chars = design().components.links.url_chars as usize;
+    let cmd_enter_caps = catalog
+        .keys_for(Screen::Links, None)
+        .into_iter()
+        .find(|k| k.keys == "cmd-enter")
+        .map(|k| k.caps);
     let rows = entry
         .links
         .iter()
@@ -180,6 +185,7 @@ pub fn links_page(catalog: &Catalog, entry: &Entry) -> Page {
             (
                 PanelRow {
                     label,
+                    caps: cmd_enter_caps.clone(),
                     ..PanelRow::default()
                 },
                 PanelCommand::Link(link.url.clone()),
@@ -276,7 +282,7 @@ pub fn filter_page(
             ))
         })
         .collect();
-    page.section(Some("Types".into()), type_rows);
+    page.section(Some(catalog.panel.types_section.clone()), type_rows);
     let tag_rows = tags
         .iter()
         .map(|t| {
@@ -302,7 +308,7 @@ pub fn filter_page(
             )
         })
         .collect();
-    page.section(Some("Tags".into()), tag_rows);
+    page.section(Some(catalog.panel.tags_section.clone()), tag_rows);
     page
 }
 

@@ -162,6 +162,10 @@ pub struct Panel {
     pub copy_section: String,
     /// More…'s second section.
     pub admin_section: String,
+    /// The filter's types section.
+    pub types_section: String,
+    /// The filter's tags section.
+    pub tags_section: String,
     /// The root's rows after the screen's keys.
     pub root: Vec<String>,
     /// More…'s copy rows.

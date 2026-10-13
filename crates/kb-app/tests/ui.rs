@@ -324,13 +324,20 @@ fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppCo
 
 #[gpui_kit::test]
 fn opens_and_copies_a_link_from_links(cx: &mut TestAppContext) {
-    let (_home, window, _view) = open_with_query(cx, "example");
+    let (_home, window, view) = open_with_query(cx, "example");
     press(cx, window, "cmd-k");
     cx.run_until_parked();
     type_text(cx, window, "Links…");
     cx.run_until_parked();
     press(cx, window, "enter");
     cx.run_until_parked();
+    // Check that links rows show the ⌘↵ keycap from catalog
+    let details = cx.read(|cx| view.read(cx).panel_row_details(cx));
+    assert_eq!(
+        details[0].1[0].1.as_deref(),
+        Some("⌘↵"),
+        "Links rows show the ⌘↵ keycap from catalog"
+    );
     press(cx, window, "cmd-enter");
     cx.run_until_parked();
     let copied = cx.read_from_clipboard().and_then(|item| item.text());
