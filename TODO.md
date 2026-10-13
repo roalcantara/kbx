@@ -409,7 +409,7 @@
   - **Tags**: design, plan8
 
 - [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
-  - **Comments**: 8Ylj
+  - **Comments**: 8Ylj,2A23
   - **Priority**: low
   - **Created**: 2026-10-12 19:39
   - **Tags**: app
@@ -418,6 +418,11 @@
   - **Priority**: low
   - **Created**: 2026-10-12 22:15
   - **Tags**: app, design
+
+- [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kb-domain could run as a Nohrs plugin
+  - **Priority**: low
+  - **Created**: 2026-10-12 22:58
+  - **Tags**: watch
 
 # Actors
 
@@ -551,5 +556,8 @@
   - **Task**: Z64Y
 
 - 8Ylj **-** 2026-10-12 survey: buy a terminal view instead of building output handling: gpui_xterm 0.2.1 (alacritty_terminal on GPUI Kit 0.6; kb is on 0.7.1, check before use) runs the command in an embedded terminal pane; tty7, KazeTerm and Miaominal are GPUI terminal apps on alacritty_terminal for reference. Prior art for runnable commands: Runme (DevOps notebooks from Markdown), Atuin Desktop (runbooks, archived), navi (argument placeholders with suggestion commands).
+  - **Task**: 3g6H
+
+- 2A23 **-** 2026-10-12, mechanism-level prior art for showing a command and running it: GPUI API clients on kb's GPUI (probe, Arc, Broquest, GetCat, Setu, Protide: request body in GPUI Kit's Editor, run, response pane, environments/variables); notebooks (marimo, Jupyter: output under the cell); Runme (Markdown code blocks as runnable cells; kb's notes already hold code blocks); navi (argument placeholders with suggestion commands). Read the GPUI API clients first when this task starts.
   - **Task**: 3g6H
 
