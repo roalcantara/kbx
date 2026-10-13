@@ -146,7 +146,7 @@ impl EntryView {
 }
 
 impl RenderOnce for EntryView {
-    #[allow(clippy::too_many_lines)]
+    #[expect(clippy::too_many_lines, reason = "the template's slots and Links, in reading order")]
     fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
         let d = design();
         let (c, p) = (&d.colors, &d.spacing.pane);

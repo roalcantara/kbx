@@ -8,7 +8,10 @@ use crate::ui::design::design;
 
 /// An accent and its tag pill.
 #[derive(Debug, Clone, Copy, PartialEq)]
-#[expect(dead_code, reason = "Plan 8d transition artifact kept for backward compatibility")]
+#[expect(
+    dead_code,
+    reason = "unused since the design tokens (8a); the file goes in Plan 8g Task 4"
+)]
 pub struct Accent {
     /// Icons, bars, the type tint.
     pub color: Hsla,
@@ -19,7 +22,10 @@ pub struct Accent {
 }
 
 /// The accent for `hue`; pills are grey (D3, chip at rest).
-#[expect(dead_code, reason = "Plan 8d transition artifact kept for backward compatibility")]
+#[expect(
+    dead_code,
+    reason = "unused since the design tokens (8a); the file goes in Plan 8g Task 4"
+)]
 #[must_use]
 pub fn accent(hue: Hue, _: &App) -> Accent {
     let colors = &design().colors;
