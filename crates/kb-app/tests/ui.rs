@@ -499,16 +499,6 @@ fn moves_the_caret_with_right_and_left_inside_the_query(cx: &mut TestAppContext)
 }
 
 #[gpui_kit::test]
-fn shows_and_hides_the_metadata_with_right_and_left_on_the_detail_screen(cx: &mut TestAppContext) {
-    let (_home, window, view) = open_with_query(cx, "kubectl");
-    press(cx, window, "enter");
-    press(cx, window, "right");
-    assert!(cx.read(|cx| view.read(cx).is_showing_metadata()));
-    press(cx, window, "left");
-    assert!(!cx.read(|cx| view.read(cx).is_showing_metadata()));
-}
-
-#[gpui_kit::test]
 fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     press(cx, window, "cmd-shift-f");
@@ -670,4 +660,35 @@ fn copies_a_bookmark_s_url_with_its_secondary_action(cx: &mut TestAppContext) {
     press(cx, window, "shift-cmd-enter");
     let copied = cx.read_from_clipboard().and_then(|item| item.text());
     assert_eq!(copied.as_deref(), Some("https://www.youtube.com/watch?v=aqz-KE-bpKQ"));
+}
+
+#[gpui_kit::test]
+fn ignores_right_and_left_on_the_detail_screen(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "enter");
+    press(cx, window, "right");
+    press(cx, window, "left");
+    assert!(
+        cx.read(|cx| view.read(cx).is_showing_detail()),
+        "still on the detail screen"
+    );
+}
+
+#[gpui_kit::test]
+fn opens_a_link_with_its_number_on_the_detail_screen(cx: &mut TestAppContext) {
+    let (_home, window, _view) = open_with_query(cx, "example");
+    press(cx, window, "enter");
+    press(cx, window, "cmd-2");
+    assert_eq!(cx.opened_url().as_deref(), Some("https://example.com/guide"));
+}
+
+#[gpui_kit::test]
+fn filters_the_list_by_a_tag_from_the_detail_screen(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "enter");
+    click(cx, window, "entry-tag-kube-commands.yml#commands#kubectl get pods -A");
+    settle(cx);
+    assert!(!cx.read(|cx| view.read(cx).is_showing_detail()), "back on the list");
+    let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
+    assert_eq!(filter.tags, ["kube"]);
 }

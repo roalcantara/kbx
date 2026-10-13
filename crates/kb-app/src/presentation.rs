@@ -4,11 +4,9 @@
 use gpui_kit::assets::IconName;
 use kb_domain::entry::Entry;
 
-/// The notes pane's text when an entry has no notes.
-pub const NO_NOTES: &str = "*No additional notes available for this entry.*";
-
 /// An entry type, singular, as the actions and icons distinguish it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), expect(dead_code, reason = "kept for type categorization in tests"))]
 pub enum TypeKey {
     /// `bookmarks`
     Bookmark,
@@ -25,6 +23,7 @@ pub enum TypeKey {
 }
 
 /// The type, trimmed, lowercased and singular: `Bookmarks` → `Bookmark`.
+#[cfg_attr(not(test), expect(dead_code, reason = "kept for type categorization in tests"))]
 #[must_use]
 pub fn type_key(entry_type: &str) -> TypeKey {
     let normalized = entry_type.trim().to_lowercase();
@@ -85,6 +84,7 @@ pub enum Hue {
 
 /// The tinted icon that leads a list row.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), expect(dead_code, reason = "kept for type_badge parity"))]
 pub struct TypeBadge {
     /// The type's icon, as Raycast's.
     pub icon: IconName,
@@ -94,6 +94,7 @@ pub struct TypeBadge {
 
 /// The badge for an entry type: Raycast's icon and tint; an unknown type hashes its singular
 /// name, as the Raycast extension's `typeColor`.
+#[cfg_attr(not(test), expect(dead_code, reason = "kept for type_badge parity"))]
 #[must_use]
 pub fn type_badge(entry_type: &str) -> TypeBadge {
     let (icon, hue) = match type_key(entry_type) {
@@ -182,92 +183,8 @@ pub fn row_tags(tags: &[String], max: usize) -> (&[String], usize) {
     (&tags[..shown], tags.len() - shown)
 }
 
-/// The Markdown the notes pane renders.
-#[must_use]
-pub fn notes_markdown(entry: &Entry) -> &str {
-    if entry.notes_markdown.is_empty() {
-        NO_NOTES
-    } else {
-        &entry.notes_markdown
-    }
-}
-
-/// The notes Markdown split around the description quote, which the pane draws itself with the
-/// red bar of DESIGN.md (`TextView` draws every quote bar in the border colour).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct NotesParts<'a> {
-    /// What precedes the quote: the thumbnail, a command's code block.
-    pub before: &'a str,
-    /// The description, when the Markdown carries its quote.
-    pub description: Option<&'a str>,
-    /// The rest: notes, links, source.
-    pub after: &'a str,
-}
-
-/// Finds the quote `kb_domain::markdown` writes for `description` (each line prefixed `> `);
-/// without it, the Markdown stays whole in `after` and keeps its own quote.
-#[must_use]
-pub fn split_description<'a>(markdown: &'a str, description: Option<&'a str>) -> NotesParts<'a> {
-    let whole = NotesParts {
-        before: "",
-        description: None,
-        after: markdown,
-    };
-    let Some(description) = description.map(str::trim).filter(|d| !d.is_empty()) else {
-        return whole;
-    };
-    let quote = description.lines().fold(String::new(), |mut quote, line| {
-        quote.push_str("> ");
-        quote.push_str(line);
-        quote.push('\n');
-        quote
-    });
-    match markdown.find(&quote) {
-        Some(at) => NotesParts {
-            before: &markdown[..at],
-            description: Some(description),
-            after: &markdown[at + quote.len()..],
-        },
-        None => whole,
-    }
-}
-
-/// The metadata pane's rows, in the Raycast order: target, type, workflow, description, tags,
-/// links, source.
-#[must_use]
-pub fn metadata(entry: &Entry) -> Vec<(&'static str, String)> {
-    let mut rows = Vec::new();
-    // A bookmark's URL; a command has none, as the notes show it as a code block.
-    if type_key(&entry.entry_type) == TypeKey::Bookmark {
-        rows.push(("URL", entry.primary_content.clone()));
-    }
-    rows.push(("Type", type_label(&entry.entry_type)));
-    if let Some(status) = &entry.task_status {
-        rows.push(("Status", status.clone()));
-    }
-    if let Some(priority) = &entry.task_priority {
-        rows.push(("Priority", priority.clone()));
-    }
-    // No Description row: the notes open with it, as a quote.
-    if !entry.tags.is_empty() {
-        rows.push((
-            "Tags",
-            entry.tags.iter().map(|t| format!("#{t}")).collect::<Vec<_>>().join(" "),
-        ));
-    }
-    // One link by its title; several by their count, which the Links page of the actions lists.
-    match entry.links.as_slice() {
-        [] => {}
-        [link] => rows.push(("Links", link.title.clone().unwrap_or_else(|| link.url.clone()))),
-        links => rows.push(("Links", format!("{} links", links.len()))),
-    }
-    rows.push(("Source", entry.source_rel_path.clone()));
-    rows
-}
-
 #[cfg(test)]
 mod tests {
-    use kb_domain::entry::EntryLink;
 
     use super::*;
     use crate::fixture::entry;
@@ -300,63 +217,6 @@ mod tests {
         let tags: Vec<String> = ["a", "b", "c", "d", "e"].map(String::from).to_vec();
         assert_eq!(row_tags(&tags, 3), (&tags[..3], 2));
         assert_eq!(row_tags(&tags[..2], 3), (&tags[..2], 0));
-    }
-
-    #[test]
-    fn falls_back_to_a_placeholder_without_notes() {
-        let mut bare = entry("notes", "k", "title: t\n");
-        bare.notes_markdown.clear();
-        assert_eq!(notes_markdown(&bare), NO_NOTES);
-    }
-
-    #[test]
-    fn leaves_a_command_to_the_notes_code_block() {
-        let command = entry("commands", "ls -la", "desc: List all\n");
-        let labels: Vec<&str> = metadata(&command).iter().map(|(label, _)| *label).collect();
-        assert_eq!(labels, ["Type", "Source"]);
-    }
-
-    #[test]
-    fn lists_metadata_in_raycast_order_without_the_description_the_notes_quote() {
-        let mut task = entry(
-            "tasks",
-            "port",
-            "desc: Port it\nstatus: todo\npriority: high\ntags: [rust, kb]\nlinks: [{Spec: https://s.example}]\n",
-        );
-        task.links.push(EntryLink {
-            title: None,
-            url: "https://u.example".into(),
-        });
-        let labels: Vec<&str> = metadata(&task).iter().map(|(label, _)| *label).collect();
-        assert_eq!(labels, ["Type", "Status", "Priority", "Tags", "Links", "Source"]);
-        assert_eq!(metadata(&task)[3].1, "#rust #kb");
-        assert_eq!(metadata(&task)[4].1, "2 links", "the Links page lists them");
-        assert_eq!(
-            metadata(&entry("bookmarks", "https://b.example", "title: B\n"))[0],
-            ("URL", "https://b.example".into())
-        );
-    }
-
-    #[test]
-    fn splits_the_notes_around_the_description_quote() {
-        let bookmark = entry(
-            "bookmarks",
-            "https://youtu.be/aqz-KE-bpKQ",
-            "desc: A talk\nnotes: Watch it.\n",
-        );
-        let parts = split_description(&bookmark.notes_markdown, bookmark.description.as_deref());
-        assert!(parts.before.starts_with("![]("), "{}", parts.before);
-        assert_eq!(parts.description, Some("A talk"));
-        assert!(parts.after.contains("Watch it."), "{}", parts.after);
-        assert!(!parts.after.contains("> A talk"));
-    }
-
-    #[test]
-    fn keeps_the_notes_whole_without_a_description() {
-        let note = entry("notes", "n", "notes: Hi\n");
-        let parts = split_description(&note.notes_markdown, None);
-        assert_eq!((parts.before, parts.description), ("", None));
-        assert_eq!(parts.after, note.notes_markdown);
     }
 
     #[test]

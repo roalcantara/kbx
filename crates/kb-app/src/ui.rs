@@ -2,7 +2,9 @@
 
 pub mod action_panel;
 pub mod chip;
+pub mod command_card;
 pub mod design;
+pub mod entry_view;
 pub mod footer;
 pub mod header;
 pub mod keycap;

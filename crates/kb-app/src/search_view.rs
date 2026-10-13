@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::list::{List, ListEvent, ListState};
-use gpui_kit::component::{ActiveTheme as _, IndexPath, WindowExt as _, h_flex, v_flex};
+use gpui_kit::component::{IndexPath, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
     IntoElement, ParentElement, Pixels, Render, ScrollHandle, Styled as _, Subscription, Window, div, point, px,
@@ -29,11 +29,11 @@ use crate::keys::{
     RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter,
     ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::notes::{PaneLayout, next_offset, notes_pane};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
-use crate::ui::design::{design, pt};
+use crate::ui::design::{design, pixels, pt};
+use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
 use crate::window_size::{COMPACT, WindowSize};
 
@@ -78,7 +78,6 @@ pub struct SearchView {
     panel_focus: FocusHandle,
     screen: Screen,
     show_details: bool,
-    show_metadata: bool,
     window_size: WindowSize,
     /// The detail screen's notes, scrolled by the keyboard.
     detail_scroll: ScrollHandle,
@@ -143,7 +142,6 @@ impl SearchView {
             screen: Screen::Search,
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
-            show_metadata: false,
             window_size: WindowSize::default(),
             detail_scroll: ScrollHandle::new(),
             panel_scroll: ScrollHandle::new(),
@@ -175,12 +173,6 @@ impl SearchView {
     #[must_use]
     pub fn is_showing_details(&self) -> bool {
         self.show_details
-    }
-
-    /// Whether the detail screen shows the metadata beside the notes.
-    #[must_use]
-    pub fn is_showing_metadata(&self) -> bool {
-        self.show_metadata
     }
 
     /// The panel's current size.
@@ -231,7 +223,6 @@ impl SearchView {
             return;
         }
         self.screen = Screen::Detail;
-        self.show_metadata = false;
         self.detail_scroll.set_offset(point(px(0.), px(0.)));
         self.focus.focus(window, cx);
         cx.notify();
@@ -381,8 +372,21 @@ impl SearchView {
         self.ladder("shift-cmd-enter", window, cx);
     }
 
-    /// ⌘n: selects row n − 1 and runs its primary action (R7); the detail screen's links come in 8f.
+    /// ⌘n: on the detail screen opens link n − 1 (D20); on the list selects row n − 1 and runs its primary action (R7).
     fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if matches!(self.screen, Screen::Detail) {
+            let url = self
+                .list
+                .read(cx)
+                .delegate()
+                .selected_entry()
+                .and_then(|entry| entry.links.get(n - 1))
+                .map(|link| link.url.clone());
+            if let Some(url) = url {
+                cx.open_url(&url);
+            }
+            return;
+        }
         if !matches!(self.screen, Screen::Search) {
             return;
         }
@@ -413,7 +417,7 @@ impl SearchView {
 
     fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
         match self.screen {
-            Screen::Detail => self.show_metadata = true,
+            Screen::Detail => {}
             _ => self.show_details = true,
         }
         cx.notify();
@@ -421,7 +425,7 @@ impl SearchView {
 
     fn hide_details(&mut self, _: &HideDetails, _: &mut Window, cx: &mut Context<Self>) {
         match self.screen {
-            Screen::Detail => self.show_metadata = false,
+            Screen::Detail => {}
             _ => self.show_details = false,
         }
         cx.notify();
@@ -590,53 +594,108 @@ impl SearchView {
     }
 }
 impl SearchView {
+    /// The entry view of `entry` in `layout`, its command card as wide as the pane allows.
+    fn entry_view(&self, entry: &Entry, layout: Layout, window: &Window, cx: &mut Context<Self>) -> EntryView {
+        let d = design();
+        let viewport = f32::from(window.viewport_size().width);
+        let (share, pad, role) = match layout {
+            Layout::Split => (
+                1. - d.components.split.list,
+                d.spacing.pane.split_pad_x,
+                &d.typography.roles.card_split,
+            ),
+            Layout::Detail => (1., d.spacing.pane.detail_pad_x, &d.typography.roles.card_detail),
+        };
+        let width = viewport * share
+            - 2. * pad
+            - d.spacing.card.pad_x
+            - d.spacing.card.pad_right
+            - 2. * d.components.border.hairline;
+        let font = gpui_kit::font(d.typography.mono.clone());
+        let advance = window
+            .text_system()
+            .em_advance(window.text_system().resolve_font(&font), pixels(role.size))
+            .map_or(role.size * 0.6, f32::from);
+        let view = cx.entity().downgrade();
+        let (on_tag_view, on_copy_view) = (view.clone(), view.clone());
+        let images = self.list.read(cx).delegate().tag_images().clone();
+        EntryView::new(
+            entry.clone(),
+            self.catalog.clone(),
+            images,
+            layout,
+            columns_for(width, advance),
+            Rc::new(move |tag, window, cx| {
+                let tag = tag.to_owned();
+                let _ = on_tag_view.update(cx, |this, cx| this.filter_by_tag(&tag, window, cx));
+            }),
+            Rc::new(|url, _, cx| cx.open_url(url)),
+            Rc::new(move |_, window, cx| {
+                let _ = on_copy_view.update(cx, |this, cx| this.notice_copied(window, cx));
+            }),
+        )
+    }
+
+    /// A header tag clicked: the list, filtered by that tag alone (D20).
+    fn filter_by_tag(&mut self, tag: &str, window: &mut Window, cx: &mut Context<Self>) {
+        self.apply_filter(
+            FilterState {
+                types: Vec::new(),
+                tags: vec![tag.to_owned()],
+            },
+            cx,
+        );
+        self.screen = Screen::Search;
+        self.query_input.update(cx, |input, cx| input.focus(window, cx));
+        cx.notify();
+    }
+
+    /// The copy notice, after the command card's own button copied (D17).
+    fn notice_copied(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.last_notice = Some(self.catalog.messages.copied.clone());
+        window.push_notification(notice::copied(&self.catalog.messages), cx);
+    }
+
     /// The screen: the list and its split pane, the detail screen, or the rebuild.
-    fn render_content(&self, selected: Option<&Entry>, cx: &mut Context<Self>) -> AnyElement {
+    fn render_content(&self, selected: Option<&Entry>, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         let tokens = design();
+        let list_panel = || {
+            List::new(&self.list)
+                .px(pt(tokens.spacing.list.pad))
+                .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.))
+                .into_any_element()
+        };
         match &self.screen {
             Screen::Rebuild(sync) => sync.clone().into_any_element(),
-            // The notes alone, without a title block: the footer names the entry (UI-12).
             Screen::Detail => selected.map_or_else(
                 || div().into_any_element(),
                 |entry| {
-                    notes_pane(
-                        entry,
-                        self.show_metadata,
-                        PaneLayout::Detail,
-                        Some(&self.detail_scroll),
-                        cx,
-                    )
+                    self.entry_view(entry, Layout::Detail, window, cx)
+                        .track_scroll(self.detail_scroll.clone())
+                        .into_any_element()
                 },
             ),
-            // Raycast's split: the list a third of the width, the pane the rest (DESIGN.md, D3).
             Screen::Search => match selected.filter(|_| self.show_details) {
                 Some(entry) => h_flex()
                     .size_full()
                     .child(
                         div()
                             .h_full()
-                            .w(relative(1. / 3.))
+                            .w(relative(tokens.components.split.list))
                             .flex_none()
-                            .border_r_1()
-                            .border_color(cx.theme().border)
-                            .child(
-                                List::new(&self.list)
-                                    .px(pt(tokens.spacing.list.pad))
-                                    .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.)),
-                            ),
+                            .border_r(pt(tokens.components.border.hairline))
+                            .border_color(tokens.colors.edge)
+                            .child(list_panel()),
                     )
-                    .child(div().h_full().flex_1().min_w_0().child(notes_pane(
-                        entry,
-                        true,
-                        PaneLayout::Split,
-                        None,
-                        cx,
-                    )))
+                    .child(
+                        div()
+                            .h_full()
+                            .flex_1()
+                            .min_w_0()
+                            .child(self.entry_view(entry, Layout::Split, window, cx)),
+                    )
                     .into_any_element(),
-                None => List::new(&self.list)
-                    .px(pt(tokens.spacing.list.pad))
-                    .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.))
-                    .into_any_element(),
+                None => list_panel(),
             },
         }
     }
@@ -702,8 +761,37 @@ impl Render for SearchView {
                     .flex_1()
                     .min_h_0()
                     .w_full()
-                    .child(self.render_content(selected.as_ref(), cx)),
+                    .child(self.render_content(selected.as_ref(), window, cx)),
             )
             .child(self.render_footer(selected.as_ref(), window, cx))
+    }
+}
+
+/// The notes' next scroll offset after moving `delta` down (negative: up), kept between the top (0)
+/// and the bottom (`-max`). A scroll offset grows more negative as the content moves up.
+fn next_offset(current: Pixels, delta: Pixels, max: Pixels) -> Pixels {
+    let next = current - delta;
+    if next > px(0.) {
+        px(0.)
+    } else if next < -max {
+        -max
+    } else {
+        next
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scrolls_within_the_notes_and_stops_at_their_ends() {
+        assert_eq!(next_offset(px(0.), px(40.), px(100.)), px(-40.));
+        assert_eq!(
+            next_offset(px(-80.), px(40.), px(100.)),
+            px(-100.),
+            "stops at the bottom"
+        );
+        assert_eq!(next_offset(px(-40.), px(-60.), px(100.)), px(0.), "stops at the top");
     }
 }

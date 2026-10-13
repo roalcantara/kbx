@@ -1820,6 +1820,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fmt-rs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4225accd1e186c6c0d16721d96bf1426921a20a38a9893e37e1c669316876b6"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3597,6 +3603,7 @@ name = "kb-app"
 version = "0.5.0"
 dependencies = [
  "dirs 6.0.0",
+ "fmt-rs",
  "futures",
  "global-hotkey",
  "gpui-kit",

@@ -18,8 +18,6 @@ mod filter;
 mod fixture;
 mod http;
 pub mod keys;
-mod metadata;
-mod notes;
 mod panel;
 mod presentation;
 pub mod search_view;

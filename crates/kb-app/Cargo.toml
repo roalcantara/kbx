@@ -15,6 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 dirs.workspace = true
+fmt-rs.workspace = true
 futures.workspace = true
 global-hotkey.workspace = true
 gpui-kit.workspace = true
