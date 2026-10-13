@@ -143,3 +143,37 @@ Feature families that recur, as candidates for the investigation's taxonomy (to 
 
 Model routing (choosing models per task) appears in none of the four, which makes it either a gap or out of this
 category; the next pass should decide which.
+
+## Addendum: tools that do route or assign models
+
+Asked by the owner after reading the comparison: do other tools in this family provide model routing, or other
+agent-management features the four lack? Read on 2026-10-13 from each project's README (not the code).
+
+"Model routing" covers three different things, and tools do one or another:
+
+| Kind                                                       | Tool                                                                                                                                                                                | Stack, licence                  | What it does with models                                                                                                                                                                          |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gateway:** routes every request an agent CLI makes       | [claude-code-router](https://github.com/musistudio/claude-code-router) (37.6k★)                                                                                                     | TypeScript, MIT; desktop app    | One local endpoint for Claude Code, Codex, OpenCode, Pi, Kimi, Grok and others; routing rules on headers and bodies, retries, ordered fallbacks; logs with resolved model, tokens, estimated cost |
+| **Assignment:** a model chosen per task or agent at launch | [Superset](https://github.com/superset-sh/superset) (15.1k★)                                                                                                                        | TypeScript, unspecified licence | Model picker and reasoning effort per agent; per-agent model overrides; bring-your-own providers (OpenRouter, Bedrock, Vertex, Vercel AI Gateway)                                                 |
+|                                                            | [Orchestrator.inc](https://github.com/ComposioHQ/agent-orchestrator) (13.1k★)                                                                                                       | Go, Apache-2.0                  | Each worker is one task, one agent, one model, one workspace; 25+ harnesses; desktop, web, mobile, cloud                                                                                          |
+|                                                            | [agent-deck](https://github.com/asheshgoplani/agent-deck) (1.1k★)                                                                                                                   | Go, MIT; TUI                    | Model and reasoning effort per session; a cost dashboard                                                                                                                                          |
+|                                                            | [Mux](https://github.com/coder/mux) (2.1k★)                                                                                                                                         | TypeScript, AGPL-3.0            | Multi-model (Sonnet, Opus, GPT-5, Grok), Ollama and OpenRouter; a costs tab                                                                                                                       |
+| **Policy:** routes a task to a model by rule or outcome    | [Bernstein](https://github.com/chernistry/bernstein) (1.2k★)                                                                                                                        | Python, Apache-2.0              | Declarative YAML of phases, roles and dependencies; cheap local models for boilerplate, cloud models for architecture; a failed task is retried or routed to a different model; cost line         |
+|                                                            | [Verdent](https://www.verdent.ai/guides/multi-agent-coding-tools)                                                                                                                   | commercial                      | Routes tasks across Claude, GPT and Gemini by task type (per its own guide; not verified)                                                                                                         |
+| **Agent choice only** (the model comes with the agent)     | Vibe Kanban (28.3k★, Rust, Apache-2.0; **sunsetting**), Emdash (6k★, 34 provider CLIs), Claude Squad (8.6k★, AGPL), Crystal → Nimbalyst, cmux (28.1k★, Ghostty; subagents as panes) | —                               | Switch between 10–34 agent CLIs per task; models only through the agent's own flags                                                                                                               |
+
+What it adds to the comparison:
+
+- **Model routing exists, but mostly outside the managers.** The strongest router, claude-code-router, is a gateway
+  that sits under any agent and manager; the managers that go furthest (Superset, Orchestrator.inc, agent-deck, Mux)
+  only let you pick a model per task. Automatic routing by task or outcome appears in orchestration frameworks
+  (Bernstein, Verdent), not in the session managers.
+- **Cost and usage are a feature family of their own**: claude-code-router, agent-deck, Mux, Bernstein and Orca all
+  show tokens or cost; none of the four Swift terminals does.
+- **Policy and governance** (who may do what, approvals, a replayable record) is a further family, visible only in
+  Bernstein.
+- A Rust manager existed — Vibe Kanban — and is shutting down; its code is Apache-2.0.
+
+Sources: the projects' READMEs; [Augment's orchestrator roundup](https://www.augmentcode.com/tools/open-source-agent-orchestrators);
+[Verdent's guide](https://www.verdent.ai/guides/multi-agent-coding-tools); [Morph's claude-code-router guide](https://www.morphllm.com/claude-code-router);
+[Agent-as-a-Router (arXiv 2606.22902)](https://arxiv.org/abs/2606.22902).
