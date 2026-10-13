@@ -114,7 +114,7 @@ kbd {
 .context { display: flex; align-items: center; gap: var(--space-sm); color: var(--text-muted); min-width: 0; }
 .context .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
 
-/* Popover (search_view/overlays.rs, ui::menu) */
+/* Popover (search_view/panel.rs, ui::action_panel) */
 .popover {
   position: absolute; z-index: 10; display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface-raised); border: 1px solid var(--border-divider); border-radius: var(--radius-popover);

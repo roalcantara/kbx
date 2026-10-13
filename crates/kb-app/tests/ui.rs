@@ -267,6 +267,21 @@ fn isolates_a_filter_choice_with_cmd_return(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn keeps_the_toggled_filter_row_selected(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    open_filter(cx, window);
+    // ↵ toggles the first type, adding the Clear All row above it; ↓ ↵ must reach the next type.
+    press(cx, window, "enter");
+    settle(cx);
+    press(cx, window, "down");
+    press(cx, window, "enter");
+    settle(cx);
+    let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
+    assert_eq!(filter.types.len(), 2, "two types toggled on: {filter:?}");
+}
+
+#[gpui_kit::test]
 fn opens_the_detail_screen_on_enter_and_returns_on_escape(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));

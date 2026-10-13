@@ -162,8 +162,22 @@ impl SearchView {
                     self.apply_filter(only, cx);
                     self.show_overlay(Overlay::None, window, cx);
                 } else {
+                    // The toggle can add or drop the Clear All section, so the row is found again
+                    // by its labels; index 0 would be Clear All, one ↵ away from losing the filter.
+                    let picked = visible.get(ix).map(|&(s, r)| {
+                        let section = &page.page.sections[s];
+                        (section.label.clone(), section.rows[r].label.clone())
+                    });
                     self.apply_filter(toggle, cx);
                     self.set_panel_query("", window, cx);
+                    let page = self.current_page(cx);
+                    self.panel_selected = matches(&page.page, "")
+                        .into_iter()
+                        .position(|(s, r)| {
+                            let section = &page.page.sections[s];
+                            picked.as_ref() == Some(&(section.label.clone(), section.rows[r].label.clone()))
+                        })
+                        .unwrap_or(0);
                 }
             }
         }

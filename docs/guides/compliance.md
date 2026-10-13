@@ -41,8 +41,8 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 
 ## GPUI Kit design guides
 
-- [x] Every action is reachable and operable by keyboard: the action palette lists every action of the selection,
-      and each has a shortcut (`palette::entry_palette`).
+- [x] Every action is reachable and operable by keyboard: the action panel lists every action of the selection,
+      and each has a shortcut (`actions::root_page`, `actions::more_page`).
 - [x] Focus order follows the task, and focus returns after overlays (see the coding-guides item on focus).
 - [x] Icon-only controls have names and tooltips: the back button has an accessibility label and the "Back (Esc)"
       tooltip; the footer buttons carry their labels and key hints (`search_view::render_header`, `render_footer`).
@@ -51,9 +51,9 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 - [x] Copy follows Raycast's Title Case, with an ellipsis only on commands that open more choices or ask for more input:
       "Open in Browser", "Copy Command Snippet", "Rebuild Index…", "Copy…", "Clear All Filters"
       ([DESIGN.md, Adaptations](../../DESIGN.md#adaptations); an owner-approved deviation from the GPUI Kit Design
-      Guides) (`presentation.rs`, `palette.rs`, `filter.rs`). Messages stay sentences.
+      Guides) (`presentation.rs`, `assets/catalog.toml`). Messages stay sentences.
 - [x] Errors read as what happened and what to do: "Couldn’t register ⌥K: … Another app may be using it."
-- [x] An app-level Quit command exists: ⌘Q, and "Quit kb" in the action palette (`palette::Quit`).
+- [x] An app-level Quit command exists: ⌘Q (`keys::Quit`).
 - [x] Content remains usable at larger text: text sizes are in the rem scale and grow with the base font; the split is
       a share of the window (⅓ list), and ⌘⇧F expands the window when the compact size is too small.
 - [x] Assistive technology can read the controls and the list: GPUI exposes them through AccessKit once a client
@@ -78,8 +78,8 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 - [x] Benchmarks run in release with LTO (`kb-bench`, `profile.release`).
 - [x] No `TODO` without an issue: none in the crates.
 - [x] No unsafe code: `unsafe_code = "forbid"` for the workspace.
-- [x] Static dispatch by default; `dyn` only where values are heterogeneous: palette rows hold `Box<dyn Action>`,
-      the GPUI dispatch type (`palette.rs`), and `kb-bench` boxes its errors at the binary's edge.
+- [x] Static dispatch by default; `dyn` only where values are heterogeneous: the action panel's row callback
+      (`ui::action_panel::OnRow`), and `kb-bench` boxes its errors at the binary's edge.
 
 ## Repository conventions
 
