@@ -241,7 +241,7 @@
   - **Tags**: design, plan8
 
 - [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
-  - **Comments**: oVNz,xpAF
+  - **Comments**: oVNz,xpAF,QU41
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -533,5 +533,8 @@
   - **Task**: Z64Y
 
 - xpAF **-** 2026-10-12, pane template (owner, to render next): split and detail share one component; slots Header (title left, tags right), Hero, Summary (description), Body (notes); per-type fill from the catalog (command: no title, hero CommandCard; bookmark: URL title, hero YouTube thumbnail, og:image later; cheat: title, hero snippet card when present; note: title; task: task, hero status+priority badges; other: title); empty slots collapse; no type badge or path in the pane; Links only in the Links… submenu. Footer: left context (status line on the list, [type] file ⌥⌘C copy-path when a pane or detail is open), right the screen's ↵ / ⌘↵ / ⇧⌘↵ actions and Actions ⌘K. Stored notes_markdown stays (TS goldens); kb-domain adds a body-only Markdown function.
+  - **Task**: Z64Y
+
+- QU41 **-** 2026-10-12, template v2 (owner): one header row for every entry: [the row's icon: favicon for bookmarks, the type tile otherwise] [header text by type: bookmark URL (link style), cheat title, command description (else title), note title, task text] … tags right; at most 2 lines in the split, whole in detail. Summary = the description unless the header used it (so commands have none). The footer's left always shows the type tile + file + ⌥⌘C. Header text per type lives in the catalog with the actions.
   - **Task**: Z64Y
 
