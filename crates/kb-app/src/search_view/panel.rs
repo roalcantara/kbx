@@ -128,6 +128,7 @@ impl SearchView {
         let count = matches(&self.current_page(cx).page, &self.panel_query.read(cx).value()).len();
         if count > 0 {
             self.panel_selected = self.panel_selected.saturating_add_signed(delta).min(count - 1);
+            self.panel_scroll.scroll_to_item(self.panel_selected);
             cx.notify();
         }
     }
@@ -290,7 +291,7 @@ impl SearchView {
             .capture_action(cx.listener(|this, _: &MoveDown, _, cx| this.move_panel(1, cx)))
             .child(Input::new(&self.panel_query).appearance(false).p_0())
             .into_any_element();
-        panel(&page.page, &visible, self.panel_selected, Some(search), width, &on_row)
+        panel(&page.page, &visible, self.panel_selected, &self.panel_scroll, Some(search), width, &on_row)
             .id("action-panel")
             .key_context(crate::keys::PANEL_CONTEXT)
             .track_focus(&self.panel_focus)

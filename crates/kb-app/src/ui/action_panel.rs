@@ -4,18 +4,17 @@
 
 use std::rc::Rc;
 
-use gpui_kit::component::{h_flex, v_flex};
-use gpui_kit::prelude::FluentBuilder as _;
-use gpui_kit::{
-    AnyElement, App, Div, Hsla, InteractiveElement as _, IntoElement as _, ParentElement as _, SharedString,
-    StatefulInteractiveElement as _, Styled as _, Window, div, svg,
-};
-
 use crate::tag_images::TagImage;
 use crate::ui::chip::icon_chip;
 use crate::ui::design::{TextRoleExt as _, design, pt};
 use crate::ui::keycap::{ChipState, keycap};
 use crate::ui::tile::{TileSize, tile};
+use gpui_kit::component::{h_flex, v_flex};
+use gpui_kit::prelude::FluentBuilder as _;
+use gpui_kit::{
+    AnyElement, App, Div, Hsla, InteractiveElement as _, IntoElement as _, ParentElement as _, ScrollHandle,
+    SharedString, StatefulInteractiveElement as _, Styled as _, Window, div, svg,
+};
 
 /// What leads a row (the filter's rows; the action rows have none).
 #[derive(Debug, Clone, PartialEq)]
@@ -102,6 +101,7 @@ pub fn panel(
     page: &PanelPage,
     visible: &[(usize, usize)],
     selected: usize,
+    scroll: &ScrollHandle,
     search: Option<AnyElement>,
     width: f32,
     on_row: &OnRow,
@@ -111,6 +111,7 @@ pub fn panel(
     let hairline = || div().h(pt(d.components.border.hairline)).bg(c.edge).flex_none();
     let mut list = v_flex()
         .id("panel-rows")
+        .track_scroll(scroll)
         .p(pt(s.pad))
         .max_h(pt(k.max_height))
         .overflow_y_scroll();

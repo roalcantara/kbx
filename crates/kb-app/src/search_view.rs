@@ -82,6 +82,8 @@ pub struct SearchView {
     window_size: WindowSize,
     /// The detail screen's notes, scrolled by the keyboard.
     detail_scroll: ScrollHandle,
+    /// The action panel's rows, scrolled as the selection moves.
+    panel_scroll: ScrollHandle,
     /// The overlay open over the screen, if any.
     overlay: Overlay,
     /// The last notice the view showed (D17).
@@ -144,6 +146,7 @@ impl SearchView {
             show_metadata: false,
             window_size: WindowSize::default(),
             detail_scroll: ScrollHandle::new(),
+            panel_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
             last_notice: None,
             subscriptions: vec![list_sub, input_sub, panel_sub],
@@ -192,6 +195,11 @@ impl SearchView {
         self.detail_scroll.offset().y
     }
 
+    /// How far the panel's rows are scrolled: 0 at the top, negative below it.
+    #[must_use]
+    pub fn panel_scroll_offset(&self) -> Pixels {
+        self.panel_scroll.offset().y
+    }
     /// Whether the rebuild screen is showing.
     #[must_use]
     pub fn is_rebuilding(&self) -> bool {

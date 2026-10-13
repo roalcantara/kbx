@@ -262,6 +262,24 @@ fn rebuild_screen_maps_to_refreshing_and_panel_omits_details_without_entry(cx: &
         "no Details with empty list: {empty_labels:?}"
     );
 }
+#[gpui_kit::test]
+fn scrolls_selected_panel_row_into_view_when_filter_overflows(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    open_filter(cx, window);
+    cx.run_until_parked();
+    let initial_offset = cx.read(|cx| view.read(cx).panel_scroll_offset());
+    assert_eq!(initial_offset, px(0.));
+    for _ in 0..12 {
+        press(cx, window, "down");
+        cx.run_until_parked();
+    }
+    let scrolled_offset = cx.read(|cx| view.read(cx).panel_scroll_offset());
+    assert!(
+        scrolled_offset < px(0.),
+        "moving panel down scrolled the list into view (offset < 0): {scrolled_offset:?}"
+    );
+}
 
 #[gpui_kit::test]
 fn copies_the_path_found_from_the_root_s_search(cx: &mut TestAppContext) {
