@@ -74,3 +74,55 @@ a ceiling too low for adoption or revenue". Re-evaluated against the data:
 **Refined signal for the next rungs:** "No wedge exists that a Rust/GPUI launcher could own" — where a wedge is a
 segment without a strong incumbent, or a way to inherit an incumbent's ecosystem, as Vicinae did. And a number from the
 owner: what adoption and revenue, by when, would make it worth building.
+
+## The owner's bar (set after rung 1)
+
+**Worth building = a sustainable niche:** about 2–3k engaged users and enough revenue (sponsors or a paid tier) to
+cover its own maintenance, within 12 months.
+
+# Rung 2 (20 minutes): wedge, reach, payment
+
+Read 2026-10-13 from the Hacker News search API (Algolia) and GitHub's and OpenCollective's APIs.
+
+## Data
+
+**Reach — Show HN launches of desktop launchers** (103 launcher-related Show HN posts; median 4 points):
+
+| Launch                                                    | Points | Date    | Wedge                        |
+| --------------------------------------------------------- | -----: | ------- | ---------------------------- |
+| A Raycast-compatible launcher for Linux (Vicinae)         |    192 | 2025-07 | Linux + Raycast's extensions |
+| Vicinae – a native, Raycast-compatible launcher for Linux |    181 | 2025-09 | Linux + Raycast's extensions |
+| Albert – open-source keyboard launcher for Linux          |    144 | 2022-06 | Linux                        |
+| Script Kit                                                |    136 | 2023-01 | Scripting                    |
+| Zazu – an OSS app launcher, similar to Alfred             |    111 | 2017-01 | Free Alfred                  |
+| Raycast for Windows                                       |     49 | 2025-11 | —                            |
+| RustCast – open-source Raycast-style launcher in Rust     |      6 | 2026-02 | none stated                  |
+| Gauntlet – Raycast-inspired open-source launcher          |      4 | 2024-05 | none stated                  |
+
+**Wedge — Hacker News comments about Raycast since 2024**, by theme: Windows 110, "Alfred" comparisons 90,
+"alternative" 89, memory and web views 69, Linux 59, subscription or price 31, closed source 21, privacy 7. ("Pro"
+returned 4,108 hits and is noise.)
+
+**Payment — open-source launchers' funding:** Flow Launcher (15.8k stars) about $720 a year on OpenCollective
+(balance about $2,990) and 8 GitHub sponsors; Vicinae 16 sponsors; Albert's author 8; Sol's author 3; Script Kit's
+author 14. Paid launchers: Raycast (venture-funded; Pro tier for AI), Alfred (one-time Powerpack, independent since
+2010); their revenue is private.
+
+## Gates
+
+| Signal                                                 | Fires?                                                                                                                                                                                                                                                  | Is the signal sound?                                                                                                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **(a) No wedge a Rust/GPUI launcher could own**        | **Partly.** The one proven wedge — Linux plus Raycast's extensions — is taken by Vicinae. On Windows, Raycast arrived in 2025-11 beside PowerToys and Flow Launcher. Complaints about Raycast on HN are few (dozens per theme over almost three years). | Weak. HN comment counts measure discussion, not pain; Reddit, Product Hunt and the stores' reviews were not read. It can say "no obvious open wedge", not "no wedge". |
+| **(b) Launches go unnoticed**                          | **Yes, for a launcher without a wedge** (Gauntlet 4, RustCast 6); no for one with a wedge (Vicinae 181–192).                                                                                                                                            | Fair for one channel. HN is where these launches happen, but r/macapps, r/linux and Product Hunt were not checked.                                                    |
+| **(c) No comparable launcher earns maintenance money** | **Yes, for sponsorship:** the most-starred open-source launcher earns hundreds of dollars a year. Unknown for a paid tier.                                                                                                                              | Sound for sponsorship (the amounts are public). Silent on paid products, whose revenue is private.                                                                    |
+
+## What it shows
+
+- **Adoption at the bar (2–3k engaged users) is reachable only with a wedge;** a launcher without one gets a handful of
+  points and stalls, as every Rust launcher so far has.
+- **Revenue at the bar is not reachable through sponsorship:** even five-figure-star launchers earn a few hundred
+  dollars a year. It needs a paid product — Alfred's model — against Raycast's free tier.
+- **So the idea survives only as "a paid launcher with a wedge nobody owns yet".** Rung 3 would test exactly that:
+  candidate wedges (the agent control tower — cmux's 2026 growth says attention is there — Windows, a
+  Raycast-extension runtime on macOS) and the economics of paid launchers (Alfred, Sol's history, indie launchers on
+  Setapp), plus the graveyard and the cost of ownership.
