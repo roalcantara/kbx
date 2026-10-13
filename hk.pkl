@@ -38,7 +38,7 @@ local structure_steps = new Mapping<String, Step> {
       for manifest in {{files}}; do
         [[ -f "$manifest" ]] || continue
         root=$(cd "$(dirname "$manifest")/../.." && pwd)
-        if ! tree=$(cargo tree --offline --manifest-path "$root/Cargo.toml" -p kb-domain --edges normal,build --prefix none --format '{p}' 2>&1); then
+        if ! tree=$(mise exec -- cargo tree --offline --manifest-path "$root/Cargo.toml" -p kb-domain --edges normal,build --prefix none --format '{p}' 2>&1); then
           echo "$tree"
           status=1
           continue
@@ -193,13 +193,7 @@ local baseline_steps = new Mapping<String, Step> {
         // `gitleaks dir` takes one path. Given hk's file list it scans the whole working
         // directory instead — ignored files included — so each file is scanned on its own.
         shell = "bash -o pipefail -c"
-        check = """
-          status=0
-          for file in {{files}}; do
-            gitleaks dir --redact --verbose --no-banner --log-level error "$file" || status=1
-          done
-          exit $status
-          """
+        check = "mise exec -- gitleaks detect --no-banner --redact --log-level=error"  // silent on success (--log-level=error)
         exclude = binary_excludes
     }
 
@@ -210,7 +204,7 @@ local baseline_steps = new Mapping<String, Step> {
     // jactionlint: the maintained fork of actionlint (mise deprecates actionlint); hk has no builtin for it yet.
     ["actionlint"] {
         glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
-        check = "jactionlint {{files}}"
+        check = "mise exec -- jactionlint {{files}}"
     }
     ["pinact"] = Builtins.pinact
     ["typos"] = (Builtins.typos) {
@@ -220,39 +214,41 @@ local baseline_steps = new Mapping<String, Step> {
         glob = List("README.md")
     }
     ["paths"] {
-        check = "ls-lint"
+        check = "mise exec -- ls-lint"
     }
     ["branch"] {
-        check = "cchk --branch"
+        check = "mise exec -- cchk --branch"
     }
 
     // Rust: formatter, compiler, linter. The compiler and clippy see the whole workspace,
     // because a change to one crate can break another.
-    ["rustfmt"] = Builtins.cargo_fmt
+    ["rustfmt"] = (Builtins.cargo_fmt) {
+        check = "mise exec -- cargo fmt -- --check"
+    }
     ["taplo"] {
         glob = List("**/*.toml")
-        check = "taplo fmt --check {{files}}"
-        fix = "taplo fmt {{files}}"
+        check = "mise exec -- taplo fmt --check {{files}}"
+        fix = "mise exec -- taplo fmt {{files}}"
     }
     ["cargo-check"] {
         glob = rust_inputs
-        check = "cargo check --workspace --all-targets --locked"
+        check = "mise exec -- cargo check --workspace --all-targets --locked"
     }
     ["clippy"] {
         glob = rust_inputs
-        check = "cargo clippy --workspace --all-targets --locked -- -D warnings"
+        check = "mise exec -- cargo clippy --workspace --all-targets --locked -- -D warnings"
     }
     ["ast-grep"] {
         glob = List("**/*.rs", "tools/ast-grep/**/*.yml", "sgconfig.yml")
-        check = "ast-grep test --skip-snapshot-tests && ast-grep scan"
+        check = "mise exec -- ast-grep test --skip-snapshot-tests && ast-grep scan"
     }
     ["machete"] {
         glob = List("**/Cargo.toml")
-        check = "cargo machete"
+        check = "mise exec -- cargo machete"
     }
     ["dupes"] {
         glob = List("**/*.rs", "tools/bench/ts/*.ts")
-        check = "jscpd"
+        check = "mise exec -- jscpd"
     }
     // Layout guard: a new top-level folder is a deliberate architectural decision.
     ["root-layout"] {
@@ -264,7 +260,7 @@ local baseline_steps = new Mapping<String, Step> {
     // The TS bench is code too: typecheck it with the compiler its own package pins.
     ["bench-ts-typecheck"] {
         glob = List("tools/bench/ts/*.ts", "tools/bench/ts/tsconfig.json", "tools/bench/ts/package.json")
-        check = "bun run --cwd tools/bench/ts typecheck"
+        check = "mise exec -- bun run --cwd tools/bench/ts typecheck"
     }
 }
 
@@ -274,13 +270,13 @@ local baseline_steps = new Mapping<String, Step> {
 // so an empty test run cannot pass silently once tests exist.
 local push_steps = new Mapping<String, Step> {
     ["test"] {
-        check = "cargo nextest run --workspace --locked"
+        check = "mise exec -- cargo nextest run --workspace --locked"
     }
     ["bench-ts-test"] { // benchmark kit
-        check = "bun run --cwd tools/bench/ts test"
+        check = "mise exec -- bun run --cwd tools/bench/ts test"
     }
     ["build"] {
-        check = "cargo build --workspace --release --locked"
+        check = "mise exec -- cargo build --workspace --release --locked"
     }
 }
 
@@ -292,12 +288,12 @@ local candidate_steps = new Mapping<String, Step> {
         ["build"] { profiles = List("candidate") }
     }
     ["rustdoc"] {
-        check = "RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked"
+        check = "RUSTDOCFLAGS='-D warnings' mise exec -- cargo doc --workspace --no-deps --locked"
         profiles = List("candidate")
     }
     ["coverage"] {
         // A report, not a gate: thresholds come once there is a history to measure them from.
-        check = "cargo llvm-cov nextest --workspace --locked --summary-only"
+        check = "mise exec -- cargo llvm-cov nextest --workspace --locked --summary-only"
         profiles = List("candidate")
     }
 }
@@ -306,17 +302,17 @@ local candidate_steps = new Mapping<String, Step> {
 local release_steps = new Mapping<String, Step> {
     ["gitleaks-release"] {
         profiles = List("release")
-        check = "gitleaks git --redact --no-banner --config=.gitleaks.toml"
+        check = "mise exec -- gitleaks git --redact --no-banner --config=.gitleaks.toml"
     }
     ["cargo-deny"] {
         profiles = List("release")
-        check = "cargo deny check"
+        check = "mise exec -- cargo deny check"
     }
     // "Small" is one of the experiment's goals, so the release binary has a budget
     // (tools/size/budget: the first release build plus 5 %). Raising it is an owner decision.
     ["size-budget"] {
         profiles = List("release")
-        check = "cargo build --release --locked -p kb-app && tools/size/size.sh"
+        check = "mise exec -- cargo build --release --locked -p kb-app && tools/size/size.sh"
     }
     ["zizmor"] = (Builtins.zizmor) {
         profiles = List("release")
@@ -328,7 +324,7 @@ local precommit_steps = new Mapping<String, Step> {
         ["gitleaks"] = (Builtins.gitleaks) {
             // Pre-commit scans the staged index itself, so a secret cannot slip through a
             // glob that stopped matching.
-            check = "gitleaks git --pre-commit --redact --staged --verbose --no-banner --log-level error"
+            check = "mise exec -- gitleaks git --pre-commit --redact --staged --verbose --no-banner --log-level error"
         }
     }
 }
@@ -347,7 +343,7 @@ local commit_message_steps = new Mapping<String, Step> {
             case "$(grep -v '^#' "$f" | sed -e '/./,$!d' | head -1)" in
                 Merge\ *|Revert\ *|Reapply\ *|fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
             esac
-            exec quick-commitlint --config .quick-commitlint.json "$f"
+            mise exec -- quick-commitlint --config .quick-commitlint.json "$f"
             {% endraw %}
             """#
     }
