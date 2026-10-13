@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 
 use kb_domain::row::IndexRow;
-use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, search};
+use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, search};
 use kb_domain::sync::{SyncSummary, open_database, sync_knowledge_base};
 use kb_domain::{query::fts_prefix_query, yaml};
 use serde::Deserialize;
@@ -202,26 +202,29 @@ fn same_key(a: &Json, b: &Json) -> bool {
     }
 }
 
+fn golden_queries(f: &Fixture) -> Vec<GoldenQuery> {
+    serde_json::from_str(&fs::read_to_string(f.goldens.join("queries.json")).unwrap()).unwrap()
+}
+
+/// `q` as a query over the whole index, its page window at `offset`.
+fn query_of(q: &GoldenQuery, offset: usize) -> SearchQuery {
+    SearchQuery {
+        text: q.text.clone(),
+        filter: FilterState {
+            types: q.types.clone(),
+            tags: q.tags.clone(),
+        },
+        limit: PAGE_SIZE,
+        offset,
+    }
+}
+
 #[test]
 fn queries_return_what_the_typescript_engine_returns() {
     let f = fixture();
     let connection = open_database(&f.database.path().join("kb.db")).unwrap();
-    let golden: Vec<GoldenQuery> =
-        serde_json::from_str(&fs::read_to_string(f.goldens.join("queries.json")).unwrap()).unwrap();
-    for q in golden {
-        let rows = search(
-            &connection,
-            &SearchQuery {
-                text: q.text.clone(),
-                filter: FilterState {
-                    types: q.types,
-                    tags: q.tags,
-                },
-                limit: PAGE_SIZE,
-                offset: q.offset,
-            },
-        )
-        .unwrap();
+    for q in golden_queries(&f) {
+        let rows = search(&connection, &query_of(&q, q.offset)).unwrap();
         assert_eq!(rows.len(), q.results.len(), "{}: result count", q.id);
         let fts = fts_prefix_query(&q.text);
         let keys: Vec<Json> = rows
@@ -260,5 +263,19 @@ fn queries_return_what_the_typescript_engine_returns() {
             }
             start = end;
         }
+    }
+}
+
+#[test]
+fn counts_what_the_typescript_engine_returns() {
+    let f = fixture();
+    let connection = open_database(&f.database.path().join("kb.db")).unwrap();
+    // A golden holds the whole result set only when the page did not cut it.
+    for q in golden_queries(&f)
+        .into_iter()
+        .filter(|q| q.offset == 0 && q.results.len() < PAGE_SIZE)
+    {
+        let count = count(&connection, &query_of(&q, 0)).unwrap();
+        assert_eq!(count, q.results.len(), "{}: count", q.id);
     }
 }

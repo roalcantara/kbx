@@ -288,8 +288,8 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] 7lTb **-** Narrow the entry types to Bookmarks, Cheat Sheets, Commands and Tasks across the app; any other type is ignored (owner, 2026-10-12)
-  - **Comments**: Bo3f
+- [x] 7lTb **-** Narrow the entry types to Bookmarks, Cheat Sheets, Commands and Tasks across the app; any other type is ignored (owner, 2026-10-12)
+  - **Comments**: Bo3f,28mD
   - **Priority**: high
   - **Created**: 2026-10-12 23:09
   - **Tags**: app, plan8
@@ -535,4 +535,7 @@
 
 - IF60 **-** 2026-10-13: Plan 8b
   - **Task**: RKHF
+
+- 28mD **-** 2026-10-13: app-side, Plan 8c Task 4 (Bo3f option a)
+  - **Task**: 7lTb
 

@@ -18,7 +18,7 @@ use gpui_kit::{
     Anchor, AnyElement, App, ClipboardItem, Context, Div, Entity, Focusable as _, Hsla, IntoElement as _,
     ParentElement as _, Styled as _, WeakEntity, Window, div, px,
 };
-use kb_domain::search::{FilterState, entry_types, tags};
+use kb_domain::search::{FilterState, tags_for_types};
 
 use super::footer::{action_keycaps, keycap_row};
 use super::{Overlay, Screen, SearchView};
@@ -166,16 +166,17 @@ impl SearchView {
         }
     }
 
-    /// The filter's sections for the index's types and tags; none without an index.
+    /// The filter's sections for the visible types and their tags; none without an index.
     fn filter_sections(&self, cx: &App) -> Vec<FilterGroup> {
         let delegate = self.list.read(cx).delegate();
         let Some(connection) = delegate.connection() else {
             return Vec::new();
         };
+        let types = delegate.visible_types().to_vec();
         // A failed read offers no choices rather than stale ones; the list shows the index.
-        match (entry_types(connection), tags(connection)) {
-            (Ok(types), Ok(tags)) => filter_groups(&types, &tags, delegate.filter()),
-            _ => Vec::new(),
+        match tags_for_types(connection, &types) {
+            Ok(tags) => filter_groups(&types, &tags, delegate.filter()),
+            Err(_) => Vec::new(),
         }
     }
 }

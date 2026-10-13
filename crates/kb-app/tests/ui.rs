@@ -147,7 +147,7 @@ fn settle(cx: &mut TestAppContext) {
 fn lists_entries_by_title_and_narrows_them_as_the_user_types(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
-    assert_eq!(titles(&view, cx).len(), 12);
+    assert_eq!(titles(&view, cx).len(), 8);
 
     type_text(cx, window, "docker");
     settle(cx);
@@ -257,7 +257,7 @@ fn runs_one_query_after_typing_settles(cx: &mut TestAppContext) {
     let (window, view) = open(cx, sample_config(home.path()));
     type_text(cx, window, "docker");
     cx.run_until_parked();
-    assert_eq!(titles(&view, cx).len(), 12, "nothing runs before the debounce elapses");
+    assert_eq!(titles(&view, cx).len(), 8, "nothing runs before the debounce elapses");
     settle(cx);
     assert_eq!(titles(&view, cx), ["docker ps -a"]);
 }
@@ -457,4 +457,29 @@ fn opens_the_actions_and_the_filter_with_a_click(cx: &mut TestAppContext) {
     press(cx, window, "escape");
     click(cx, window, "filter-button");
     assert!(cx.read(|cx| view.read(cx).is_filter_open()), "a click opens the filter");
+}
+
+#[gpui_kit::test]
+fn shows_only_the_four_entry_types_and_counts_them(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    let all = titles(&view, cx);
+    assert_eq!(
+        all.len(),
+        8,
+        "the sample's 12 entries less 3 notes and 1 snippet: {all:?}"
+    );
+    assert!(
+        !all.iter()
+            .any(|t| t == "Café ☕ notes" || t == "An entry of an unknown type")
+    );
+    let (count, types) = cx.read(|cx| {
+        let list = view.read(cx).list().read(cx);
+        (list.delegate().count(), list.delegate().visible_types().to_vec())
+    });
+    assert_eq!(count, 8);
+    assert_eq!(types, ["bookmarks", "cheats", "commands", "tasks"]);
+    type_text(cx, window, "café");
+    settle(cx);
+    assert!(titles(&view, cx).is_empty(), "a note never shows, even when it matches");
 }

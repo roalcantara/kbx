@@ -39,10 +39,15 @@ pub struct SearchSql {
     pub params: Vec<rusqlite::types::Value>,
 }
 
-/// The statement the TypeScript engine runs: FTS rank order with text, title order without.
-/// `CROSS JOIN` pins the FTS match as the outer loop on every SQLite version.
-#[must_use]
-pub fn build_search_sql(query: &SearchQuery) -> SearchSql {
+/// The FROM clause, the WHERE clause and their parameters, shared by a page and its count.
+struct Filtered {
+    from: &'static str,
+    filter: String,
+    params: Vec<rusqlite::types::Value>,
+    fts: bool,
+}
+
+fn filtered(query: &SearchQuery) -> Filtered {
     use rusqlite::types::Value;
     let fts = fts_prefix_query(&query.text);
     let mut conditions = Vec::new();
@@ -61,22 +66,67 @@ pub fn build_search_sql(query: &SearchQuery) -> SearchSql {
         conditions.push("EXISTS (SELECT 1 FROM entry_tags WHERE entry_id = e.id AND tag = ?)".to_owned());
         params.push(Value::Text(tag.clone()));
     }
-    let limit = i64::try_from(query.limit).unwrap_or(i64::MAX);
-    let offset = i64::try_from(query.offset).unwrap_or(i64::MAX);
-    params.extend([Value::Integer(limit), Value::Integer(offset)]);
     let filter = if conditions.is_empty() {
         String::new()
     } else {
         format!(" WHERE {}", conditions.join(" AND "))
     };
-    let sql = if fts.is_empty() {
-        format!("SELECT e.* FROM entries e{filter} ORDER BY e.title ASC LIMIT ? OFFSET ?")
-    } else {
-        format!(
-            "SELECT e.* FROM entries_fts(?) fts CROSS JOIN entries e ON e.rowid = fts.rowid{filter} ORDER BY fts.rank LIMIT ? OFFSET ?"
-        )
-    };
-    SearchSql { sql, params }
+    Filtered {
+        from: if fts.is_empty() {
+            "entries e"
+        } else {
+            "entries_fts(?) fts CROSS JOIN entries e ON e.rowid = fts.rowid"
+        },
+        filter,
+        params,
+        fts: !fts.is_empty(),
+    }
+}
+
+/// The statement the TypeScript engine runs: FTS rank order with text, title order without.
+/// `CROSS JOIN` pins the FTS match as the outer loop on every SQLite version.
+#[must_use]
+pub fn build_search_sql(query: &SearchQuery) -> SearchSql {
+    use rusqlite::types::Value;
+    let Filtered {
+        from,
+        filter,
+        mut params,
+        fts,
+    } = filtered(query);
+    let limit = i64::try_from(query.limit).unwrap_or(i64::MAX);
+    let offset = i64::try_from(query.offset).unwrap_or(i64::MAX);
+    params.extend([Value::Integer(limit), Value::Integer(offset)]);
+    let order = if fts { "fts.rank" } else { "e.title ASC" };
+    SearchSql {
+        sql: format!("SELECT e.* FROM {from}{filter} ORDER BY {order} LIMIT ? OFFSET ?"),
+        params,
+    }
+}
+
+/// How many entries `query` matches, whatever its page window: the status line's count.
+#[must_use]
+pub fn build_count_sql(query: &SearchQuery) -> SearchSql {
+    let Filtered {
+        from, filter, params, ..
+    } = filtered(query);
+    SearchSql {
+        sql: format!("SELECT COUNT(*) FROM {from}{filter}"),
+        params,
+    }
+}
+
+/// How many entries `query` matches.
+///
+/// # Errors
+///
+/// An SQLite error.
+pub fn count(connection: &Connection, query: &SearchQuery) -> rusqlite::Result<usize> {
+    let SearchSql { sql, params } = build_count_sql(query);
+    let count: i64 = connection
+        .prepare_cached(&sql)?
+        .query_row(params_from_iter(params), |row| row.get(0))?;
+    Ok(usize::try_from(count).unwrap_or(0))
 }
 
 /// The entry types in the index, sorted: the filter's type choices.
@@ -95,6 +145,26 @@ pub fn entry_types(connection: &Connection) -> rusqlite::Result<Vec<String>> {
 /// An SQLite error.
 pub fn tags(connection: &Connection) -> rusqlite::Result<Vec<String>> {
     column(connection, "SELECT DISTINCT tag FROM entry_tags ORDER BY tag ASC")
+}
+
+/// The tags of the entries of `types`, sorted; every tag when `types` is empty. The app's filter
+/// offers only the tags of the types it shows.
+///
+/// # Errors
+///
+/// An SQLite error.
+pub fn tags_for_types(connection: &Connection, types: &[String]) -> rusqlite::Result<Vec<String>> {
+    if types.is_empty() {
+        return tags(connection);
+    }
+    let sql = format!(
+        "SELECT DISTINCT t.tag FROM entry_tags t JOIN entries e ON e.id = t.entry_id WHERE e.type IN ({}) ORDER BY t.tag ASC",
+        vec!["?"; types.len()].join(", ")
+    );
+    connection
+        .prepare_cached(&sql)?
+        .query_map(params_from_iter(types), |row| row.get(0))?
+        .collect()
 }
 
 fn column(connection: &Connection, sql: &str) -> rusqlite::Result<Vec<String>> {
@@ -170,5 +240,36 @@ mod tests {
             "SELECT e.* FROM entries e ORDER BY e.title ASC LIMIT ? OFFSET ?"
         );
         assert_eq!(sql.params.len(), 2);
+    }
+
+    #[test]
+    fn counts_with_the_page_query_s_filter_and_no_window() {
+        let sql = build_count_sql(&query("docker", &["commands"], &["infra"]));
+        assert_eq!(
+            sql.sql,
+            "SELECT COUNT(*) FROM entries_fts(?) fts CROSS JOIN entries e ON e.rowid = fts.rowid WHERE e.type IN (?) AND EXISTS (SELECT 1 FROM entry_tags WHERE entry_id = e.id AND tag = ?)"
+        );
+        assert_eq!(sql.params.len(), 3);
+        assert_eq!(
+            build_count_sql(&query("", &[], &[])).sql,
+            "SELECT COUNT(*) FROM entries e"
+        );
+    }
+
+    #[test]
+    fn lists_only_the_tags_of_the_chosen_types() {
+        let dir = tempfile::tempdir().unwrap();
+        let (sources, database) = (dir.path().join("s"), dir.path().join("kb.db"));
+        std::fs::create_dir(&sources).unwrap();
+        std::fs::write(
+            sources.join("a.yml"),
+            "commands:\n  ls:\n    tags: [shell]\nnotes:\n  n:\n    tags: [diary]\n",
+        )
+        .unwrap();
+        crate::sync::sync_knowledge_base(&sources, &database, &std::sync::atomic::AtomicBool::new(false), |_| {})
+            .unwrap();
+        let connection = crate::sync::open_readonly(&database).unwrap();
+        assert_eq!(tags_for_types(&connection, &["commands".into()]).unwrap(), ["shell"]);
+        assert_eq!(tags_for_types(&connection, &[]).unwrap(), ["diary", "shell"]);
     }
 }

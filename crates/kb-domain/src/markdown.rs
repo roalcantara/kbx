@@ -206,16 +206,11 @@ pub fn build_entry_markdown(entry: &Entry) -> String {
     build_entry_markdown_with(entry, &|path| fs::read_to_string(path))
 }
 
-/// [`build_entry_markdown`], reading `file://` notes with `read`.
-fn build_entry_markdown_with(entry: &Entry, read: &dyn Fn(&Path) -> io::Result<String>) -> String {
-    let files = NoteFiles {
-        read,
-        source_file: &entry.source_file,
-        included: Cell::new(false),
-    };
+/// The blocks before the notes: a `YouTube` bookmark's thumbnail, a command's code block, the
+/// description quote.
+fn head_blocks(entry: &Entry) -> Vec<Block> {
     let entry_type = entry.entry_type.to_lowercase();
     let mut blocks = Vec::new();
-
     if entry_type.contains("bookmark")
         && let Some(id) = youtube_video_id(&entry.primary_content)
     {
@@ -233,15 +228,12 @@ fn build_entry_markdown_with(entry: &Entry, read: &dyn Fn(&Path) -> io::Result<S
     if let Some(description) = entry.description.as_deref().map(str::trim).filter(|d| !d.is_empty()) {
         blocks.push(Block::Blockquote(description.to_owned()));
     }
-    if has_notes(entry.notes.as_ref()) {
-        blocks.extend(
-            entry
-                .notes
-                .as_ref()
-                .map(|notes| notes_blocks(notes, &files))
-                .unwrap_or_default(),
-        );
-    }
+    blocks
+}
+
+/// The blocks after the notes: the links and the source line.
+fn tail_blocks(entry: &Entry) -> Vec<Block> {
+    let mut blocks = Vec::new();
     if !entry.links.is_empty() {
         blocks.push(Block::H3("LINKS"));
         blocks.push(Block::List(
@@ -259,8 +251,62 @@ fn build_entry_markdown_with(entry: &Entry, read: &dyn Fn(&Path) -> io::Result<S
         ));
     }
     blocks.push(Block::Text(format!("\n\n*Source: `{}`*", entry.source_rel_path)));
+    blocks
+}
 
+fn join(blocks: &[Block]) -> String {
     blocks.iter().map(render).collect::<Vec<_>>().join("\n")
+}
+
+/// [`build_entry_markdown`], reading `file://` notes with `read`.
+fn build_entry_markdown_with(entry: &Entry, read: &dyn Fn(&Path) -> io::Result<String>) -> String {
+    let files = NoteFiles {
+        read,
+        source_file: &entry.source_file,
+        included: Cell::new(false),
+    };
+    let mut blocks = head_blocks(entry);
+    if has_notes(entry.notes.as_ref()) {
+        blocks.extend(
+            entry
+                .notes
+                .as_ref()
+                .map(|notes| notes_blocks(notes, &files))
+                .unwrap_or_default(),
+        );
+    }
+    blocks.extend(tail_blocks(entry));
+    join(&blocks)
+}
+
+/// The notes alone, for the entry view's Body (spec §5): the entry's stored `notes_markdown`
+/// without its head (thumbnail, command, description) and tail (links, source), which the entry
+/// view draws itself. The head and tail are rebuilt from the entry exactly as the builder wrote
+/// them, so the notes are never compiled again (no `file://` read). Markdown of another shape
+/// stays whole.
+#[must_use]
+pub fn notes_body(entry: &Entry) -> &str {
+    let markdown = entry.notes_markdown.as_str();
+    let head = join(&head_blocks(entry));
+    let tail = join(&tail_blocks(entry));
+    let rest = if head.is_empty() {
+        markdown
+    } else {
+        match markdown
+            .strip_prefix(head.as_str())
+            .and_then(|rest| rest.strip_prefix('\n'))
+        {
+            Some(rest) => rest,
+            None => return markdown,
+        }
+    };
+    if rest == tail {
+        return "";
+    }
+    rest.strip_suffix(tail.as_str())
+        .and_then(|body| body.strip_suffix('\n'))
+        .unwrap_or(markdown)
+        .trim_end_matches('\n')
 }
 
 /// `json2md` of one block. Every typed block ends with a newline; a text block does not.
@@ -434,5 +480,41 @@ mod tests {
             build_entry_markdown(&entry)
         );
         assert!(!build_entry_markdown(&entry).contains("---"));
+    }
+
+    fn compiled(entry_type: &str, key: &str, source: &str) -> Entry {
+        let raw = crate::yaml::load(source).unwrap().unwrap();
+        let mut entry = crate::entry::normalize_entry("/kb/f.yml", "f.yml", entry_type, key, &raw);
+        entry.notes_markdown = build_entry_markdown(&entry);
+        entry
+    }
+
+    #[test]
+    fn keeps_only_the_notes_for_the_body() {
+        let command = compiled(
+            "commands",
+            "docker ps -a",
+            "desc: List them\nnotes: Add `--format` for names.\nlinks: [{Docs: https://d.example}]\n",
+        );
+        assert_eq!(notes_body(&command), "Add `--format` for names.");
+        let video = compiled(
+            "bookmarks",
+            "https://youtu.be/aqz-KE-bpKQ",
+            "desc: A talk\nnotes:\n  - One.\n  - md: Two.\n",
+        );
+        assert_eq!(notes_body(&video), "One.\nTwo.");
+    }
+
+    #[test]
+    fn has_no_body_without_notes() {
+        let bare = compiled("tasks", "t", "desc: Only a description\n");
+        assert_eq!(notes_body(&bare), "");
+        let mut untouched = compiled("tasks", "t", "notes: hi\n");
+        untouched.notes_markdown = "something else entirely".into();
+        assert_eq!(
+            notes_body(&untouched),
+            "something else entirely",
+            "an unexpected shape stays whole"
+        );
     }
 }

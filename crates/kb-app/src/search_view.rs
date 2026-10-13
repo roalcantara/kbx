@@ -98,9 +98,15 @@ impl SearchView {
     pub fn new(config: Config, catalog: Catalog, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let connection = open_readonly(config.database()).ok();
         let tag_images = TagImages::scan(config.tag_images());
+        let types: Vec<String> = catalog.types.keys().cloned().collect();
         let placeholder = catalog.messages.search_placeholder.clone();
         let list = cx.new(|cx| {
-            ListState::new(EntryList::new(connection).with_tag_images(tag_images), window, cx).searchable(false)
+            ListState::new(
+                EntryList::new(connection).with_tag_images(tag_images).with_types(types),
+                window,
+                cx,
+            )
+            .searchable(false)
         });
         let query_input = cx.new(|cx| InputState::new(window, cx).placeholder(placeholder));
         // The first row starts selected, as in Raycast, so Enter and ⌘K act on it at once.

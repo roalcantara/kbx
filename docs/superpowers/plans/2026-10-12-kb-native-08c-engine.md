@@ -38,7 +38,7 @@ narrows every query to the index's types the catalog names.
 
 **Files:** modify `crates/kb-domain/src/search.rs`, `crates/kb-domain/tests/goldens.rs`.
 
-- [ ] **Step 1: Write the failing tests.** Append to the `tests` module of `search.rs`:
+- [x] **Step 1: Write the failing tests.** Append to the `tests` module of `search.rs`:
 
 ```rust
 #[test]
@@ -85,7 +85,7 @@ fn counts_what_the_typescript_engine_returns() {
 Run: `cargo nextest run -p kb-domain`
 Expected: FAIL to compile: no function `build_count_sql`, no function `count`.
 
-- [ ] **Step 2: Share the filter between the page and the count.** In `search.rs`, replace `build_search_sql` with:
+- [x] **Step 2: Share the filter between the page and the count.** In `search.rs`, replace `build_search_sql` with:
 
 ```rust
 /// The FROM clause, the WHERE clause and their parameters, shared by a page and its count.
@@ -177,13 +177,13 @@ pub fn count(connection: &Connection, query: &SearchQuery) -> rusqlite::Result<u
 }
 ```
 
-- [ ] **Step 3: Run the tests and see them pass.**
+- [x] **Step 3: Run the tests and see them pass.**
 
 Run: `cargo nextest run -p kb-domain`
 Expected: PASS, including `orders_by_rank_from_the_fts_match_with_text`, `orders_by_title_without_text`,
 `queries_return_what_the_typescript_engine_returns` and the two new tests.
 
-- [ ] **Step 4: Gate and commit.**
+- [x] **Step 4: Gate and commit.**
 
 ```bash
 mise run gate
@@ -199,7 +199,7 @@ git commit -m "feat(domain): Count a query's matches" \
 
 **Files:** modify `crates/kb-domain/src/search.rs`.
 
-- [ ] **Step 1: Write the failing test.** Append to the `tests` module of `search.rs`:
+- [x] **Step 1: Write the failing test.** Append to the `tests` module of `search.rs`:
 
 ```rust
 #[test]
@@ -223,7 +223,7 @@ fn lists_only_the_tags_of_the_chosen_types() {
 Run: `cargo nextest run -p kb-domain search`
 Expected: FAIL to compile: no function `tags_for_types`.
 
-- [ ] **Step 2: Write it.** Add after `tags` in `search.rs`:
+- [x] **Step 2: Write it.** Add after `tags` in `search.rs`:
 
 ```rust
 /// The tags of the entries of `types`, sorted; every tag when `types` is empty. The app's filter
@@ -247,12 +247,12 @@ pub fn tags_for_types(connection: &Connection, types: &[String]) -> rusqlite::Re
 }
 ```
 
-- [ ] **Step 3: Run the tests and see them pass.**
+- [x] **Step 3: Run the tests and see them pass.**
 
 Run: `cargo nextest run -p kb-domain search`
 Expected: PASS. (`tempfile` is already a dev-dependency of kb-domain.)
 
-- [ ] **Step 4: Gate and commit.**
+- [x] **Step 4: Gate and commit.**
 
 ```bash
 mise run gate
@@ -267,7 +267,7 @@ git commit -m "feat(domain): List the tags of chosen entry types" \
 
 **Files:** modify `crates/kb-domain/src/markdown.rs`.
 
-- [ ] **Step 1: Write the failing tests.** Append to the `tests` module of `markdown.rs`:
+- [x] **Step 1: Write the failing tests.** Append to the `tests` module of `markdown.rs`:
 
 ```rust
     fn compiled(entry_type: &str, key: &str, source: &str) -> Entry {
@@ -306,7 +306,7 @@ git commit -m "feat(domain): List the tags of chosen entry types" \
 Run: `cargo nextest run -p kb-domain markdown`
 Expected: FAIL to compile: no function `notes_body`.
 
-- [ ] **Step 2: Split the builder and slice the body.** In `markdown.rs`, replace `build_entry_markdown_with` with the
+- [x] **Step 2: Split the builder and slice the body.** In `markdown.rs`, replace `build_entry_markdown_with` with the
       three functions below and add `notes_body` after `build_entry_markdown`:
 
 ```rust
@@ -415,14 +415,14 @@ pub fn notes_body(entry: &Entry) -> &str {
 
 (`build_entry_markdown` keeps calling `build_entry_markdown_with`; the goldens prove the output is byte-identical.)
 
-- [ ] **Step 3: Run the tests and see them pass.**
+- [x] **Step 3: Run the tests and see them pass.**
 
 Run: `cargo nextest run -p kb-domain`
 Expected: PASS, including `rows_match_the_typescript_engine` (the stored Markdown is unchanged). If
 `keeps_only_the_notes_for_the_body` fails only on a trailing newline, the `trim_end_matches('\n')` above is the
 intended behaviour: fix the expectation's whitespace, never the slicing.
 
-- [ ] **Step 4: Gate and commit.**
+- [x] **Step 4: Gate and commit.**
 
 ```bash
 mise run gate
@@ -439,7 +439,7 @@ git commit -m "feat(domain): Give an entry's notes without its head and tail" \
 **Files:** modify `crates/kb-app/src/entry_list.rs`, `crates/kb-app/src/search_view.rs`,
 `crates/kb-app/src/search_view/overlays.rs`, `crates/kb-app/tests/ui.rs`.
 
-- [ ] **Step 1: Write the failing UI test.** Append to `crates/kb-app/tests/ui.rs`:
+- [x] **Step 1: Write the failing UI test.** Append to `crates/kb-app/tests/ui.rs`:
 
 ```rust
 #[gpui_kit::test]
@@ -464,7 +464,7 @@ fn shows_only_the_four_entry_types_and_counts_them(cx: &mut TestAppContext) {
 Run: `cargo nextest run -p kb-app --test ui shows_only_the_four_entry_types_and_counts_them`
 Expected: FAIL to compile: no method `count` / `visible_types`.
 
-- [ ] **Step 2: Narrow the list.** In `crates/kb-app/src/entry_list.rs`:
+- [x] **Step 2: Narrow the list.** In `crates/kb-app/src/entry_list.rs`:
 
   - change the `kb_domain::search` import to `use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, entry_types, search};`;
   - add three fields to `EntryList` after `filter: FilterState,`:
@@ -548,7 +548,7 @@ fn refresh(&mut self) {
 }
 ```
 
-- [ ] **Step 3: Give the list the catalog's types.** In `search_view.rs`, `SearchView::new`, change the list
+- [x] **Step 3: Give the list the catalog's types.** In `search_view.rs`, `SearchView::new`, change the list
       construction to:
 
 ```rust
@@ -565,7 +565,7 @@ let list = cx.new(|cx| {
 
 (This must sit before `catalog` moves into `Rc::new`; place `let types = …` right after `let tag_images = …`.)
 
-- [ ] **Step 4: Offer only the visible types and their tags in the filter.** In
+- [x] **Step 4: Offer only the visible types and their tags in the filter.** In
       `crates/kb-app/src/search_view/overlays.rs`, replace the body of `filter_sections` with:
 
 ```rust
@@ -584,18 +584,18 @@ match tags_for_types(connection, &types) {
 and change `use kb_domain::search::{FilterState, entry_types, tags};` to
 `use kb_domain::search::{FilterState, tags_for_types};`.
 
-- [ ] **Step 5: Update the sample-corpus expectations.** In `crates/kb-app/tests/ui.rs`:
+- [x] **Step 5: Update the sample-corpus expectations.** In `crates/kb-app/tests/ui.rs`:
   - `lists_entries_by_title_and_narrows_them_as_the_user_types`: `assert_eq!(titles(&view, cx).len(), 12);` becomes
     `assert_eq!(titles(&view, cx).len(), 8);`;
   - `runs_one_query_after_typing_settles`: `assert_eq!(titles(&view, cx).len(), 12, "nothing runs before the debounce elapses");`
     becomes `assert_eq!(titles(&view, cx).len(), 8, "nothing runs before the debounce elapses");`.
 
-- [ ] **Step 6: Run every kb-app test.**
+- [x] **Step 6: Run every kb-app test.**
 
 Run: `cargo nextest run -p kb-app`
 Expected: PASS.
 
-- [ ] **Step 7: Gate and commit.**
+- [x] **Step 7: Gate and commit.**
 
 ```bash
 mise run gate

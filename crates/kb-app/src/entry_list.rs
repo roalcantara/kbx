@@ -16,7 +16,7 @@ use gpui_kit::{
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
 use kb_domain::row::row_to_entry;
-use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, search};
+use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, entry_types, search};
 
 use crate::accents::accent;
 use crate::presentation::{TypeKey, favicon_url, row_label, row_tags, tag_hue, type_badge, type_key};
@@ -35,6 +35,12 @@ pub struct EntryList {
     connection: Option<Connection>,
     query: String,
     filter: FilterState,
+    /// The catalog's entry types (D6); other types never show.
+    known_types: Vec<String>,
+    /// The index's types the catalog knows: what an empty type filter means.
+    visible_types: Vec<String>,
+    /// How many entries the query and filter match, whatever the page.
+    count: usize,
     limit: usize,
     entries: Vec<Entry>,
     selected: Option<IndexPath>,
@@ -51,6 +57,9 @@ impl EntryList {
             connection,
             query: String::new(),
             filter: FilterState::default(),
+            known_types: Vec::new(),
+            visible_types: Vec::new(),
+            count: 0,
             limit: PAGE_SIZE,
             entries: Vec::new(),
             selected: None,
@@ -67,6 +76,26 @@ impl EntryList {
     pub fn with_tag_images(mut self, tag_images: TagImages) -> Self {
         self.tag_images = tag_images;
         self
+    }
+
+    /// Shows only `types` (the catalog's), as the sources write them, lowercase.
+    #[must_use]
+    pub fn with_types(mut self, types: impl IntoIterator<Item = String>) -> Self {
+        self.known_types = types.into_iter().collect();
+        self.refresh();
+        self
+    }
+
+    /// The index's types the list shows, sorted: the filter's type choices.
+    #[must_use]
+    pub fn visible_types(&self) -> &[String] {
+        &self.visible_types
+    }
+
+    /// How many entries match the query and filter (the status line).
+    #[must_use]
+    pub fn count(&self) -> usize {
+        self.count
     }
 
     /// Whether rows show their titles alone, as beside the split pane.
@@ -129,21 +158,44 @@ impl EntryList {
         self.secondary_confirm
     }
 
-    /// Runs the query for the current text, filter and page window.
+    /// Runs the query for the current text, filter and page window, over the visible types only.
     fn refresh(&mut self) {
         let Some(connection) = &self.connection else {
             self.entries.clear();
+            self.visible_types.clear();
+            self.count = 0;
             return;
         };
+        self.visible_types = entry_types(connection)
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|t| self.known_types.contains(&t.trim().to_lowercase()))
+            .collect();
+        let types = if self.filter.types.is_empty() {
+            self.visible_types.clone()
+        } else {
+            self.filter.types.clone()
+        };
+        if types.is_empty() {
+            self.entries.clear();
+            self.count = 0;
+            return;
+        }
         let query = SearchQuery {
             text: self.query.clone(),
-            filter: self.filter.clone(),
+            filter: FilterState {
+                types,
+                tags: self.filter.tags.clone(),
+            },
             limit: self.limit,
             offset: 0,
         };
         // A failed query keeps the previous results on screen rather than emptying the list.
         if let Ok(rows) = search(connection, &query) {
             self.entries = rows.iter().map(row_to_entry).collect();
+        }
+        if let Ok(matched) = count(connection, &query) {
+            self.count = matched;
         }
     }
 
