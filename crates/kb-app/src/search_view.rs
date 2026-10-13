@@ -4,7 +4,6 @@
 use std::fs;
 use std::rc::Rc;
 
-use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{InputEvent, InputState};
 use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::{ActiveTheme as _, IndexPath, WindowExt as _, h_flex, v_flex};
@@ -19,20 +18,18 @@ use kb_domain::sync::open_readonly;
 
 mod footer;
 mod header;
-mod overlays;
+mod panel;
 
 use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen};
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
-    Back, CONTEXT, CopyPath, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter,
-    OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3,
-    RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter,
-    ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
+    Back, CONTEXT, CopyPath, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
+    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5,
+    RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter,
+    ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::{PaneLayout, next_offset, notes_pane};
-use crate::palette::Page;
-use crate::presentation::{TypeKey, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
@@ -59,9 +56,9 @@ const NOTES_LINE_STEP: Pixels = px(60.);
 enum Overlay {
     /// Nothing.
     None,
-    /// The actions popover, on this page.
-    Actions(Page),
-    /// The filter dropdown.
+    /// The action panel: the root, or a submenu.
+    Actions(Option<crate::actions::Submenu>),
+    /// The filter.
     Filter,
 }
 
@@ -71,10 +68,14 @@ pub struct SearchView {
     catalog: Rc<Catalog>,
     list: Entity<ListState<EntryList>>,
     query_input: Entity<InputState>,
-    palette: Entity<CommandState>,
-    filter_palette: Entity<CommandState>,
+    /// The panel's shared search field (D9, D15).
+    panel_query: Entity<InputState>,
+    /// The visible row the panel highlights.
+    panel_selected: usize,
     /// Focus for the screens without the list, so their keys reach this view.
     focus: FocusHandle,
+    /// Focus for the panel itself, so its keys reach it on the submenus (no search field).
+    panel_focus: FocusHandle,
     screen: Screen,
     show_details: bool,
     show_metadata: bool,
@@ -104,6 +105,8 @@ impl SearchView {
         let tag_images = TagImages::scan(config.tag_images());
         let placeholder = catalog.messages.search_placeholder.clone();
         let catalog = Rc::new(catalog);
+        let panel_query = cx.new(|cx| InputState::new(window, cx).placeholder(catalog.panel.search.clone()));
+        let panel_sub = cx.subscribe_in(&panel_query, window, Self::on_panel_query_event);
         let list = cx.new(|cx| {
             ListState::new(
                 EntryList::new(connection)
@@ -124,8 +127,6 @@ impl SearchView {
         query_input.update(cx, |input, cx| {
             input.focus(window, cx);
         });
-        let palette = cx.new(|cx| CommandState::new(window, cx));
-        let filter_palette = cx.new(|cx| CommandState::new(window, cx));
         let list_sub = cx.subscribe_in(&list, window, Self::on_list_event);
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
         Self {
@@ -133,9 +134,10 @@ impl SearchView {
             catalog,
             list,
             query_input,
-            palette,
-            filter_palette,
+            panel_query,
+            panel_selected: 0,
             focus: cx.focus_handle(),
+            panel_focus: cx.focus_handle(),
             screen: Screen::Search,
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
@@ -144,7 +146,7 @@ impl SearchView {
             detail_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
             last_notice: None,
-            subscriptions: vec![list_sub, input_sub],
+            subscriptions: vec![list_sub, input_sub, panel_sub],
         }
     }
 
@@ -286,6 +288,11 @@ impl SearchView {
 
     /// Runs what the current screen binds to `keys` (`enter`, `cmd-enter`, `shift-cmd-enter`).
     fn ladder(&mut self, keys: &str, window: &mut Window, cx: &mut Context<Self>) {
+        // While the panel is open it owns ↵ (its own `Confirm` action), so the screen ladder must
+        // not also run and switch the screen under it.
+        if self.overlay != Overlay::None {
+            return;
+        }
         let action = self
             .screen_keys(cx)
             .into_iter()
@@ -378,19 +385,6 @@ impl SearchView {
             list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx);
         });
         self.run_entry(false, window, cx);
-    }
-
-    fn copy_url(&mut self, _: &CopyUrl, window: &mut Window, cx: &mut Context<Self>) {
-        let url = self
-            .list
-            .read(cx)
-            .delegate()
-            .selected_entry()
-            .filter(|e| type_key(&e.entry_type) == TypeKey::Bookmark)
-            .map(|e| e.primary_content.clone());
-        if let Some(url) = url {
-            self.copy(url, window, cx);
-        }
     }
 
     fn copy_path(&mut self, _: &CopyPath, window: &mut Window, cx: &mut Context<Self>) {
@@ -517,11 +511,16 @@ impl SearchView {
     }
 
     fn back(&mut self, _: &Back, window: &mut Window, cx: &mut Context<Self>) {
-        // Esc leaves a page of the actions popover, then the popover, before the screen.
-        match self.overlay {
-            Overlay::Actions(Page::Main) | Overlay::Filter => return self.show_overlay(Overlay::None, window, cx),
-            Overlay::Actions(_) => return self.show_overlay(Overlay::Actions(Page::Main), window, cx),
-            Overlay::None => {}
+        // Esc clears the panel's search, then leaves a submenu, then closes the panel (Raycast).
+        if self.overlay != Overlay::None {
+            if !self.panel_query.read(cx).value().is_empty() {
+                return self.set_panel_query("", window, cx);
+            }
+            let next = match self.overlay {
+                Overlay::Actions(Some(_)) => Overlay::Actions(None),
+                _ => Overlay::None,
+            };
+            return self.show_overlay(next, window, cx);
         }
         match &self.screen {
             Screen::Rebuild(sync) if sync.read(cx).is_running() => sync.read(cx).cancel(),
@@ -547,7 +546,7 @@ impl SearchView {
         let next = if self.is_actions_open() {
             Overlay::None
         } else {
-            Overlay::Actions(Page::Main)
+            Overlay::Actions(None)
         };
         self.show_overlay(next, window, cx);
     }
@@ -667,7 +666,6 @@ impl Render for SearchView {
             .on_action(cx.listener(|this, _: &RunRow7, window, cx| this.run_row(7, window, cx)))
             .on_action(cx.listener(|this, _: &RunRow8, window, cx| this.run_row(8, window, cx)))
             .on_action(cx.listener(|this, _: &RunRow9, window, cx| this.run_row(9, window, cx)))
-            .on_action(cx.listener(Self::copy_url))
             .on_action(cx.listener(Self::copy_path))
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))

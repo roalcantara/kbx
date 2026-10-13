@@ -135,6 +135,12 @@ impl EntryList {
         &self.filter
     }
 
+    /// The tag-images folder's images, for the filter's rows.
+    #[must_use]
+    pub fn tag_images(&self) -> &TagImages {
+        &self.tag_images
+    }
+
     /// Replaces the filter and runs the query again from the first page.
     pub fn set_filter(&mut self, filter: FilterState) {
         self.filter = filter;

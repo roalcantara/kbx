@@ -5,6 +5,8 @@
 
 use std::ops::Range;
 
+use gpui_kit::base::actions::Confirm;
+use gpui_kit::component::input::{MoveDown, MoveUp};
 use gpui_kit::{KeyBinding, actions};
 
 use crate::catalog::Catalog;
@@ -14,6 +16,10 @@ pub const CONTEXT: &str = "Search";
 
 /// Added to [`CONTEXT`] while the detail screen shows.
 pub const DETAIL_CONTEXT: &str = "Detail";
+
+/// The action panel's own key context: it holds the keyboard on the submenus (More…, Links…),
+/// which have no search field, so ↵, Esc and the arrows still reach the panel there.
+pub const PANEL_CONTEXT: &str = "ActionPanel";
 
 actions!(
     kb,
@@ -32,8 +38,6 @@ actions!(
         ScreenCmdEnter,
         /// The screen's ⇧⌘↵.
         ScreenShiftCmdEnter,
-        /// Copy the selected bookmark's URL.
-        CopyUrl,
         /// Open the selected entry's source file.
         OpenSourceFile,
         /// Copy the selected entry's source file path, absolute.
@@ -135,6 +139,13 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         KeyBinding::new("cmd-7", RunRow7, context),
         KeyBinding::new("cmd-8", RunRow8, context),
         KeyBinding::new("cmd-9", RunRow9, context),
+        // The action panel's own keys (D9), so ↵, ⌘↵, Esc and the arrows reach it on the
+        // submenus too, where the search field (and its input context) is gone.
+        KeyBinding::new("enter", Confirm { secondary: false }, Some(PANEL_CONTEXT)),
+        KeyBinding::new("secondary-enter", Confirm { secondary: true }, Some(PANEL_CONTEXT)),
+        KeyBinding::new("escape", Back, Some(PANEL_CONTEXT)),
+        KeyBinding::new("up", MoveUp, Some(PANEL_CONTEXT)),
+        KeyBinding::new("down", MoveDown, Some(PANEL_CONTEXT)),
     ]);
     bindings
 }
@@ -156,8 +167,8 @@ mod tests {
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
         // 7 keyed catalog actions + enter, cmd-enter (detail), shift-cmd-enter, escape, cmd-q, right, left,
-        // down, up, cmd-down, cmd-up, cmd-1…cmd-9.
-        assert_eq!(bindings.len(), 27);
+        // down, up, cmd-down, cmd-up, cmd-1…cmd-9, and the panel's enter, secondary-enter, escape, up, down.
+        assert_eq!(bindings.len(), 32);
     }
 
     #[test]

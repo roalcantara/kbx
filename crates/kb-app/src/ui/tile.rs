@@ -13,7 +13,6 @@ pub enum TileSize {
     /// The footer and the pane header: 20, icon 13.
     Small,
     /// The filter's rows: 18, icon 12.
-    #[allow(dead_code, reason = "the filter's rows read this in Plan 8e")]
     Mini,
 }
 

@@ -125,6 +125,20 @@ fn click(cx: &mut TestAppContext, window: AnyWindowHandle, id: &'static str) {
     act(cx, window, |window, cx| window.click(id, cx));
 }
 
+/// Opens the filter (⌘P) and lets it render.
+fn open_filter(cx: &mut TestAppContext, window: AnyWindowHandle) {
+    press(cx, window, "cmd-p");
+    cx.run_until_parked();
+}
+
+/// Types `query` into the open filter and confirms it with `keys` (↵ toggles, ⌘↵ isolates).
+fn confirm_filter(cx: &mut TestAppContext, window: AnyWindowHandle, query: &'static str, keys: &'static str) {
+    type_text(cx, window, query);
+    cx.run_until_parked();
+    press(cx, window, keys);
+    settle(cx);
+}
+
 /// Opens the panel over the sample corpus and searches for `query`. Keep the home alive.
 fn open_with_query(
     cx: &mut TestAppContext,
@@ -175,50 +189,81 @@ fn copies_a_command_with_its_primary_action(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn copies_the_title_from_the_copy_page_of_the_actions(cx: &mut TestAppContext) {
-    let (_home, window, _view) = open_with_query(cx, "rebase");
+fn lists_the_root_actions_for_a_bookmark_with_links(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "example");
     press(cx, window, "cmd-k");
     cx.run_until_parked();
-    type_text(cx, window, "Copy…");
-    cx.run_until_parked();
-    press(cx, window, "enter");
-    cx.run_until_parked();
-    type_text(cx, window, "title");
-    cx.run_until_parked();
-    press(cx, window, "enter");
-    cx.run_until_parked();
-    let copied = cx.read_from_clipboard().and_then(|item| item.text());
-    assert_eq!(copied.as_deref(), Some("Interactive rebase"));
+    assert_eq!(
+        cx.read(|cx| view.read(cx).panel_labels(cx)),
+        [["Details", "Open", "Copy", "Resize", "Links…", "More…"]]
+    );
 }
 
 #[gpui_kit::test]
-fn leaves_a_page_of_the_actions_then_the_actions_with_escape(cx: &mut TestAppContext) {
+fn copies_the_path_found_from_the_root_s_search(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "rebase");
     press(cx, window, "cmd-k");
     cx.run_until_parked();
-    assert!(cx.read(|cx| view.read(cx).is_actions_open()));
-    type_text(cx, window, "Copy…");
+    type_text(cx, window, "path");
     cx.run_until_parked();
     press(cx, window, "enter");
     cx.run_until_parked();
-    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
+    let copied = cx.read_from_clipboard().and_then(|item| item.text()).unwrap();
+    assert!(copied.ends_with("cheats.yml"), "{copied}");
+    assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
+}
+
+#[gpui_kit::test]
+fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    type_text(cx, window, "More");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
     assert_eq!(
-        labels,
-        [["Copy Title", "Copy Notes", "Copy Raw YAML"]],
-        "the cheat has no description"
+        cx.read(|cx| view.read(cx).panel_labels(cx)),
+        [vec!["Notes", "Path"], vec!["Edit", "Refresh", "Configure"]],
+        "the cheat sheet has no description"
     );
     press(cx, window, "escape");
     cx.run_until_parked();
-    let labels = cx.read(|cx| view.read(cx).actions_labels(cx));
-    assert_eq!(labels[0], ["Show Details", "Copy Cheat Sheet"]);
+    assert_eq!(cx.read(|cx| view.read(cx).panel_labels(cx))[0][0], "Details");
     press(cx, window, "escape");
     cx.run_until_parked();
     assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
     assert_eq!(
         titles(&view, cx),
         ["Interactive rebase"],
-        "Esc closed the popover, not the query"
+        "Esc closed the panel, not the query"
     );
+}
+
+#[gpui_kit::test]
+fn opens_and_copies_a_link_from_links(cx: &mut TestAppContext) {
+    let (_home, window, _view) = open_with_query(cx, "example");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    type_text(cx, window, "Links…");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    press(cx, window, "cmd-enter");
+    cx.run_until_parked();
+    let copied = cx.read_from_clipboard().and_then(|item| item.text());
+    assert_eq!(copied.as_deref(), Some("https://example.com/changelog"));
+}
+
+#[gpui_kit::test]
+fn isolates_a_filter_choice_with_cmd_return(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    open_filter(cx, window);
+    confirm_filter(cx, window, "docker", "cmd-enter");
+    assert!(!cx.read(|cx| view.read(cx).is_filter_open()), "Only closes the filter");
+    let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
+    assert_eq!((filter.types.len(), filter.tags), (0, vec!["docker".to_owned()]));
 }
 
 #[gpui_kit::test]
@@ -423,13 +468,9 @@ fn task_t2_copies_a_command_with_a_query_and_one_chord(cx: &mut TestAppContext) 
 fn task_t3_filters_by_a_type_and_a_tag_in_one_visit(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
-    press(cx, window, "cmd-p");
-    cx.run_until_parked();
-    for choice in ["Commands", "#docker"] {
-        type_text(cx, window, choice);
-        cx.run_until_parked();
-        press(cx, window, "enter");
-        settle(cx);
+    open_filter(cx, window);
+    for choice in ["Commands", "docker"] {
+        confirm_filter(cx, window, choice, "enter");
     }
     assert!(cx.read(|cx| view.read(cx).is_filter_open()), "stays open while picking");
     press(cx, window, "escape");

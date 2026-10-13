@@ -1,93 +1,10 @@
-//! The filter's choices: any of the selected types, and every selected tag.
+//! The filter in a few words, for the header's pill. The choices themselves live in
+//! `actions.rs`'s filter page (D15).
 
 use kb_domain::search::FilterState;
 
 use crate::catalog::Catalog;
 use crate::presentation::type_label;
-
-/// One choice, checked when it is part of the current filter, and the filter picking it gives.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FilterChoice {
-    /// Its label.
-    pub label: String,
-    /// Whether it is part of the current filter.
-    pub checked: bool,
-    /// The filter after picking it.
-    pub next: FilterState,
-}
-
-/// A labelled group of choices.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FilterGroup {
-    /// The group label.
-    pub label: String,
-    /// Its choices, never empty.
-    pub choices: Vec<FilterChoice>,
-}
-
-fn toggled(values: &[String], value: &str) -> Vec<String> {
-    if values.iter().any(|v| v == value) {
-        values.iter().filter(|v| *v != value).cloned().collect()
-    } else {
-        let mut next = values.to_vec();
-        next.push(value.to_owned());
-        next
-    }
-}
-
-/// The choices for the index's `types` and `tags` under the `current` filter. Picking a checked
-/// choice removes it; picking any other adds it.
-#[must_use]
-pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -> Vec<FilterGroup> {
-    let mut groups = Vec::new();
-    let active = current.types.len() + current.tags.len();
-    if active > 0 {
-        groups.push(FilterGroup {
-            // "2 Filters", as Raycast's summary above Clear All Filters.
-            label: format!("{active} Filter{}", if active == 1 { "" } else { "s" }),
-            choices: vec![FilterChoice {
-                label: "Clear All Filters".into(),
-                checked: false,
-                next: FilterState::default(),
-            }],
-        });
-    }
-    let type_choices: Vec<FilterChoice> = types
-        .iter()
-        .map(|t| FilterChoice {
-            label: type_label(t),
-            checked: current.types.contains(t),
-            next: FilterState {
-                types: toggled(&current.types, t),
-                tags: current.tags.clone(),
-            },
-        })
-        .collect();
-    if !type_choices.is_empty() {
-        groups.push(FilterGroup {
-            label: "Types".into(),
-            choices: type_choices,
-        });
-    }
-    let tag_choices: Vec<FilterChoice> = tags
-        .iter()
-        .map(|t| FilterChoice {
-            label: format!("#{t}"),
-            checked: current.tags.contains(t),
-            next: FilterState {
-                types: current.types.clone(),
-                tags: toggled(&current.tags, t),
-            },
-        })
-        .collect();
-    if !tag_choices.is_empty() {
-        groups.push(FilterGroup {
-            label: "Tags".into(),
-            choices: tag_choices,
-        });
-    }
-    groups
-}
 
 /// The filter in a few words, for the pill: "All Entries", "Commands", "Commands, #k8s".
 #[must_use]
@@ -115,54 +32,6 @@ mod tests {
 
     fn strings(values: &[&str]) -> Vec<String> {
         values.iter().map(|v| (*v).to_owned()).collect()
-    }
-
-    #[test]
-    fn counts_the_active_filters_as_raycast() {
-        let current = FilterState {
-            types: strings(&["commands"]),
-            tags: strings(&["git"]),
-        };
-        let groups = filter_groups(&strings(&["commands"]), &strings(&["git"]), &current);
-        assert_eq!(groups[0].label, "2 Filters");
-        assert_eq!(groups[0].choices[0].label, "Clear All Filters");
-    }
-
-    #[test]
-    fn adds_an_unchecked_choice_and_removes_a_checked_one() {
-        let current = FilterState {
-            types: strings(&["commands"]),
-            tags: Vec::new(),
-        };
-        let groups = filter_groups(&strings(&["commands", "notes"]), &strings(&["git"]), &current);
-        assert_eq!(
-            groups.iter().map(|g| g.label.as_str()).collect::<Vec<_>>(),
-            ["1 Filter", "Types", "Tags"]
-        );
-        let types = &groups[1].choices;
-        assert_eq!(
-            (
-                types[0].label.as_str(),
-                types[0].checked,
-                types[0].next.types.is_empty()
-            ),
-            ("Commands", true, true)
-        );
-        assert_eq!(types[1].next.types, strings(&["commands", "notes"]));
-        assert_eq!(
-            groups[2].choices[0].next,
-            FilterState {
-                types: strings(&["commands"]),
-                tags: strings(&["git"])
-            }
-        );
-        assert_eq!(groups[0].choices[0].next, FilterState::default());
-    }
-
-    #[test]
-    fn offers_no_clear_choice_without_a_filter() {
-        let groups = filter_groups(&strings(&["notes"]), &[], &FilterState::default());
-        assert_eq!(groups.iter().map(|g| g.label.as_str()).collect::<Vec<_>>(), ["Types"]);
     }
 
     #[test]

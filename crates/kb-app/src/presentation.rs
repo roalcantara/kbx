@@ -132,44 +132,6 @@ pub fn tag_hue(tag: &str) -> Hue {
     TAG_ORDER[hash(&tag.to_lowercase()) % TAG_ORDER.len()]
 }
 
-/// What the primary action does.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PrimaryKind {
-    /// Open the content in the browser.
-    OpenInBrowser,
-    /// Copy the content.
-    Copy,
-}
-
-/// An entry type's primary action, as data.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PrimaryAction {
-    /// What it does.
-    pub kind: PrimaryKind,
-    /// Its label.
-    pub title: &'static str,
-    /// What it opens or copies.
-    pub content: String,
-}
-
-/// A bookmark opens; commands, cheats, notes and tasks copy.
-#[must_use]
-pub fn primary_action(entry: &Entry) -> PrimaryAction {
-    let (kind, title) = match type_key(&entry.entry_type) {
-        TypeKey::Bookmark => (PrimaryKind::OpenInBrowser, "Open in Browser"),
-        TypeKey::Command => (PrimaryKind::Copy, "Copy Command Snippet"),
-        TypeKey::Cheat => (PrimaryKind::Copy, "Copy Cheat Sheet"),
-        TypeKey::Note => (PrimaryKind::Copy, "Copy Notes"),
-        TypeKey::Task => (PrimaryKind::Copy, "Copy Task"),
-        TypeKey::Other => (PrimaryKind::Copy, "Copy Primary Content"),
-    };
-    PrimaryAction {
-        kind,
-        title,
-        content: entry.primary_content.clone(),
-    }
-}
-
 /// What assistive technology reads for a list row: its visible text, in reading order, because
 /// a row's children do not name it. "docker ps -a, Commands, List every container…, tags docker,
 /// containers".
@@ -193,6 +155,24 @@ pub fn favicon_url(url: &str) -> Option<String> {
     let rest = url.split_once("://")?.1;
     let host = rest.split(['/', '?', '#']).next().filter(|host| !host.is_empty())?;
     Some(format!("https://icons.duckduckgo.com/ip3/{host}.ico"))
+}
+
+/// A URL as the Links list shows it (D20): no scheme, `www.`, query or fragment, no trailing
+/// slash; longer than `max` characters, the host and the last path segment with `/…/` between.
+#[must_use]
+pub fn trim_url(url: &str, max: usize) -> String {
+    let rest = url.split_once("://").map_or(url, |(_, rest)| rest);
+    let rest = rest.split(['?', '#']).next().unwrap_or(rest);
+    let rest = rest.strip_prefix("www.").unwrap_or(rest).trim_end_matches('/');
+    if rest.chars().count() <= max {
+        return rest.to_owned();
+    }
+    let mut parts = rest.split('/');
+    let host = parts.next().unwrap_or(rest);
+    match parts.next_back() {
+        Some(last) => format!("{host}/…/{last}"),
+        None => rest.to_owned(),
+    }
 }
 
 /// The tags a row shows (at most `max`) and how many more there are.
@@ -300,25 +280,6 @@ mod tests {
         assert_eq!(type_label("commands"), "Commands");
         assert_eq!(type_label("snippets"), "Snippets");
         assert_eq!(type_label(""), "");
-    }
-
-    #[test]
-    fn matches_the_raycast_primary_action_matrix() {
-        let cases = [
-            ("bookmarks", PrimaryKind::OpenInBrowser, "Open in Browser"),
-            ("commands", PrimaryKind::Copy, "Copy Command Snippet"),
-            ("cheats", PrimaryKind::Copy, "Copy Cheat Sheet"),
-            ("notes", PrimaryKind::Copy, "Copy Notes"),
-            ("tasks", PrimaryKind::Copy, "Copy Task"),
-            ("snippets", PrimaryKind::Copy, "Copy Primary Content"),
-        ];
-        for (entry_type, kind, title) in cases {
-            let action = primary_action(&entry(entry_type, "key", "title: t\n"));
-            assert_eq!(
-                (action.kind, action.title, action.content.as_str()),
-                (kind, title, "key")
-            );
-        }
     }
 
     #[test]
@@ -456,5 +417,18 @@ mod tests {
             }
         );
         assert_eq!(type_badge("snippets").hue, tag_hue("snippet"));
+    }
+
+    #[test]
+    fn trims_a_url_to_its_host_and_last_segment() {
+        assert_eq!(
+            trim_url("https://www.github.com/tokio-rs/mini-redis?tab=1#x", 32),
+            "github.com/tokio-rs/mini-redis"
+        );
+        assert_eq!(
+            trim_url("https://doc.rust-lang.org/std/task/struct.Waker.html", 32),
+            "doc.rust-lang.org/…/struct.Waker.html"
+        );
+        assert_eq!(trim_url("https://tokio.rs/", 32), "tokio.rs");
     }
 }

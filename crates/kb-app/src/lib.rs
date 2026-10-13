@@ -7,6 +7,7 @@
 #![warn(missing_docs)]
 
 mod accents;
+mod actions;
 mod assets;
 pub mod catalog;
 pub mod cli;
@@ -19,7 +20,6 @@ mod http;
 pub mod keys;
 mod metadata;
 mod notes;
-pub mod palette;
 mod panel;
 mod presentation;
 pub mod search_view;
