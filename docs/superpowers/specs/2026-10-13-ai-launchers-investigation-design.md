@@ -1,6 +1,6 @@
 # AI-agent features: Raycast versus the Rust/GPUI launchers — design
 
-- Status: approved by the owner, 2026-10-13
+- Status: superseded, 2026-10-13 — not executed; answered by the research notes of 2026-10-13 and [ADR 0008](../../adr/0008-kb-stays-its-own-code.md)
 - Date: 2026-10-13
 - Kind: an investigation, executed by other agents; it writes reports, never code
 - Inputs: [2026-10-13-asyar-claims-review.md](../research/2026-10-13-asyar-claims-review.md) (the GPUI launchers

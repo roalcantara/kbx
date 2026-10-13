@@ -1,5 +1,8 @@
 # AI launchers investigation — plan
 
+> **Superseded, 2026-10-13 — do not execute.** Not approved by the owner; the questions were answered by cheaper passes
+> (research notes of 2026-10-13) and recorded in [ADR 0008](../../adr/0008-kb-stays-its-own-code.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

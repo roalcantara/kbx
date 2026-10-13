@@ -297,11 +297,11 @@
 - [x] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
   - **Comments**: IF60
 
-- [~] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
-  - **Comments**: LGMU,ixvo
+- [x] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
+  - **Comments**: LGMU,ixvo,oSwX
 
-- [ ] pMDV **-** Plan 8: write the plan from the spec
-  - **Comments**: gvTO
+- [~] pMDV **-** Plan 8: write the plan from the spec
+  - **Comments**: gvTO,HuqS
 
 - [ ] VHnE **-** Plan 8: review the plan until no findings remain
 
@@ -356,6 +356,21 @@
   - **Priority**: medium
   - **Created**: 2026-10-13 00:30
   - **Tags**: domain
+
+- [ ] ZF8t **-** Adoption: import navi, cheat and pet cheat files into kb (navi's library crate, Apache-2.0); after the experiment's report (ADR 0008)
+  - **Priority**: medium
+  - **Created**: 2026-10-13 14:50
+  - **Tags**: adoption, engine
+
+- [ ] E78j **-** Adoption: import shell history from Atuin's SQLite database as command entries; after the experiment's report (ADR 0008)
+  - **Priority**: low
+  - **Created**: 2026-10-13 14:50
+  - **Tags**: adoption, engine
+
+- [ ] uAa3 **-** Adoption: bundle tldr pages as built-in content so kb is useful on first launch (CC BY 4.0 attribution); after the experiment's report (ADR 0008)
+  - **Priority**: medium
+  - **Created**: 2026-10-13 14:50
+  - **Tags**: adoption, content
 
 # Actors
 
@@ -538,4 +553,10 @@
 
 - 28mD **-** 2026-10-13: app-side, Plan 8c Task 4 (Bo3f option a)
   - **Task**: 7lTb
+
+- oSwX **-** 2026-10-13: approved by the owner (rewritten spec, D1-D20)
+  - **Task**: KhLt
+
+- HuqS **-** 2026-10-13: index and sub-plans 8a-8e written; 8f-8h next
+  - **Task**: pMDV
 
