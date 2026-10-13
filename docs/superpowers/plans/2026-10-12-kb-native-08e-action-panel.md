@@ -47,7 +47,7 @@ copy, apply_filter, key_screen}`).
 **Files:** create `crates/kb-app/src/ui/action_panel.rs` (data part), `crates/kb-app/src/actions.rs`; modify
 `ui.rs`, `lib.rs`.
 
-- [ ] **Step 1: Write the data types.** Create `crates/kb-app/src/ui/action_panel.rs` with:
+- [x] **Step 1: Write the data types.** Create `crates/kb-app/src/ui/action_panel.rs` with:
 
 ```rust
 //! D9's action panel (02-actions, 07-filter): sections of 28 pt rows separated by a hairline, a
@@ -184,7 +184,7 @@ mod tests {
 
 Add `pub mod action_panel;` to `ui.rs` (sorted, first).
 
-- [ ] **Step 2: Write the page builders with their tests.** Create `crates/kb-app/src/actions.rs`:
+- [x] **Step 2: Write the page builders with their tests.** Create `crates/kb-app/src/actions.rs`:
 
 ```rust
 //! The action panel's pages for a screen and an entry, from the catalog (D9), and the filter's
@@ -627,13 +627,13 @@ fn trims_a_url_to_its_host_and_last_segment() {
 }
 ```
 
-- [ ] **Step 3: Run the tests.**
+- [x] **Step 3: Run the tests.**
 
 Run: `cargo nextest run -p kb-app actions ui::action_panel presentation`
 Expected: PASS (the builders are complete; this task writes data and tests together because the page shapes are
 copied from the approved pages, not discovered).
 
-- [ ] **Step 4: Gate and commit.** (`dead_code` on the not-yet-used builders: add
+- [x] **Step 4: Gate and commit.** (`dead_code` on the not-yet-used builders: add
       `#![expect(dead_code, reason = "search_view/panel.rs uses the pages in the next task")]` at the top of
       `actions.rs` and remove it in Task 2.)
 
@@ -652,7 +652,7 @@ git commit -m "feat(app): Build the action panel's pages from the catalog" \
 **Files:** modify `ui/action_panel.rs` (render part); create `search_view/panel.rs`; delete
 `search_view/overlays.rs`, `palette.rs`; modify `search_view.rs`, `keys.rs`, `filter.rs`, `lib.rs`, `tests/ui.rs`.
 
-- [ ] **Step 1: Write the failing UI tests.** In `crates/kb-app/tests/ui.rs`, delete
+- [x] **Step 1: Write the failing UI tests.** In `crates/kb-app/tests/ui.rs`, delete
       `copies_the_title_from_the_copy_page_of_the_actions` and `leaves_a_page_of_the_actions_then_the_actions_with_escape`,
       and append:
 
@@ -742,7 +742,7 @@ choices to `["Commands", "docker"]`.
 Run: `cargo nextest run -p kb-app --test ui`
 Expected: FAIL to compile: no method `panel_labels`.
 
-- [ ] **Step 2: Draw the panel.** Append to `ui/action_panel.rs` (before the tests module):
+- [x] **Step 2: Draw the panel.** Append to `ui/action_panel.rs` (before the tests module):
 
 ```rust
 /// What runs when a row is clicked: its index among the visible rows.
@@ -878,7 +878,7 @@ fn row(row: &PanelRow, ix: usize, selected: bool, on_row: &OnRow) -> impl gpui_k
 }
 ```
 
-- [ ] **Step 3: The overlay state.** In `search_view.rs`:
+- [x] **Step 3: The overlay state.** In `search_view.rs`:
   - replace `enum Overlay` with:
 
 ```rust
@@ -925,7 +925,7 @@ if self.overlay != Overlay::None {
 
 - in `open_actions`, `Overlay::Actions(Page::Main)` becomes `Overlay::Actions(None)`.
 
-- [ ] **Step 4: The panel module.** Create `crates/kb-app/src/search_view/panel.rs`:
+- [x] **Step 4: The panel module.** Create `crates/kb-app/src/search_view/panel.rs`:
 
 ```rust
 //! The overlays (D9, D15): the action panel above the footer's Actions, the filter under the
@@ -1155,7 +1155,7 @@ pub fn tag_images(&self) -> &TagImages {
 }
 ```
 
-- [ ] **Step 5: Remove what the panel replaces.**
+- [x] **Step 5: Remove what the panel replaces.**
 
 ```bash
 git rm crates/kb-app/src/palette.rs crates/kb-app/src/search_view/overlays.rs
@@ -1170,7 +1170,7 @@ git rm crates/kb-app/src/palette.rs crates/kb-app/src/search_view/overlays.rs
   `actions.rs`); keep `filter_summary` and its test.
 - In `actions.rs`, delete the `#![expect(dead_code, …)]` line of Task 1.
 
-- [ ] **Step 6: Run every kb-app test.**
+- [x] **Step 6: Run every kb-app test.**
 
 Run: `cargo nextest run -p kb-app`
 Expected: PASS. If `Popover` is not `Styled` (so `.p_0()` does not compile), drop `.p_0()` and add
@@ -1178,7 +1178,7 @@ Expected: PASS. If `Popover` is not `Styled` (so `.p_0()` does not compile), dro
 `div().bg(d.colors.mantle).border_1().border_color(d.colors.selected).rounded(pt(d.rounded.popover)).overflow_hidden()`;
 note it under "Deviation:".
 
-- [ ] **Step 7: Gate and commit.**
+- [x] **Step 7: Gate and commit.**
 
 ```bash
 mise run gate
@@ -1187,6 +1187,30 @@ git commit -m "feat(ui): Draw the action panel and the filter as the approved pa
   -m "28 pt rows, search at the bottom, Links… and More… submenus; Toggle ↵ and Only ⌘↵ (D9, D15)." \
   -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
+
+---
+
+## Deviations
+
+Recorded while executing (2026-10-13, commit `41355c3`):
+
+- **`search_page` keeps the Links…/More… rows.** The plan's code dropped every row whose command
+  was `Open(_)`, but its own UI tests need them: typing `More…` or `Links…` and pressing ↵ must
+  open the submenu. The root rows are kept and the submenus' rows are appended, marked with their
+  origin, so both goals hold; `actions::tests::finds_the_submenus_rows_from_the_root` was updated.
+- **The panel has its own key context and focus.** The submenus have no search field, so with the
+  plan's `Input`-only handling their keys (↵, ⌘↵, Esc, ↑↓) were lost and the popover closed.
+  `keys::PANEL_CONTEXT` (`ui/action_panel`'s element, `panel_focus`) now binds `enter`/`secondary-enter`
+  to the `Confirm` action and `escape` to `Back`, handled on the panel element (with
+  `stop_propagation`, since gpui-base's `Popover` binds ↵ to a `Confirm` that toggles it shut).
+  `InputEvent::PressEnter` is no longer used.
+- **`SearchView::ladder` returns early while an overlay is open**, so the screen ladder cannot switch
+  the screen under the panel.
+- **Removed the now-dead `presentation::{PrimaryKind, PrimaryAction, primary_action}`** (and its test):
+  `palette.rs` was its only caller, so deleting the palette left it unused (`-D unused`).
+- **One commit instead of two.** The plan's Task 1 tree does not pass the repo's own hooks
+  (jscpd flags the `actions.rs`/`filter.rs` `toggled` clone; `-D unused` flags the not-yet-used
+  builders), so Tasks 1–2 land together.
 
 ---
 
