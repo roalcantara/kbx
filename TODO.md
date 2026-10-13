@@ -241,7 +241,7 @@
   - **Tags**: design, plan8
 
 - [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
-  - **Comments**: oVNz,xpAF,QU41
+  - **Comments**: oVNz,xpAF,QU41,dNCU
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -536,5 +536,8 @@
   - **Task**: Z64Y
 
 - QU41 **-** 2026-10-12, template v2 (owner): one header row for every entry: [the row's icon: favicon for bookmarks, the type tile otherwise] [header text by type: bookmark URL (link style), cheat title, command description (else title), note title, task text] … tags right; at most 2 lines in the split, whole in detail. Summary = the description unless the header used it (so commands have none). The footer's left always shows the type tile + file + ⌥⌘C. Header text per type lives in the catalog with the actions.
+  - **Task**: Z64Y
+
+- dNCU **-** 2026-10-12, template v3 (owner, supersedes v2's per-type header): four fixed slots for every entry, only the hero varies by type. 1 Header: [the row's icon: favicon for bookmarks, type tile otherwise] the title (title field, else the key), one line trimmed, tags right. 2 Hero by type: command → CommandCard; bookmark → thumbnail (YouTube; og:image later) else the URL as a link line (↗ host/path); cheat → snippet card when it has one; task → status + priority badges; note, other → none. 3 Quote: the description (desc or description), whole, red bar; omitted when absent. 4 Body: the notes. Split = the same component, hero capped. Footer left: type tile + file + ⌥⌘C.
   - **Task**: Z64Y
 
