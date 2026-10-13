@@ -94,7 +94,7 @@ pub type OnTag = Rc<dyn Fn(&str, &mut Window, &mut App)>;
 /// Opens a link.
 pub type OnLink = Rc<dyn Fn(&str, &mut Window, &mut App)>;
 /// After the card copied its command.
-pub type OnCopied = Rc<dyn Fn(SharedString, &mut Window, &mut App)>;
+pub use crate::ui::command_card::OnCopied;
 
 /// The entry template.
 #[derive(IntoElement)]

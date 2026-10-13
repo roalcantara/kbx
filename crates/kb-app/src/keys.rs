@@ -50,9 +50,9 @@ actions!(
         Back,
         /// Quit the app: it has no Dock icon or menu bar to quit it from.
         Quit,
-        /// Show the split pane (list) or the metadata (detail screen).
+        /// Show the split pane (list); nothing on the detail screen (D20).
         ShowDetails,
-        /// Hide the split pane (list) or the metadata (detail screen).
+        /// Hide the split pane (list); nothing on the detail screen (D20).
         HideDetails,
         /// Switch the window between its compact and expanded sizes.
         ToggleWindowSize,

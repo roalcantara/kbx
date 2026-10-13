@@ -327,8 +327,7 @@ impl SearchView {
     /// Copies `text` and says so (D17).
     pub(super) fn copy(&mut self, text: String, window: &mut Window, cx: &mut Context<Self>) {
         cx.write_to_clipboard(ClipboardItem::new_string(text));
-        self.last_notice = Some(self.catalog.messages.copied.clone());
-        window.push_notification(notice::copied(&self.catalog.messages), cx);
+        self.notice_copied(window, cx);
     }
 
     /// The last notice the view showed, for tests.
@@ -792,6 +791,11 @@ mod tests {
             px(-100.),
             "stops at the bottom"
         );
-        assert_eq!(next_offset(px(-40.), px(-60.), px(100.)), px(0.), "stops at the top");
+        assert_eq!(next_offset(px(-20.), px(-40.), px(100.)), px(0.), "stops at the top");
+        assert_eq!(
+            next_offset(px(0.), px(40.), px(0.)),
+            px(0.),
+            "short notes do not scroll"
+        );
     }
 }
