@@ -466,4 +466,18 @@ mod tests {
         assert_eq!(c.named("green"), Some(c.green));
         assert_eq!(c.named("teal"), None);
     }
+
+    #[test]
+    fn gives_gpui_kit_the_tokens() {
+        let theme: serde_json::Value = serde_json::from_str(include_str!("../../assets/themes/kb.json")).unwrap();
+        let colors = &theme["themes"][0]["colors"];
+        let token = |key: &str| hex(colors[key].as_str().unwrap()).unwrap();
+        let c = &design().colors;
+        assert_eq!(token("popover.background"), c.mantle);
+        assert_eq!(token("foreground"), c.text);
+        assert_eq!(token("muted.foreground"), c.muted);
+        assert_eq!(token("border"), c.selected);
+        assert_eq!(token("caret"), c.mauve);
+        assert_eq!(token("background").a, 0., "the window draws its own rounded surface");
+    }
 }

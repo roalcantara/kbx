@@ -92,15 +92,15 @@ fn follows_the_system_appearance(cx: &mut gpui_kit::TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn draws_dark_mode_in_the_palette_of_design_md(cx: &mut gpui_kit::TestAppContext) {
+fn draws_gpui_kit_components_in_the_design_tokens(cx: &mut gpui_kit::TestAppContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);
         kb_app::init_theme(cx);
         Theme::change(ThemeMode::Dark, None, cx);
         let theme: serde_json::Value = serde_json::from_str(include_str!("../assets/themes/kb.json")).unwrap();
-        let window = theme["themes"][0]["colors"]["background"].as_str().unwrap();
-        let window = u32::from_str_radix(window.trim_start_matches('#'), 16).unwrap();
-        assert_eq!(cx.theme().background, gpui_kit::rgb(window).into());
+        let popover = theme["themes"][0]["colors"]["popover.background"].as_str().unwrap();
+        let popover = u32::from_str_radix(popover.trim_start_matches('#'), 16).unwrap();
+        assert_eq!(cx.theme().popover, gpui_kit::rgb(popover).into());
     });
 }
 
