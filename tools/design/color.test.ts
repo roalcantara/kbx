@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { contrast, description, LIGHT_ACCENTS, mix, pill, tagAccent, tint, typeAccent } from './color.ts'
+import { contrast, description, frontMatter, LIGHT_ACCENTS, mix, pill, tagAccent, tint, typeAccent } from './color.ts'
 
 describe('colour arithmetic', () => {
   test('mixes and measures contrast as WCAG does', () => {
@@ -57,4 +57,10 @@ describe('accents', () => {
     expect(typeAccent('bookmark')).toBe('purple')
     expect(typeAccent('skill')).toBe(tagAccent('skill'))
   })
+})
+
+test('reads the tokens from DESIGN.md front matter', () => {
+  const tokens = frontMatter('---\ncolors:\n  window: "#24273A"\n---\n\n# Design\n')
+  expect(tokens.colors.window).toBe('#24273A')
+  expect(() => frontMatter('# no front matter\n')).toThrow('DESIGN.md has no front matter')
 })

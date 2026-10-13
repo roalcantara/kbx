@@ -87,3 +87,10 @@ export const LIGHT_ACCENTS: Roles = {
   yellow: '#CA8A04',
   red: '#DC2626'
 }
+
+/** DESIGN.md's front matter (the design tokens), parsed with Bun's YAML parser. */
+export const frontMatter = (markdown: string): Record<string, any> => {
+  const match = markdown.match(/^---\n([\s\S]*?)\n---\n/)
+  if (!match) throw new Error('DESIGN.md has no front matter')
+  return Bun.YAML.parse(match[1]!) as Record<string, any>
+}

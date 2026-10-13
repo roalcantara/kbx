@@ -300,6 +300,7 @@
   - **Comments**: LGMU,ixvo
 
 - [ ] pMDV **-** Plan 8: write the plan from the spec
+  - **Comments**: gvTO
 
 - [ ] VHnE **-** Plan 8: review the plan until no findings remain
 
@@ -527,4 +528,7 @@
 
 - ixvo **-** 2026-10-13, detail links (owner): A1 compact Links list at the end of the Body (05-detail-links.html), no metadata column (every attribute has a home), one line per link (title trimmed with an ellipsis, URL without scheme/www/query/fragment and trimmed in the middle, full text in a tooltip), ⌘1–⌘9 open links, clickable header tags filter. Spec: D11 updated, D20 added, 04–06 checklist updated. Link shapes: only the two list forms are parsed by both engines; the other two queued as an engine task.
   - **Task**: KhLt
+
+- gvTO **-** 2026-10-13 O1: A (owner)
+  - **Task**: pMDV
 

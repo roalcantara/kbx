@@ -1,5 +1,36 @@
 [
   {
+    "id": "kb (DESIGN.md)",
+    "failed": 0,
+    "warned": 4,
+    "checks": [
+      { "name": "text on window", "value": 9.92, "status": "pass" },
+      { "name": "muted on window", "value": 6.62, "status": "pass" },
+      { "name": "text on mantle", "value": 10.85, "status": "pass" },
+      { "name": "muted on mantle", "value": 7.24, "status": "pass" },
+      { "name": "text on selected", "value": 7.55, "status": "pass" },
+      { "name": "muted on selected", "value": 5.03, "status": "pass" },
+      { "name": "text on badge", "value": 8.49, "status": "pass" },
+      { "name": "muted on badge", "value": 5.67, "status": "pass" },
+      { "name": "text on crust", "value": 11.73, "status": "pass" },
+      { "name": "muted on crust", "value": 7.83, "status": "pass" },
+      { "name": "faint on window", "value": 3.15, "status": "pass" },
+      { "name": "faint on mantle", "value": 3.45, "status": "pass" },
+      { "name": "faint on crust", "value": 3.73, "status": "pass" },
+      { "name": "faint on badge", "value": 2.7, "status": "warn" },
+      { "name": "mauve on its tile", "value": 5.11, "status": "pass" },
+      { "name": "blue on its tile", "value": 4.93, "status": "pass" },
+      { "name": "green on its tile", "value": 6.41, "status": "pass" },
+      { "name": "peach on its tile", "value": 5.58, "status": "pass" },
+      { "name": "pink on its tile", "value": 6.47, "status": "pass" },
+      { "name": "yellow on its tile", "value": 6.98, "status": "pass" },
+      { "name": "red on its tile", "value": 4.64, "status": "pass" },
+      { "name": "accents apart (normal)", "value": 8.51, "status": "warn", "pair": "mauve/blue" },
+      { "name": "accents apart (protan)", "value": 1.18, "status": "warn", "pair": "mauve/blue" },
+      { "name": "accents apart (deutan)", "value": 2.79, "status": "warn", "pair": "mauve/blue" }
+    ]
+  },
+  {
     "id": "tokyo-night-storm-flat-separated",
     "failed": 0,
     "warned": 0,
@@ -12,8 +43,6 @@
       { "name": "textMuted on raised", "value": 7.48, "status": "pass" },
       { "name": "text on header", "value": 9.85, "status": "pass" },
       { "name": "textMuted on header", "value": 7.48, "status": "pass" },
-      { "name": "textFaint on window", "value": 4.16, "status": "pass" },
-      { "name": "divider on window", "value": 1.38, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.67, "status": "pass" },
       { "name": "#green on its pill", "value": 5.58, "status": "pass" },
       { "name": "#orange on its pill", "value": 4.99, "status": "pass" },
@@ -28,8 +57,8 @@
   },
   {
     "id": "catppuccin-mocha",
-    "failed": 4,
-    "warned": 0,
+    "failed": 1,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 11.34, "status": "pass" },
       { "name": "textMuted on window", "value": 7.37, "status": "pass" },
@@ -39,8 +68,6 @@
       { "name": "textMuted on raised", "value": 4.1, "status": "fail" },
       { "name": "text on header", "value": 12.14, "status": "pass" },
       { "name": "textMuted on header", "value": 7.89, "status": "pass" },
-      { "name": "textFaint on window", "value": 4.44, "status": "pass" },
-      { "name": "divider on window", "value": 1.3, "status": "pass" },
       { "name": "#blue on its pill", "value": 5.18, "status": "pass" },
       { "name": "#green on its pill", "value": 6.69, "status": "pass" },
       { "name": "#orange on its pill", "value": 5.9, "status": "pass" },
@@ -48,15 +75,15 @@
       { "name": "#magenta on its pill", "value": 6.49, "status": "pass" },
       { "name": "#yellow on its pill", "value": 7.39, "status": "pass" },
       { "name": "#red on its pill", "value": 4.87, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 9.05, "status": "fail", "pair": "blue/purple" },
-      { "name": "accents apart (protan)", "value": 1.21, "status": "fail", "pair": "blue/purple" },
-      { "name": "accents apart (deutan)", "value": 3.2, "status": "fail", "pair": "blue/purple" }
+      { "name": "accents apart (normal)", "value": 9.05, "status": "warn", "pair": "blue/purple" },
+      { "name": "accents apart (protan)", "value": 1.21, "status": "warn", "pair": "blue/purple" },
+      { "name": "accents apart (deutan)", "value": 3.2, "status": "warn", "pair": "blue/purple" }
     ]
   },
   {
     "id": "catppuccin-macchiato",
-    "failed": 4,
-    "warned": 0,
+    "failed": 1,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 9.92, "status": "pass" },
       { "name": "textMuted on window", "value": 6.62, "status": "pass" },
@@ -66,8 +93,6 @@
       { "name": "textMuted on raised", "value": 3.73, "status": "fail" },
       { "name": "text on header", "value": 10.85, "status": "pass" },
       { "name": "textMuted on header", "value": 7.24, "status": "pass" },
-      { "name": "textFaint on window", "value": 4.14, "status": "pass" },
-      { "name": "divider on window", "value": 1.31, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.53, "status": "pass" },
       { "name": "#green on its pill", "value": 5.65, "status": "pass" },
       { "name": "#orange on its pill", "value": 5, "status": "pass" },
@@ -75,15 +100,15 @@
       { "name": "#magenta on its pill", "value": 5.71, "status": "pass" },
       { "name": "#yellow on its pill", "value": 6.07, "status": "pass" },
       { "name": "#red on its pill", "value": 4.5, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 8.51, "status": "fail", "pair": "blue/purple" },
-      { "name": "accents apart (protan)", "value": 1.18, "status": "fail", "pair": "blue/purple" },
-      { "name": "accents apart (deutan)", "value": 2.79, "status": "fail", "pair": "blue/purple" }
+      { "name": "accents apart (normal)", "value": 8.51, "status": "warn", "pair": "blue/purple" },
+      { "name": "accents apart (protan)", "value": 1.18, "status": "warn", "pair": "blue/purple" },
+      { "name": "accents apart (deutan)", "value": 2.79, "status": "warn", "pair": "blue/purple" }
     ]
   },
   {
     "id": "tokyo-night-storm",
-    "failed": 4,
-    "warned": 0,
+    "failed": 0,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 9.02, "status": "pass" },
       { "name": "textMuted on window", "value": 6.9, "status": "pass" },
@@ -93,8 +118,6 @@
       { "name": "textMuted on raised", "value": 7.37, "status": "pass" },
       { "name": "text on header", "value": 9.63, "status": "pass" },
       { "name": "textMuted on header", "value": 7.37, "status": "pass" },
-      { "name": "textFaint on window", "value": 2.35, "status": "fail" },
-      { "name": "divider on window", "value": 1.48, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.55, "status": "pass" },
       { "name": "#green on its pill", "value": 5.16, "status": "pass" },
       { "name": "#orange on its pill", "value": 4.79, "status": "pass" },
@@ -102,15 +125,15 @@
       { "name": "#magenta on its pill", "value": 4.53, "status": "pass" },
       { "name": "#yellow on its pill", "value": 4.82, "status": "pass" },
       { "name": "#red on its pill", "value": 4.57, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 6.08, "status": "fail", "pair": "orange/yellow" },
-      { "name": "accents apart (protan)", "value": 0.31, "status": "fail", "pair": "blue/magenta" },
-      { "name": "accents apart (deutan)", "value": 0.85, "status": "fail", "pair": "green/yellow" }
+      { "name": "accents apart (normal)", "value": 6.08, "status": "warn", "pair": "orange/yellow" },
+      { "name": "accents apart (protan)", "value": 0.31, "status": "warn", "pair": "blue/magenta" },
+      { "name": "accents apart (deutan)", "value": 0.85, "status": "warn", "pair": "green/yellow" }
     ]
   },
   {
     "id": "github-dimmed",
-    "failed": 8,
-    "warned": 0,
+    "failed": 4,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 7.6, "status": "pass" },
       { "name": "textMuted on window", "value": 3.88, "status": "fail" },
@@ -120,8 +143,6 @@
       { "name": "textMuted on raised", "value": 3.29, "status": "fail" },
       { "name": "text on header", "value": 8.19, "status": "pass" },
       { "name": "textMuted on header", "value": 4.18, "status": "fail" },
-      { "name": "textFaint on window", "value": 2.9, "status": "fail" },
-      { "name": "divider on window", "value": 1.73, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.56, "status": "pass" },
       { "name": "#green on its pill", "value": 4.58, "status": "pass" },
       { "name": "#orange on its pill", "value": 4.54, "status": "pass" },
@@ -129,15 +150,15 @@
       { "name": "#magenta on its pill", "value": 4.58, "status": "pass" },
       { "name": "#yellow on its pill", "value": 4.57, "status": "pass" },
       { "name": "#red on its pill", "value": 4.62, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 12.31, "status": "fail", "pair": "magenta/red" },
-      { "name": "accents apart (protan)", "value": 5.43, "status": "fail", "pair": "green/orange" },
-      { "name": "accents apart (deutan)", "value": 2.85, "status": "fail", "pair": "green/red" }
+      { "name": "accents apart (normal)", "value": 12.31, "status": "warn", "pair": "magenta/red" },
+      { "name": "accents apart (protan)", "value": 5.43, "status": "warn", "pair": "green/orange" },
+      { "name": "accents apart (deutan)", "value": 2.85, "status": "warn", "pair": "green/red" }
     ]
   },
   {
     "id": "nord",
-    "failed": 3,
-    "warned": 0,
+    "failed": 0,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 10.84, "status": "pass" },
       { "name": "textMuted on window", "value": 9.25, "status": "pass" },
@@ -147,8 +168,6 @@
       { "name": "textMuted on raised", "value": 7.45, "status": "pass" },
       { "name": "text on header", "value": 8.73, "status": "pass" },
       { "name": "textMuted on header", "value": 7.45, "status": "pass" },
-      { "name": "textFaint on window", "value": 3.17, "status": "pass" },
-      { "name": "divider on window", "value": 1.69, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.54, "status": "pass" },
       { "name": "#green on its pill", "value": 4.64, "status": "pass" },
       { "name": "#orange on its pill", "value": 4.53, "status": "pass" },
@@ -156,15 +175,15 @@
       { "name": "#magenta on its pill", "value": 4.55, "status": "pass" },
       { "name": "#yellow on its pill", "value": 4.99, "status": "pass" },
       { "name": "#red on its pill", "value": 4.58, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 5.44, "status": "fail", "pair": "purple/magenta" },
-      { "name": "accents apart (protan)", "value": 5.54, "status": "fail", "pair": "purple/magenta" },
-      { "name": "accents apart (deutan)", "value": 2.83, "status": "fail", "pair": "blue/magenta" }
+      { "name": "accents apart (normal)", "value": 5.44, "status": "warn", "pair": "purple/magenta" },
+      { "name": "accents apart (protan)", "value": 5.54, "status": "warn", "pair": "purple/magenta" },
+      { "name": "accents apart (deutan)", "value": 2.83, "status": "warn", "pair": "blue/magenta" }
     ]
   },
   {
     "id": "radix-slate-indigo",
-    "failed": 3,
-    "warned": 0,
+    "failed": 0,
+    "warned": 3,
     "checks": [
       { "name": "text on window", "value": 15.15, "status": "pass" },
       { "name": "textMuted on window", "value": 8.45, "status": "pass" },
@@ -174,8 +193,6 @@
       { "name": "textMuted on raised", "value": 7.64, "status": "pass" },
       { "name": "text on header", "value": 16.25, "status": "pass" },
       { "name": "textMuted on header", "value": 9.06, "status": "pass" },
-      { "name": "textFaint on window", "value": 4.38, "status": "pass" },
-      { "name": "divider on window", "value": 2.08, "status": "pass" },
       { "name": "#blue on its pill", "value": 4.72, "status": "pass" },
       { "name": "#green on its pill", "value": 4.56, "status": "pass" },
       { "name": "#orange on its pill", "value": 4.55, "status": "pass" },
@@ -183,9 +200,9 @@
       { "name": "#magenta on its pill", "value": 4.74, "status": "pass" },
       { "name": "#yellow on its pill", "value": 4.55, "status": "pass" },
       { "name": "#red on its pill", "value": 4.77, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 9.54, "status": "fail", "pair": "orange/red" },
-      { "name": "accents apart (protan)", "value": 3.81, "status": "fail", "pair": "purple/magenta" },
-      { "name": "accents apart (deutan)", "value": 2.36, "status": "fail", "pair": "green/red" }
+      { "name": "accents apart (normal)", "value": 9.54, "status": "warn", "pair": "orange/red" },
+      { "name": "accents apart (protan)", "value": 3.81, "status": "warn", "pair": "purple/magenta" },
+      { "name": "accents apart (deutan)", "value": 2.36, "status": "warn", "pair": "green/red" }
     ]
   }
 ]

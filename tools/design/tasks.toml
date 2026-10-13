@@ -160,28 +160,19 @@ console.log(`wrote ${OUT}`)
 ]
 
 ["design:validate"]
-description = "Check each palette (WCAG 2.2 contrast of every text role and tag pill; OKLab ΔE between accents under normal, protan and deutan vision) into tools/design/validation.json; fail when DESIGN.md's palette table drifts"
-run = ['''
+description = "Check the design tokens in DESIGN.md (WCAG 2.2 contrast of every text role on its surfaces; accents apart under normal, protan and deutan vision, as warnings, D19) and the comparison palettes in palettes.json, into tools/design/validation.json; fail when a token check fails"
+run = [
+  '''
 #!/usr/bin/env bun
 import { readFileSync, writeFileSync } from 'node:fs'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { ACCENTS, contrast, lin, pill, rgb } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { ACCENTS, contrast, frontMatter, lin, mix, pill, rgb } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const dir = 'tools/design/'
-const palettes = JSON.parse(readFileSync(`${dir}palettes.json`, 'utf8'))
-
 const CVD = {
   normal: null,
-  protan: [
-    [0.152286, 1.052583, -0.204868],
-    [0.114503, 0.786281, 0.099216],
-    [-0.003882, -0.048116, 1.051998]
-  ],
-  deutan: [
-    [0.367322, 0.860646, -0.227968],
-    [0.280085, 0.672501, 0.047413],
-    [-0.01182, 0.04294, 0.968881]
-  ]
+  protan: [[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]],
+  deutan: [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.01182, 0.04294, 0.968881]]
 }
 const simulate = (h, m) => {
   const c = rgb(h).map(lin)
@@ -201,60 +192,80 @@ const deltaE = (a, b, m) => {
   const [p, q] = [oklab(simulate(a, m)), oklab(simulate(b, m))]
   return 100 * Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2])
 }
-
 const check = (name, value, pass, warn) => ({
   name,
   value: Math.round(value * 100) / 100,
   status: value >= pass ? 'pass' : warn !== undefined && value >= warn ? 'warn' : 'fail'
 })
+const separation = (colors, names) => {
+  const checks = []
+  for (const [vision, m] of Object.entries(CVD)) {
+    let worst = { value: Infinity }
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const value = deltaE(colors[names[i]], colors[names[j]], m)
+        if (value < worst.value) worst = { value, pair: `${names[i]}/${names[j]}` }
+      }
+    }
+    // D19 (owner, 2026-10-12): accents apart is advisory; colour is never the only cue.
+    const c = check(`accents apart (${vision})`, worst.value, vision === 'normal' ? 15 : 8, 0)
+    checks.push({ ...c, pair: worst.pair })
+  }
+  return checks
+}
 
-const results = palettes.map(({ id, roles: r }) => {
+// The tokens: what the app draws. These checks fail the task.
+const t = frontMatter(readFileSync('DESIGN.md', 'utf8')).colors
+const tokenChecks = []
+for (const surface of ['window', 'mantle', 'selected', 'badge', 'crust']) {
+  tokenChecks.push(check(`text on ${surface}`, contrast(t.text, t[surface]), 4.5))
+  tokenChecks.push(check(`muted on ${surface}`, contrast(t.muted, t[surface]), 4.5))
+}
+// O1 (owner, see TODO pMDV): FAINT_RULE is 'tertiary' (answer A) or 'aa' (answer B).
+const FAINT_RULE = 'tertiary'
+for (const surface of ['window', 'mantle', 'crust']) {
+  tokenChecks.push(check(`faint on ${surface}`, contrast(t.faint, t[surface]), FAINT_RULE === 'aa' ? 4.5 : 3))
+}
+tokenChecks.push(check('faint on badge', contrast(t.faint, t.badge), FAINT_RULE === 'aa' ? 4.5 : 3, FAINT_RULE === 'aa' ? undefined : 2.5))
+const tints = ['mauve', 'blue', 'green', 'peach', 'pink', 'yellow', 'red']
+for (const a of tints) {
+  // A type tile: the accent at 15 % over the window, its icon in the accent (non-text, 3:1).
+  tokenChecks.push(check(`${a} on its tile`, contrast(t[a], mix(t[a], t.window, 0.15)), 3))
+}
+tokenChecks.push(...separation(t, tints))
+const tokenFailed = tokenChecks.filter((c) => c.status === 'fail')
+
+// The comparison palettes: informational, they draw nothing.
+const palettes = JSON.parse(readFileSync(`${dir}palettes.json`, 'utf8'))
+const paletteResults = palettes.map(({ id, roles: r }) => {
   const checks = []
   for (const surface of ['window', 'selection', 'raised', 'header']) {
     checks.push(check(`text on ${surface}`, contrast(r.text, r[surface]), 4.5))
     checks.push(check(`textMuted on ${surface}`, contrast(r.textMuted, r[surface]), 4.5))
   }
-  checks.push(check('textFaint on window', contrast(r.textFaint, r.window), 3))
-  checks.push(check('divider on window', contrast(r.divider, r.window), 1.2))
   for (const a of ACCENTS) {
     const { background, text } = pill(r, a)
     checks.push(check(`#${a} on its pill`, contrast(text, background), 4.5, 3))
   }
-  for (const [vision, m] of Object.entries(CVD)) {
-    let worst = { value: Infinity }
-    for (let i = 0; i < ACCENTS.length; i++) {
-      for (let j = i + 1; j < ACCENTS.length; j++) {
-        const value = deltaE(r[ACCENTS[i]], r[ACCENTS[j]], m)
-        if (value < worst.value) worst = { value, pair: `${ACCENTS[i]}/${ACCENTS[j]}` }
-      }
-    }
-    // Tags always carry their #name, so 6-8 under colour-blind vision is a warning, not a failure.
-    const c = vision === 'normal'
-      ? check('accents apart (normal)', worst.value, 15)
-      : check(`accents apart (${vision})`, worst.value, 8, 6)
-    checks.push({ ...c, pair: worst.pair })
-  }
-  const failed = checks.filter((c) => c.status === 'fail').length
-  return { id, failed, warned: checks.filter((c) => c.status === 'warn').length, checks }
+  checks.push(...separation(r, ACCENTS))
+  return { id, failed: checks.filter((c) => c.status === 'fail').length, warned: checks.filter((c) => c.status === 'warn').length, checks }
 })
 
+const results = [
+  { id: 'kb (DESIGN.md)', failed: tokenFailed.length, warned: tokenChecks.filter((c) => c.status === 'warn').length, checks: tokenChecks },
+  ...paletteResults
+]
 writeFileSync(`${dir}validation.json`, `${JSON.stringify(results, null, 2)}\n`)
 for (const { id, failed, warned } of results) {
-  console.log(`${id.padEnd(22)} ${failed ? `${failed} fail` : 'pass'}${warned ? `, ${warned} warn` : ''}`)
+  console.log(`${id.padEnd(32)} ${failed ? `${failed} fail` : 'pass'}${warned ? `, ${warned} warn` : ''}`)
 }
-
-// DESIGN.md repeats the chosen palette's hexes for readers: they must match palettes.json.
-const chosen = palettes.find((p) => p.chosen)
-const design = readFileSync('DESIGN.md', 'utf8')
-const drift = Object.entries(chosen.roles).filter(([role, hex]) => {
-  const row = design.match(new RegExp(`^\\| \`${role}\`\\s*\\| \`(#[0-9A-Fa-f]{6})\``, 'm'))
-  return row?.[1].toUpperCase() !== hex.toUpperCase()
-})
-if (drift.length) {
-  console.error(`DESIGN.md's palette table differs from ${chosen.id}: ${drift.map(([r, h]) => `${r} ${h}`).join(', ')}`)
+if (tokenFailed.length) {
+  console.error(`DESIGN.md's tokens fail: ${tokenFailed.map((c) => `${c.name} ${c.value}`).join(', ')}`)
   process.exit(1)
 }
-''', "dprint fmt tools/design/validation.json"]
+''',
+  "dprint fmt tools/design/validation.json",
+]
 
 ["design:theme"]
 description = "Write the app's GPUI Kit dark theme (kb.json), its accents and the tag-accent fixture from the chosen palette, or the one named"

@@ -48,7 +48,9 @@ Command"), no exclamation marks, no chatter.
 
 ## Accessibility & Inclusion
 
-- Text meets WCAG 2.2 AA contrast on every surface it sits on; `mise run design:validate` checks the palette.
+- Body and label text meet WCAG 2.2 AA (4.5:1) on every surface they sit on; tertiary text (`faint`: counts, hints,
+  section labels, URLs) at least 3:1 on the window and popovers (owner, 2026-10-13, O1); `mise run design:validate`
+  checks the tokens.
 - Nothing is told by colour alone: a tag carries its `#name`, a type its icon and tooltip.
 - Every control is named for assistive technology ([compliance checklist](docs/experiment/compliance.md)).
 
