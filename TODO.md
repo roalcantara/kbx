@@ -253,23 +253,25 @@
   - **Tags**: design, plan8
 
 - [x] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
-  - **Comments**: qUan
+  - **Comments**: qUan,8liG
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] 3XFj **-** Plan 8, 08-09 Actions pages in the companion: Links and Copy; owner approves
-  - **Comments**: 1AzQ
+- [x] 3XFj **-** Plan 8, 08-09 Actions pages in the companion: Links and Copy; owner approves
+  - **Comments**: 1AzQ,y0NF
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] prlL **-** Plan 8, 11-14 Rebuild in the companion: running, report, stopped, failed; owner approves
+- [x] prlL **-** Plan 8, 11-14 Rebuild in the companion: running, report, stopped, failed; owner approves
+  - **Comments**: 9SZI
   - **Priority**: medium
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] ER8Q **-** Plan 8, 15-16 Bookmark media in the companion: thumbnail and favicon, split and detail; owner approves
+- [x] ER8Q **-** Plan 8, 15-16 Bookmark media in the companion: thumbnail and favicon, split and detail; owner approves
+  - **Comments**: RQzn
   - **Priority**: medium
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -293,146 +295,79 @@
 # Actors
 
 - [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
-  - **Priority**: high
-  - **Created**: 2026-10-12 19:39
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
-  - **Priority**: high
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] pMDV **-** Plan 8: write the plan from the spec
-  - **Priority**: high
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] VHnE **-** Plan 8: review the plan until no findings remain
-  - **Priority**: high
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
-  - **Priority**: high
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
-  - **Priority**: medium
-  - **Created**: 2026-10-12 19:39
-  - **Tags**: app, next
+  - **Type**: Human
 
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
-  - **Priority**: high
-  - **Created**: 2026-10-11 15:37
-  - **Tags**: tags
+  - **Type**: Human
 
 - [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
-  - **Comments**: 9Cpo
-  - **Priority**: medium
-  - **Created**: 2026-10-11 09:30
-  - **Tags**: plan7, report
+  - **Type**: Human
 
 - [ ] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kb (which memory.sh relaunches)
-  - **Comments**: HGSp
-  - **Priority**: high
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/memory.sh#L36:1"
-  - **Tags**: bench, decision, next
+  - **Type**: Human
 
 - [ ] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
-  - **Comments**: TbBw
-  - **Priority**: high
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/plans/2026-10-09-kb-native-05-mvp-compliance-and-report.md#L1:1"
-  - **Tags**: bench, plan5
+  - **Type**: Human
 
 - [ ] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/manual-keystroke.sh#L1:1"
-  - **Tags**: bench, plan5
+  - **Type**: Human
 
 - [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
-  - **Tags**: plan5, report
+  - **Type**: Human
 
 - [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
-  - **Priority**: medium
-  - **Created**: 2026-10-10 02:29
-  - **Tags**: git, plan5
+  - **Type**: Human
 
 - [ ] Y0HE **-** Purge the benchmark kit (tools/bench/README.md, Purge) once the Plan 5 report is merged
-  - **Comments**: 6165
-  - **Priority**: medium
-  - **Created**: 2026-10-11 12:51
-  - **Tags**: bench
+  - **Type**: Human
 
 - [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types outside the benchmark kit (checked once with the kit's tsc, strict, 2026-10-10)
-  - **Priority**: low
-  - **Created**: 2026-10-10 07:17
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/graph.ts#L1:1"
-  - **Tags**: graph, quality, tools
+  - **Type**: Human
 
 - [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
-  - **Priority**: low
-  - **Created**: 2026-10-10 02:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/third-party/README.md#L1:1"
-  - **Tags**: deps, upstream
+  - **Type**: Human
 
 - [ ] BuLS **-** Run Graphify's semantic pass (mise run graph build graphify --force) once API keys are in fnox
-  - **Priority**: low
-  - **Created**: 2026-10-10 06:58
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
-  - **Tags**: graph, tools
+  - **Type**: Human
 
 - [ ] KDYD **-** Evaluate moving tool configs (mise, hk, dprint, typos, ls-lint, jscpd, gitleaks, mdschema, commitlint, cchk, taplo, ast-grep) into .config/
-  - **Comments**: JOrA
-  - **Priority**: low
-  - **Created**: 2026-10-10 03:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/README.md#L1:1"
-  - **Tags**: config, layout
+  - **Type**: Human
 
 - [ ] Sdkb **-** Sign kb.app with a Developer ID and notarize it, so macOS opens it without asking
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0006-packaging.md#L1:1"
-  - **Tags**: release, signing
+  - **Type**: Human
 
 - [ ] enBz **-** Release a universal binary (Apple silicon and Intel): today's zip is arm64 only
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/mise.toml#L1:1"
-  - **Tags**: release
+  - **Type**: Human
 
 - [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
-  - **Priority**: low
-  - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
-  - **Tags**: linux, release
+  - **Type**: Human
 
 - [ ] MOB4 **-** Plan 8, 17 Toast: restyle the notice (the owner is not happy with it); copy feedback lands meanwhile
-  - **Priority**: low
-  - **Created**: 2026-10-12 17:19
-  - **Tags**: design, plan8
+  - **Type**: Human
 
 - [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
-  - **Comments**: 8Ylj,2A23
-  - **Priority**: low
-  - **Created**: 2026-10-12 19:39
-  - **Tags**: app
+  - **Type**: Human
 
 - [ ] rPyR **-** Notes code blocks: render fenced code in the Body with GPUI Kit's read-only code Editor (line numbers, Clipboard copy), as dbflux's SQL preview does, instead of TextView's code block; needs the notes Markdown split around code blocks
-  - **Priority**: low
-  - **Created**: 2026-10-12 22:15
-  - **Tags**: app, design
+  - **Type**: Human
 
 - [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kb-domain could run as a Nohrs plugin
-  - **Priority**: low
-  - **Created**: 2026-10-12 22:58
-  - **Tags**: watch
+  - **Type**: Human
 
 # Comments
 
@@ -580,4 +515,16 @@
 
 - Bo3f **-** 2026-10-12, where to ignore them: (a) in the app (catalog lists the four types; list, filter and counts skip the rest) keeps kb-domain and the index identical to the TypeScript engine, so the goldens and the experiment's parity hold; (b) at sync (unknown types skipped, the sync report says so) is cleaner but changes the engine's output, which the TS goldens check (CONTEXT.md: 'Unknown keys are kept, not rejected'). Recommended: (a) in Plan 8, (b) after the experiment's report. Also update: CONTEXT.md (Entry type), the catalog, the type tints (Notes' peach and Other's hash fall away), the template rows for notes, parity.md, and the sample and showcase corpora.
   - **Task**: 7lTb
+
+- 8liG **-** 2026-10-12, correction (owner): the filter's search sits at the bottom, as Raycast's and as the actions panel's (07-filter.html v4); my 'search next to its trigger' rule is withdrawn.
+  - **Task**: kzv4
+
+- y0NF **-** 2026-10-12: settled in 02 (02-actions.html): Links… › (only when the entry has links; one row per link; ↵ opens, ⌘↵ copies, the bookmark pair) and More… › (COPY Description, Notes, Path, URL on bookmarks │ ADMINISTRATION Edit, Refresh, Configure); no search of their own, the root's search finds their rows; ‹ header; at most two levels.
+  - **Task**: 3XFj
+
+- 9SZI **-** 2026-10-12 (11-14-refresh.html, 01-list v5 + a script, nothing new designed): header back chevron only; running, stopped, failed use 03's empty view (large icon, title, sentence; running adds a thin progress bar and 'n of m files · current file'); the report uses 01's rows, one per file worth a look, failed first (tile ✕ failed, ⚠ skipped entries, ✓ indexed; chip: failed / count), a summary line on top. Keys: running Stop esc; report Back ↵; stopped Retry ↵; failed Retry ↵ · Configure ⌘↵. The action is named Refresh everywhere (Sync in the code).
+  - **Task**: prlL
+
+- RQzn **-** 2026-10-12: settled by template v3 (04-entry-template.html): hero = the thumbnail (YouTube now, og:image later), capped in the split, full width in detail; otherwise the URL link line; the favicon leads the header and the list row.
+  - **Task**: ER8Q
 

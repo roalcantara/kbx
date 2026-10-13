@@ -238,6 +238,7 @@
 .kb .hr { height: 1px; background: var(--edge); margin: 4px; flex: none; }
 .kb .a.clear .lb { color: var(--muted); }
 
+.kb .pop .ps { border-bottom: none; border-top: 1px solid var(--edge); }
 .filter-states { display: flex; flex-direction: column; gap: 28px; } .filter-states h2 { font-size: 16px; font-weight: 600; }
 </style>
 <script>
@@ -254,6 +255,7 @@
       const spans = kb.querySelectorAll('.ft .l span'); spans[spans.length - 1].textContent = '1 result'
     }
     kb.querySelector('.ft').insertAdjacentHTML('beforebegin', pop)
+    const pp = kb.querySelector('.pop'); pp.append(pp.querySelector('.ps'))
     kb.querySelector('.ft .rt').innerHTML = '<span class="it">Toggle<kbd>↵</kbd></span><span class="it">Only<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span>'
     return kb
   }
@@ -264,8 +266,8 @@
   box.innerHTML = '<h2>Nothing chosen yet (⌘P)</h2>'
   box.append(original); box.insertAdjacentHTML('beforeend', '<h2>Commands and #k8s chosen</h2>'); box.append(second)
   const stage = document.querySelector('.stage'); stage.replaceWith(box)
-  document.querySelector('h1').textContent = '07 · Filter — v3, on 01-list v5 unchanged'
-  document.querySelector('.lead').innerHTML = 'Both panels are <b>01-list v5 byte-for-byte</b> (this page is that file plus a script): same rows, chips, keycaps, spacing, footer, at 100 %. Added: <b>the filter dropdown</b> under the pill and the footer keys while it is open (<b>Toggle ↵ · Only ⌘↵</b>); with a filter set, the list keeps the matching row and the pill names the filters.'
+  document.querySelector('h1').textContent = '07 · Filter — v4, on 01-list v5 unchanged'
+  document.querySelector('.lead').innerHTML = 'Both panels are <b>01-list v5 byte-for-byte</b> (this page is that file plus a script): same rows, chips, keycaps, spacing, footer, at 100 %. Added: <b>the filter dropdown</b> under the pill, its search at the bottom as Raycast (and as the actions panel) and the footer keys while it is open (<b>Toggle ↵ · Only ⌘↵</b>); with a filter set, the list keeps the matching row and the pill names the filters.'
   document.querySelectorAll('.questions').forEach(n => n.remove())
   lucide.createIcons()
 })()
