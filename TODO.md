@@ -276,12 +276,14 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] nNln **-** Plan 8: add a realistic showcase corpus to the repo (committed YAML) that the prototypes and design:shots both use
+- [x] r58y **-** Plan 8: rebuild the prototypes in docs/guides/design from the approved companion screens, on the showcase corpus (replaces the 0fcaddc set)
+  - **Comments**: dPmR
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] r58y **-** Plan 8: rebuild the prototypes in docs/guides/design from the approved companion screens, on the showcase corpus (replaces the 0fcaddc set)
+- [ ] nNln **-** Plan 8: add a realistic showcase corpus to the repo (committed YAML) that the prototypes and design:shots both use
+  - **Comments**: Vx4Z
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -292,82 +294,63 @@
   - **Created**: 2026-10-12 23:09
   - **Tags**: app, plan8
 
-# Actors
-
 - [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
-  - **Type**: Human
 
-- [ ] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
-  - **Type**: Human
+- [~] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
+  - **Comments**: LGMU
 
 - [ ] pMDV **-** Plan 8: write the plan from the spec
-  - **Type**: Human
 
 - [ ] VHnE **-** Plan 8: review the plan until no findings remain
-  - **Type**: Human
 
 - [ ] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
-  - **Type**: Human
 
 - [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
-  - **Type**: Human
 
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
-  - **Type**: Human
 
 - [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
-  - **Type**: Human
 
 - [ ] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kb (which memory.sh relaunches)
-  - **Type**: Human
 
 - [ ] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
-  - **Type**: Human
 
 - [ ] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
-  - **Type**: Human
 
 - [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
-  - **Type**: Human
 
 - [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
-  - **Type**: Human
 
 - [ ] Y0HE **-** Purge the benchmark kit (tools/bench/README.md, Purge) once the Plan 5 report is merged
-  - **Type**: Human
 
 - [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types outside the benchmark kit (checked once with the kit's tsc, strict, 2026-10-10)
-  - **Type**: Human
 
 - [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
-  - **Type**: Human
 
 - [ ] BuLS **-** Run Graphify's semantic pass (mise run graph build graphify --force) once API keys are in fnox
-  - **Type**: Human
 
 - [ ] KDYD **-** Evaluate moving tool configs (mise, hk, dprint, typos, ls-lint, jscpd, gitleaks, mdschema, commitlint, cchk, taplo, ast-grep) into .config/
-  - **Type**: Human
 
 - [ ] Sdkb **-** Sign kb.app with a Developer ID and notarize it, so macOS opens it without asking
-  - **Type**: Human
 
 - [ ] enBz **-** Release a universal binary (Apple silicon and Intel): today's zip is arm64 only
-  - **Type**: Human
 
 - [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
-  - **Type**: Human
 
 - [ ] MOB4 **-** Plan 8, 17 Toast: restyle the notice (the owner is not happy with it); copy feedback lands meanwhile
-  - **Type**: Human
 
 - [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
-  - **Type**: Human
 
 - [ ] rPyR **-** Notes code blocks: render fenced code in the Body with GPUI Kit's read-only code Editor (line numbers, Clipboard copy), as dbflux's SQL preview does, instead of TextView's code block; needs the notes Markdown split around code blocks
-  - **Type**: Human
 
 - [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kb-domain could run as a Nohrs plugin
-  - **Type**: Human
+
+- [ ] Th4B **-** Idea: read massCode's Markdown vault as a second kind of source beside the YAML, so massCode can be the editor and kb the launcher (owner-approved idea, 2026-10-12; only if a GUI editor is wanted)
+  - **Priority**: low
+  - **Created**: 2026-10-12 23:33
+  - **Tags**: idea
+
+# Actors
 
 # Comments
 
@@ -527,4 +510,13 @@
 
 - RQzn **-** 2026-10-12: settled by template v3 (04-entry-template.html): hero = the thumbnail (YouTube now, og:image later), capped in the split, full width in detail; otherwise the URL link line; the favicon leads the header and the list row.
   - **Task**: ER8Q
+
+- dPmR **-** 2026-10-12, won't do as a separate step (owner): the approved pages in docs/superpowers/brainstorm/2026-10-12-design-system/ are the visual contract; the plan replaces docs/guides/design/ with them and points design:shots at them.
+  - **Task**: r58y
+
+- Vx4Z **-** 2026-10-12 (owner): becomes the plan's first task, since both the pages and the app's screenshots need it.
+  - **Task**: nNln
+
+- LGMU **-** 2026-10-12, decided before writing the spec: keep evolving kb rather than port massCode's slice (~55k lines of Vue/TS, an editing workspace without a hotkey panel) to GPUI; kb's design is bought from Raycast, the best-tested answer for its job.
+  - **Task**: KhLt
 
