@@ -240,18 +240,19 @@
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [~] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
-  - **Comments**: oVNz,xpAF,QU41,dNCU,nkjz
+- [x] Z64Y **-** Plan 8, 04 Split in the companion: list and split pane; owner approves
+  - **Comments**: oVNz,xpAF,QU41,dNCU,nkjz,cObJ
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] sTbE **-** Plan 8, 05-06 Detail in the companion: drawn from the rules (no Stitch screen), with and without metadata; owner approves
+- [x] sTbE **-** Plan 8, 05-06 Detail in the companion: drawn from the rules (no Stitch screen), with and without metadata; owner approves
+  - **Comments**: m0LI
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
 
-- [ ] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
+- [~] kzv4 **-** Plan 8, 07 Filter in the companion: drawn from the rules (no Stitch screen); owner approves
   - **Priority**: high
   - **Created**: 2026-10-12 17:19
   - **Tags**: design, plan8
@@ -560,4 +561,10 @@
 
 - 2A23 **-** 2026-10-12, mechanism-level prior art for showing a command and running it: GPUI API clients on kb's GPUI (probe, Arc, Broquest, GetCat, Setu, Protide: request body in GPUI Kit's Editor, run, response pane, environments/variables); notebooks (marimo, Jupyter: output under the cell); Runme (Markdown code blocks as runnable cells; kb's notes already hold code blocks); navi (argument placeholders with suggestion commands). Read the GPUI API clients first when this task starts.
   - **Task**: 3g6H
+
+- cObJ **-** 2026-10-12: closed by the full-screen GPUI spike (four real screens): template v3, command card (b), footer with the type tile + file + ⌥⌘C and the screen's ↵/⌘↵/⇧⌘↵; 12 pt card in the split, 13 pt in detail; the count leaves the footer while a pane is open (← brings it back). Detail (05–06) is the same template at full width; → shows the metadata column.
+  - **Task**: Z64Y
+
+- m0LI **-** 2026-10-12: folded into 04 (same component at full width). Still to settle in the spec: the metadata column's look (→).
+  - **Task**: sTbE
 
