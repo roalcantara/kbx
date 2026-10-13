@@ -2,6 +2,7 @@
 
 use kb_domain::search::FilterState;
 
+use crate::catalog::Catalog;
 use crate::presentation::type_label;
 
 /// One choice, checked when it is part of the current filter, and the filter picking it gives.
@@ -88,17 +89,21 @@ pub fn filter_groups(types: &[String], tags: &[String], current: &FilterState) -
     groups
 }
 
-/// The filter in a few words, for the list placeholder: "All Entries", "Commands", "Commands, #git".
+/// The filter in a few words, for the pill: "All Entries", "Commands", "Commands, #k8s".
 #[must_use]
-pub fn filter_summary(filter: &FilterState) -> String {
+pub fn filter_summary(filter: &FilterState, catalog: &Catalog) -> String {
     let parts: Vec<String> = filter
         .types
         .iter()
-        .map(|t| type_label(t))
+        .map(|t| {
+            catalog
+                .entry_type(t)
+                .map_or_else(|| type_label(t), |kind| kind.label.clone())
+        })
         .chain(filter.tags.iter().map(|t| format!("#{t}")))
         .collect();
     if parts.is_empty() {
-        "All Entries".into()
+        catalog.messages.all_entries.clone()
     } else {
         parts.join(", ")
     }
@@ -162,12 +167,16 @@ mod tests {
 
     #[test]
     fn summarizes_the_filter() {
-        assert_eq!(filter_summary(&FilterState::default()), "All Entries");
+        let catalog = Catalog::default();
+        assert_eq!(filter_summary(&FilterState::default(), &catalog), "All Entries");
         assert_eq!(
-            filter_summary(&FilterState {
-                types: strings(&["commands"]),
-                tags: strings(&["git"])
-            }),
+            filter_summary(
+                &FilterState {
+                    types: strings(&["commands"]),
+                    tags: strings(&["git"])
+                },
+                &catalog
+            ),
             "Commands, #git"
         );
     }

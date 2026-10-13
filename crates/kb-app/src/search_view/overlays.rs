@@ -15,12 +15,11 @@ use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandSt
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex};
 use gpui_kit::{
-    Anchor, AnyElement, App, ClipboardItem, Context, Div, Entity, Focusable as _, Hsla, IntoElement as _,
+    Anchor, AnyElement, App, AsKeystroke as _, Context, Div, Entity, Focusable as _, Hsla, IntoElement as _,
     ParentElement as _, Styled as _, WeakEntity, Window, div, px,
 };
 use kb_domain::search::{FilterState, tags_for_types};
 
-use super::footer::{action_keycaps, keycap_row};
 use super::{Overlay, Screen, SearchView};
 use crate::filter::{FilterGroup, filter_groups};
 use crate::palette::{Page, PaletteCommand, PaletteContext, PaletteGroup, entry_palette, page};
@@ -181,6 +180,28 @@ impl SearchView {
     }
 }
 
+/// The keycap text of `action`'s binding in the panel, if it has one.
+fn action_keycaps(action: &dyn gpui_kit::Action, window: &Window) -> Vec<String> {
+    gpui_kit::KeyContext::parse(crate::keys::CONTEXT)
+        .ok()
+        .and_then(|context| window.highest_precedence_binding_for_action_in_context(action, context))
+        .and_then(|binding| {
+            binding
+                .keystrokes()
+                .first()
+                .map(|key| vec![crate::ui::keycap::caps(&key.as_keystroke().unparse())])
+        })
+        .unwrap_or_default()
+}
+
+/// The keys as one live keycap.
+fn keycap_row(caps: &[String], _: &App) -> gpui_kit::Div {
+    gpui_kit::div().child(crate::ui::keycap::keycap(
+        caps.concat(),
+        crate::ui::keycap::ChipState::Live,
+    ))
+}
+
 /// A row: its icon in `tint`, then its label; the caller appends what trails it.
 fn row(icon: IconName, tint: Hsla, label: &str) -> Div {
     h_flex()
@@ -221,7 +242,7 @@ fn actions_content(this: &SearchView, view: &WeakEntity<SearchView>, window: &mu
                     .child(if drills_in {
                         div().text_color(muted).child("›").into_any_element()
                     } else {
-                        keycap_row(keys.clone(), cx).into_any_element()
+                        keycap_row(&keys, cx).into_any_element()
                     })
             }));
             row_commands.push(palette_row.command);
@@ -258,7 +279,10 @@ fn run(command: &PaletteCommand, view: &WeakEntity<SearchView>, window: &mut Win
             window.defer(cx, move |window, cx| window.dispatch_action(action, cx));
         }
         PaletteCommand::OpenUrl(url) => cx.open_url(url),
-        PaletteCommand::Copy(text) => cx.write_to_clipboard(ClipboardItem::new_string(text.clone())),
+        PaletteCommand::Copy(text) => {
+            let text = text.clone();
+            let _ = view.update(cx, |this, cx| this.copy(text, window, cx));
+        }
         PaletteCommand::Filter(filter) => {
             let filter = filter.clone();
             let _ = view.update(cx, |this, cx| this.apply_filter(filter, cx));

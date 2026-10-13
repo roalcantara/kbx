@@ -10,8 +10,10 @@ use gpui_kit::{App, IntoElement, ParentElement as _, SharedString, Styled as _, 
 use kb_domain::entry::Entry;
 
 use crate::accents::accent;
-use crate::entry_list::TAG_RADIUS;
 use crate::presentation::{Hue, metadata, tag_hue, type_badge};
+
+// Removed with this module in Plan 8f.
+const TAG_RADIUS: f32 = 4.;
 
 /// A value in the card.
 #[derive(Debug, Clone, PartialEq, Eq)]

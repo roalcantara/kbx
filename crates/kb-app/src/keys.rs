@@ -24,6 +24,14 @@ actions!(
         OpenFilter,
         /// Run the selected entry's primary action.
         RunPrimary,
+        /// Run the selected entry's secondary action.
+        RunSecondary,
+        /// The screen's ↵ (its catalog key `enter`).
+        ScreenEnter,
+        /// The screen's ⌘↵.
+        ScreenCmdEnter,
+        /// The screen's ⇧⌘↵.
+        ScreenShiftCmdEnter,
         /// Copy the selected bookmark's URL.
         CopyUrl,
         /// Open the selected entry's source file.
@@ -55,6 +63,24 @@ actions!(
         /// Open the selected entry's detail screen (Return in the list, which the query field
         /// reports; no binding of its own).
         OpenDetail,
+        /// Run row 1's primary action (list) or open link 1 (detail screen).
+        RunRow1,
+        /// Row or link 2.
+        RunRow2,
+        /// Row or link 3.
+        RunRow3,
+        /// Row or link 4.
+        RunRow4,
+        /// Row or link 5.
+        RunRow5,
+        /// Row or link 6.
+        RunRow6,
+        /// Row or link 7.
+        RunRow7,
+        /// Row or link 8.
+        RunRow8,
+        /// Row or link 9.
+        RunRow9,
     ]
 );
 
@@ -81,9 +107,12 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         })
         .collect();
     bindings.extend([
-        // Enter runs the primary action only on the detail screen. In the list, the search field
-        // propagates Enter after reporting it, so a panel-wide binding would also fire there.
-        KeyBinding::new("enter", RunPrimary, Some(DETAIL_CONTEXT)),
+        // The list's ↵ and ⌘↵ come from the query field (it reports Enter, then propagates it), so
+        // the ladder is bound here only where no text field has the keyboard: the detail screen.
+        KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
+        KeyBinding::new("cmd-enter", ScreenCmdEnter, Some(DETAIL_CONTEXT)),
+        // The query field does not bind ⇧⌘↵, so it reaches the panel everywhere.
+        KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, context),
         KeyBinding::new("escape", Back, context),
         KeyBinding::new("cmd-q", Quit, context),
         // → and ← reach these only where no text field takes them first: the detail screen. In
@@ -96,6 +125,16 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         KeyBinding::new("up", ScrollNotesUp, Some(DETAIL_CONTEXT)),
         KeyBinding::new("cmd-down", PageNotesDown, Some(DETAIL_CONTEXT)),
         KeyBinding::new("cmd-up", PageNotesUp, Some(DETAIL_CONTEXT)),
+        // ⌘1–⌘9: row n's primary action in the list; link n on the detail screen (R7).
+        KeyBinding::new("cmd-1", RunRow1, context),
+        KeyBinding::new("cmd-2", RunRow2, context),
+        KeyBinding::new("cmd-3", RunRow3, context),
+        KeyBinding::new("cmd-4", RunRow4, context),
+        KeyBinding::new("cmd-5", RunRow5, context),
+        KeyBinding::new("cmd-6", RunRow6, context),
+        KeyBinding::new("cmd-7", RunRow7, context),
+        KeyBinding::new("cmd-8", RunRow8, context),
+        KeyBinding::new("cmd-9", RunRow9, context),
     ]);
     bindings
 }
@@ -116,8 +155,9 @@ mod tests {
     #[test]
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
-        // 7 keyed catalog actions + escape, cmd-q, right, left, enter (detail), down, up, cmd-down, cmd-up.
-        assert_eq!(bindings.len(), 16);
+        // 7 keyed catalog actions + enter, cmd-enter (detail), shift-cmd-enter, escape, cmd-q, right, left,
+        // down, up, cmd-down, cmd-up, cmd-1…cmd-9.
+        assert_eq!(bindings.len(), 27);
     }
 
     #[test]

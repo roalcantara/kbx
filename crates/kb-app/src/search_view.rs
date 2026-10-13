@@ -21,21 +21,23 @@ mod footer;
 mod header;
 mod overlays;
 
-use crate::catalog::Catalog;
+use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen};
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
     Back, CONTEXT, CopyPath, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter,
-    OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, ScrollNotesDown,
-    ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
+    OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3,
+    RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter,
+    ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::{PaneLayout, next_offset, notes_pane};
 use crate::palette::Page;
-use crate::presentation::{PrimaryKind, TypeKey, primary_action, type_key};
+use crate::presentation::{TypeKey, type_key};
 use crate::sync_view::{SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pt};
+use crate::ui::notice;
 use crate::window_size::{COMPACT, WindowSize};
 
 /// What fills the panel.
@@ -81,6 +83,8 @@ pub struct SearchView {
     detail_scroll: ScrollHandle,
     /// The overlay open over the screen, if any.
     overlay: Overlay,
+    /// The last notice the view showed (D17).
+    last_notice: Option<String>,
     subscriptions: Vec<Subscription>,
 }
 
@@ -98,11 +102,13 @@ impl SearchView {
     pub fn new(config: Config, catalog: Catalog, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let connection = open_readonly(config.database()).ok();
         let tag_images = TagImages::scan(config.tag_images());
-        let types: Vec<String> = catalog.types.keys().cloned().collect();
         let placeholder = catalog.messages.search_placeholder.clone();
+        let catalog = Rc::new(catalog);
         let list = cx.new(|cx| {
             ListState::new(
-                EntryList::new(connection).with_tag_images(tag_images).with_types(types),
+                EntryList::new(connection)
+                    .with_tag_images(tag_images)
+                    .with_catalog(catalog.clone()),
                 window,
                 cx,
             )
@@ -124,7 +130,7 @@ impl SearchView {
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
         Self {
             config,
-            catalog: Rc::new(catalog),
+            catalog,
             list,
             query_input,
             palette,
@@ -137,6 +143,7 @@ impl SearchView {
             window_size: WindowSize::default(),
             detail_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
+            last_notice: None,
             subscriptions: vec![list_sub, input_sub],
         }
     }
@@ -234,11 +241,7 @@ impl SearchView {
                 self.search(&text, window, cx);
             }
             InputEvent::PressEnter { secondary, .. } => {
-                if *secondary {
-                    self.run_primary(&RunPrimary, window, cx);
-                } else {
-                    self.show_detail_screen(window, cx);
-                }
+                self.ladder(if *secondary { "cmd-enter" } else { "enter" }, window, cx);
             }
             _ => {}
         }
@@ -254,28 +257,130 @@ impl SearchView {
         match event {
             ListEvent::Select(_) => cx.notify(),
             ListEvent::Confirm(_) => {
-                if self.list.read(cx).delegate().is_secondary_confirm() {
-                    self.run_primary(&RunPrimary, window, cx);
+                let keys = if self.list.read(cx).delegate().is_secondary_confirm() {
+                    "cmd-enter"
                 } else {
-                    self.show_detail_screen(window, cx);
-                }
+                    "enter"
+                };
+                self.ladder(keys, window, cx);
             }
             // Esc in the list leaves the panel, as it closes the Raycast command.
             ListEvent::Cancel => cx.hide(),
         }
     }
 
-    fn run_primary(&mut self, _: &RunPrimary, _: &mut Window, cx: &mut Context<Self>) {
-        let Some(action) = self.list.read(cx).delegate().selected_entry().map(primary_action) else {
-            return;
-        };
-        match action.kind {
-            PrimaryKind::OpenInBrowser => cx.open_url(&action.content),
-            PrimaryKind::Copy => cx.write_to_clipboard(ClipboardItem::new_string(action.content)),
+    /// The screen whose keys apply now (8g adds the empty and refresh screens).
+    fn key_screen(&self) -> KeyScreen {
+        match self.screen {
+            Screen::Detail => KeyScreen::Detail,
+            _ => KeyScreen::List,
         }
     }
 
-    fn copy_url(&mut self, _: &CopyUrl, _: &mut Window, cx: &mut Context<Self>) {
+    /// The current screen's keys, resolved for the selected entry.
+    fn screen_keys(&self, cx: &App) -> Vec<KeyItem> {
+        let selected = self.list.read(cx).delegate().selected_entry();
+        let kind = selected.and_then(|entry| self.catalog.entry_type(&entry.entry_type));
+        self.catalog.keys_for(self.key_screen(), kind)
+    }
+
+    /// Runs what the current screen binds to `keys` (`enter`, `cmd-enter`, `shift-cmd-enter`).
+    fn ladder(&mut self, keys: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let action = self
+            .screen_keys(cx)
+            .into_iter()
+            .find(|item| item.keys == keys)
+            .map(|item| item.action);
+        if let Some(action) = action {
+            self.run_action(&action, window, cx);
+        }
+    }
+
+    /// Runs a catalog action by id on the selected entry.
+    fn run_action(&mut self, action: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let content = self
+            .list
+            .read(cx)
+            .delegate()
+            .selected_entry()
+            .map(|entry| entry.primary_content.clone());
+        match (action, content) {
+            ("details", _) => self.show_detail_screen(window, cx),
+            ("open", Some(url)) => cx.open_url(&url),
+            ("copy", Some(text)) => self.copy(text, window, cx),
+            ("refresh", _) => self.rebuild(&Rebuild, window, cx),
+            ("configure", _) => self.open_preferences(&OpenPreferences, window, cx),
+            ("resize", _) => self.toggle_window_size(&ToggleWindowSize, window, cx),
+            ("edit", _) => self.open_source_file(&OpenSourceFile, window, cx),
+            ("copy-path", _) => self.copy_path(&CopyPath, window, cx),
+            _ => {}
+        }
+    }
+
+    /// Copies `text` and says so (D17).
+    pub(super) fn copy(&mut self, text: String, window: &mut Window, cx: &mut Context<Self>) {
+        cx.write_to_clipboard(ClipboardItem::new_string(text));
+        self.last_notice = Some(self.catalog.messages.copied.clone());
+        window.push_notification(notice::copied(&self.catalog.messages), cx);
+    }
+
+    /// The last notice the view showed, for tests.
+    #[must_use]
+    pub fn last_notice(&self) -> Option<&str> {
+        self.last_notice.as_deref()
+    }
+
+    /// The selected entry's primary (`secondary` false) or secondary action.
+    fn run_entry(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let action = self.list.read(cx).delegate().selected_entry().and_then(|entry| {
+            let kind = self.catalog.entry_type(&entry.entry_type)?;
+            if secondary {
+                kind.secondary.clone()
+            } else {
+                Some(kind.primary.clone())
+            }
+        });
+        if let Some(action) = action {
+            self.run_action(&action, window, cx);
+        }
+    }
+
+    fn run_primary(&mut self, _: &RunPrimary, window: &mut Window, cx: &mut Context<Self>) {
+        self.run_entry(false, window, cx);
+    }
+
+    fn run_secondary(&mut self, _: &RunSecondary, window: &mut Window, cx: &mut Context<Self>) {
+        self.run_entry(true, window, cx);
+    }
+
+    fn screen_enter(&mut self, _: &ScreenEnter, window: &mut Window, cx: &mut Context<Self>) {
+        self.ladder("enter", window, cx);
+    }
+
+    fn screen_cmd_enter(&mut self, _: &ScreenCmdEnter, window: &mut Window, cx: &mut Context<Self>) {
+        self.ladder("cmd-enter", window, cx);
+    }
+
+    fn screen_shift_cmd_enter(&mut self, _: &ScreenShiftCmdEnter, window: &mut Window, cx: &mut Context<Self>) {
+        self.ladder("shift-cmd-enter", window, cx);
+    }
+
+    /// ⌘n: selects row n − 1 and runs its primary action (R7); the detail screen's links come in 8f.
+    fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if !matches!(self.screen, Screen::Search) {
+            return;
+        }
+        let exists = self.list.read(cx).delegate().entries().len() >= n;
+        if !exists {
+            return;
+        }
+        self.list.update(cx, |list, cx| {
+            list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx);
+        });
+        self.run_entry(false, window, cx);
+    }
+
+    fn copy_url(&mut self, _: &CopyUrl, window: &mut Window, cx: &mut Context<Self>) {
         let url = self
             .list
             .read(cx)
@@ -284,13 +389,13 @@ impl SearchView {
             .filter(|e| type_key(&e.entry_type) == TypeKey::Bookmark)
             .map(|e| e.primary_content.clone());
         if let Some(url) = url {
-            cx.write_to_clipboard(ClipboardItem::new_string(url));
+            self.copy(url, window, cx);
         }
     }
 
-    fn copy_path(&mut self, _: &CopyPath, _: &mut Window, cx: &mut Context<Self>) {
+    fn copy_path(&mut self, _: &CopyPath, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(path) = self.selected_source_file(cx) {
-            cx.write_to_clipboard(ClipboardItem::new_string(path));
+            self.copy(path, window, cx);
         }
     }
 
@@ -479,6 +584,7 @@ impl SearchView {
 impl SearchView {
     /// The screen: the list and its split pane, the detail screen, or the rebuild.
     fn render_content(&self, selected: Option<&Entry>, cx: &mut Context<Self>) -> AnyElement {
+        let tokens = design();
         match &self.screen {
             Screen::Rebuild(sync) => sync.clone().into_any_element(),
             // The notes alone, without a title block: the footer names the entry (UI-12).
@@ -505,7 +611,11 @@ impl SearchView {
                             .flex_none()
                             .border_r_1()
                             .border_color(cx.theme().border)
-                            .child(List::new(&self.list)),
+                            .child(
+                                List::new(&self.list)
+                                    .px(pt(tokens.spacing.list.pad))
+                                    .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.)),
+                            ),
                     )
                     .child(div().h_full().flex_1().min_w_0().child(notes_pane(
                         entry,
@@ -515,7 +625,10 @@ impl SearchView {
                         cx,
                     )))
                     .into_any_element(),
-                None => List::new(&self.list).into_any_element(),
+                None => List::new(&self.list)
+                    .px(pt(tokens.spacing.list.pad))
+                    .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.))
+                    .into_any_element(),
             },
         }
     }
@@ -541,6 +654,19 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::open_actions))
             .on_action(cx.listener(Self::open_filter))
             .on_action(cx.listener(Self::run_primary))
+            .on_action(cx.listener(Self::run_secondary))
+            .on_action(cx.listener(Self::screen_enter))
+            .on_action(cx.listener(Self::screen_cmd_enter))
+            .on_action(cx.listener(Self::screen_shift_cmd_enter))
+            .on_action(cx.listener(|this, _: &RunRow1, window, cx| this.run_row(1, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow2, window, cx| this.run_row(2, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow3, window, cx| this.run_row(3, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow4, window, cx| this.run_row(4, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow5, window, cx| this.run_row(5, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow6, window, cx| this.run_row(6, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow7, window, cx| this.run_row(7, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow8, window, cx| this.run_row(8, window, cx)))
+            .on_action(cx.listener(|this, _: &RunRow9, window, cx| this.run_row(9, window, cx)))
             .on_action(cx.listener(Self::copy_url))
             .on_action(cx.listener(Self::copy_path))
             .on_action(cx.listener(Self::show_details))

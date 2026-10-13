@@ -7,7 +7,7 @@
 
 use std::sync::{Arc, LazyLock};
 
-use gpui_kit::{FontFeatures, FontWeight, Hsla, Rems, Styled, rems, rgb, rgba};
+use gpui_kit::{BoxShadow, FontFeatures, FontWeight, Hsla, Pixels, Rems, Styled, point, px, rems, rgb, rgba};
 use serde::Deserialize;
 
 use crate::presentation::Hue;
@@ -22,6 +22,26 @@ pub const POINTS_PER_REM: f32 = 16.;
 #[must_use]
 pub fn pt(points: f32) -> Rems {
     rems(points / POINTS_PER_REM)
+}
+
+/// `points` as GPUI pixels, for the few APIs that take pixels (shadows, window frames, notice
+/// margins). One point is one pixel at the base font size.
+#[must_use]
+pub fn pixels(points: f32) -> Pixels {
+    px(points)
+}
+
+/// A glow around an element: `color` at `alpha`, blurred `blur` points (the selection bar, the
+/// ready dot).
+#[must_use]
+pub fn glow(color: Hsla, blur: f32, alpha: f32) -> Vec<BoxShadow> {
+    vec![BoxShadow {
+        color: color.opacity(alpha),
+        offset: point(px(0.), px(0.)),
+        blur_radius: px(blur),
+        spread_radius: px(0.),
+        inset: false,
+    }]
 }
 
 /// Why the front matter could not be read.
@@ -322,7 +342,7 @@ points!(/// The favicon's sizes.
 points!(/// The action panel's sizes.
     PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check, offset });
 points!(/// The footer's sizes.
-    FooterSize { height, dot, dot_glow });
+    FooterSize { height, dot, dot_glow, dot_glow_alpha });
 points!(/// The split's shares.
     SplitSize { list });
 points!(/// The empty view's sizes.
@@ -334,7 +354,7 @@ points!(/// The quote's sizes.
 points!(/// The Links section's sizes.
     LinksSize { row, url_chars, title_share });
 points!(/// The notice's sizes.
-    NoticeSize { width, icon, check });
+    NoticeSize { width, icon, check, ring_fill, ring_border });
 points!(/// Borders.
     BorderSize { hairline });
 

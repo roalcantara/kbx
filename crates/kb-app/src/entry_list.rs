@@ -1,30 +1,29 @@
 //! The result list: one page of entries for the query and filter, read from the index.
 
+use std::rc::Rc;
 use std::time::Duration;
 
-use gpui_kit::assets::IconName;
 use gpui_kit::component::empty::{Empty, EmptyDescription, EmptyHeader, EmptyTitle};
-use gpui_kit::component::list::{ListDelegate, ListItem, ListState};
-use gpui_kit::component::tag::Tag;
-use gpui_kit::component::tooltip::Tooltip;
-use gpui_kit::component::{ActiveTheme as _, Icon, IndexPath, Sizable as _, h_flex, v_flex};
+use gpui_kit::component::list::{ListDelegate, ListState};
+use gpui_kit::component::{ActiveTheme as _, IndexPath, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, App, Context, InteractiveElement as _, IntoElement as _, ParentElement, Role, SharedString,
-    StatefulInteractiveElement as _, Styled as _, StyledImage as _, Task, Window, div, img, px, svg,
+    AnyElement, App, Context, IntoElement as _, ParentElement as _, SharedString, Styled as _, Task, Window,
 };
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
 use kb_domain::row::row_to_entry;
 use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, entry_types, search};
 
-use crate::accents::accent;
-use crate::presentation::{TypeKey, favicon_url, row_label, row_tags, tag_hue, type_badge, type_key};
+use crate::catalog::{Catalog, Hero};
+use crate::presentation::{favicon_url, row_label, row_tags, tag_hue};
 use crate::tag_images::TagImages;
 use crate::trace;
-
-/// A tag pill's corner radius: squarer than a pill, as Raycast's (tools/design/layout.json, tag).
-pub const TAG_RADIUS: f32 = 4.;
+use crate::ui::chip::{icon_chip, link_chip, pill};
+use crate::ui::design::{design, pt};
+use crate::ui::keycap::{ChipState, caps, keycap};
+use crate::ui::row::Row;
+use crate::ui::tile::{TileSize, favicon, tile};
 
 /// Keystrokes settle this long before a query runs, as in the Raycast command.
 pub const DEBOUNCE: Duration = Duration::from_millis(150);
@@ -47,6 +46,7 @@ pub struct EntryList {
     secondary_confirm: bool,
     tag_images: TagImages,
     compact: bool,
+    catalog: Rc<Catalog>,
 }
 
 impl EntryList {
@@ -66,6 +66,7 @@ impl EntryList {
             secondary_confirm: false,
             tag_images: TagImages::default(),
             compact: false,
+            catalog: Rc::new(Catalog::default()),
         };
         list.refresh();
         list
@@ -78,10 +79,11 @@ impl EntryList {
         self
     }
 
-    /// Shows only `types` (the catalog's), as the sources write them, lowercase.
+    /// Shows only the catalog's types (D6), drawn as the catalog says.
     #[must_use]
-    pub fn with_types(mut self, types: impl IntoIterator<Item = String>) -> Self {
-        self.known_types = types.into_iter().collect();
+    pub fn with_catalog(mut self, catalog: Rc<Catalog>) -> Self {
+        self.known_types = catalog.types.keys().cloned().collect();
+        self.catalog = catalog;
         self.refresh();
         self
     }
@@ -158,6 +160,25 @@ impl EntryList {
         self.secondary_confirm
     }
 
+    /// The keycap each row shows, in order, for tests: `↵` on the selected row, `⌘n` on the
+    /// first nine (R7).
+    #[must_use]
+    pub fn row_keycaps(&self) -> Vec<String> {
+        (0..self.entries.len())
+            .filter_map(|ix| Self::row_keycap(ix, Some(IndexPath::new(ix)) == self.selected))
+            .collect()
+    }
+
+    fn row_keycap(ix: usize, selected: bool) -> Option<String> {
+        if selected {
+            Some(caps("enter"))
+        } else if ix < 9 {
+            Some(caps(&format!("cmd-{}", ix + 1)))
+        } else {
+            None
+        }
+    }
+
     /// Runs the query for the current text, filter and page window, over the visible types only.
     fn refresh(&mut self) {
         let Some(connection) = &self.connection else {
@@ -199,119 +220,77 @@ impl EntryList {
         }
     }
 
-    /// A row as Raycast's (DESIGN.md, List row): the type icon or the bookmark's favicon, the
-    /// title, the muted description at the same size, then up to three tags (pills, or their
-    /// images), `+N` and the link count.
-    fn render_row(&self, entry: &Entry, selected: bool, cx: &App) -> ListItem {
-        let (tags, more) = row_tags(&entry.tags);
-        let badge = type_badge(&entry.entry_type);
-        let tint = accent(badge.hue, cx).color;
-        let type_icon = move || Icon::new(badge.icon).small().text_color(tint).into_any_element();
-        let favicon = (type_key(&entry.entry_type) == TypeKey::Bookmark)
-            .then(|| favicon_url(&entry.primary_content))
-            .flatten();
-        let muted = cx.theme().muted_foreground;
-
-        ListItem::new(SharedString::from(entry.id.clone()))
-            // The List wraps each row in its own ListItem node and reports only nodes with a role,
-            // so the row needs one to carry its name to assistive technology.
-            .role(Role::Label)
-            .accessibility_label(row_label(entry))
-            .selected(selected)
-            // Inset and rounded, as Raycast's selection (tools/design/layout.json, resultRow).
-            .mx(px(8.))
-            .px(px(16.))
-            .h(px(56.))
-            .rounded(px(12.))
-            .child(
-                h_flex()
-                    .w_full()
-                    .items_center()
-                    .gap(px(12.))
-                    .child(
-                        div()
-                            .flex_none()
-                            .w(px(24.))
-                            .flex()
-                            .justify_center()
-                            .map(|column| match favicon {
-                                Some(url) => column.child(img(url).size_4().with_fallback(type_icon)),
-                                None => column.child(type_icon()),
-                            }),
-                    )
-                    // The title over its description, smaller and dimmer (DESIGN.md, List row); the title
-                    // alone beside the split pane.
-                    .child(
-                        v_flex()
-                            .flex_1()
-                            .min_w_0()
-                            .gap(px(2.))
-                            .child(
-                                div()
-                                    .truncate()
-                                    .text_sm()
-                                    .text_color(cx.theme().foreground)
-                                    .child(entry.title.clone()),
-                            )
-                            .when(!self.compact, |text| {
-                                text.when_some(entry.description.clone(), |text, description| {
-                                    text.child(div().truncate().text_xs().text_color(muted).child(description))
-                                })
-                            }),
-                    )
-                    .when(!self.compact, |row| row.children(tags.iter().map(|tag| self.render_tag(tag, cx))))
-                    .when(!self.compact && more > 0, |row| {
-                        row.child(div().text_color(muted).text_xs().child(format!("+{more}")))
-                    })
-                    .when(!self.compact && !entry.links.is_empty(), |row| {
-                        row.child(
-                            h_flex()
-                                .gap_1()
-                                .items_center()
-                                .text_color(muted)
-                                .text_xs()
-                                .child(Icon::new(IconName::Link).xsmall())
-                                .child(entry.links.len().to_string()),
-                        )
-                    }),
+    /// A row as `01-list.html` draws it.
+    fn render_row(&self, entry: &Entry, ix: usize, selected: bool) -> Row {
+        let d = design();
+        let kind = self.catalog.entry_type(&entry.entry_type);
+        let (icon, tint, label, mono, media) = kind.map_or(("file-text", d.colors.faint, "", false, false), |kind| {
+            (
+                kind.icon.as_str(),
+                d.colors.named(&kind.tint).unwrap_or(d.colors.faint),
+                kind.label.as_str(),
+                kind.mono_title,
+                kind.hero == Hero::Media,
             )
+        });
+        let lead = match media.then(|| favicon_url(&entry.primary_content)).flatten() {
+            Some(url) => favicon(url, icon.to_owned(), tint, TileSize::Row).into_any_element(),
+            None => tile(icon, tint, TileSize::Row).into_any_element(),
+        };
+        let state = ChipState::of(selected);
+        let mut trailing: Vec<AnyElement> = Vec::new();
+        if !self.compact {
+            #[expect(
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss,
+                reason = "a token of a few tags"
+            )]
+            let max = d.components.row.max_tags as usize;
+            let (tags, more) = row_tags(&entry.tags, max);
+            if !tags.is_empty() {
+                trailing.push(
+                    h_flex()
+                        .items_center()
+                        .gap(pt(d.spacing.row.tags_gap))
+                        .children(tags.iter().map(|tag| self.render_tag(&entry.id, tag, state)))
+                        .when(more > 0, |group| group.child(pill(format!("+{more}"), state)))
+                        .into_any_element(),
+                );
+            }
+            if !entry.links.is_empty() {
+                trailing.push(link_chip(entry.links.len(), state).into_any_element());
+            }
+        }
+        if let Some(key) = Self::row_keycap(ix, selected) {
+            trailing.push(keycap(key, ChipState::Live).into_any_element());
+        }
+        Row::new(SharedString::from(entry.id.clone()), entry.title.clone())
+            .label(row_label(entry, label))
+            .lead(lead)
+            .mono(mono)
+            .description(entry.description.clone())
+            .trailing(trailing)
+            .compact(self.compact)
     }
 
-    /// A tag: its image when the tag-images folder has one, else its filled pill. The image sits in
-    /// an invisible square, so every image has the same size whatever its own margins; a brand's
-    /// colours are its own, a shape takes the muted text colour.
-    fn render_tag(&self, tag: &str, cx: &App) -> AnyElement {
-        let Some(image) = self.tag_images.image(tag) else {
-            let accent = accent(tag_hue(tag), cx);
-            return Tag::custom(accent.pill, accent.pill_text, accent.pill)
-                .xsmall()
-                .rounded(px(TAG_RADIUS))
-                .child(format!("#{tag}"))
-                .into_any_element();
-        };
-        let name = format!("#{tag}");
-        let path = image.path.clone();
-        let drawn = if image.coloured {
-            img(path).size_full().into_any_element()
-        } else {
-            svg()
-                .external_path(path.to_string_lossy().into_owned())
-                .size_full()
-                .text_color(cx.theme().muted_foreground)
-                .into_any_element()
-        };
-        div()
-            .id(SharedString::from(format!("tag-{tag}")))
-            .flex_none()
-            .size_4()
-            .child(drawn)
-            .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
-            .into_any_element()
+    /// A tag: its image when the tag-images folder has one, else its grey pill.
+    fn render_tag(&self, entry_id: &str, tag: &str, state: ChipState) -> AnyElement {
+        match self.tag_images.image(tag) {
+            Some(image) => icon_chip(
+                SharedString::from(format!("tag-{entry_id}-{tag}")),
+                image,
+                design().colors.hue(tag_hue(tag)),
+                state,
+                format!("#{tag}"),
+            )
+            .into_any_element(),
+            None => pill(format!("#{tag}"), state).into_any_element(),
+        }
     }
 }
 
 impl ListDelegate for EntryList {
-    type Item = ListItem;
+    type Item = Row;
 
     fn perform_search(&mut self, query: &str, window: &mut Window, cx: &mut Context<ListState<Self>>) -> Task<()> {
         let query = query.to_owned();
@@ -334,9 +313,9 @@ impl ListDelegate for EntryList {
         self.entries.len()
     }
 
-    fn render_item(&mut self, ix: IndexPath, _: &mut Window, cx: &mut Context<ListState<Self>>) -> Option<ListItem> {
+    fn render_item(&mut self, ix: IndexPath, _: &mut Window, _: &mut Context<ListState<Self>>) -> Option<Row> {
         let entry = self.entries.get(ix.row)?;
-        Some(self.render_row(entry, Some(ix) == self.selected, cx))
+        Some(self.render_row(entry, ix.row, Some(ix) == self.selected))
     }
 
     fn render_empty(&mut self, _: &mut Window, cx: &mut Context<ListState<Self>>) -> impl gpui_kit::IntoElement {

@@ -1,188 +1,128 @@
-//! The footer (DESIGN.md, Footer): two floating pills over the panel's bottom edge, the entry on
-//! the left; the primary action and Actions on the right, one keycap per key.
+//! The footer on each screen (D14): the status line on the list, the entry's file while a pane or
+//! the detail screen is open; the screen's keys and Actions.
 
-use gpui_kit::assets::IconName;
-use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
-use gpui_kit::component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
-use gpui_kit::prelude::FluentBuilder as _;
-use gpui_kit::{
-    Action, App, AsKeystroke as _, Context, IntoElement, KeyContext, Keystroke, ParentElement as _, Styled as _,
-    Window, div, px,
-};
+use gpui_kit::component::button::{Button, ButtonVariants as _};
+use gpui_kit::{AnyElement, App, Context, IntoElement, ParentElement as _, SharedString, Window};
 use kb_domain::entry::Entry;
 
+use super::header::plain_button;
 use super::{Screen, SearchView};
-use crate::accents::accent;
-use crate::keys::{CONTEXT, OpenActions, RunPrimary};
-use crate::presentation::{primary_action, type_badge};
-
-/// The keycaps of `keystroke`, one per key: modifiers in macOS order (⌃ ⌥ ⇧ ⌘), then the key.
-#[must_use]
-pub fn keycaps(keystroke: &Keystroke) -> Vec<String> {
-    let modifiers = keystroke.modifiers;
-    let mut caps: Vec<String> = [
-        (modifiers.control, "⌃"),
-        (modifiers.alt, "⌥"),
-        (modifiers.shift, "⇧"),
-        (modifiers.platform, "⌘"),
-    ]
-    .into_iter()
-    .filter(|(held, _)| *held)
-    .map(|(_, cap)| cap.to_owned())
-    .collect();
-    caps.push(match keystroke.key.as_str() {
-        "enter" => "↵".to_owned(),
-        "escape" => "esc".to_owned(),
-        "right" => "→".to_owned(),
-        "left" => "←".to_owned(),
-        "up" => "↑".to_owned(),
-        "down" => "↓".to_owned(),
-        "backspace" => "⌫".to_owned(),
-        "tab" => "⇥".to_owned(),
-        "space" => "␣".to_owned(),
-        key => key.to_uppercase(),
-    });
-    caps
-}
-
-/// The keycaps of `action`'s binding in the panel, if it has one.
-pub fn action_keycaps(action: &dyn Action, window: &Window) -> Vec<String> {
-    KeyContext::parse(CONTEXT)
-        .ok()
-        .and_then(|context| window.highest_precedence_binding_for_action_in_context(action, context))
-        .and_then(|binding| binding.keystrokes().first().map(|key| keycaps(key.as_keystroke())))
-        .unwrap_or_default()
-}
-
-/// One keycap per key, as Raycast draws them.
-pub fn keycap_row(caps: Vec<String>, cx: &App) -> impl IntoElement {
-    let theme = cx.theme();
-    h_flex().gap(px(4.)).children(caps.into_iter().map(|cap| {
-        div()
-            .min_w(px(18.))
-            .h(px(18.))
-            .px(px(4.))
-            .flex()
-            .items_center()
-            .justify_center()
-            .rounded(px(4.))
-            .bg(theme.list_active)
-            .text_color(theme.foreground)
-            .text_xs()
-            .child(cap)
-    }))
-}
-
-/// A button drawn as its text and keys alone: no fill, even on hover (the footer, the filter).
-pub(super) fn plain_button(cx: &App) -> ButtonCustomVariant {
-    ButtonCustomVariant::new(cx)
-        .color(gpui_kit::transparent_black())
-        .hover(gpui_kit::transparent_black())
-        .active(gpui_kit::transparent_black())
-        .foreground(cx.theme().foreground)
-        .shadow(false)
-}
-
-/// A footer item: its text and keycaps, with neither fill nor line around them.
-fn pill(_: &App) -> gpui_kit::Div {
-    h_flex().h(px(30.)).items_center().gap(px(8.)).px(px(12.)).text_xs()
-}
+use crate::catalog::fill;
+use crate::ui::design::design;
+use crate::ui::footer::{Dot, entry_status, footer, key_item, status};
+use crate::ui::keycap::caps;
+use crate::ui::tile::{TileSize, tile};
 
 impl SearchView {
-    /// The footer: the entry on the left; the primary action and Actions on the right.
+    /// Whether the footer names the entry rather than the index: a pane or the detail screen.
+    fn footer_names_entry(&self, selected: Option<&Entry>) -> bool {
+        selected.is_some() && (self.is_showing_detail() || (matches!(self.screen, Screen::Search) && self.show_details))
+    }
+
+    /// The status line's text, for tests: "Ready • 8 results".
+    #[must_use]
+    pub fn status_line(&self, cx: &App) -> String {
+        let (word, count) = self.status_parts(cx);
+        count.map_or_else(|| word.clone(), |count| format!("{word} • {count}"))
+    }
+
+    fn status_parts(&self, cx: &App) -> (String, Option<String>) {
+        let messages = &self.catalog.messages;
+        let list = self.list.read(cx).delegate();
+        if !list.has_index() {
+            return (messages.no_index_status.clone(), None);
+        }
+        let count = list.count();
+        let count = if count == 1 {
+            messages.one_result.clone()
+        } else {
+            fill(&messages.results, &[("count", &count.to_string())])
+        };
+        (messages.ready.clone(), Some(count))
+    }
+
+    /// The footer's right side as text, for tests: "Details ↵", …, "Actions ⌘K".
+    #[must_use]
+    pub fn footer_keys(&self, cx: &App) -> Vec<String> {
+        let mut keys: Vec<String> = self
+            .screen_keys(cx)
+            .into_iter()
+            .map(|item| format!("{} {}", item.label, item.caps))
+            .collect();
+        keys.push(format!("{} {}", self.catalog.label("actions"), self.actions_caps()));
+        keys
+    }
+
+    fn actions_caps(&self) -> String {
+        self.catalog.actions["actions"]
+            .keys
+            .as_deref()
+            .map(caps)
+            .unwrap_or_default()
+    }
+
     pub(super) fn render_footer(
         &self,
         selected: Option<&Entry>,
-        window: &Window,
+        _: &Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
-        let theme = cx.theme();
-        // What the screen is about, on the left: nothing on the list, whose search field says it already.
-        let context = match (&self.screen, selected) {
-            (Screen::Rebuild(_), _) => Some((
-                IconName::RefreshCw,
-                theme.muted_foreground,
-                "Rebuilding the Index…".to_owned(),
-            )),
-            (Screen::Detail, Some(entry)) => {
-                let badge = type_badge(&entry.entry_type);
-                Some((badge.icon, accent(badge.hue, cx).color, entry.title.clone()))
-            }
-            _ => None,
+        let names_entry = self.footer_names_entry(selected);
+        let left: AnyElement = if let Some(entry) = selected.filter(|_| names_entry) {
+            let colors = &design().colors;
+            let kind = self.catalog.entry_type(&entry.entry_type);
+            let (icon, tint) = kind.map_or(("file-text", colors.faint), |kind| {
+                (kind.icon.as_str(), colors.named(&kind.tint).unwrap_or(colors.faint))
+            });
+            let copy_caps = self.catalog.actions["copy-path"]
+                .keys
+                .as_deref()
+                .map(caps)
+                .unwrap_or_default();
+            entry_status(
+                tile(icon, tint, TileSize::Small),
+                entry.source_rel_path.clone(),
+                copy_caps,
+            )
+            .into_any_element()
+        } else {
+            let (word, count) = self.status_parts(cx);
+            let dot = if self.list.read(cx).delegate().has_index() {
+                Dot::Ready
+            } else {
+                Dot::Off
+            };
+            status(dot, word, count).into_any_element()
         };
         let plain = plain_button(cx);
-        let primary_label = if self.is_showing_detail() {
-            selected.map_or("Run", |e| primary_action(e).title)
-        } else {
-            "Show Details"
-        };
-        let enter = vec!["↵".to_owned()];
-        let actions = action_keycaps(&OpenActions, window);
-        h_flex()
-            .w_full()
-            .flex_none()
-            .items_center()
-            .justify_between()
-            .gap(px(8.))
-            .p(px(8.))
-            .child(div().min_w_0().when_some(context, |left, (icon, tint, context)| {
-                left.child(
-                    pill(cx)
-                        .min_w_0()
-                        .child(Icon::new(icon).small().text_color(tint))
-                        .child(div().truncate().max_w(px(320.)).child(context)),
-                )
-            }))
-            .child(
-                h_flex()
-                    .gap(px(8.))
-                    .child(
-                        pill(cx).child(
-                            Button::new("footer-primary-action")
-                                .custom(plain)
-                                .xsmall()
-                                .label(primary_label)
-                                .child(keycap_row(enter, cx))
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    if this.is_showing_detail() {
-                                        this.run_primary(&RunPrimary, window, cx);
-                                    } else {
-                                        this.show_detail_screen(window, cx);
-                                    }
-                                })),
-                        ),
-                    )
-                    .child(
-                        pill(cx).child(
-                            self.actions_popover(
-                                Button::new("footer-open-actions")
-                                    .custom(plain)
-                                    .xsmall()
-                                    .label("Actions")
-                                    // The popover opens on its trigger's click; a handler here would close it again.
-                                    .when(!actions.is_empty(), |button| button.child(keycap_row(actions, cx))),
-                                cx,
-                            ),
-                        ),
-                    ),
+        let mut right: Vec<AnyElement> = self
+            .screen_keys(cx)
+            .into_iter()
+            .enumerate()
+            .map(|(ix, item)| {
+                let id = if ix == 0 {
+                    SharedString::from("footer-primary-action")
+                } else {
+                    SharedString::from(format!("footer-key-{ix}"))
+                };
+                let keys = item.keys;
+                Button::new(id)
+                    .custom(plain)
+                    .child(key_item(item.label, item.caps))
+                    .on_click(cx.listener(move |this, _, window, cx| this.ladder(keys, window, cx)))
+                    .into_any_element()
+            })
+            .collect();
+        right.push(
+            self.actions_popover(
+                Button::new("footer-open-actions")
+                    .custom(plain)
+                    // The popover opens on its trigger's click; a handler here would close it again.
+                    .child(key_item(self.catalog.label("actions").to_owned(), self.actions_caps())),
+                cx,
             )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn caps(binding: &str) -> Vec<String> {
-        keycaps(&Keystroke::parse(binding).unwrap())
-    }
-
-    #[test]
-    fn draws_one_keycap_per_key() {
-        assert_eq!(caps("cmd-k"), ["⌘", "K"]);
-        assert_eq!(caps("cmd-enter"), ["⌘", "↵"]);
-        assert_eq!(caps("cmd-shift-,"), ["⇧", "⌘", ","]);
-        assert_eq!(caps("right"), ["→"]);
-        assert_eq!(caps("escape"), ["esc"]);
+            .into_any_element(),
+        );
+        footer(left, right, names_entry)
     }
 }

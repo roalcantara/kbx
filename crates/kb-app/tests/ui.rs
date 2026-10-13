@@ -144,6 +144,14 @@ fn settle(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn marks_the_selected_row_with_return_and_the_first_nine_with_their_number(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (_window, view) = open(cx, sample_config(home.path()));
+    let keys = cx.read(|cx| view.read(cx).list().read(cx).delegate().row_keycaps());
+    assert_eq!(keys, ["↵", "⌘2", "⌘3", "⌘4", "⌘5", "⌘6", "⌘7", "⌘8"]);
+}
+
+#[gpui_kit::test]
 fn lists_entries_by_title_and_narrows_them_as_the_user_types(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
@@ -156,10 +164,14 @@ fn lists_entries_by_title_and_narrows_them_as_the_user_types(cx: &mut TestAppCon
 
 #[gpui_kit::test]
 fn copies_a_command_with_its_primary_action(cx: &mut TestAppContext) {
-    let (_home, window, _view) = open_with_query(cx, "kubectl");
+    let (_home, window, view) = open_with_query(cx, "kubectl");
     press(cx, window, "secondary-enter");
     let copied = cx.read_from_clipboard().and_then(|item| item.text());
     assert_eq!(copied.as_deref(), Some("kubectl get pods -A"));
+    assert_eq!(
+        cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)).as_deref(),
+        Some("Copied to clipboard")
+    );
 }
 
 #[gpui_kit::test]
@@ -357,13 +369,13 @@ fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn shows_only_the_back_chevron_in_the_detail_screen_header(cx: &mut TestAppContext) {
+fn shows_the_magnifier_on_the_list_and_only_the_chevron_on_the_detail_screen(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     let parts = cx.read(|cx| view.read(cx).header_parts());
-    assert_eq!((parts.query, parts.filter, parts.back), (true, true, true));
+    assert_eq!((parts.back, parts.query, parts.filter), (false, true, true));
     press(cx, window, "enter");
     let parts = cx.read(|cx| view.read(cx).header_parts());
-    assert_eq!((parts.query, parts.filter, parts.back), (false, false, true));
+    assert_eq!((parts.back, parts.query, parts.filter), (true, false, false));
 }
 
 #[gpui_kit::test]
@@ -482,4 +494,35 @@ fn shows_only_the_four_entry_types_and_counts_them(cx: &mut TestAppContext) {
     type_text(cx, window, "café");
     settle(cx);
     assert!(titles(&view, cx).is_empty(), "a note never shows, even when it matches");
+}
+
+#[gpui_kit::test]
+fn runs_a_row_s_primary_action_with_its_number(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, _view) = open(cx, sample_config(home.path()));
+    // The sample's rows by title: A conference talk (a bookmark), All pods (a command), …
+    press(cx, window, "cmd-2");
+    let copied = cx.read_from_clipboard().and_then(|item| item.text());
+    assert_eq!(copied.as_deref(), Some("kubectl get pods -A"));
+    press(cx, window, "cmd-1");
+    assert_eq!(
+        cx.opened_url().as_deref(),
+        Some("https://www.youtube.com/watch?v=aqz-KE-bpKQ")
+    );
+}
+
+#[gpui_kit::test]
+fn shows_the_status_line_and_the_screen_keys_in_the_footer(cx: &mut TestAppContext) {
+    let (_home, _window, view) = open_with_query(cx, "conference");
+    let (status, keys) = cx.read(|cx| (view.read(cx).status_line(cx), view.read(cx).footer_keys(cx)));
+    assert_eq!(status, "Ready • 1 result");
+    assert_eq!(keys, ["Details ↵", "Open ⌘↵", "Copy ⇧⌘↵", "Actions ⌘K"]);
+}
+
+#[gpui_kit::test]
+fn copies_a_bookmark_s_url_with_its_secondary_action(cx: &mut TestAppContext) {
+    let (_home, window, _view) = open_with_query(cx, "conference");
+    press(cx, window, "shift-cmd-enter");
+    let copied = cx.read_from_clipboard().and_then(|item| item.text());
+    assert_eq!(copied.as_deref(), Some("https://www.youtube.com/watch?v=aqz-KE-bpKQ"));
 }

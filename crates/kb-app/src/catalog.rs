@@ -118,6 +118,19 @@ pub enum Screen {
     Failed,
 }
 
+/// One of a screen's keys, resolved for the selected entry.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeyItem {
+    /// The key in GPUI's spelling (`cmd-enter`).
+    pub keys: &'static str,
+    /// Its keycap text (`⌘↵`).
+    pub caps: String,
+    /// The action's label.
+    pub label: String,
+    /// The action's id.
+    pub action: String,
+}
+
 /// Every screen's keys.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
@@ -275,6 +288,30 @@ impl Catalog {
     #[must_use]
     pub fn label<'a>(&'a self, id: &'a str) -> &'a str {
         self.actions.get(id).map_or(id, |action| action.label.as_str())
+    }
+
+    /// `screen`'s keys in footer order, each resolved to an action: `entry.primary` and
+    /// `entry.secondary` become `kind`'s actions; a key whose action the entry lacks is left out.
+    #[must_use]
+    pub fn keys_for(&self, screen: Screen, kind: Option<&EntryType>) -> Vec<KeyItem> {
+        let keys = self.screen(screen);
+        SCREEN_KEYS
+            .iter()
+            .filter_map(|key| {
+                let value = keys.get(*key)?;
+                let action = match value.as_str() {
+                    ENTRY_PRIMARY => kind?.primary.clone(),
+                    ENTRY_SECONDARY => kind?.secondary.clone()?,
+                    id => id.to_owned(),
+                };
+                Some(KeyItem {
+                    keys: key,
+                    caps: crate::ui::keycap::caps(key),
+                    label: self.label(&action).to_owned(),
+                    action,
+                })
+            })
+            .collect()
     }
 
     /// The shipped catalog with `overrides` (config.toml's catalog tables) applied one leaf at a
@@ -492,6 +529,32 @@ mod tests {
         assert_eq!(catalog.screens.list["shift-cmd-enter"], ENTRY_SECONDARY);
         assert_eq!(catalog.actions["resize"].keys.as_deref(), Some("cmd-shift-f"));
         assert_eq!(catalog.actions.len(), ACTION_IDS.len());
+    }
+
+    #[test]
+    fn resolves_a_screen_s_keys_for_the_selected_entry() {
+        let catalog = Catalog::default();
+        let labels = |screen, kind: &str| {
+            catalog
+                .keys_for(screen, catalog.types.get(kind))
+                .into_iter()
+                .map(|item| (item.label, item.caps, item.action))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            labels(Screen::List, "bookmarks"),
+            [
+                ("Details".into(), "↵".into(), "details".into()),
+                ("Open".into(), "⌘↵".into(), "open".into()),
+                ("Copy".into(), "⇧⌘↵".into(), "copy".into())
+            ]
+        );
+        assert_eq!(
+            labels(Screen::Detail, "commands"),
+            [("Copy".into(), "↵".into(), "copy".into())],
+            "a command has no secondary"
+        );
+        assert_eq!(catalog.keys_for(Screen::Refreshing, None)[0].caps, "esc");
     }
 
     fn with(edit: impl FnOnce(&mut toml::Table)) -> Result<Catalog, CatalogError> {

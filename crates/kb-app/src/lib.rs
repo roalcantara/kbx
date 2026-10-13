@@ -58,6 +58,7 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
     theme.font_family = typography.ui.clone().into();
     theme.mono_font_family = typography.mono.clone().into();
     theme.font_size = gpui_kit::px(ui::design::POINTS_PER_REM);
+    ui::notice::configure(Theme::global_mut(cx));
 }
 
 /// Starts the app and blocks until it quits. `notices` are shown in the panel once it opens:

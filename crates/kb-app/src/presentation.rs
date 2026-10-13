@@ -7,9 +7,6 @@ use kb_domain::entry::Entry;
 /// The notes pane's text when an entry has no notes.
 pub const NO_NOTES: &str = "*No additional notes available for this entry.*";
 
-/// Tags shown on a list row before the rest collapse into `+N`.
-pub const MAX_ROW_TAGS: usize = 3;
-
 /// An entry type, singular, as the actions and icons distinguish it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeKey {
@@ -177,8 +174,8 @@ pub fn primary_action(entry: &Entry) -> PrimaryAction {
 /// a row's children do not name it. "docker ps -a, Commands, List every container…, tags docker,
 /// containers".
 #[must_use]
-pub fn row_label(entry: &Entry) -> String {
-    let mut parts = vec![entry.title.clone(), type_label(&entry.entry_type)];
+pub fn row_label(entry: &Entry, type_label: &str) -> String {
+    let mut parts = vec![entry.title.clone(), type_label.to_owned()];
     parts.extend(entry.description.clone());
     if !entry.tags.is_empty() {
         parts.push(format!("tags {}", entry.tags.join(", ")));
@@ -198,10 +195,10 @@ pub fn favicon_url(url: &str) -> Option<String> {
     Some(format!("https://icons.duckduckgo.com/ip3/{host}.ico"))
 }
 
-/// The tags a row shows and how many more there are.
+/// The tags a row shows (at most `max`) and how many more there are.
 #[must_use]
-pub fn row_tags(tags: &[String]) -> (&[String], usize) {
-    let shown = tags.len().min(MAX_ROW_TAGS);
+pub fn row_tags(tags: &[String], max: usize) -> (&[String], usize) {
+    let shown = tags.len().min(max);
     (&tags[..shown], tags.len() - shown)
 }
 
@@ -332,7 +329,7 @@ mod tests {
             "desc: List containers.\ntags: [docker, ops]\n",
         );
         assert_eq!(
-            row_label(&command),
+            row_label(&command, "Commands"),
             "docker ps -a, Commands, List containers., tags docker, ops"
         );
     }
@@ -340,8 +337,8 @@ mod tests {
     #[test]
     fn collapses_tags_after_three() {
         let tags: Vec<String> = ["a", "b", "c", "d", "e"].map(String::from).to_vec();
-        assert_eq!(row_tags(&tags), (&tags[..3], 2));
-        assert_eq!(row_tags(&tags[..2]), (&tags[..2], 0));
+        assert_eq!(row_tags(&tags, 3), (&tags[..3], 2));
+        assert_eq!(row_tags(&tags[..2], 3), (&tags[..2], 0));
     }
 
     #[test]

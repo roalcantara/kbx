@@ -85,13 +85,13 @@ components:
   tile: { size: 24, icon: 16, small: 20, small_icon: 13, mini: 18, mini_icon: 12, alpha: 0.15 }
   favicon: { size: 16, inset: 4 }
   panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14, offset: 8 }
-  footer: { height: 40, dot: 6, dot_glow: 6 }
+  footer: { height: 40, dot: 6, dot_glow: 6, dot_glow_alpha: 0.7 }
   split: { list: 0.34 }
   empty: { icon: 56, text_max_width: 420, bar_width: 260, bar_height: 4 }
   hero: { thumb_split: 150, thumb_detail: 250, link_icon: 14 }
   quote: { bar: 3 }
   links: { row: 28, url_chars: 32, title_share: 0.5 }
-  notice: { width: 340, icon: 20, check: 13 }
+  notice: { width: 340, icon: 20, check: 13, ring_fill: 0.2, ring_border: 0.4 }
   border: { hairline: 1 }
 ---
 
