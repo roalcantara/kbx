@@ -13,6 +13,7 @@ use gpui_kit::{
     WindowBounds, WindowKind, WindowOptions,
 };
 
+use crate::catalog::Catalog;
 use crate::config::Config;
 use crate::keys::key_bindings;
 use crate::search_view::SearchView;
@@ -64,11 +65,14 @@ pub struct PanelError(String);
 ///
 /// The window cannot be opened.
 pub fn open(config: Config, mut notices: Vec<String>, cx: &mut App) -> Result<(), PanelError> {
-    cx.bind_keys(key_bindings());
+    let (catalog, catalog_notices) = Catalog::load(config.overrides());
+    notices.extend(config.notices().iter().cloned());
+    notices.extend(catalog_notices);
+    cx.bind_keys(key_bindings(&catalog));
     cx.set_activation_policy(ActivationPolicy::Accessory);
 
     let (window, view) = gpui_kit::open_window(window_options(cx), cx, |window, cx| {
-        cx.new(|cx| SearchView::new(config, window, cx))
+        cx.new(|cx| SearchView::new(config, catalog, window, cx))
     })
     .map_err(|error| PanelError(error.to_string()))?;
     let hide_on_blur = hide_on_blur(&view, window, cx);

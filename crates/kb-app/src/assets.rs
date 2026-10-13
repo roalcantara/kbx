@@ -6,7 +6,23 @@ use std::borrow::Cow;
 use gpui_kit::assets::{Assets, icon_assets};
 use gpui_kit::{AssetSource, Result, SharedString};
 
-icon_assets!(ExtraIcons, [ArrowUpRight, Circle, Funnel, Link, NotebookText, Power]);
+icon_assets!(
+    ExtraIcons,
+    [
+        ArrowUpRight,
+        Bookmark,
+        Circle,
+        CircleStop,
+        Database,
+        Funnel,
+        Hash,
+        Link,
+        NotebookText,
+        Power,
+        SlidersHorizontal,
+        X
+    ]
+);
 
 /// GPUI Kit's default assets, then kb's extra icons.
 #[derive(Debug, Clone, Copy, Default)]
@@ -26,6 +42,12 @@ impl AssetSource for KbAssets {
         paths.extend(ExtraIcons.list(path)?);
         Ok(paths)
     }
+}
+
+/// Whether the Lucide icon `name` (`book-open`) is bundled, by GPUI Kit or by kb.
+#[must_use]
+pub fn has_icon(name: &str) -> bool {
+    matches!(KbAssets.load(&format!("icons/{name}.svg")), Ok(Some(_)))
 }
 
 #[cfg(test)]

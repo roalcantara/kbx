@@ -14,6 +14,7 @@ use gpui_kit::{
     AnyWindowHandle, App, AppContext as _, Bounds, Entity, Point, TestAppContext, Window, WindowBounds, WindowOptions,
     px, size,
 };
+use kb_app::catalog::Catalog;
 use kb_app::config::Config;
 use kb_app::entry_list::DEBOUNCE;
 use kb_app::keys::key_bindings;
@@ -37,7 +38,7 @@ fn sample_config(home: &Path) -> Config {
 
 fn open(cx: &mut TestAppContext, config: Config) -> (AnyWindowHandle, Entity<SearchView>) {
     cx.update(gpui_kit::init);
-    cx.update(|cx| cx.bind_keys(key_bindings()));
+    cx.update(|cx| cx.bind_keys(key_bindings(&Catalog::default())));
     cx.update(|cx| {
         let options = WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(Bounds::new(
@@ -47,7 +48,7 @@ fn open(cx: &mut TestAppContext, config: Config) -> (AnyWindowHandle, Entity<Sea
             ..WindowOptions::default()
         };
         gpui_kit::open_window(options, cx, |window, cx| {
-            cx.new(|cx| SearchView::new(config, window, cx))
+            cx.new(|cx| SearchView::new(config, Catalog::default(), window, cx))
         })
         .unwrap()
     })
@@ -289,10 +290,10 @@ fn selects_the_first_result_of_a_new_query(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn opens_on_the_list_alone_and_toggles_the_split_pane_with_cmd_d(cx: &mut TestAppContext) {
+fn opens_on_the_list_alone_and_shows_the_split_pane_with_right(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     assert!(!cx.read(|cx| view.read(cx).is_showing_details()));
-    press(cx, window, "cmd-d");
+    press(cx, window, "right");
     assert!(cx.read(|cx| view.read(cx).is_showing_details()));
 }
 
@@ -301,9 +302,9 @@ fn shows_titles_alone_beside_the_split_pane(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     let compact = |cx: &mut TestAppContext| cx.read(|cx| view.read(cx).list().read(cx).delegate().is_compact());
     assert!(!compact(cx));
-    press(cx, window, "cmd-d");
+    press(cx, window, "right");
     assert!(compact(cx));
-    press(cx, window, "cmd-d");
+    press(cx, window, "left");
     assert!(!compact(cx));
 }
 

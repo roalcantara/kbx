@@ -1,10 +1,14 @@
 //! Where the app reads its sources and keeps its index.
 //!
-//! The preferences are one optional TOML file, `~/.config/kb/config.toml`:
+//! The preferences are one optional TOML file, `~/.config/kb/config.toml`: the two locations, and
+//! any key of the catalog (`assets/catalog.toml`) to override:
 //!
 //! ```toml
 //! sources_path = "~/Work/knowledge"
 //! tag_images_path = "~/Pictures/kb-tags"
+//!
+//! [actions.copy]
+//! label = "Yank"
 //! ```
 //!
 //! Without it the sources are `~/.config/kodexb/sources`, as in the Raycast extension. The index
@@ -44,20 +48,25 @@ pub enum ConfigError {
     },
 }
 
+/// The location settings; the catalog's tables are kept apart as overrides.
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct Preferences {
     sources_path: Option<String>,
     tag_images_path: Option<String>,
 }
 
-/// The resolved locations.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// The top-level tables of config.toml that override the catalog (`crate::catalog`).
+const CATALOG_TABLES: [&str; 5] = ["types", "actions", "screens", "panel", "messages"];
+
+/// The resolved locations, the catalog overrides and what was ignored.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Config {
     sources_dir: PathBuf,
     tag_images: PathBuf,
     database: PathBuf,
     preferences: PathBuf,
+    overrides: toml::Table,
+    notices: Vec<String>,
 }
 
 impl Config {
@@ -68,12 +77,12 @@ impl Config {
     /// The preferences file exists but cannot be read or parsed.
     pub fn load(home: &Path, data_dir: &Path) -> Result<Self, ConfigError> {
         let preferences = home.join(PREFERENCES);
-        let parsed = match fs::read_to_string(&preferences) {
-            Ok(text) => toml::from_str::<Preferences>(&text).map_err(|source| ConfigError::Parse {
+        let table = match fs::read_to_string(&preferences) {
+            Ok(text) => toml::from_str::<toml::Table>(&text).map_err(|source| ConfigError::Parse {
                 path: preferences.clone(),
                 source: Box::new(source),
             })?,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Preferences::default(),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => toml::Table::new(),
             Err(source) => {
                 return Err(ConfigError::Read {
                     path: preferences,
@@ -81,16 +90,43 @@ impl Config {
                 });
             }
         };
-        Ok(Self::from_preferences(parsed, home, data_dir))
+        let (mut locations, mut overrides, mut notices) = (toml::Table::new(), toml::Table::new(), Vec::new());
+        for (key, value) in table {
+            match key.as_str() {
+                "sources_path" | "tag_images_path" => {
+                    locations.insert(key, value);
+                }
+                k if CATALOG_TABLES.contains(&k) => {
+                    overrides.insert(key, value);
+                }
+                _ => notices.push(format!(
+                    "Ignored the unknown setting `{key}` in {}",
+                    preferences.display()
+                )),
+            }
+        }
+        let parsed: Preferences = toml::Value::Table(locations)
+            .try_into()
+            .map_err(|source| ConfigError::Parse {
+                path: preferences.clone(),
+                source: Box::new(source),
+            })?;
+        Ok(Self::from_preferences(parsed, overrides, notices, home, data_dir))
     }
 
     /// The locations without preferences: the Raycast sources directory and the app's index.
     #[must_use]
     pub fn defaults(home: &Path, data_dir: &Path) -> Self {
-        Self::from_preferences(Preferences::default(), home, data_dir)
+        Self::from_preferences(Preferences::default(), toml::Table::new(), Vec::new(), home, data_dir)
     }
 
-    fn from_preferences(parsed: Preferences, home: &Path, data_dir: &Path) -> Self {
+    fn from_preferences(
+        parsed: Preferences,
+        overrides: toml::Table,
+        notices: Vec<String>,
+        home: &Path,
+        data_dir: &Path,
+    ) -> Self {
         let sources_dir = parsed
             .sources_path
             .map_or_else(|| home.join(DEFAULT_SOURCES), |path| expand_home(&path, home));
@@ -102,6 +138,8 @@ impl Config {
             tag_images,
             database: data_dir.join("kb-native").join("kb.db"),
             preferences: home.join(PREFERENCES),
+            overrides,
+            notices,
         }
     }
 
@@ -127,6 +165,18 @@ impl Config {
     #[must_use]
     pub fn preferences(&self) -> &Path {
         &self.preferences
+    }
+
+    /// The catalog tables of config.toml, applied by `Catalog::load`.
+    #[must_use]
+    pub fn overrides(&self) -> &toml::Table {
+        &self.overrides
+    }
+
+    /// What config.toml held that kb ignored, to show as notices.
+    #[must_use]
+    pub fn notices(&self) -> &[String] {
+        &self.notices
     }
 }
 
@@ -188,8 +238,28 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_keys() {
+    fn ignores_unknown_settings_with_a_notice() {
         let home = home_with(Some("source_path = \"x\"\n"));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.notices().len(), 1);
+        assert!(config.notices()[0].contains("source_path"), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn keeps_the_catalog_tables_as_overrides() {
+        let home = home_with(Some(
+            "sources_path = \"~/k\"\n[actions.copy]\nlabel = \"Yank\"\n[messages]\nready = \"Idle\"\n",
+        ));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.sources_dir(), home.path().join("k"));
+        assert_eq!(config.overrides()["actions"]["copy"]["label"].as_str(), Some("Yank"));
+        assert_eq!(config.overrides()["messages"]["ready"].as_str(), Some("Idle"));
+        assert!(config.notices().is_empty(), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn rejects_a_file_that_is_not_toml() {
+        let home = home_with(Some("sources_path = \n"));
         assert!(matches!(
             Config::load(home.path(), Path::new("/data")),
             Err(ConfigError::Parse { .. })

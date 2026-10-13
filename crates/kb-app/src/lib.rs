@@ -8,6 +8,7 @@
 
 mod accents;
 mod assets;
+pub mod catalog;
 pub mod cli;
 pub mod config;
 pub mod entry_list;

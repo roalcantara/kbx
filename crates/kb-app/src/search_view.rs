@@ -2,6 +2,7 @@
 //! every command's handler.
 
 use std::fs;
+use std::rc::Rc;
 
 use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{InputEvent, InputState};
@@ -20,12 +21,13 @@ mod footer;
 mod header;
 mod overlays;
 
+use crate::catalog::Catalog;
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
-    Back, CONTEXT, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
-    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, ScrollNotesDown, ScrollNotesUp, ShowDetails,
-    ToggleDetails, ToggleWindowSize, caret_at_end,
+    Back, CONTEXT, CopyPath, CopyUrl, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter,
+    OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, ScrollNotesDown,
+    ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
 use crate::notes::{PaneLayout, next_offset, notes_pane};
 use crate::palette::Page;
@@ -64,6 +66,7 @@ enum Overlay {
 /// The panel's root view.
 pub struct SearchView {
     config: Config,
+    catalog: Rc<Catalog>,
     list: Entity<ListState<EntryList>>,
     query_input: Entity<InputState>,
     palette: Entity<CommandState>,
@@ -92,13 +95,14 @@ impl std::fmt::Debug for SearchView {
 
 impl SearchView {
     /// Opens the index if there is one and builds the list over it.
-    pub fn new(config: Config, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(config: Config, catalog: Catalog, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let connection = open_readonly(config.database()).ok();
         let tag_images = TagImages::scan(config.tag_images());
+        let placeholder = catalog.messages.search_placeholder.clone();
         let list = cx.new(|cx| {
             ListState::new(EntryList::new(connection).with_tag_images(tag_images), window, cx).searchable(false)
         });
-        let query_input = cx.new(|cx| InputState::new(window, cx).placeholder("Search Knowledge Base…"));
+        let query_input = cx.new(|cx| InputState::new(window, cx).placeholder(placeholder));
         // The first row starts selected, as in Raycast, so Enter and ⌘K act on it at once.
         list.update(cx, |list, cx| {
             if !list.delegate().entries().is_empty() {
@@ -114,6 +118,7 @@ impl SearchView {
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
         Self {
             config,
+            catalog: Rc::new(catalog),
             list,
             query_input,
             palette,
@@ -134,6 +139,12 @@ impl SearchView {
     #[must_use]
     pub fn list(&self) -> &Entity<ListState<EntryList>> {
         &self.list
+    }
+
+    /// The catalog the panel was built with: the entry types, actions, keys and words it shows.
+    #[must_use]
+    pub fn catalog(&self) -> &Catalog {
+        &self.catalog
     }
 
     /// Whether the detail screen is showing.
@@ -271,12 +282,19 @@ impl SearchView {
         }
     }
 
-    fn toggle_details(&mut self, _: &ToggleDetails, _: &mut Window, cx: &mut Context<Self>) {
-        match self.screen {
-            Screen::Detail => self.show_metadata = !self.show_metadata,
-            _ => self.show_details = !self.show_details,
+    fn copy_path(&mut self, _: &CopyPath, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(path) = self.selected_source_file(cx) {
+            cx.write_to_clipboard(ClipboardItem::new_string(path));
         }
-        cx.notify();
+    }
+
+    /// The selected entry's source file, absolute, for the copy and open commands.
+    fn selected_source_file(&self, cx: &App) -> Option<String> {
+        self.list
+            .read(cx)
+            .delegate()
+            .selected_entry()
+            .map(|e| e.source_file.clone())
     }
 
     fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
@@ -341,13 +359,7 @@ impl SearchView {
     }
 
     fn open_source_file(&mut self, _: &OpenSourceFile, _: &mut Window, cx: &mut Context<Self>) {
-        let path = self
-            .list
-            .read(cx)
-            .delegate()
-            .selected_entry()
-            .map(|e| e.source_file.clone());
-        if let Some(path) = path {
+        if let Some(path) = self.selected_source_file(cx) {
             cx.open_with_system(std::path::Path::new(&path));
         }
     }
@@ -355,10 +367,7 @@ impl SearchView {
     fn open_preferences(&mut self, _: &OpenPreferences, window: &mut Window, cx: &mut Context<Self>) {
         let file = self.config.preferences().to_path_buf();
         if !file.exists() {
-            let template = format!(
-                "# kb preferences\n# sources_path = \"{}\"\n",
-                self.config.sources_dir().display()
-            );
+            let template = crate::catalog::preferences_template(self.config.sources_dir());
             let written = file
                 .parent()
                 .map_or(Ok(()), fs::create_dir_all)
@@ -527,7 +536,7 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::open_filter))
             .on_action(cx.listener(Self::run_primary))
             .on_action(cx.listener(Self::copy_url))
-            .on_action(cx.listener(Self::toggle_details))
+            .on_action(cx.listener(Self::copy_path))
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::toggle_window_size))

@@ -294,7 +294,8 @@
   - **Created**: 2026-10-12 23:09
   - **Tags**: app, plan8
 
-- [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
+- [x] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
+  - **Comments**: IF60
 
 - [~] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
   - **Comments**: LGMU,ixvo
@@ -531,4 +532,7 @@
 
 - gvTO **-** 2026-10-13 O1: A (owner)
   - **Task**: pMDV
+
+- IF60 **-** 2026-10-13: Plan 8b
+  - **Task**: RKHF
 
