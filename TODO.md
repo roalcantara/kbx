@@ -409,6 +409,7 @@
   - **Tags**: design, plan8
 
 - [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
+  - **Comments**: 8Ylj
   - **Priority**: low
   - **Created**: 2026-10-12 19:39
   - **Tags**: app
@@ -548,4 +549,7 @@
 
 - nkjz **-** 2026-10-12, command card decided after a full-screen GPUI spike (real renders) and a survey (paperoll, probe, pasta, Loungy, markraft, dbflux): the hero is option (b), StyledText + GPUI Kit's bash highlighter, as pasta does: fmt-rs breaks at operators to the card's real column count; kb pre-wraps at spaces with a hanging indent, operators glued, tokens never split; ligatures off; 12 pt in the split, 13 pt in detail; GPUI Kit's Clipboard button in the corner; no line numbers. Register bash with an extended highlight query (dbflux-style, LanguageRegistry::register) so argument values get their own colour; test each token's colour role. Fixes from the spike: notes headings take the type tokens (TextView styles), the quote's italic needs Inter Italic bundled (or drop italic), favicons come from kb's curl client.
   - **Task**: Z64Y
+
+- 8Ylj **-** 2026-10-12 survey: buy a terminal view instead of building output handling: gpui_xterm 0.2.1 (alacritty_terminal on GPUI Kit 0.6; kb is on 0.7.1, check before use) runs the command in an embedded terminal pane; tty7, KazeTerm and Miaominal are GPUI terminal apps on alacritty_terminal for reference. Prior art for runnable commands: Runme (DevOps notebooks from Markdown), Atuin Desktop (runbooks, archived), navi (argument placeholders with suggestion commands).
+  - **Task**: 3g6H
 
