@@ -398,6 +398,26 @@ pub fn no_ligatures() -> FontFeatures {
     FontFeatures(Arc::new(vec![("liga".into(), 0), ("calt".into(), 0)]))
 }
 
+/// The bundled fonts: Inter 400, 500, 600 and 400 italic, then `JetBrains` Mono 400 and 500.
+pub const FONTS: [&[u8]; 6] = [
+    include_bytes!("../../assets/fonts/Inter-Regular.ttf"),
+    include_bytes!("../../assets/fonts/Inter-Medium.ttf"),
+    include_bytes!("../../assets/fonts/Inter-SemiBold.ttf"),
+    include_bytes!("../../assets/fonts/Inter-Italic.ttf"),
+    include_bytes!("../../assets/fonts/JetBrainsMono-Regular.ttf"),
+    include_bytes!("../../assets/fonts/JetBrainsMono-Medium.ttf"),
+];
+
+/// Registers the bundled fonts with GPUI's text system.
+///
+/// # Errors
+///
+/// The platform rejected a font.
+pub fn load_fonts(cx: &gpui_kit::App) -> gpui_kit::Result<()> {
+    cx.text_system()
+        .add_fonts(FONTS.iter().map(|font| std::borrow::Cow::Borrowed(*font)).collect())
+}
+
 /// Applies a type role: family, size, weight, line height, italic; ligatures off for mono.
 pub trait TextRoleExt: Styled + Sized {
     /// Draws text in `role`.
@@ -479,5 +499,25 @@ mod tests {
         assert_eq!(token("border"), c.selected);
         assert_eq!(token("caret"), c.mauve);
         assert_eq!(token("background").a, 0., "the window draws its own rounded surface");
+    }
+
+    /// Whether `font` names `family` in its name table (UTF-16 big-endian, as TrueType stores it).
+    fn names_family(font: &[u8], family: &str) -> bool {
+        let needle: Vec<u8> = family.encode_utf16().flat_map(u16::to_be_bytes).collect();
+        font.windows(needle.len()).any(|window| window == needle.as_slice())
+    }
+
+    #[test]
+    fn bundles_the_families_the_tokens_name() {
+        let typography = &design().typography;
+        for font in FONTS {
+            assert_eq!(&font[..4], &[0, 1, 0, 0], "a TrueType font");
+        }
+        for font in &FONTS[..4] {
+            assert!(names_family(font, &typography.ui));
+        }
+        for font in &FONTS[4..] {
+            assert!(names_family(font, &typography.mono));
+        }
     }
 }

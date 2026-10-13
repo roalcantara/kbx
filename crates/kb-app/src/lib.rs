@@ -65,6 +65,12 @@ pub fn run(config: Config, notices: Vec<String>, trace: bool) {
         .run(move |cx| {
             gpui_kit::init(cx);
             cx.set_app_identity(APP_ID, "kb");
+            if let Err(error) = ui::design::load_fonts(cx) {
+                #[expect(clippy::print_stderr, reason = "a font failed to load before any window exists")]
+                {
+                    eprintln!("kb: {error}");
+                }
+            }
             init_theme(cx);
             if trace {
                 trace::enable(cx);
