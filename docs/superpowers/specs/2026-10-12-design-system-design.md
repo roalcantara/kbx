@@ -1,338 +1,231 @@
 # The new design system (Plan 8) — design
 
-- Status: draft, for the owner's review (revised: Catppuccin Macchiato, D13–D14)
-- Date: 2026-10-12
+- Status: draft, for the owner's review
+- Date: 2026-10-12 (rewritten after the design sessions; supersedes the draft of `27918b2`)
 - Branch: `feat/design-system`
+- Visual contract: [docs/superpowers/brainstorm/2026-10-12-design-system/](../brainstorm/2026-10-12-design-system/README.md)
+- Decisions, with their reasons: the Plan 8 tasks' comments in [TODO.md](../../../TODO.md)
 - Plan: [2026-10-12-kb-native-08-design-system.md](../plans/2026-10-12-kb-native-08-design-system.md)
 
 ## Goal
 
-The design system in `docs/guides/design/` replaces the current one. At the end:
+kb takes the design the owner brought (the Stitch screens in `docs/guides/design/`), as settled screen by screen with
+the owner. At the end, the app matches the approved pages on every screen, every design value and every action lives in one
+place (DESIGN.md's front matter for how it looks, the catalog for what it offers), the documents say so, and committed
+screenshots of the real app prove it.
 
-- the new DESIGN.md is the root `DESIGN.md`, and its YAML front matter is the single source of every design token;
-- the design kit (`tools/design`) reads that front matter: the theme, validation and comparison page derive from it;
-- the whole app follows the new rules: typography, geometry, rows, popovers, footer, notifications;
-- two new features land: a status line in the footer (with a true result count) and copy feedback;
-- every document that names the design is updated, and a change map lists every file a future design change touches;
-- committed screenshots of kb, taken on the sample corpus, show the result.
+## How this was decided
 
-## What was found
-
-The new system (`docs/guides/design/`, commit `c5dc878`) is a Google Stitch export: a `DESIGN.md` in Stitch's format
-(YAML tokens, then prose), four screens (`01-list`, `02-actions`, `03-empty`, `04-split`, each an HTML file and a PNG),
-and copies of kit files.
-
-| Finding | Detail                                                                                                                                                                                                                                                                                                                           | Consequence                                                                                                |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| F1      | The new DESIGN.md's text names Tokyo Night Storm and repeats the current palette hex for hex (`surface-window` `#23273A` … `accent-red` `#E04F50`); its screens 01–03 are Catppuccin Macchiato.                                                                                                                                  | The owner chose Catppuccin Macchiato (D13).                                                                |
-| F2      | Its front matter also carries ~50 Material 3 roles (`surface` `#0e1224`, `primary`, `on-primary-container`…) no kb surface uses.                                                                                                                                                                                                 | They are dropped (D5).                                                                                     |
-| F3      | The screens disagree with the text: `01`–`03` are coloured in Catppuccin Macchiato (`#24273A`, mauve `#C6A0F6`, sky, mint, peach) with radii 14 / 6 / 4; `04-split` uses the Tokyo Night Storm hexes; the text says radii 28 / 16 / 12 / 8 / 6 / 4.                                                                              | The text wins on geometry, the screens on colour (D1).                                                     |
-| F4      | New typography: Inter for the interface, JetBrains Mono for code, a ten-role scale (`headline-lg` 24/600 … `label-xs` 11/600 uppercase, `code-sm` 12), with line heights and letter spacing.                                                                                                                                     | Fonts are bundled (D3); GPUI has no letter spacing (Deviations).                                           |
-| F5      | `layout.json`, `color.ts`, `color.test.ts` and `palettes.json` in the folder are byte-identical copies of `tools/design/`'s; `manifest.json` is a web-app manifest (PWA icons, `start_url`); `icon.png` is an app icon candidate.                                                                                                | Copies and the manifest are deleted (D4).                                                                  |
-| F6      | The screens add anatomy the text doesn't describe: tinted icon tiles, an accent bar on the selected row, a ↵ keycap on the selected row, icons on action rows, a status line (`● Ready • 12 results`), a copy toast, a rich empty state, ⌘1–⌘9 quick picks, ⌘N Create Entry, a title block and metadata tiles in the split pane. | The owner picked which land (D2).                                                                          |
-| F7      | GPUI Kit 0.7.1's `Notification` has placement (`Anchor`), types (info, success, warning, error), an action, an id (a notification with the same id replaces the last), and a fixed 5-second autohide.                                                                                                                            | Copy feedback uses it directly, with no wrapper (D7).                                                      |
-| F8      | The engine has no result count: `search` returns one page of 50.                                                                                                                                                                                                                                                                 | A count query joins `kb-domain` (D8).                                                                      |
-| F9      | Copying today writes to the clipboard silently and keeps the panel open.                                                                                                                                                                                                                                                         | Copy feedback fills a real gap; the GPUI Kit guides' rule against redundant success toasts does not apply. |
-| F10     | The current docs have drifted: DESIGN.md lines 38 and 78 and `search_view/footer.rs`'s header still say "footer pills", removed in `dbf8cf0`; DESIGN.md's appendix row UI‑16 says "search at the bottom" against §4's "on top".                                                                                                  | The rewrite removes them.                                                                                  |
+- **The owner's Stitch screens are the reference**, not the DESIGN.md text Stitch generated with them; where kb departs
+  from a screen, the approved page says why.
+- **Buy over build.** Behaviour copies Raycast wherever Raycast has an answer (action panel, primary and secondary
+  actions, empty view, submenus); components and crates are adopted before anything is written (fmt-rs, GPUI Kit's
+  highlighter, Clipboard and Notification; a terminal view later).
+- Each screen was approved in the brainstorming companion against the owner's screen, and every page after the first is
+  the approved 01 list's own file plus only its new part, so every page shows the same list. A throwaway GPUI spike
+  rendered the panel on kb's own GPUI Kit to check the HTML against the real thing (`04-spike-screens.html`).
+- Before this spec, the owner weighed adopting massCode or porting it to GPUI; kb was kept (TODO.md, `KhLt`).
 
 ## Decisions
 
-The owner's, 2026-10-12.
-
-**D1. The text is canonical, except colour.** Where the new DESIGN.md's text and its screens disagree, the text wins
-on geometry, type and anatomy (radii 28 / 16 / 12 / 8 / 6 / 4, not the screens' 14 / 6 / 4). Colour follows the screens:
-the palette is Catppuccin Macchiato (D13), and the text's Tokyo Night Storm hexes are replaced.
-
-**D2. Product surface that lands.** From F6: the status line, copy feedback, tinted icon tiles, the accent bar on the
-selected row, the ↵ keycap on the selected row, icons on action rows. Not landing: the rich empty state, ⌘1–⌘9 quick
-picks, ⌘N Create Entry (kb never writes source files), the search magnifier in the header (the back chevron stays), the
-split pane's title block, metadata tiles and Copy button (the metadata card stays), monospaced row titles.
-
-**D3. Typography.** Inter (400, 500, 600) and JetBrains Mono (400, 500) are bundled in the app (SIL OFL 1.1, licence
-files beside them) and loaded at start. Icons stay GPUI Kit's Lucide set: each Material Symbol the screens use maps to
-its nearest Lucide glyph (table in Components).
-
-**D4. Layout of the system.** The new DESIGN.md replaces the root one. Its reference screens move to
-`tools/design/reference/`. `docs/guides/design/` is removed, with its copies and `manifest.json`. `icon.png` moves with
-the screens as a reference (the app icon is not changed by this plan).
-
-**D5. Tokens.** DESIGN.md's front matter is the source of every token. It keeps only tokens kb uses; the Material 3
-roles go. `layout.json` folds into it. `palettes.json` keeps only the alternative palettes the comparison page
-renders; it no longer marks a `chosen` one.
-
-**D6. Always dark.** kb draws its dark theme whatever the system appearance. The light theme, the light accents and the
-appearance observer go.
-
-**D7. Copy feedback and notices use GPUI Kit's `Notification` directly.** No kb wrapper and no Raycast-shaped API: kb
-sets the defaults once (placement bottom-right, above the footer) and every feature calls
-`window.push_notification(Notification::…)`. Every existing notice moves to the same placement and gets its type.
-
-**D8. The status line shows a true count.** `kb-domain` gains a count of the entries a query matches, with the same
-text and filter as `search`; it runs off the keystroke path.
-
-**D9. The reference changes.** The design system is the reference for how kb looks; Raycast's kb Search stays the
-reference for how kb behaves (keys, actions, flows: `docs/guides/parity.md`). PRODUCT.md principle 2 says so.
-
-**D10. Verification by committed screenshots.** A task runs kb on the committed sample corpus, drives it, and commits
-its screens beside the reference screens.
-
-**D11. Accent bar colour.** The selected row's bar is `accent-purple`, Catppuccin's mauve (`#C6A0F6`), as the screens
-draw it, whatever the entry's type.
-
-**D12. A change map closes the work.** The last task records every file the design system reaches, so a later design
-change starts from a checklist instead of a search.
-
-**D13. The palette is Catppuccin Macchiato**, its canonical hexes ([catppuccin.com/palette](https://catppuccin.com/palette)),
-mapped to kb's roles as the screens use them:
-
-| Role (front matter) | Catppuccin | Hex       | Job                                                  |
-| ------------------- | ---------- | --------- | ---------------------------------------------------- |
-| `surface-window`    | base       | `#24273A` | The panel, the list, the detail pane                 |
-| `surface-header`    | base       | `#24273A` | The header: seamless with the window, as the screens |
-| `surface-selection` | surface0   | `#363A4F` | The selected row, the selected popover item          |
-| `surface-raised`    | mantle     | `#1E2030` | Popovers and notices: a step below, edge and shadow  |
-| `border-divider`    | surface0   | `#363A4F` | Pane boundaries, popover and card edges              |
-| `text-primary`      | text       | `#CAD3F5` | Titles, values, search text                          |
-| `text-muted`        | subtext0   | `#A5ADCB` | Descriptions, labels, shortcut hints                 |
-| `text-faint`        | overlay0   | `#6E738D` | The placeholder, tertiary hints                      |
-| `accent-blue`       | blue       | `#8AADF4` | Cheats; tags                                         |
-| `accent-green`      | green      | `#A6DA95` | Commands; tags; the Ready dot                        |
-| `accent-orange`     | peach      | `#F5A97F` | Notes; tags                                          |
-| `accent-purple`     | mauve      | `#C6A0F6` | Bookmarks; tags; the selection bar                   |
-| `accent-magenta`    | pink       | `#F5BDE6` | Tasks; tags                                          |
-| `accent-yellow`     | yellow     | `#EED49F` | Tags; the Rebuilding dot                             |
-| `accent-red`        | red        | `#ED8796` | Tags; the notes' description bar                     |
-
-Checked with kb's rules (2026-10-12): text 7.55–10.85 and muted text 5.03–7.24 on every surface; faint text 3.15 on
-the window; divider 1.31; every tag pill 4.50–6.07 (pill text lifted where needed, red to `#E892A4`); the description
-shade `#A0A7C5`. Accent separation fails: the closest pair, blue / purple, is ΔE 8.5 apart in normal vision (15
-required), 1.2 under protan and 2.8 under deutan (8 required). No subset of genuine Catppuccin colours passes; a tuned
-set passes but moves accents up to ΔE 8.2, and the owner chose the canonical hexes.
-
-**D14. Accent separation becomes advisory (a gate change, owner-approved 2026-10-12).** `design:validate`'s three
-"accents apart" checks report `warn` instead of `fail` below their thresholds, for every palette. Colour is never the
-only cue: a tag carries its `#name`, a type its icon and tooltip (PRODUCT.md, Accessibility). Every other threshold is
-unchanged.
+| #   | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Page                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| D1  | **Look:** Catppuccin Macchiato; window corners 14; hairlines under the header and above the footer; Inter for the interface, JetBrains Mono for commands and code (both bundled); small type (titles 13, descriptions 12, footer 11); rows 56, 4 apart, corners 6; always dark.                                                                                                                                                                                             | 01-list                            |
+| D2  | **Chips and keycaps:** every chip and keycap is 20 high. One keycap component: one cap per shortcut (`⌘K`, `⇧⌘,`), JetBrains Mono 11, muted text on mantle; on the darker popover and notice surfaces, resting keycaps take the grey fill.                                                                                                                                                                                                                                  | 01-list, 01-chips                  |
+| D3  | **Chip state** decides fill and text: _live_ (mantle, muted text) on every keycap and on the selected row's chips; _rest_ (grey `#2E3248`) elsewhere, tags muted, the link count faint.                                                                                                                                                                                                                                                                                     | 01-list                            |
+| D4  | **Header:** the magnifier on the list, the back chevron on the detail and refresh screens; the filter pill (sliders icon, the filter's name, `⌘P`).                                                                                                                                                                                                                                                                                                                         | 01-list, 07-filter                 |
+| D5  | **Rows:** tinted type tile (or the bookmark's favicon); commands' titles in JetBrains Mono; the description under the title; then tag icon chips and grey `#tag` pills, the `↗ n` link chip, and a keycap: `↵` on the selected row, `⌘1`…`⌘9` on the others (⌘n runs row n's primary action).                                                                                                                                                                               | 01-list                            |
+| D6  | **Entry types:** Bookmarks, Cheat Sheets, Commands, Tasks. Any other type is ignored by the app (list, filter, counts); kb-domain and the index stay unchanged, so the TypeScript goldens hold.                                                                                                                                                                                                                                                                             | 07-filter                          |
+| D7  | **Entry actions** (catalog): Bookmark — primary _Open_ (default browser), secondary _Copy_ (its URL); Command, Cheat Sheet, Task — primary _Copy_ (their main content), no secondary. When Paste lands (its own task), it becomes Commands' and Cheat Sheets' primary and Copy their secondary.                                                                                                                                                                             | 02-actions                         |
+| D8  | **Screen keys** (catalog): each screen maps the ladder ↵ / ⌘↵ / ⇧⌘↵. List: _Details_ ↵, entry primary ⌘↵, entry secondary ⇧⌘↵. Detail: entry primary ↵, entry secondary ⌘↵. The footer shows the screen's keys and _Actions ⌘K_.                                                                                                                                                                                                                                            | 02-actions                         |
+| D9  | **Action panel** (⌘K, Raycast layout): rows 28, search at the bottom, sections by a hairline, at most two levels. Root: the screen's keyed actions, _Resize_ ⇧⌘F, _Links… ›_ (only when the entry has links; each link row opens with ↵ and copies with ⌘↵), _More… ›_. More…: COPY _Description_, _Notes_, _Path_ (absolute, ⌥⌘C) │ ADMINISTRATION _Edit_ ⌘O, _Refresh_ ⌘R, _Configure_ ⇧⌘,. Submenus have a `‹` header and no search; the root's search finds their rows. | 02-actions                         |
+| D10 | **Empty and no index:** Raycast's empty view: one large icon, a title, a sentence (the query in mauve mono); footer primary _Refresh ↵_; Esc clears the query.                                                                                                                                                                                                                                                                                                              | 03-empty                           |
+| D11 | **Entry template**, the same component in the split (34 % list) and on the detail screen: 1 _Header_ — the row's icon and the title (title field, else the key), one line, tags right; 2 _Hero_ by type; 3 _Quote_ — the description, whole, with the red bar; 4 _Body_ — the notes. Empty slots collapse. No type badge, path or links in the pane.                                                                                                                        | 04-entry-template                  |
+| D12 | **Heroes:** Command → the command card; Cheat Sheet → the command card for its snippet when it has one; Bookmark → its thumbnail (YouTube; capped in the split), else its URL as a link line (`↗ host/path`); Task → its status and priority chips.                                                                                                                                                                                                                         | 04-entry-template                  |
+| D13 | **Command card:** fmt-rs breaks the command at `&&`, `\|\|`, `\|` to the card's real column count; kb wraps what remains at spaces with a hanging indent, never splitting a token and keeping operators with the word before them; colours from GPUI Kit's bash highlighter with an extended highlight query (argument values coloured); ligatures off; 12 pt in the split, 13 in detail; GPUI Kit's Clipboard button in the corner; no line numbers.                       | 04-command-cards, 04-spike-screens |
+| D14 | **Footer:** left, the status line on the list (`● Ready • N results`, `● Refreshing…`, `● No index`; N is a true count), or, while a pane or the detail screen is open, the entry's type tile, its file and `⌥⌘C`; right, the screen's keys and _Actions ⌘K_.                                                                                                                                                                                                               | 01-list, 04-spike-screens          |
+| D15 | **Filter** (⌘P): the action panel's component under the pill, search at the bottom; TYPES with their tile, TAGS with their icon or `#`; only chosen rows show ✓; picking keeps it open; with filters set, a _n filters · Clear All_ row leads and the pill names the filters; footer _Toggle ↵ · Only ⌘↵_.                                                                                                                                                                  | 07-filter                          |
+| D16 | **Refresh** (the sync, ⌘R): header chevron only; running, stopped and failed use the empty view (running adds a thin progress bar and _n of m files · file_); the report uses the list's rows, one per file worth a look, failed first; keys _Stop esc_, _Back ↵_, _Retry ↵_, _Retry ↵ · Configure ⌘↵_.                                                                                                                                                                     | 11-14-refresh                      |
+| D17 | **Copy feedback:** a notice bottom right above the footer, _Copied to clipboard_ with a `⌘V` hint, through GPUI Kit's Notification; every existing notice moves there. Its restyle is parked (TODO `MOB4`).                                                                                                                                                                                                                                                                 | 01-list                            |
+| D18 | **One place for each thing:** DESIGN.md's front matter holds every design token (colours, type, radii, spacing, component sizes); `crates/kb-app/assets/catalog.toml` holds what kb offers (types, actions, screens' keys, labels, messages), deep-merged under `~/.config/kb/config.toml` (same keys win; validated at start with a notice and a per-key fallback; colours and sizes are not overridable).                                                                 | —                                  |
+| D19 | **Accent separation becomes advisory** (owner-approved gate change, 2026-10-12): `design:validate` warns instead of failing when Catppuccin's accents fall under the colour-blind separation thresholds; colour is never the only cue.                                                                                                                                                                                                                                      | —                                  |
 
 ## Scope
 
-In: the design system (DESIGN.md, the kit), every app surface, the status line and count, copy feedback and notice
-defaults, `design:shots`, the documents of section 7 and the change map.
+In: DESIGN.md and the design kit, the catalog and its overrides, every screen of the table above, the four entry types,
+the status line and its count, copy feedback, ⌘1–⌘9, the command card, the showcase corpus, screenshots of the app,
+the documents and the change map.
 
-Out: the rich empty state, ⌘1–⌘9, ⌘N, a light palette, a new app icon, blur, and re-running the measurement session
-(Plan 5 T9, after this plan).
+Out: Paste, Execute/Run Command (with a terminal view), Editor-based code blocks in notes, og:image previews, the
+notice's restyle, a footer hint for ← →, the massCode source idea, re-running the measurement session (Plan 5 T9). Each
+is its own TODO task.
 
 ## Design
 
-### 1. DESIGN.md and its tokens
+### 1. DESIGN.md and the design kit
 
-The root `DESIGN.md` becomes the new one, edited to D1–D14:
+DESIGN.md is rewritten around the approved pages. Its YAML front matter is the only place a design value is written:
 
-- **Front matter** (YAML), the only place a token's value is written. The keys follow the new system's names; values
-  are the text's:
-  - `name: Catppuccin Macchiato`
-  - `colors`: `surface-window`, `surface-header`, `surface-raised`, `surface-selection`, `border-divider`,
-    `text-primary`, `text-muted`, `text-faint`, and the seven `accent-*`. Nothing else.
-  - `typography`: the ten roles of F4 (`fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing` kept for
-    Stitch but unused by the app; `label-xs` gains `textTransform: uppercase`).
-  - `rounded`: `panel` 28, `popover` 16, `selection` 12, `media` 12, `action-row` 8, `keycap` 6, `tag` 4 (points).
-  - `spacing`: the 4-point ramp (`hairline` 1, `xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `section` 32).
-  - `components`: what `layout.json`'s `components` held (header, result row, tag, footer, popover, action item,
-    filter control, split pane, detail, metadata, media), updated to the text (action row 40 high, keycap padding 4 × 2,
-    keycap gap 4), plus the new parts: `icon-tile` (24, radius 4, fill the accent at 15% over `surface-window`),
-    `selection-bar` (2.5 wide, inset 6 top and bottom, `accent-purple`), `notification` (placement `bottom-right`,
-    margins above the footer), `window` (compact 860 × 520, expanded 85% of the display).
-  - `alignment`: `layout.json`'s `alignmentRules`, as a list.
-- **Prose**, in the Stitch order (Brand & Style, Colors, Typography, Layout & Spacing, Elevation & Depth, Shapes,
-  Components), plus kb's sections: Tags (the Raycast hash, the pill-lift rule), Deviations (below), Evidence (the
-  reference screens) and the change map's pointer. Prose never repeats a value: it names the token (`rounded.popover`)
-  where a reader needs the number, except the colour table, which `design:validate` keeps in step (as today).
+- `colors`: the Catppuccin Macchiato roles kb uses (window, header, selection, mantle, badge, divider, text, muted, faint,
+  the accents) and the derived fills (tile at 15 %, chip rest and live, code block).
+- `typography`: the pages' roles (search 15, title 13 medium, description 12, labels 12 and 11, section labels 10
+  semibold uppercase, footer 11, card 12/13 mono, keycap 11 mono, notes body and headings).
+- `rounded`, `spacing` and `components` (window 860 × 520 and expanded, header 56, row 56 / gap 4 / radius 6, chip 20,
+  keycap 20, tile 24 and 20, popover 220 wide / rows 28 / radius 14, footer 40, split 34 %, selection bar 2.5).
 
-**Deviations** (replaces Adaptations). What kb does differently from the GPUI Kit Design Guides, and from Raycast where
-it matters, each with its reason: Inter instead of the platform font (the system's choice; owner-approved); uppercase
-`label-xs` section headers (owner-approved; the guides advise against uppercase); Title Case (kept); no letter spacing
-(GPUI has none); always dark (D6); accent separation advisory (D14); notices autohide after GPUI Kit's fixed 5 seconds; and the rows of today's
-Adaptations table that still hold (opaque surfaces, favicons from DuckDuckGo, tag images from a local folder, images
-by `curl`, the patched GPUI that keeps the window centred, the two window sizes, → / ← only at the caret's end).
+The prose describes the look and links each section to its approved page. `tools/design` reads the front matter:
+`design:validate` (contrast; accent separation as warnings, D19), `design:theme` (GPUI Kit's theme and a `design.json`
+the app loads), `design:prototypes` and `design:shots` (section 8). `layout.json` and `accents.json` go; the Tokyo Night
+palette stays only as a comparison alternative.
 
-### 2. The design kit
+### 2. The catalog
 
-`tools/design/` keeps its role, with the front matter as its input:
+`crates/kb-app/assets/catalog.toml`, compiled in and deep-merged under the user's `~/.config/kb/config.toml`:
 
-- A small module, `tools/design/tokens.ts` (with `tokens.test.ts`), parses DESIGN.md's front matter and returns typed
-  tokens; it fails on an unknown or missing key. It imports no npm package (AGENTS.md: tested modules import none), so
-  it parses the front matter's YAML subset itself: maps, quoted and bare scalars, lists of scalars. The test covers that
-  subset and the real DESIGN.md.
-- `design:validate` reads the colours from the front matter (no longer from `palettes.json`'s `chosen`), and checks the
-  rest of `palettes.json` as alternatives. The palette-table drift check stays, against the front matter. The "accents
-  apart" checks warn instead of failing (D14). `palettes.json` drops its `catppuccin-macchiato` entry (the front matter
-  holds it now, with D13's roles) and keeps Tokyo Night Storm Flat Separated as an alternative.
-- `design:theme` reads the front matter and writes:
-  - `crates/kb-app/assets/themes/kb.json`: as today, plus `font.family` `Inter`, `mono_font.family`
-    `JetBrains Mono`; dark only.
-  - `crates/kb-app/assets/themes/design.json` (replaces `accents.json`): the accents and their pills (dark only), the
-    typography roles in rem (px ÷ 16), the radii, the spacing and the component geometry, all in points.
-  - `crates/kb-app/tests/fixtures/tag-accents.json`, as today.
-- `design:render` (the comparison page) reads the front matter for geometry and the chosen colours, and
-  `palettes.json` for the alternatives.
-- `design:sample` keeps reading the local Raycast captures; its output, `raycast.json`, stays a record.
-- `layout.json` is deleted. `tools/tags`'s single read of `palettes.json` (`tools/tags/tasks.toml`, the window colour)
-  moves to the front matter.
-- New `design:shots` (section 6).
+```toml
+[types.bookmark]
+label = "Bookmarks"
+icon = "bookmark"
+tint = "blue"
+hero = "media"
+primary = "open"
+secondary = "copy-url"
 
-### 3. The app: theme, fonts, tokens
+[actions.open]
+label = "Open"
 
-- **Fonts.** `crates/kb-app/assets/fonts/`: Inter 400/500/600 and JetBrains Mono 400/500 as static TTFs from their
-  pinned upstream releases, with `OFL.txt` for each. `KbAssets` serves them; `run` adds them to the text system
-  (`cx.text_system().add_fonts`) before the theme loads. A test fails if a font file is missing or does not load.
-- **Always dark.** `init_theme` loads `kb Dark` and sets the dark mode; it no longer syncs to the system appearance, and
-  `SearchView` drops its appearance observer.
-- **Tokens in Rust.** `accents.rs` becomes `design.rs` (one concept: the generated design tokens), loading
-  `design.json` once (`LazyLock`, as `accents.rs` does). It exposes typed accessors: `accent(role)`, `pill(role)`,
-  `text(TypeRole) -> TextStyle refinement` (size in rem, weight, line height, family), `radius(Radius)`,
-  `space(Space)` and the component geometry. Views use these; no view keeps a literal size, weight, radius or colour
-  (the compliance rule today is "no colour literals"; it extends to these). Uppercase is applied where `label-xs` is
-  drawn.
+[screens.list]
+enter = "details"
+cmd-enter = "entry.primary"
+shift-cmd-enter = "entry.secondary"
+```
 
-### 4. Components
+It holds the four types (label, icon, tint, hero, primary, secondary), every action (label, keys), each screen's keys
+(list, detail, filter, empty, no index, the refresh states), the action panel's and More…'s rows, and the messages. A
+test validates it: every icon exists, every key parses, every reference resolves, no screen binds a key twice. Configure
+(⇧⌘,) creates `config.toml` with the defaults as comments.
 
-Each item cites the DESIGN.md section it implements. Unlisted components keep today's behaviour, restyled through the
-tokens.
+### 3. Components (`crates/kb-app/src/ui/`)
 
-| Component                 | Change                                                                                                                                                                                                                                                                                     | Code                                    |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| Typography                | Every text takes its role: search field `headline-md`; row title `body-lg`; description `body-sm`; metadata `body-md` / `label-md`; keycaps and pills `label-sm`; section headers `label-xs` uppercase; notes headings `headline-lg` / `headline-sm`; code `code-sm`.                      | all views; `notes.rs` through the theme |
-| Header                    | Geometry from tokens; back chevron, query and filter button as today.                                                                                                                                                                                                                      | `search_view/header.rs`                 |
-| Result row                | Type glyph inside the icon tile (accent at 15%, glyph in the accent); a favicon or tag image is drawn bare, without a tile. Selected row: the inset fill as today, plus the purple bar at its left edge and a trailing ↵ keycap (full list only; beside the split pane titles stay alone). | `entry_list.rs`, `presentation.rs`      |
-| Tag pill and tag image    | Geometry from tokens; text `label-sm`.                                                                                                                                                                                                                                                     | `entry_list.rs`, `tag_images.rs`        |
-| Footer                    | Left: the status line (section 5) instead of the selected entry. Right: unchanged (primary action, Actions, one keycap per key). Keycaps take the `keycap` radius and padding.                                                                                                             | `search_view/footer.rs`                 |
-| Actions popover           | Each action row gets a leading Lucide icon; rows 40 high, radius 8; section headers `label-xs`.                                                                                                                                                                                            | `palette.rs`, `search_view/overlays.rs` |
-| Filter dropdown           | Section headers `label-xs`; geometry from tokens; ✓ / ○ as today.                                                                                                                                                                                                                          | `filter.rs`, `search_view/overlays.rs`  |
-| Split pane, metadata card | Geometry and type from tokens.                                                                                                                                                                                                                                                             | `search_view.rs`, `metadata.rs`         |
-| Notes                     | Body and headings through the theme's fonts; code in JetBrains Mono.                                                                                                                                                                                                                       | `notes.rs`                              |
-| Empty states              | Restyled through the tokens; content unchanged.                                                                                                                                                                                                                                            | `entry_list.rs`                         |
-| Sync screen               | Restyled through the tokens.                                                                                                                                                                                                                                                               | `sync_view.rs`                          |
+One component per concept, each matching a part of the pages, so a redesign touches one file:
 
-Action icons (Material Symbol in the screens → Lucide): copy → `Copy`; terminal → `SquareTerminal`; visibility →
-`Eye`; description → `FileText`; code → `Code`; tune → `SlidersHorizontal`; open in browser → `Globe`; links → `Link`;
-rebuild → `RefreshCw`; preferences → `Settings`; quit → `Power`. Any icon the default bundle lacks is added to
-`ExtraIcons`; the existing test catches a missing one.
+| Component      | Draws                                                                      |
+| -------------- | -------------------------------------------------------------------------- |
+| `keycap`       | D2's keycap                                                                |
+| `chip`         | tag pills, tag icon chips, the link chip, task chips; live or rest (D3)    |
+| `tile`         | the tinted type tile, and the favicon with its tile fallback               |
+| `row`          | the list row (D5) and the refresh report's row                             |
+| `header`       | the magnifier or chevron, the query, the filter pill                       |
+| `footer`       | the status line or the entry's statusline, the screen's keys               |
+| `action_panel` | the root and its submenus, search at the bottom (D9); reused by the filter |
+| `empty_view`   | D10 and the refresh states                                                 |
+| `entry_view`   | the four-slot template (D11), split and detail                             |
+| `command_card` | D13, with no kb types, ready to extract into its own crate                 |
+| `notice`       | D17, through GPUI Kit's Notification                                       |
 
-### 5. New features
+Views keep no literal colour, size, radius or spacing: they come from `design.json` and the catalog. An ast-grep rule
+fails a `px(` literal outside the design module.
 
-**Status line.** The footer's left side shows one of:
+### 4. Window and theme
 
-- `● Ready • N results` (`N` with a thousands separator; `1 result` singular), the dot `accent-green`;
-- `● Rebuilding…`, the dot `accent-yellow`, while a sync runs;
-- `● No index`, the dot `text-faint`, when there is no index.
+GPUI keeps its windows square, so the panel is drawn on a transparent window background with a rounded root (14). kb
+always uses its dark theme. Inter (400, 500, 600 and the italic the quote uses) and JetBrains Mono (400, 500) are bundled
+with their OFL licences and loaded at start; ligatures are off wherever code or commands are drawn.
 
-Text `body-md` in `text-muted`. Status is never told by the dot alone: the word is always there.
+### 5. Engine additions (kb-domain)
 
-**Count.** `kb_domain::search::count(connection, query) -> rusqlite::Result<usize>` runs `SELECT COUNT(*)` over the
-statement `build_search_sql` builds, without its `LIMIT`/`OFFSET`, with the same parameters. Its test: for every query
-of the sample and private goldens, `count` equals the length of the golden's full result list (the goldens are not
-paged). `EntryList` asks for the count with each new query on the background executor, after the page; a stale count
-(the query changed) is dropped. The footer shows the last count for the current query, and nothing in its place until
-it arrives.
+- `search::count(query)`: how many entries a query matches, run off the keystroke path; tested against the goldens'
+  full result sets.
+- A body-only notes Markdown (the notes without the description quote, the command block, links or source) for the
+  template's Body; the stored `notes_markdown` and the goldens stay as they are.
+- Type narrowing (D6) happens in the app, not in sync.
 
-**Copy feedback.** Every action that writes to the clipboard (the primary Copy, Copy URL, the Copy… page) pushes
-`Notification::success("Copied to Clipboard")`, with an id so a second copy replaces the first. Notices that exist
-today take their type: the sync's finished message `success` (or `error` when it failed), "Couldn't create …"
-`error`, the startup notices (unreadable preferences, taken hotkey) `warning`. kb sets
-`theme.notification.placement` to bottom-right and its margins from the `notification` component token, once, in
-`init_theme`.
+### 6. Notes body
 
-### 6. Verification: `design:shots`
+GPUI Kit's Markdown view, styled from the type tokens (headings stop being oversized). Before the plan commits to it,
+a spike renders the same notes with `zorite-markdown` (MIT, on kb's `gpui-pre`; `MarkdownStyle`, `on_highlight`,
+`on_mermaid`); the plan adopts it if it renders the body better.
 
-`mise run design:shots` (a task in `tools/design/tasks.toml`, Bun inline, AGENTS.md):
+### 7. The showcase corpus
 
-1. Builds kb (release), and makes a home under `tmp/design-home` whose `config.toml` points `sources_path` at
-   `crates/kb-domain/tests/fixtures/sample`; runs `kb --sync` there.
-2. Quits a running kb (it owns ⌥K), launches kb under that home, and drives it with the bench kit's `probe`
-   (`tools/bench/probes/probe.swift`, CGEvent): opens the panel and visits each screen.
-3. Captures the panel's window with `screencapture -l <window id>` (the id from `probe`, or from a small Swift query),
-   compact and expanded (⌘⇧F), into `tools/design/shots/<screen>-<size>.png`.
+`tools/design/showcase/`: committed, realistic YAML for the four types, holding the entries the approved pages show
+(`/k8s-rollout-restart`, the Kubernetes cheat sheet, the Tokio bookmark…), so the app's screenshots and the pages show
+the same data. The sample corpus stays the engine's golden fixture.
 
-Screens: `list`, `list-selected-tags` (a row with tags and links), `split`, `detail`, `actions`, `actions-copy-page`,
-`filter`, `empty`, `copy-notice`, `bookmark-split`. The task needs the Screen Recording and Accessibility permissions;
-it says so and stops when it lacks them. Shots are committed; they hold only the sample corpus.
+### 8. Verification
 
-The final review compares each shot with the reference screen of the same anatomy (`tools/design/reference/`), read in
-the same palette, Catppuccin Macchiato. Differences either get fixed or become a Deviation with its reason.
+`mise run design:shots` runs kb on the showcase corpus, drives each screen with the bench kit's `probe`, and captures
+the window by its id (the spike's method) into `tools/design/shots/`, compact and expanded. The final review compares
+each shot with its approved page through the checklists below; a difference is fixed or recorded as a deviation.
 
-### 7. Documents
+### 9. Per-screen checklists
 
-| Document                           | Change                                                                                                                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DESIGN.md`                        | Replaced (section 1).                                                                                                                                                                                                          |
-| `PRODUCT.md`                       | Principle 2 (D9); Brand Personality's "looks and speaks like Raycast" becomes "speaks like Raycast; looks as DESIGN.md says"; accessibility line says accent separation is advisory (D14), since colour is never the only cue. |
-| `AGENTS.md`                        | The `tools/design/` entry (front matter as source, shots, reference screens); "Read DESIGN.md before any UI change" stays.                                                                                                     |
-| `CONTEXT.md`                       | Colour palette row (lives in DESIGN.md's front matter); new rows **Design token**, **Status line**, **Notice**; Tag image row unchanged.                                                                                       |
-| `README.md`                        | Project structure (`docs/guides/design` gone; `tools/design/reference`, `shots`); a current screenshot.                                                                                                                        |
-| `docs/guides/parity.md`            | Footer row (status line instead of the entry: Adapted, with reason); new Better rows: copy feedback, result count; appearance row (always dark: Adapted).                                                                      |
-| `docs/guides/compliance.md`        | "Follows the system appearance" becomes "always dark", with reason; "theme tokens replace visual literals" extends to type, radii and spacing; fonts bundled.                                                                  |
-| `tools/bench/README.md`            | Tier 2 size note: the bundled fonts add to the binary; the next session measures it.                                                                                                                                           |
-| `crates/third-party/README.md`     | Unchanged (no new patch).                                                                                                                                                                                                      |
-| Source comments citing DESIGN.md   | Updated to the new section names and token names (`accents.rs`, `entry_list.rs`, `http.rs`, `lib.rs`, `metadata.rs`, `notes.rs`, `presentation.rs`, `search_view*.rs`, `tag_images.rs`, `window_size.rs`).                     |
-| `TODO.md`                          | Plan 8 tasks, done as they land.                                                                                                                                                                                               |
-| `tools/design/CHANGE-MAP.md` (new) | Section 8.                                                                                                                                                                                                                     |
+Each item is checked on the shot against its approved page.
 
-### 8. The change map
+**List (01):** magnifier, query in 15 pt, the filter pill with `⌘P`; a hairline under the header; rows 56 tall, 4 apart,
+corners 6; the selected row's fill `#363A4F` with a 2.5 mauve bar; tiles 24 tinted by type (Commands green, Cheat Sheets
+mauve, Bookmarks blue, Tasks pink); command titles in mono; chips and keycaps exactly 20 tall; the selected row's chips
+on mantle with muted text, other rows' chips grey; `↵` on the selected row, `⌘2`…`⌘9` on the next eight; footer status
+`● Ready • N results` with the true count, then _Details ↵ · Copy ⌘↵ · Actions ⌘K_ (a bookmark selected: _Open ⌘↵ ·
+Copy ⇧⌘↵_).
 
-`tools/design/CHANGE-MAP.md`: for a future design change, what to edit and in what order. One table per kind of
-change (a colour, a type role, a radius or spacing, a component's anatomy, a new notice, a new icon), each row a file,
-what in it depends on the design, and the check that catches a miss (`design:validate`, the icon test, `cargo nextest`,
-`design:shots`). It is written last, from this plan's actual diff (`git diff --stat main...feat/design-system`), so it
-records what was touched rather than what was expected. DESIGN.md and AGENTS.md link to it.
+**Action panel (02):** opens above _Actions_, bottom right, 220 wide, rows 28, search at the bottom; the root lists the
+screen's actions in D9's order with their keycaps; _Links… ›_ only for entries with links; More… shows COPY and
+ADMINISTRATION under a `‹ More` header with no search; typing in the root finds More…'s rows, marked _More_.
 
-## Phases
+**Empty and no index (03, 10):** one large icon, the title, the sentence with the query in mauve mono; status
+`0 results` or `● No index`; footer _Refresh ↵_.
 
-The plan follows approach B: tokens first, then components, then features, then documents. Every phase ends with
-`mise run gate` green and, from phase 1 on, `mise run design:shots` committed, so each phase's visual change is
-reviewable on its own.
+**Split and detail (04–06):** the list at 34 %; the pane's header is the row's icon and title on one line with tags
+right; the hero by type; the description as a red-bar quote; the notes; nothing else (no badge, path or links). The
+command card: breaks at `&&` and `|`, a hanging indent, no split tokens, no ligatures, the copy button, 12 pt in the
+split, 13 in detail. Footer left: the type tile, the file, `⌥⌘C`. Detail: the chevron only; → shows the metadata column.
 
-1. **The system lands.** DESIGN.md replaced, in Catppuccin Macchiato (D13, D14); `tokens.ts`; the kit reads the front matter; `design.json`; fonts
-   bundled and loaded; always dark; `design.rs`; `design:shots`; `docs/guides/design/` removed, screens moved. The app
-   turns Catppuccin Macchiato, in Inter.
-2. **Components.** Typography roles everywhere; rows (tile, bar, ↵); popovers (icons, rows 40, keycaps); footer
-   keycaps; metadata, notes, sync screen through tokens.
-3. **Features.** `count` in `kb-domain`; status line; notice defaults and types; copy feedback.
-4. **Documents and close.** Section 7; the final shot review; the change map last.
+**Filter (07):** under the pill, search at the bottom; the four types with their tiles, tags with their icons or `#`;
+✓ only on chosen rows; stays open while picking; _n filters · Clear All_ first when filters are set; the pill names
+them; footer _Toggle ↵ · Only ⌘↵_.
+
+**Refresh (11–14):** the chevron only; running shows its icon, _Refreshing the index…_, the progress bar and _n of m
+files · file_, footer _Stop esc_; the report lists files, failed first, under a summary line, footer _Back ↵_; stopped
+and failed show their icon, title and sentence, footers _Retry ↵_ and _Retry ↵ · Configure ⌘↵_.
+
+**Notice (17):** bottom right above the footer, _Copied to clipboard_, a `⌘V` hint on a grey keycap.
+
+### 10. Documents
+
+DESIGN.md (rewritten); PRODUCT.md (the design system is the visual reference, Raycast the behavioural one); CONTEXT.md
+(the entry types narrowed; new terms Catalog, Design token, Status line, Command card, Notice; Refresh as the action's
+name); AGENTS.md (the design kit and the catalog); the README; `docs/guides/parity.md` and `compliance.md` (keys,
+labels, always dark, fonts); `docs/guides/design/` replaced by the approved pages; TODO.md.
+
+### 11. The change map
+
+`tools/design/CHANGE-MAP.md`, written last from the plan's actual diff: for each kind of change (a colour, a type role,
+a size, an action, a screen's keys, a component), the files it reaches and the check that catches a miss.
 
 ## Acceptance criteria
 
-1. `DESIGN.md` at the root is the new system edited to D1–D14; `docs/guides/design/` does not exist; the reference
-   screens are under `tools/design/reference/`.
-2. Every design value is written once, in DESIGN.md's front matter; `layout.json` and `accents.json` do not exist;
-   `design:validate` passes (accent separation as warnings, D14) and fails on a drifted table (checked by editing a hex in a scratch copy).
-3. `kb.json` and `design.json` are generated by `design:theme`; regenerating them leaves no diff.
-4. kb renders in Inter, notes code in JetBrains Mono; it stays dark in the light appearance.
-5. No view in `crates/kb-app/src` has a literal colour, font size, font weight, radius or spacing; a test or an
-   ast-grep rule (`sgconfig.yml`) enforces it for `px(` literals outside `design.rs`.
-6. Rows show the icon tile, and the selected row its purple bar and ↵ keycap; action rows show icons; section headers
-   are uppercase `label-xs`.
-7. The footer shows `● Ready • N results` with the true count, `Rebuilding…` and `No index` in their states; `count`
-   matches every golden.
-8. Each copy shows "Copied to Clipboard" bottom-right; existing notices appear there with their types.
-9. `tools/design/shots/` holds every screen of section 6 in both sizes, taken from the final commit.
-10. The documents of section 7 are updated; `tools/design/CHANGE-MAP.md` exists and is linked.
-11. kb draws Catppuccin Macchiato (D13): the front matter's colours, `kb.json` and `design.json` agree.
-12. `mise run gate` passes; the only threshold change is D14's.
+1. Every screen's checklist (section 9) passes on `design:shots`, compact and expanded.
+2. Every design value is in DESIGN.md's front matter, and every action, label and key in the catalog; no view keeps a
+   literal colour, size, radius or spacing (ast-grep rule).
+3. `design:validate` passes, with accent separation reported as warnings (D19).
+4. `config.toml` overrides a label, a key and a type's primary action; an invalid value shows a notice and falls back.
+5. Only the four entry types appear in the list, the filter and the counts; the goldens still pass.
+6. The status line shows the true count; ⌘1–⌘9 run the rows' primary actions; copy feedback appears on every copy.
+7. The documents of section 10 are updated, and `tools/design/CHANGE-MAP.md` exists.
+8. `mise run gate` passes; the only threshold change is D19.
 
 ## Risks
 
-| Risk                                                                                     | Mitigation                                                                                                                         |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| GPUI Kit components (List, Command, Notification, TextView) draw text in their own sizes | Set the theme's base font and `font.family`; where a component ignores them, restyle through its builder or record a Deviation.    |
-| Inter's metrics change row and header heights                                            | Heights are tokens, not content-driven; shots show any clipping.                                                                   |
-| `design:shots` needs macOS permissions and a free ⌥K                                     | The task checks both and says what to grant; it never kills an app other than kb.                                                  |
-| The front-matter parser misreads YAML                                                    | It accepts only the subset DESIGN.md uses and fails loudly on anything else; tested on the real file.                              |
-| Bundled fonts grow the binary (tier 2 size)                                              | Static weights only (five files); the next measurement session records it; noted in `tools/bench/README.md`.                       |
-| The count query adds work per query                                                      | It runs after the page, off the keystroke path, and is dropped when stale; tier 1's search cases are unaffected.                   |
-| Catppuccin's accents are close under colour-blind vision (D14)                           | Tags keep their `#name` and types their icon; the type tint is never the only cue; `design:validate` keeps reporting the warnings. |
+| Risk                                                                 | Mitigation                                                                               |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| GPUI renders differently from the HTML pages                         | The spike already checked the panel; shots are compared screen by screen.                |
+| A transparent rounded window misbehaves with the patched GPUI        | Fall back to a square window and record it as a deviation.                               |
+| fmt-rs (v0.1.0, one author) stalls                                   | Pinned; pure Rust with no dependencies, so it can be vendored into `crates/third-party`. |
+| `design:shots` needs Screen Recording and Accessibility, and ⌥K free | The task checks and says what to grant; it quits only kb.                                |
+| Catalog overrides make a screen bind a key twice                     | The validation rejects it and falls back to the default for that key.                    |
 
 ## Doctrine check
 
-`docs/doctrine/` holds one doctrine, `tag-conventions` (`applies_to: tools/tags/**`). This plan touches
-`tools/tags/tasks.toml` only to read the window colour from the front matter instead of `palettes.json`; no tag rule is
-involved. No other doctrine applies.
+`docs/doctrine/` holds one doctrine, `tag-conventions` (`applies_to: tools/tags/**`); this work does not touch the tag
+tools or their rules.
