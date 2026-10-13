@@ -297,7 +297,7 @@
 - [ ] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
 
 - [~] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
-  - **Comments**: LGMU
+  - **Comments**: LGMU,ixvo
 
 - [ ] pMDV **-** Plan 8: write the plan from the spec
 
@@ -349,6 +349,11 @@
   - **Priority**: low
   - **Created**: 2026-10-12 23:33
   - **Tags**: idea
+
+- [ ] CKx2 **-** Engine: accept every link shape the corpus uses: a bare URL (links: https://…) and a top-level title: url map, besides the two list forms; both engines drop them today (2 entries in the private corpus lose their links). After the experiment's report, since it changes kb-domain's output against the TS goldens; until then the sync report could flag them
+  - **Priority**: medium
+  - **Created**: 2026-10-13 00:30
+  - **Tags**: domain
 
 # Actors
 
@@ -518,5 +523,8 @@
   - **Task**: nNln
 
 - LGMU **-** 2026-10-12, decided before writing the spec: keep evolving kb rather than port massCode's slice (~55k lines of Vue/TS, an editing workspace without a hotkey panel) to GPUI; kb's design is bought from Raycast, the best-tested answer for its job.
+  - **Task**: KhLt
+
+- ixvo **-** 2026-10-13, detail links (owner): A1 compact Links list at the end of the Body (05-detail-links.html), no metadata column (every attribute has a home), one line per link (title trimmed with an ellipsis, URL without scheme/www/query/fragment and trimmed in the middle, full text in a tooltip), ⌘1–⌘9 open links, clickable header tags filter. Spec: D11 updated, D20 added, 04–06 checklist updated. Link shapes: only the two list forms are parsed by both engines; the other two queued as an engine task.
   - **Task**: KhLt
 

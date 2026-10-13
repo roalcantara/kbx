@@ -17,6 +17,7 @@ unchanged and add only their new part with a script, so the list they show is th
 | [04-entry-template.html](04-entry-template.html) | 04–06 Split, Detail | Template v3: Header (row icon + title), Hero by type, Quote (description), Body (notes); bookmarks with and without a hero                  |
 | [04-command-cards.html](04-command-cards.html)   | 04–06               | The command card on real commands: fmt-rs breaks at operators, wrap at spaces with a hanging indent, operators glued, ligatures off         |
 | [04-spike-screens.html](04-spike-screens.html)   | 04–06               | Real GPUI renders of the panel (a throwaway spike on kb's GPUI Kit 0.7.1): split and detail, command, bookmark, cheat sheet                 |
+| [05-detail-links.html](05-detail-links.html)     | 05–06 Detail        | Links close the body as a compact list (A1, chosen; A2 cards kept for later); no metadata column; tags filter                               |
 | [07-filter.html](07-filter.html)                 | 07 Filter           | The action component reused, its search at the bottom (Raycast); ✓ on chosen rows only; the pill names the filters; Toggle ↵, Only ⌘↵       |
 | [11-14-refresh.html](11-14-refresh.html)         | 11–14 Refresh       | Running, stopped, failed as 03's empty view; the report as 01's rows; Stop esc, Back ↵, Retry ↵, Configure ⌘↵                               |
 
