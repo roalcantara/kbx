@@ -1,189 +1,213 @@
+---
+# The design tokens: the only place a design value is written (spec D18). The app reads this front matter at start
+# (crates/kb-app/src/ui/design.rs); `mise run design:theme` writes GPUI Kit's theme from it; `design:validate` checks it.
+# Sizes are points. Colours are #RRGGBB or #RRGGBBAA.
+name: kb
+colors:
+  window: "#24273A"
+  mantle: "#1E2030"
+  crust: "#181926"
+  selected: "#363A4F"
+  hover: "#2F334A"
+  badge: "#2E3248"
+  code: "#191B29"
+  edge: "#6E738D1A"
+  ring: "#CAD3F514"
+  text: "#CAD3F5"
+  muted: "#A5ADCB"
+  faint: "#6E738D"
+  mauve: "#C6A0F6"
+  blue: "#8AADF4"
+  green: "#A6DA95"
+  peach: "#F5A97F"
+  pink: "#F5BDE6"
+  yellow: "#EED49F"
+  red: "#ED8796"
+typography:
+  ui: Inter
+  mono: JetBrains Mono
+  roles:
+    search: { family: ui, size: 15, weight: 400 }
+    title: { family: ui, size: 13, weight: 500 }
+    description: { family: ui, size: 12, weight: 400 }
+    label: { family: ui, size: 12, weight: 500 }
+    section: { family: ui, size: 10, weight: 600, uppercase: true }
+    footer: { family: ui, size: 11, weight: 400 }
+    chip: { family: ui, size: 11, weight: 600 }
+    count: { family: mono, size: 11, weight: 400 }
+    keycap: { family: mono, size: 11, weight: 400, line_height: 16 }
+    heading: { family: ui, size: 15, weight: 600, line_height: 24 }
+    quote: { family: ui, size: 14, weight: 400, line_height: 21, italic: true }
+    body: { family: ui, size: 13, weight: 400, line_height: 20 }
+    notes_h1: { family: ui, size: 15, weight: 600 }
+    notes_h2: { family: ui, size: 14, weight: 600 }
+    notes_h3: { family: ui, size: 13, weight: 600 }
+    card_split: { family: mono, size: 12, weight: 400, line_height: 20 }
+    card_detail: { family: mono, size: 13, weight: 400, line_height: 22 }
+    link_title: { family: ui, size: 13, weight: 500 }
+    link_url: { family: mono, size: 12, weight: 400 }
+    link_hero: { family: mono, size: 13, weight: 500 }
+    empty_title: { family: ui, size: 15, weight: 500 }
+    empty_text: { family: ui, size: 13, weight: 400 }
+    notice: { family: ui, size: 13, weight: 500 }
+rounded:
+  window: 14
+  row: 6
+  chip: 4
+  tile: 4
+  pill: 6
+  popover: 14
+  card: 10
+  hero: 12
+  favicon: 3
+spacing:
+  header: { pad_x: 24, gap: 12 }
+  list: { pad: 8, gap: 4 }
+  row: { pad_x: 14, gap: 12, text_gap: 2, trailing_gap: 12, tags_gap: 6, split_pad_x: 10, split_gap: 10 }
+  pane: { split_pad_x: 24, split_pad_y: 18, detail_pad_x: 32, detail_pad_y: 22, gap: 12, header_gap: 10 }
+  footer: { pad_left: 24, pad_right: 24, entry_pad_right: 16, gap: 20, entry_gap: 16, item_gap: 6, left_gap: 8 }
+  panel: { pad: 6, row_pad_x: 10, row_gap: 10, section_pad_top: 6, section_pad_x: 10, section_pad_bottom: 4, rule_margin: 4, search_pad_x: 12, search_gap: 8, crumb_pad_x: 12, crumb_gap: 6 }
+  pill: { pad_x: 10, pad_y: 4, gap: 8 }
+  chip: { pad_x: 8, link_pad_x: 6, link_gap: 4 }
+  keycap: { pad_x: 6, gap: 4 }
+  empty: { pad_x: 16, icon_gap: 12, title_gap: 4, bar_gap: 10, summary_pad_x: 16, summary_pad_top: 10, summary_pad_bottom: 4 }
+  quote: { pad_left: 12, pad_y: 2 }
+  card: { pad_x: 14, pad_y: 12, pad_right: 40, copy_inset: 8 }
+  link_hero: { pad_x: 12, pad_y: 10, gap: 8 }
+  links: { gap: 4, label_gap: 6, label_pad_top: 2, label_pad_bottom: 4, row_pad_x: 8, row_gap: 10 }
+  notice: { gap: 12, hint_gap: 6, right: 16, bottom: 48 }
+components:
+  window: { width: 860, height: 520, expanded_share: 0.85 }
+  header: { height: 56, icon: 20, pill_icon: 15, pill_max_width: 220 }
+  row: { height: 56, bar_width: 2.5, bar_inset: 6, glow: 8, glow_alpha: 0.6, max_tags: 3 }
+  chip: { height: 20, icon: 14, link_icon: 12 }
+  keycap: { height: 20, min_width: 20 }
+  tile: { size: 24, icon: 16, small: 20, small_icon: 13, mini: 18, mini_icon: 12, alpha: 0.15 }
+  favicon: { size: 16, inset: 4 }
+  panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14, offset: 8 }
+  footer: { height: 40, dot: 6, dot_glow: 6 }
+  split: { list: 0.34 }
+  empty: { icon: 56, text_max_width: 420, bar_width: 260, bar_height: 4 }
+  hero: { thumb_split: 150, thumb_detail: 250, link_icon: 14 }
+  quote: { bar: 3 }
+  links: { row: 28, url_chars: 32, title_share: 0.5 }
+  notice: { width: 340, icon: 20, check: 13 }
+  border: { hairline: 1 }
+---
+
 # Design system
 
-kb's visual design. The reference is Raycast's kb Search extension: kb copies its anatomy, layout and behaviour, and
-departs from it only where [Adaptations](#adaptations) says why. [PRODUCT.md](PRODUCT.md) says what kb is for; this file
-says how it looks. Read it before any UI change.
+How kb looks. The owner's Stitch screens are the reference, settled screen by screen into the **approved pages**
+([docs/guides/design/](docs/guides/design/README.md)), which are the visual contract: where this text and a page
+differ, the page wins and this text is fixed. [PRODUCT.md](PRODUCT.md) says what kb is for; Raycast is the reference
+for behaviour. Read this file before any UI change.
 
-Values live in one place each, and this file points at them:
+Every value lives in one place:
 
-| What                                       | Source of truth                                                                  | Consumer                                                          |
-| ------------------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Palette roles (hex)                        | [`tools/design/palettes.json`](tools/design/palettes.json), the `chosen` palette | `design:theme` → [`kb.json`](crates/kb-app/assets/themes/kb.json) |
-| Derived colours (pills, tints), tag hashes | [`tools/design/color.ts`](tools/design/color.ts)                                 | the `design:` tasks ([`tasks.toml`](tools/design/tasks.toml))     |
-| Spacing, sizes, radii, alignment           | [`tools/design/layout.json`](tools/design/layout.json)                           | `design:render`; the app (Plan 7)                                 |
-| Validation results                         | [`tools/design/validation.json`](tools/design/validation.json)                   | the comparison page                                               |
+| What                                   | Where                                                                    | Read by                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Colours, type, radii, spacing, sizes   | This file's front matter (the design tokens)                             | the app (`ui/design.rs`); `design:theme`, `design:validate`     |
+| Entry types, actions, keys, words      | [`crates/kb-app/assets/catalog.toml`](crates/kb-app/assets/catalog.toml) | the app (`catalog.rs`); `~/.config/kb/config.toml` overrides it |
+| GPUI Kit's theme                       | [`kb.json`](crates/kb-app/assets/themes/kb.json), generated              | GPUI Kit's own components                                       |
+| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)               | whoever changes a value                                         |
 
-The palette table below repeats the chosen hexes for readers; `mise run design:validate` fails when it drifts from `palettes.json`.
-`mise run design:palettes` validates every palette, regenerates the theme and opens the comparison page
-(`tmp/design/palettes.html`).
+`mise run design:theme` regenerates `kb.json` after a colour changes; `mise run design:validate` checks contrast;
+`mise run design:shots` captures the app on the showcase corpus for comparison with the approved pages.
 
 ## 1. Visual Theme & Atmosphere
 
-A calm, dark navy launcher. Surfaces are flat and close in tone; hierarchy comes from spacing, a soft inset selection
-and type weight before any border or card. Colour is reserved for meaning: an entry's type, its tags, and state. The
-panel floats over whatever is behind it and never shouts.
+A calm, dark launcher in Catppuccin Macchiato: a navy panel with 14 pt corners floating over the desktop, flat
+surfaces close in tone, hairlines only under the header and above the footer. Hierarchy comes from type weight, a
+selected row's fill and its mauve bar, never from boxes. Colour is reserved for meaning: an entry's type (its tile),
+a tag's identity (its icon), and state (the status dot). Always dark: kb has one approved palette.
 
 ## 2. Color Palette & Roles
 
-**Tokyo Night Storm Flat Separated**: Tokyo Night Storm
-([folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim/tree/main/extras)), tuned by hand to flatter
-surfaces and accents that stay apart under colour-blind simulation. The owner picked it on 2026-10-10 from the
-candidates in `palettes.json`.
+The roles, by name (the hexes are in the front matter):
 
-| Role        | Hex       | Name         | Job                                                         |
-| ----------- | --------- | ------------ | ----------------------------------------------------------- |
-| `window`    | `#23273A` | Storm navy   | The panel, the list, the detail pane                        |
-| `header`    | `#24293E` | Storm header | The search header and title bar                             |
-| `selection` | `#2A3047` | Selection    | The selected row, the selected popover item                 |
-| `raised`    | `#24293E` | Raised       | Popovers and footer pills                                   |
-| `divider`   | `#353D5A` | Divider      | Pane boundaries, popover and card edges; never between rows |
-| `text`      | `#CBD4FF` | Text         | Titles, values, search text                                 |
-| `textMuted` | `#B2BADB` | Muted text   | Descriptions, labels, shortcut hints                        |
-| `textFaint` | `#7A86B6` | Faint text   | The search placeholder, tertiary hints                      |
-| `blue`      | `#70B9F4` | Blue         | Cheats; tags                                                |
-| `green`     | `#30E1A5` | Green        | Commands; tags                                              |
-| `orange`    | `#F5A95D` | Orange       | Notes; tags                                                 |
-| `purple`    | `#A362F2` | Purple       | Bookmarks; tags                                             |
-| `magenta`   | `#E927AB` | Magenta      | Tasks; tags                                                 |
-| `yellow`    | `#D9E753` | Yellow       | Tags                                                        |
-| `red`       | `#E04F50` | Red          | Tags; the notes' description bar                            |
+| Role       | Job                                                                                                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `window`   | The panel                                                                                                                                                              |
+| `mantle`   | Live chips and keycaps; popovers; command cards and the link hero                                                                                                      |
+| `crust`    | The notice                                                                                                                                                             |
+| `selected` | The selected row and panel row; popover and card borders                                                                                                               |
+| `hover`    | A hovered row                                                                                                                                                          |
+| `badge`    | Rest chips; the filter pill; keycaps on the darker popover and notice surfaces                                                                                         |
+| `code`     | Code blocks in the notes                                                                                                                                               |
+| `edge`     | Hairlines (faint at 10 %)                                                                                                                                              |
+| `ring`     | The panel's 1 pt outline (text at 8 %)                                                                                                                                 |
+| `text`     | Titles, the query, values                                                                                                                                              |
+| `muted`    | Descriptions, labels, live chip text, keycap text                                                                                                                      |
+| `faint`    | Tertiary text: placeholders, counts, section labels, URLs, rest link chips; icons in the header                                                                        |
+| accents    | `mauve` (selection bar, caret, Cheat Sheets), `blue` (Bookmarks, links), `green` (Commands, ready), `pink` (Tasks), `peach`, `yellow`, `red` (the quote bar, failures) |
 
-- **Type tints** (Raycast's `TYPE_TINTS`): bookmark purple, command green, cheat blue, note orange, task magenta. An
-  unknown type takes an accent by the tag hash of its name.
-- **Tag accents:** a tag's lowercased name, hashed as Raycast does (`acc × 31 + code point`, modulo 100 003), indexes
-  the accents in the order blue, orange, green, purple, magenta, yellow, red. A tag keeps its accent in the list, the
-  metadata card and the detail screen.
-- **Pills:** the accent at 20% over `window`; the text is the accent, lifted toward `text` in 5% steps only as far as
-  4.5:1 needs. Blue, green, orange and yellow keep their pure accent; purple, magenta and red lift slightly.
-- **Validation** (`validation.json`): every text role on every surface meets WCAG 2.2 AA; every pill meets 4.5:1; the
-  seven accents stay at least ΔE 15 apart (OKLab ×100) for normal vision and 8 under protan and deutan simulation.
-  A passing check does not replace looking at the component on screen.
-- **Light appearance:** GPUI Kit's default light theme, with Tailwind 600 accents; kb is designed for dark, and no light palette is planned.
+- **Type tiles:** a type's accent at 15 % behind its icon in the accent (24 pt in rows, 20 in the footer and the pane
+  header, 18 in the filter). The type → accent pairs are the catalog's (`tint`).
+- **Tags:** a tag with an image in the tag-images folder is an icon chip, the image tinted in the tag's accent (the
+  Raycast hash of its lowercased name over blue, peach, green, mauve, pink, yellow, red); any other tag is a grey
+  `#tag` pill. Colour is never the only cue: pills carry the name, icon chips a tooltip.
+- **Chip state** (D3): _live_ (mantle, muted text) on every keycap and on the selected row's chips; _rest_ (badge)
+  elsewhere, tag text muted, the link count faint.
 
 ## 3. Typography Rules
 
-The system font (SF Pro) throughout; monospace (Menlo) only inside notes code. Sizes are GPUI Kit's text scale; they
-copy the reference's relationships (the search field largest, the row title over a smaller description, metadata and
-chrome a step smaller) rather than pixel readings, which the screenshots cannot give reliably.
-
-| Element                        | Size     | Weight             | Colour                          |
-| ------------------------------ | -------- | ------------------ | ------------------------------- |
-| Search field                   | 18 (lg)  | Regular            | `text`; placeholder `textFaint` |
-| Row title                      | 14 (sm)  | Regular            | `text`                          |
-| Row description                | 12 (xs)  | Regular            | description shade (below)       |
-| Tag pill                       | 12 (xs)  | Medium             | pill text                       |
-| Section header (list, popover) | 12 (xs)  | Semibold           | `textMuted`                     |
-| Metadata label / value         | 13       | Regular            | `textMuted` / `text`            |
-| Notes body / headings          | 14 / 16+ | Regular / Semibold | `text`                          |
-| Footer pill, action row        | 13       | Regular            | `textMuted` / `text`            |
-| Keycap                         | 12 (xs)  | Medium             | `text` on `selection`           |
-
-Commands and labels use Title Case ("Show Details", "Open in Browser", "All Entries"), as Raycast does: an
-owner-approved departure from the GPUI Kit Design Guides' sentence case. Messages and notices stay sentences.
+Inter for the interface, JetBrains Mono for commands, code, keycaps, counts and URLs; both bundled
+(`crates/kb-app/assets/fonts`), ligatures off wherever mono text is drawn, so what you read is what you copy. Small,
+dense type: titles 13 medium, descriptions 12, labels 12 medium, the footer 11, section labels 10 semibold uppercase;
+the query 15; the pane's heading 15 semibold; the quote 14 italic. Command titles are mono (the catalog's
+`mono_title`). The type roles are the front matter's `typography.roles`.
 
 ## 4. Component Stylings
 
-- **Header:** no divider below it. The back chevron (on every screen, as Raycast's) sits on the row-icon axis; the search text starts where row titles start. The filter button on the right carries a funnel
-  icon and the current filter ("All Entries"), and shows its open state with a chevron.
-- **List row:** a fixed icon column with the tinted type icon (Raycast's: globe, terminal, document, notebook, check
-  circle), or a bookmark's favicon; the title over its description; trailing accessories: at most three tag pills,
-  then `+N`, then the link count with a link icon. Beside the split pane, the title alone. The description shade is
-  `textMuted` dimmed toward `textFaint` as far as AA holds on every surface (`color.ts`, `description`); GPUI Kit
-  also draws placeholders in it. The selection is an inset, rounded `selection` fill, never a full-width bar: GPUI
-  Kit draws the list highlight translucent (at most 20% opaque), so the theme gives it the tint that shows as
-  `selection` over the window (`color.ts`, `tint`), as every GPUI Kit theme gives that key an accent at low opacity.
-- **Tag pill:** filled (no outline), corner radius 4 as Raycast's, `#name` in pill text on the pill fill. **Tag image** (D4): a tag with an image in the tag-images folder (`<tag>.svg`;
-  `tag_images_path`, default `~/.config/kb/images`, filled by `mise run tags:images`) shows the image instead of the
-  pill, in an invisible 16-point square so every image has the same size; its name in the tooltip. A brand's logo
-  keeps its colours; a shape (Lucide, or a logo too dark for the window) takes the muted text colour.
-- **Split pane** (D3): the list takes about ⅓ of the width, the detail pane ⅔; one `divider` line between them.
-- **Metadata card:** rows with the label left (`textMuted`) and the value right-aligned (`text`); alternate rows a
-  shade lighter; Type and Tags as pills; Source with a file icon; URLs with an open-link ↗ icon.
-- **Notes:** code blocks on a shade below the window, their syntax in the palette's accents (each lifted to AA on
-  that shade, as pill text is); the description as a quote with a `red` bar; bookmark thumbnails above the metadata (split) or first
-  (detail).
-- **Detail screen:** the header shows only the back chevron; content starts with the notes, without a title block.
-- **Footer:** plain items along the panel's bottom edge, with neither fill nor line: the entry on the left; the primary
-  action and Actions on the right, one keycap per key (`⌘` `K`, not `⌘K`).
-- **Actions popover:** anchored above the footer's Actions button and opening upwards; Show Details (↵) first, then
-  the primary action (⌘↵); each row shows its keys, one keycap per key; "Links" and "Copy…" open as pages in place
-  (Esc comes back); the search field on top, a line under it (GPUI Kit's `Command`). Rows carry no icons; corners of
-  16; at most 200 high, about five rows, then it scrolls; the filter dropdown alike.
-  The search field's magnifier is GPUI Kit's `Command` own, so it stays.
-- **Filter dropdown:** anchored under the filter button; a "Filters" section with the count and Clear All Filters while
-  any is active; types and tags with ✓ / ○; it stays open while picking.
+Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an approved page:
+
+- **Keycap** (`keycap.rs`; 01-chips): one cap per shortcut (`⌘K`, `⇧⌘,`), 20 tall, JetBrains Mono 11, live.
+- **Chip** (`chip.rs`; 01-list, 01-chips): 20 tall, 4 pt corners: tag pills, tag icon chips, the `↗ n` link chip,
+  task chips; live or rest.
+- **Tile** (`tile.rs`; 01-list): the tinted type tile, or a bookmark's favicon with the tile as its fallback.
+- **Row** (`row.rs`; 01-list): 56 tall, 4 apart, 6 pt corners; tile, title over description, tags, link chip, keycap
+  (`↵` selected, `⌘1`…`⌘9` the first nine rows); the selected row on `selected` with a 2.5 pt mauve bar and its glow.
+- **Header** (`header.rs`; 01-list, 07-filter): 56 tall, a hairline under it; the magnifier on the list, the back
+  chevron elsewhere; the query at 15; the filter pill (sliders, the filter's name, `⌘P`).
+- **Footer** (`footer.rs`; 01-list, 04-entry-template): 40 tall, a hairline over it; left the status line on the
+  list (`● Ready • N results`) or, with a pane or the detail screen, the entry's tile, file and `⌥⌘C`; right the
+  screen's keys and _Actions ⌘K_.
+- **Action panel** (`action_panel.rs`; 02-actions, 07-filter): mantle, 14 pt corners, 220 wide (the filter 230),
+  28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus.
+- **Empty view** (`empty_view.rs`; 03-empty, 11-14-refresh): one 56 pt icon, a 15 pt title, a sentence; the query in
+  mauve mono.
+- **Entry view** (`entry_view.rs`; 04-entry-template, 05-detail-links): Header (icon, title, tags), Hero by type,
+  Quote (the description, red bar), Body (the notes, then the Links list); the same component in the split (34 %
+  list) and on the detail screen.
+- **Command card** (`command_card.rs`; 04-command-cards): mantle, a `selected` border, 10 pt corners; fmt-rs breaks
+  at operators, kb wraps at spaces with a hanging indent; GPUI Kit's bash colours; a copy button in the corner.
+- **Notice** (`notice.rs`; 01-list): bottom right above the footer, _Copied to clipboard_ with a `⌘V` hint.
 
 ## 5. Layout Principles
 
-- **Window** (D5): compact 860 × 520 points, and expanded to about 85% of the screen; ⌘⇧F toggles between them and
-  the panel stays centred. The window is resizable in both.
-- **Spacing:** the 4-point ramp of `layout.json` (`tight` 4, `compact` 8, `inset` 12, `standard` 16, `relaxed` 24,
-  `section` 32). Native code maps points through GPUI's rem helpers so the layout scales with the interface.
-- **Geometry** (`layout.json` `components`): header 56 high; rows 56; selection inset 8 with radius 12; panel radius
-  28; popover radius 16. The comparison page refuses to render if the header control leaves the row-icon axis or the
-  search text leaves the title edge.
-- Group with whitespace; add a divider only at a real pane or section boundary.
-- Equivalent content uses the same inset in the list, the split pane, the detail screen and popovers.
+Compact 860 × 520, expanded to 85 % of the display (⇧⌘F), keeping its centre. The header and footer insets are
+24; the list is inset 8; rows inset their content 14 (10 in the split). The split gives the list 34 %. The pane
+pads 18 × 24 in the split and 22 × 32 on the detail screen, 12 between its slots. Search fields sit at the bottom of
+every panel (Raycast).
 
 ## 6. Depth & Elevation
 
-Flat surfaces, no blur (D1). Popovers sit on `raised` with a one-point edge (`divider` at 58% over
-`raised`) and a soft two-layer shadow. `raised` shares `header`'s tone, so their separation comes from that edge, the
-shadow and their placement against the control that opened them, not from a lighter fill: the owner's pick (variant E
-on the comparison page) over a lighter popover tone.
+Flat. Only three things float: the panel itself (the system's window shadow and a 1 pt ring), popovers (GPUI Kit's
+popover shadow) and the notice. The selected row's bar glows mauve; nothing else has a shadow.
 
 ## Adaptations
 
-Where kb departs from Raycast, and why.
+Where kb departs from the owner's Stitch screens or from Raycast, and why:
 
-| Adaptation                                | Raycast                     | Reason                                                                    |
-| ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------- |
-| Opaque surfaces, no blur                  | Translucent, blurred window | D1: the colours matter, not the material; blur costs GPU memory (tier 2)  |
-| Popovers separated by edge and shadow     | Lighter translucent popover | Same-tone surfaces without blur need an edge to read as overlays          |
-| Pill text lifted to 4.5:1                 | Pure accent text            | WCAG AA for 12-point text (PRODUCT.md)                                    |
-| → / ← act only with the caret at the end  | → / ← always                | The query field keeps → and ← for editing; ⌘D toggles too, unlisted       |
-| Favicons from DuckDuckGo's icon service   | Raycast's own service       | `api.ray.so` serves Raycast, not other apps                               |
-| Tag images from a local folder            | Bundled in the extension    | Their mixed licences stay out of this public repository                   |
-| Images fetched by `curl`                  | Built in                    | GPUI gives native apps no HTTP client                                     |
-| A patched GPUI keeps the window centred   | —                           | GPUI resizes from the bottom-left corner and cannot move a window         |
-| ⌘P opens the filter dropdown              | ⌘P                          | Same key, kept explicit                                                   |
-| Two window sizes, toggled by ⌘⇧F          | One fixed size              | D5: kb is not bound by Raycast's window                                   |
-| Title Case over the guide's sentence case | Title Case                  | Matches Raycast; owner-approved deviation from the GPUI Kit Design Guides |
+- **Back chevron instead of the magnifier** on the detail and refresh screens: kb needs a way back (01-list, note 1).
+- **No `deploy/api` chip**: kb entries have no field it could come from (01-list, note 4).
+- **Lucide icons** for Material ones: the set GPUI Kit ships.
+- **Type colours as the owner drew them**: Commands green, Cheat Sheets mauve, Bookmarks blue, Tasks pink.
+- **Four entry types** (D6): any other type is ignored by the app; the engine still indexes it.
+- **No metadata column** (D20): every attribute has a home (tile, quote, hero, header tags, footer file).
+- **Always dark** (D1).
 
 ## Evidence
 
-The reference is eight local captures of Raycast's kb Search (list, split pane, detail, actions, filters, bookmark
-media), mapped to components in `layout.json` `screenCoverage`. They show the private corpus, so they stay in the
-gitignored `tools/reports/`; tracked files record only measurements and screen names. Raycast publishes no numeric
-spacing for its extension UI: `layout.json` values are estimates from the captures, normalised to the ramp, and
-[`raycast.json`](tools/design/raycast.json) holds the few colour and size readings `mise run design:sample` can take reliably.
-
-## Appendix: findings → rules
-
-Each finding of the UI comparison report (local, `tools/reports/ui.md`) and the rule that settles it.
-
-| Finding | Rule                                                        |
-| ------- | ----------------------------------------------------------- |
-| UI-01   | §1, §2 palette, §6 (no blur); panel radius §5               |
-| UI-02   | §4 Header (no divider; funnel icon)                         |
-| UI-03   | §4 List row (inset selection)                               |
-| UI-04   | §3 (regular titles; muted description)                      |
-| UI-05   | §2 Pills; §4 Tag pill                                       |
-| UI-06   | §4 Tag image (D4)                                           |
-| UI-07   | §4 Footer                                                   |
-| UI-08   | §4 Split pane (D3)                                          |
-| UI-09   | §4 Metadata card                                            |
-| UI-10   | §4 Notes (red bar)                                          |
-| UI-11   | §4 Detail screen (back chevron only)                        |
-| UI-12   | §4 Detail screen (no title block)                           |
-| UI-13   | §4 Actions popover (anchored); §6                           |
-| UI-14   | §4 Actions popover (keycaps)                                |
-| UI-15   | §4 Actions popover (order)                                  |
-| UI-16   | §4 Actions popover (search at the bottom; Copy… submenu)    |
-| UI-17   | §4 Filter dropdown (anchored; open state)                   |
-| UI-18   | §4 Filter dropdown (stays open; ✓ / ○)                      |
-| UI-19   | §4 Filter dropdown (Filters section)                        |
-| UI-20   | §4 Notes (thumbnails)                                       |
-| UI-21   | §4 List row (type icon; per-site icons with the tag images) |
-| UI-22   | §4 Metadata card (↗ on URLs)                                |
-| UI-23   | §4 Notes, Detail screen                                     |
+`tools/design/shots/` holds the app captured on the showcase corpus by `mise run design:shots`, one PNG per screen,
+compact and expanded; `tools/design/CHECKLISTS.md` records each screen's checklist against its approved page.
