@@ -227,6 +227,41 @@ fn runs_the_row_matching_cmd_enter_or_shift_cmd_enter_in_the_panel(cx: &mut Test
     );
     assert!(!cx.read(|cx| view.read(cx).is_actions_open()));
 }
+#[gpui_kit::test]
+fn rebuild_screen_maps_to_refreshing_and_panel_omits_details_without_entry(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+
+    // 1. Rebuild screen maps to Screen::Refreshing: footer shows Stop esc
+    press(cx, window, "cmd-r");
+    assert!(cx.read(|cx| view.read(cx).is_rebuilding()));
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(keys, ["Stop esc", "Actions ⌘K"]);
+
+    // 2. ⌘K over a rebuild must not offer Details
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    let panel_labels = cx.read(|cx| view.read(cx).panel_labels(cx));
+    assert!(
+        !panel_labels.iter().flatten().any(|l| l == "Details"),
+        "no Details over rebuild: {panel_labels:?}"
+    );
+    press(cx, window, "escape");
+    cx.run_until_parked();
+
+    // 3. Root page when the list is empty (no selection / no matching entry): no Details
+    press(cx, window, "escape"); // return from rebuild
+    settle(cx);
+    type_text(cx, window, "nomatchforthisqueryxyz");
+    settle(cx);
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    let empty_labels = cx.read(|cx| view.read(cx).panel_labels(cx));
+    assert!(
+        !empty_labels.iter().flatten().any(|l| l == "Details"),
+        "no Details with empty list: {empty_labels:?}"
+    );
+}
 
 #[gpui_kit::test]
 fn copies_the_path_found_from_the_root_s_search(cx: &mut TestAppContext) {

@@ -85,6 +85,7 @@ pub fn root_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> Pa
     let mut rows: Vec<(PanelRow, PanelCommand)> = catalog
         .keys_for(screen, kind)
         .into_iter()
+        .filter(|item| entry.is_some() || item.action != "details")
         .map(|item| {
             (
                 PanelRow {

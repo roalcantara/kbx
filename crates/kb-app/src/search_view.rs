@@ -275,7 +275,8 @@ impl SearchView {
     fn key_screen(&self) -> KeyScreen {
         match self.screen {
             Screen::Detail => KeyScreen::Detail,
-            _ => KeyScreen::List,
+            Screen::Rebuild(_) => KeyScreen::Refreshing,
+            Screen::Search => KeyScreen::List,
         }
     }
 
