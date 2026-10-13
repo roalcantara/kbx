@@ -16,7 +16,7 @@ use gpui_kit::{
 use kb_domain::entry::Entry;
 
 use crate::catalog::{Catalog, EntryType, Hero};
-use crate::presentation::{favicon_url, tag_hue, trim_url};
+use crate::presentation::{favicon_url, row_tags, tag_hue, trim_url};
 use crate::tag_images::TagImages;
 use crate::ui::chip::{icon_chip, pill};
 use crate::ui::command_card::{CardStyle, CommandCard, SyntaxColors};
@@ -164,7 +164,14 @@ impl RenderOnce for EntryView {
             Some(url) => favicon(url, icon.clone(), tint, TileSize::Small).into_any_element(),
             None => tile(&icon, tint, TileSize::Small).into_any_element(),
         };
-        let tags = self.entry.tags.iter().map(|tag| {
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "a token of a few tags"
+        )]
+        let max = d.components.row.max_tags as usize;
+        let (tags, more) = row_tags(&self.entry.tags, max);
+        let tags = tags.iter().map(|tag| {
             let chip: AnyElement = match self.images.image(tag) {
                 Some(image) => icon_chip(
                     id(&format!("tagimg-{tag}")),
@@ -197,7 +204,15 @@ impl RenderOnce for EntryView {
                     .text_color(c.text)
                     .child(self.entry.title.clone()),
             )
-            .child(h_flex().flex_none().gap(pt(d.spacing.row.tags_gap)).children(tags));
+            .child(
+                h_flex()
+                    .flex_shrink(1.)
+                    .min_w_0()
+                    .overflow_hidden()
+                    .gap(pt(d.spacing.row.tags_gap))
+                    .children(tags)
+                    .when(more > 0, |group| group.child(pill(format!("+{more}"), ChipState::Rest))),
+            );
 
         let hero: Option<AnyElement> = match hero_of(&self.entry, kind.as_ref()) {
             HeroKind::Card(command) => {
@@ -466,5 +481,13 @@ mod tests {
             20,
             "never below 20: a card that narrow still breaks somewhere"
         );
+    }
+
+    #[test]
+    fn caps_eight_tags_to_three() {
+        let entry = entry("cheats", "k", "tags: [a, b, c, d, e, f, g, h]\n");
+        let (tags, more) = row_tags(&entry.tags, 3);
+        assert_eq!(tags, &["a", "b", "c"]);
+        assert_eq!(more, 5);
     }
 }

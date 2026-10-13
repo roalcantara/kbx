@@ -692,3 +692,30 @@ fn filters_the_list_by_a_tag_from_the_detail_screen(cx: &mut TestAppContext) {
     let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
     assert_eq!(filter.tags, ["kube"]);
 }
+
+#[gpui_kit::test]
+fn caps_header_tags_to_three_and_shrinks_without_hiding_title_in_compact_size(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let sources = home.path().join("sources");
+    fs::create_dir_all(&sources).unwrap();
+    fs::write(
+        sources.join("tags.yml"),
+        "commands:\n  many-tags:\n    cmd: ls\n    title: Command Title That Stays Visible\n    tags: [t1, t2, t3, t4, t5, t6, t7, t8]\n",
+    )
+    .unwrap();
+    let preferences = home.path().join(".config/kb/config.toml");
+    fs::create_dir_all(preferences.parent().unwrap()).unwrap();
+    fs::write(&preferences, format!("sources_path = \"{}\"\n", sources.display())).unwrap();
+    let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+    kb_domain::sync::sync_knowledge_base(config.sources_dir(), config.database(), &AtomicBool::new(false), |_| {})
+        .unwrap();
+    let (window, view) = open(cx, config);
+    // Open split pane with right arrow in compact size
+    press(cx, window, "right");
+    assert!(cx.read(|cx| view.read(cx).is_showing_details()));
+    // The first 3 tags are present in the header:
+    click(cx, window, "entry-tag-t1-tags.yml#commands#many-tags");
+    settle(cx);
+    let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
+    assert_eq!(filter.tags, ["t1"]);
+}
