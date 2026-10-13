@@ -344,6 +344,7 @@
 - [ ] 3g6H **-** Execute/Run Command: run a command entry in the terminal (proposed in iriskb.augment and iriskb.cursor; executes text from the source files, so decide its safety first)
 
 - [ ] rPyR **-** Notes code blocks: render fenced code in the Body with GPUI Kit's read-only code Editor (line numbers, Clipboard copy), as dbflux's SQL preview does, instead of TextView's code block; needs the notes Markdown split around code blocks
+  - **Comments**: lsQ5
 
 - [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kb-domain could run as a Nohrs plugin
 
@@ -371,6 +372,12 @@
   - **Priority**: medium
   - **Created**: 2026-10-13 14:50
   - **Tags**: adoption, content
+
+- [ ] 8qUa **-** Notes body: adopt zorite-markdown =0.10.0 (MIT, on kb's gpui-pre 0.3 line) in ui/entry_view.rs in place of TextView: MarkdownStyle from the design tokens (notes roles, code background), code highlighting through on_highlight with GPUI Kit's SyntaxHighlighter, links through cx.open_url; owner choice 2026-10-13 (Plan 8f Task 5)
+  - **Created**: 2026-10-13 19:52
+
+- [ ] 4hQn **-** Notes bold: **bold** renders regular in the notes body (with TextView and zorite-markdown alike): kb bundles Inter Regular, Medium, SemiBold and Italic but no Bold; bundle Inter Bold or map bold to SemiBold
+  - **Created**: 2026-10-13 19:52
 
 # Actors
 
@@ -559,4 +566,7 @@
 
 - HuqS **-** 2026-10-13: index and sub-plans 8a-8e written; 8f-8h next
   - **Task**: pMDV
+
+- lsQ5 **-** 2026-10-13: notes body — adopt zorite-markdown (owner, Plan 8f Task 5, screenshots compared); its on_highlight hook may replace this task's Editor approach for code blocks
+  - **Task**: rPyR
 
