@@ -154,6 +154,12 @@ impl EntryList {
         &self.entries
     }
 
+    /// The query the list currently reflects.
+    #[must_use]
+    pub fn query(&self) -> &str {
+        &self.query
+    }
+
     /// The selected entry.
     #[must_use]
     pub fn selected_entry(&self) -> Option<&Entry> {

@@ -738,6 +738,22 @@ fn offers_refresh_when_nothing_matches(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn typing_and_fixing_query_does_not_rebuild_on_immediate_enter(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    type_text(cx, window, "zzqxj");
+    settle(cx);
+    assert_eq!(titles(&view, cx), [] as [String; 0]);
+    press(cx, window, "escape"); // clears the search query
+    type_text(cx, window, "docker");
+    press(cx, window, "enter");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_rebuilding()),
+        "Enter while debounce is catching up must not trigger Rebuild"
+    );
+}
+
+#[gpui_kit::test]
 fn reports_a_refresh_and_goes_back_with_return(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));

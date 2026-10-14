@@ -284,7 +284,7 @@ impl SearchView {
                 let list = self.list.read(cx).delegate();
                 if !list.has_index() {
                     KeyScreen::NoIndex
-                } else if list.entries().is_empty() {
+                } else if list.entries().is_empty() && self.query_input.read(cx).value() == list.query() {
                     KeyScreen::Empty
                 } else {
                     KeyScreen::List
