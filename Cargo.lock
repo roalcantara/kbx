@@ -3607,6 +3607,7 @@ dependencies = [
  "futures",
  "global-hotkey",
  "gpui-kit",
+ "indexmap",
  "kb-domain",
  "serde",
  "serde_json",

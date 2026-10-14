@@ -28,6 +28,11 @@ impl SearchView {
 
     fn status_parts(&self, cx: &App) -> (String, Option<String>) {
         let messages = &self.catalog.messages;
+        if let Screen::Rebuild(sync) = &self.screen
+            && sync.read(cx).is_running()
+        {
+            return (messages.refreshing_status.clone(), None);
+        }
         let list = self.list.read(cx).delegate();
         if !list.has_index() {
             return (messages.no_index_status.clone(), None);
@@ -87,7 +92,9 @@ impl SearchView {
             .into_any_element()
         } else {
             let (word, count) = self.status_parts(cx);
-            let dot = if self.list.read(cx).delegate().has_index() {
+            let dot = if matches!(&self.screen, Screen::Rebuild(sync) if sync.read(cx).is_running()) {
+                Dot::Busy
+            } else if self.list.read(cx).delegate().has_index() {
                 Dot::Ready
             } else {
                 Dot::Off

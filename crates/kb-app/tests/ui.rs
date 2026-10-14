@@ -736,3 +736,23 @@ fn offers_refresh_when_nothing_matches(cx: &mut TestAppContext) {
     assert_eq!(keys, ["Refresh ↵", "Actions ⌘K"]);
     assert_eq!(cx.read(|cx| view.read(cx).status_line(cx)), "Ready • 0 results");
 }
+
+#[gpui_kit::test]
+fn reports_a_refresh_and_goes_back_with_return(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(
+        keys,
+        ["Back ↵", "Actions ⌘K"],
+        "the report's keys once the sync finished"
+    );
+    assert!(cx.read(|cx| view.read(cx).header_parts()).back);
+    press(cx, window, "enter");
+    assert!(
+        !cx.read(|cx| view.read(cx).is_rebuilding()),
+        "Back ↵ returns to the list"
+    );
+}

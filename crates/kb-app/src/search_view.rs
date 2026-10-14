@@ -25,11 +25,11 @@ use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
     Back, CONTEXT, CopyPath, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
-    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5,
-    RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter,
-    ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
+    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, REFRESH_CONTEXT, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3,
+    RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter,
+    ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::sync_view::{SyncFinished, SyncView};
+use crate::sync_view::{Phase, SyncFinished, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pixels, pt};
@@ -272,9 +272,14 @@ impl SearchView {
 
     /// The screen whose keys apply now (8g adds the empty and refresh screens).
     fn key_screen(&self, cx: &App) -> KeyScreen {
-        match self.screen {
+        match &self.screen {
             Screen::Detail => KeyScreen::Detail,
-            Screen::Rebuild(_) => KeyScreen::Refreshing,
+            Screen::Rebuild(sync) => match sync.read(cx).phase() {
+                Phase::Running => KeyScreen::Refreshing,
+                Phase::Report => KeyScreen::Report,
+                Phase::Stopped => KeyScreen::Stopped,
+                Phase::Failed => KeyScreen::Failed,
+            },
             Screen::Search => {
                 let list = self.list.read(cx).delegate();
                 if !list.has_index() {
@@ -329,6 +334,16 @@ impl SearchView {
             ("resize", _) => self.toggle_window_size(&ToggleWindowSize, window, cx),
             ("edit", _) => self.open_source_file(&OpenSourceFile, window, cx),
             ("copy-path", _) => self.copy_path(&CopyPath, window, cx),
+            ("stop", _) => {
+                if let Screen::Rebuild(sync) = &self.screen {
+                    sync.read(cx).cancel();
+                }
+            }
+            ("back", _) => self.back(&Back, window, cx),
+            ("retry", _) => {
+                // A finished or failed sync lets `rebuild` start a new one.
+                self.rebuild(&Rebuild, window, cx);
+            }
             _ => {}
         }
     }
@@ -514,7 +529,8 @@ impl SearchView {
             self.config.sources_dir().to_path_buf(),
             self.config.database().to_path_buf(),
         );
-        let sync = cx.new(|cx| SyncView::start(sources, database, cx));
+        let catalog = self.catalog.clone();
+        let sync = cx.new(|cx| SyncView::start(sources, database, catalog, cx));
         let subscription = cx.subscribe_in(&sync, window, |this, _, finished: &SyncFinished, window, cx| {
             window.push_notification(finished.message.clone(), cx);
             if finished.rebuilt {
@@ -720,6 +736,8 @@ impl Render for SearchView {
         }
         let context = if self.is_showing_detail() {
             format!("{CONTEXT} {DETAIL_CONTEXT}")
+        } else if self.is_rebuilding() {
+            format!("{CONTEXT} {REFRESH_CONTEXT}")
         } else {
             CONTEXT.to_owned()
         };

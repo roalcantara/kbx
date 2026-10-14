@@ -62,7 +62,6 @@ impl EmptyView {
     }
 
     /// Something under the sentence: the refresh's progress bar.
-    #[expect(dead_code, reason = "Plan 8g Task 3 wires EmptyView::extra into SyncView")]
     #[must_use]
     pub fn extra(mut self, extra: impl IntoElement) -> Self {
         self.extra = Some(extra.into_any_element());
@@ -121,7 +120,6 @@ impl RenderOnce for EmptyView {
 }
 
 /// The refresh's thin progress bar, `fraction` (0–1) filled.
-#[expect(dead_code, reason = "Plan 8g Task 3 wires progress_bar into SyncView")]
 #[must_use]
 pub fn progress_bar(fraction: f32) -> impl IntoElement {
     let d = design();

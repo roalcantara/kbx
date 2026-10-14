@@ -17,6 +17,9 @@ pub const CONTEXT: &str = "Search";
 /// Added to [`CONTEXT`] while the detail screen shows.
 pub const DETAIL_CONTEXT: &str = "Detail";
 
+/// Added to [`CONTEXT`] while a refresh screen shows.
+pub const REFRESH_CONTEXT: &str = "Refresh";
+
 /// The action panel's own key context: it holds the keyboard on the submenus (More…, Links…),
 /// which have no search field, so ↵, Esc and the arrows still reach the panel there.
 pub const PANEL_CONTEXT: &str = "ActionPanel";
@@ -115,6 +118,8 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         // the ladder is bound here only where no text field has the keyboard: the detail screen.
         KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
         KeyBinding::new("cmd-enter", ScreenCmdEnter, Some(DETAIL_CONTEXT)),
+        KeyBinding::new("enter", ScreenEnter, Some(REFRESH_CONTEXT)),
+        KeyBinding::new("cmd-enter", ScreenCmdEnter, Some(REFRESH_CONTEXT)),
         // The query field does not bind ⇧⌘↵, so it reaches the panel everywhere.
         KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, context),
         KeyBinding::new("escape", Back, context),
@@ -168,7 +173,7 @@ mod tests {
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
         // down, up, cmd-down, cmd-up, cmd-1…cmd-9, and the panel's enter, secondary-enter, shift-cmd-enter, escape, up, down.
-        assert_eq!(bindings.len(), 33);
+        assert_eq!(bindings.len(), 35);
     }
 
     #[test]

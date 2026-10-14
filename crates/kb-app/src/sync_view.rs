@@ -2,21 +2,29 @@
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use futures::StreamExt as _;
 use futures::channel::mpsc;
-use gpui_kit::component::progress::Progress;
-use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
-use gpui_kit::prelude::FluentBuilder as _;
+use gpui_kit::base::Selectable as _;
+use gpui_kit::component::v_flex;
 use gpui_kit::{
     AppContext as _, Context, EventEmitter, InteractiveElement as _, IntoElement, ParentElement as _, Render,
     SharedString, StatefulInteractiveElement as _, Styled as _, Task, Window, div,
 };
 use kb_domain::report::{FileIssue, FileReport};
 use kb_domain::sync::{SyncError, SyncSummary, sync_knowledge_base};
+
+use crate::catalog::{Catalog, fill};
+use crate::ui::chip::pill;
+use crate::ui::design::{TextRoleExt as _, design, pt};
+use crate::ui::empty_view::{EmptyView, Sentence, progress_bar};
+use crate::ui::keycap::ChipState;
+use crate::ui::row::Row;
+use crate::ui::tile::{TileSize, tile};
 
 /// Where a sync stands.
 #[derive(Debug)]
@@ -27,8 +35,6 @@ pub enum SyncStatus {
         files_scanned: usize,
         /// Files in all, once known.
         files_total: usize,
-        /// Entries indexed so far.
-        entries: usize,
         /// The file just processed.
         current: String,
     },
@@ -53,6 +59,7 @@ pub struct SyncFinished {
 #[derive(Debug)]
 pub struct SyncView {
     status: SyncStatus,
+    catalog: Rc<Catalog>,
     cancel: Arc<AtomicBool>,
     _run: Task<()>,
 }
@@ -63,13 +70,81 @@ impl EventEmitter<SyncFinished> for SyncView {}
 struct SyncTick {
     files_scanned: usize,
     files_total: usize,
-    entries: usize,
     current: String,
+}
+
+/// Which refresh screen shows (D16).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Phase {
+    /// Files are being read.
+    Running,
+    /// Finished: the report.
+    Report,
+    /// Stopped by Esc; the previous index is unchanged.
+    Stopped,
+    /// Failed; the previous index is unchanged.
+    Failed,
+}
+
+/// What a report row says about its file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReportKind {
+    /// The file failed to parse.
+    Failed,
+    /// Some of its entries were skipped.
+    Skipped,
+    /// Indexed in full.
+    Indexed,
+}
+
+/// One report row.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReportRow {
+    /// The file, relative to the sources directory.
+    pub path: String,
+    /// What happened.
+    pub kind: ReportKind,
+    /// The error's first line, the skipped entries, or how many it indexed.
+    pub entries: usize,
+    /// For a failed file, its error; for a skipped one, the skipped entries.
+    pub detail: String,
+}
+
+/// Every file, failed first, then those with skipped entries, then the indexed ones (R5).
+#[must_use]
+pub fn report_rows(files: &[FileReport]) -> Vec<ReportRow> {
+    let mut rows: Vec<ReportRow> = files
+        .iter()
+        .map(|file| {
+            let (kind, detail) = if let Some(error) = &file.error {
+                (
+                    ReportKind::Failed,
+                    error.message.lines().next().unwrap_or_default().to_owned(),
+                )
+            } else if !file.issues.is_empty() {
+                (ReportKind::Skipped, issues_line(file))
+            } else {
+                (ReportKind::Indexed, String::new())
+            };
+            ReportRow {
+                path: file.rel_path.clone(),
+                kind,
+                entries: file.entries,
+                detail,
+            }
+        })
+        .collect();
+    rows.sort_by_key(|row| match row.kind {
+        ReportKind::Failed => 0,
+        ReportKind::Skipped => 1,
+        ReportKind::Indexed => 2,
+    });
+    rows
 }
 
 impl SyncView {
     /// Starts rebuilding `database` from `sources`.
-    pub fn start(sources: PathBuf, database: PathBuf, cx: &mut Context<Self>) -> Self {
+    pub fn start(sources: PathBuf, database: PathBuf, catalog: Rc<Catalog>, cx: &mut Context<Self>) -> Self {
         let cancel = Arc::new(AtomicBool::new(false));
         let flag = cancel.clone();
         let run = cx.spawn(async move |view, cx| {
@@ -79,7 +154,6 @@ impl SyncView {
                     let _ = sender.unbounded_send(SyncTick {
                         files_scanned: p.files_scanned,
                         files_total: p.files_total,
-                        entries: p.entries_count,
                         current: p.file.rel_path.clone(),
                     });
                 })
@@ -89,7 +163,6 @@ impl SyncView {
                     view.status = SyncStatus::Running {
                         files_scanned: p.files_scanned,
                         files_total: p.files_total,
-                        entries: p.entries,
                         current: p.current,
                     };
                     cx.notify();
@@ -116,11 +189,11 @@ impl SyncView {
         let status = SyncStatus::Running {
             files_scanned: 0,
             files_total: 0,
-            entries: 0,
             current: String::new(),
         };
         Self {
             status,
+            catalog,
             cancel,
             _run: run,
         }
@@ -132,35 +205,21 @@ impl SyncView {
         matches!(self.status, SyncStatus::Running { .. })
     }
 
+    /// The screen to show.
+    #[must_use]
+    pub fn phase(&self) -> Phase {
+        match self.status {
+            SyncStatus::Running { .. } => Phase::Running,
+            SyncStatus::Done(_) => Phase::Report,
+            SyncStatus::Cancelled => Phase::Stopped,
+            SyncStatus::Failed(_) => Phase::Failed,
+        }
+    }
+
     /// Asks a running sync to stop; it rolls back and reports [`SyncStatus::Cancelled`].
     pub fn cancel(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }
-}
-
-/// One line per file worth a look, failed files first.
-fn report_lines(summary: &SyncSummary) -> Vec<(SharedString, String, Option<String>)> {
-    let mut lines: Vec<(SharedString, String, Option<String>)> = Vec::new();
-    for file in summary.files.iter().filter(|f| f.error.is_some()) {
-        let message = file
-            .error
-            .as_ref()
-            .map(|e| e.message.lines().next().unwrap_or_default().to_owned())
-            .unwrap_or_default();
-        lines.push((
-            file.rel_path.clone().into(),
-            format!("Failed: {message}"),
-            file.excerpt.clone(),
-        ));
-    }
-    for file in summary
-        .files
-        .iter()
-        .filter(|f| f.error.is_none() && !f.issues.is_empty())
-    {
-        lines.push((file.rel_path.clone().into(), issues_line(file), None));
-    }
-    lines
 }
 
 fn issues_line(file: &FileReport) -> String {
@@ -172,11 +231,7 @@ fn issues_line(file: &FileReport) -> String {
             FileIssue::Empty => None,
         })
         .collect();
-    if skipped.is_empty() {
-        "No entries".to_owned()
-    } else {
-        format!("Skipped, not a map: {}", skipped.join(", "))
-    }
+    skipped.join(", ")
 }
 
 /// "4,233 entries from 68 files in 0.8 s", with failed files when there are any.
@@ -207,63 +262,126 @@ fn thousands(n: usize) -> String {
 }
 
 impl Render for SyncView {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let muted = cx.theme().muted_foreground;
-        let body = match &self.status {
+    #[expect(clippy::too_many_lines, reason = "renders the four refresh screens")]
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let d = design();
+        let (c, m) = (&d.colors, &self.catalog.messages);
+        match &self.status {
             SyncStatus::Running {
                 files_scanned,
                 files_total,
-                entries,
                 current,
             } => {
-                // Whole percents: exact in f32, and all a progress bar can show.
-                let percent = files_scanned
-                    .saturating_mul(100)
-                    .checked_div(*files_total)
-                    .map_or(0, |p| p.min(100));
-                let percent = f32::from(u8::try_from(percent).unwrap_or(100));
-                v_flex()
-                    .gap_2()
-                    .child("Rebuilding the index…")
-                    .child(Progress::new("sync-progress").value(percent))
-                    .child(div().text_color(muted).child(format!(
-                        "{files_scanned} of {files_total} files, {entries} entries · {current}"
-                    )))
-                    .child(div().text_color(muted).child("Press Esc to stop."))
+                #[expect(clippy::cast_precision_loss, reason = "a fraction of a few thousand files")]
+                let fraction = if *files_total == 0 {
+                    0.
+                } else {
+                    *files_scanned as f32 / *files_total as f32
+                };
+                let progress = fill(
+                    &m.refreshing_progress,
+                    &[
+                        ("done", &files_scanned.to_string()),
+                        ("total", &files_total.to_string()),
+                        ("file", current),
+                    ],
+                );
+                EmptyView::new(
+                    "refresh-cw",
+                    c.faint,
+                    m.refreshing_title.clone(),
+                    Sentence::of(&progress, ""),
+                )
+                .extra(progress_bar(fraction))
+                .into_any_element()
             }
-            SyncStatus::Done(summary) => v_flex()
-                .gap_2()
-                .min_h_0()
-                .child(summary_line(summary))
-                .children(report_lines(summary).into_iter().map(|(path, line, excerpt)| {
-                    v_flex()
-                        .id(path.clone())
-                        .gap_1()
-                        .child(h_flex().gap_2().child(path).child(div().text_color(muted).child(line)))
-                        .when_some(excerpt, |row, excerpt| {
-                            row.child(
-                                div()
-                                    .font_family(cx.theme().mono_font_family.clone())
-                                    .text_sm()
-                                    .child(excerpt),
-                            )
-                        })
-                }))
-                .child(div().text_color(muted).child("Press Esc to return to the list.")),
-            SyncStatus::Cancelled => v_flex()
-                .gap_2()
-                .child("Rebuild stopped. The previous index is unchanged.")
-                .child(div().text_color(muted).child("Press ⌘R to try again.")),
-            SyncStatus::Failed(message) => v_flex()
-                .gap_2()
-                .child(format!("Couldn’t rebuild the index: {message}"))
-                .child(
-                    div()
-                        .text_color(muted)
-                        .child("Check the sources path in Preferences (⌘⇧,), then press ⌘R."),
-                ),
-        };
-        div().id("sync").size_full().p_4().overflow_y_scroll().child(body)
+            SyncStatus::Cancelled => EmptyView::new(
+                "circle-stop",
+                c.yellow,
+                m.stopped_title.clone(),
+                Sentence::of(&m.stopped, ""),
+            )
+            .into_any_element(),
+            SyncStatus::Failed(error) => {
+                let text = fill(&m.failed, &[("error", error)]);
+                EmptyView::new("circle-alert", c.red, m.failed_title.clone(), Sentence::of(&text, ""))
+                    .into_any_element()
+            }
+            SyncStatus::Done(summary) => {
+                let rows = report_rows(&summary.files);
+                let failed = rows.iter().filter(|r| r.kind == ReportKind::Failed).count();
+                let skipped = rows.iter().filter(|r| r.kind == ReportKind::Skipped).count();
+                let mut line = fill(
+                    &m.report_summary,
+                    &[
+                        ("entries", &thousands(summary.total_indexed)),
+                        ("files", &summary.files_scanned.to_string()),
+                        (
+                            "seconds",
+                            &format!(
+                                "{:.1}",
+                                Duration::from_millis(u64::try_from(summary.duration_ms).unwrap_or(u64::MAX))
+                                    .as_secs_f64()
+                            ),
+                        ),
+                    ],
+                );
+                if failed > 0 {
+                    let _ = write!(line, " · {}", fill(&m.report_failed, &[("count", &failed.to_string())]));
+                }
+                if skipped > 0 {
+                    let _ = write!(
+                        line,
+                        " · {}",
+                        fill(&m.report_skipped, &[("count", &skipped.to_string())])
+                    );
+                }
+                let s = &d.spacing.empty;
+                v_flex()
+                    .id("report")
+                    .size_full()
+                    .overflow_y_scroll()
+                    .px(pt(d.spacing.list.pad))
+                    .child(
+                        div()
+                            .px(pt(s.summary_pad_x))
+                            .pt(pt(s.summary_pad_top))
+                            .pb(pt(s.summary_pad_bottom))
+                            .text_role(&d.typography.roles.description)
+                            .text_color(c.muted)
+                            .child(line),
+                    )
+                    .children(rows.into_iter().enumerate().map(|(ix, row)| {
+                        let (icon, tint, chip, detail) = match row.kind {
+                            ReportKind::Failed => (
+                                "circle-x",
+                                c.red,
+                                m.report_failed.replace("{count} ", ""),
+                                row.detail.clone(),
+                            ),
+                            ReportKind::Skipped => (
+                                "triangle-alert",
+                                c.yellow,
+                                row.entries.to_string(),
+                                fill(&m.report_skipped_entries, &[("entries", &row.detail)]),
+                            ),
+                            ReportKind::Indexed => (
+                                "circle-check",
+                                c.green,
+                                row.entries.to_string(),
+                                m.report_indexed.clone(),
+                            ),
+                        };
+                        Row::new(SharedString::from(format!("report-{ix}")), row.path.clone())
+                            .lead(tile(icon, tint, TileSize::Row))
+                            .mono(true)
+                            .description(Some(detail))
+                            .trailing(vec![pill(chip, ChipState::of(ix == 0)).into_any_element()])
+                            .selected(ix == 0)
+                    }))
+                    .into_any_element()
+            }
+        }
     }
 }
 
@@ -290,5 +408,51 @@ mod tests {
             files: Vec::new(),
         };
         assert_eq!(summary_line(&summary), "4,233 entries from 68 files in 0.8 s, 1 failed");
+    }
+
+    use indexmap::IndexMap;
+    use kb_domain::report::{FileIssue, FileReport};
+    use kb_domain::source::SourceError;
+
+    fn file(rel: &str, entries: usize, error: bool, skipped: bool) -> FileReport {
+        FileReport {
+            rel_path: rel.into(),
+            file_path: format!("/s/{rel}"),
+            entries,
+            types: IndexMap::new(),
+            error: error.then(|| SourceError {
+                file_path: format!("/s/{rel}"),
+                message: "Line 4: a flow sequence must be closed".into(),
+                line: Some(4),
+                column: Some(1),
+            }),
+            excerpt: None,
+            issues: if skipped {
+                vec![FileIssue::SkippedEntry {
+                    entry_type: "bookmarks".into(),
+                    key: "not-a-map".into(),
+                }]
+            } else {
+                Vec::new()
+            },
+        }
+    }
+
+    #[test]
+    fn lists_every_file_failed_first_then_skipped_then_indexed() {
+        let files = vec![
+            file("b.yml", 9, false, true),
+            file("a.yml", 12, false, false),
+            file("errors/x.yml", 0, true, false),
+        ];
+        let order: Vec<(String, ReportKind)> = report_rows(&files).into_iter().map(|r| (r.path, r.kind)).collect();
+        assert_eq!(
+            order,
+            [
+                ("errors/x.yml".into(), ReportKind::Failed),
+                ("b.yml".into(), ReportKind::Skipped),
+                ("a.yml".into(), ReportKind::Indexed)
+            ]
+        );
     }
 }

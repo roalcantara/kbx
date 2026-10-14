@@ -13,7 +13,6 @@ pub enum Dot {
     /// Green with its glow: the index is ready.
     Ready,
     /// Yellow: a refresh runs.
-    #[expect(dead_code, reason = "the refresh screen reads this in Plan 8g")]
     Busy,
     /// Faint, no glow: no index.
     Off,
