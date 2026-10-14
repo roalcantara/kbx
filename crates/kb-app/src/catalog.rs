@@ -198,6 +198,7 @@ pub struct Messages {
     pub refreshing_progress: String,
     pub report_summary: String,
     pub report_failed: String,
+    pub report_failed_chip: String,
     pub report_skipped: String,
     pub report_indexed: String,
     pub report_skipped_entries: String,

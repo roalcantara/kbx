@@ -353,12 +353,7 @@ impl Render for SyncView {
                     )
                     .children(rows.into_iter().enumerate().map(|(ix, row)| {
                         let (icon, tint, chip, detail) = match row.kind {
-                            ReportKind::Failed => (
-                                "circle-x",
-                                c.red,
-                                m.report_failed.replace("{count} ", ""),
-                                row.detail.clone(),
-                            ),
+                            ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
                             ReportKind::Skipped => (
                                 "triangle-alert",
                                 c.yellow,
