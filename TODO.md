@@ -306,6 +306,7 @@
 - [ ] VHnE **-** Plan 8: review the plan until no findings remain
 
 - [ ] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
+  - **Comments**: CT5F
 
 - [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
 
@@ -540,7 +541,7 @@
 - RQzn **-** 2026-10-12: settled by template v3 (04-entry-template.html): hero = the thumbnail (YouTube now, og:image later), capped in the split, full width in detail; otherwise the URL link line; the favicon leads the header and the list row.
   - **Task**: ER8Q
 
-- dPmR **-** 2026-10-12, won't do as a separate step (owner): the approved pages in docs/superpowers/brainstorm/2026-10-12-design-system/ are the visual contract; the plan replaces docs/guides/design/ with them and points design:shots at them.
+- dPmR **-** 2026-10-12, won't do as a separate step (owner): the approved pages in docs/guides/design/ are the visual contract; the plan replaces docs/guides/design/ with them and points design:shots at them.
   - **Task**: r58y
 
 - Vx4Z **-** 2026-10-12 (owner): becomes the plan's first task, since both the pages and the app's screenshots need it.
@@ -569,4 +570,7 @@
 
 - lsQ5 **-** 2026-10-13: notes body — adopt zorite-markdown (owner, Plan 8f Task 5, screenshots compared); its on_highlight hook may replace this task's Editor approach for code blocks
   - **Task**: rPyR
+
+- CT5F **-** 2026-10-13 O2: A (owner)
+  - **Task**: y3ob
 

@@ -405,34 +405,30 @@ function defaultThemePath() {
 ]
 
 ["design:prototypes"]
-description = "Render each prototype (docs/guides/design/<nn-screen>/code.html) to its screen.png at 2×, in headless Chrome, or only the ones named"
-usage = 'arg "[screen]..." help="prototype folders to render, e.g. 05-detail; every one by default"'
+description = "Render each approved page (docs/guides/design/*.html) to tmp/design/pages/<page>.png at 2×, in headless Chrome, for side-by-side review with the shots"
 run = '''
 #!/usr/bin/env bun
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// The prototypes are the visual contract of the app (DESIGN.md, Evidence): a screen.png is always rendered from its
-// code.html, never edited by hand. Fonts and icons load from Google Fonts and unpkg, so this needs the network.
 const DIR = resolve('docs/guides/design')
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 if (!existsSync(CHROME)) throw new Error(`Google Chrome is not at ${CHROME}: install it to render the prototypes.`)
 
-const named = (process.env.usage_screen ?? '').split(/\s+/).filter(Boolean)
-const screens = readdirSync(DIR).filter((d) => /^\d\d-/.test(d) && existsSync(resolve(DIR, d, 'code.html')))
-const chosen = named.length ? screens.filter((s) => named.includes(s)) : screens
-if (!chosen.length) throw new Error(`No prototype named ${named.join(', ')} in ${DIR}.`)
+const pagesDir = resolve('tmp/design/pages')
+mkdirSync(pagesDir, { recursive: true })
 
-for (const screen of chosen) {
-  const page = resolve(DIR, screen, 'code.html')
-  const out = resolve(DIR, screen, 'screen.png')
+const screens = readdirSync(DIR).filter((f) => f.endsWith('.html'))
+for (const screen of screens) {
+  const page = resolve(DIR, screen)
+  const out = resolve(pagesDir, screen.replace('.html', '.png'))
   const run = Bun.spawnSync([
     CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--default-background-color=00000000',
-    '--force-device-scale-factor=2', '--window-size=860,520', '--virtual-time-budget=10000',
+    '--force-device-scale-factor=2', '--window-size=1400,1100', '--virtual-time-budget=10000',
     `--screenshot=${out}`, `file://${page}`
   ], { stderr: 'pipe' })
   if (run.exitCode !== 0 || !existsSync(out)) throw new Error(`Rendering ${screen} failed: ${run.stderr.toString()}`)
-  console.log(`rendered ${screen}/screen.png`)
+  console.log(`rendered ${screen} -> ${out}`)
 }
 '''
 

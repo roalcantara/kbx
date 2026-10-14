@@ -297,7 +297,7 @@ Expected: PASS, 1 test.
       `hk.pkl`, line 17, add `"tools/design/showcase/**/*"` to `generated`:
 
 ```pkl
-local generated = List("crates/kb-domain/tests/fixtures/**/*", "tools/bench/fixtures/**/*", "docs/guides/results/**/*", "docs/guides/design_system/**/*", "tools/design/showcase/**/*", "CHANGELOG.md", ".mise/**/*")
+local generated = List("crates/kb-domain/tests/fixtures/**/*", "tools/bench/fixtures/**/*", "docs/guides/results/**/*", "docs/guides/design/**/*", "tools/design/showcase/**/*", "CHANGELOG.md", ".mise/**/*")
 ```
 
 - [ ] **Step 7: Gate and commit.**

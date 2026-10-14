@@ -3,7 +3,7 @@
 - Status: draft, for the owner's review
 - Date: 2026-10-12 (rewritten after the design sessions; supersedes the draft of `27918b2`)
 - Branch: `feat/design-system`
-- Visual contract: [docs/superpowers/brainstorm/2026-10-12-design-system/](../brainstorm/2026-10-12-design-system/README.md)
+- Visual contract: [docs/guides/design/](../../guides/design/README.md)
 - Decisions, with their reasons: the Plan 8 tasks' comments in [TODO.md](../../../TODO.md)
 - Plan: [2026-10-12-kb-native-08-design-system.md](../plans/2026-10-12-kb-native-08-design-system.md)
 
