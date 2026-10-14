@@ -14,7 +14,7 @@ use kb_domain::entry::Entry;
 use kb_domain::row::row_to_entry;
 use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, entry_types, search};
 
-use crate::catalog::{Catalog, Hero};
+use crate::catalog::{Catalog, Hero, Messages};
 use crate::presentation::{favicon_url, row_label, row_tags, tag_hue};
 use crate::tag_images::TagImages;
 use crate::trace;
@@ -348,11 +348,7 @@ impl ListDelegate for EntryList {
                 Sentence::of(&m.no_entries, ""),
             )
         } else {
-            let template = if self.filter == FilterState::default() {
-                &m.no_match
-            } else {
-                &m.no_match_filtered
-            };
+            let template = no_match_template(m, &self.query, self.filter != FilterState::default());
             EmptyView::new(
                 "search",
                 d.colors.faint,
@@ -380,5 +376,28 @@ impl ListDelegate for EntryList {
         self.limit += PAGE_SIZE;
         self.refresh();
         cx.notify();
+    }
+}
+
+/// The sentence for a query or filter that matched nothing: with an empty query, only the filter is named.
+fn no_match_template<'a>(m: &'a Messages, query: &str, filtered: bool) -> &'a str {
+    match (query.trim().is_empty(), filtered) {
+        (true, true) => &m.no_entries_filtered,
+        (_, true) => &m.no_match_filtered,
+        (_, false) => &m.no_match,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn says_no_entries_with_this_filter_when_the_query_is_empty() {
+        let m = &Catalog::default().messages;
+        assert_eq!(no_match_template(m, "", true), m.no_entries_filtered);
+        assert_eq!(no_match_template(m, "  ", true), m.no_entries_filtered);
+        assert_eq!(no_match_template(m, "kube", true), m.no_match_filtered);
+        assert_eq!(no_match_template(m, "kube", false), m.no_match);
     }
 }

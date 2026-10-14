@@ -191,6 +191,7 @@ pub struct Messages {
     pub no_match_title: String,
     pub no_match: String,
     pub no_match_filtered: String,
+    pub no_entries_filtered: String,
     pub no_entries: String,
     pub no_index_title: String,
     pub no_index: String,
