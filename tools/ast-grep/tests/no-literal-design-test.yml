@@ -1,0 +1,10 @@
+id: no-literal-design
+valid:
+  - "fn f() { div().px(pt(3.)) }"
+  - "fn f() { div().w(pt(d.components.row.height)) }"
+  - "fn f() { let p = pixels(w.width); }"
+invalid:
+  - "fn f() { div().w(px(3.)) }"
+  - "fn f() { let s = gpui_kit::px(16.); }"
+  - "fn f() { div().bg(rgb(0x24273A)) }"
+  - "fn f() { div().bg(gpui_kit::rgba(0x6E738D1A)) }"

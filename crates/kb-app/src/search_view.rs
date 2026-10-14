@@ -9,8 +9,7 @@ use gpui_kit::component::list::{List, ListEvent, ListState};
 use gpui_kit::component::{IndexPath, WindowExt as _, h_flex, v_flex};
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClipboardItem, Context, Entity, FocusHandle, InteractiveElement as _,
-    IntoElement, ParentElement, Pixels, Render, ScrollHandle, Styled as _, Subscription, Window, div, point, px,
-    relative,
+    IntoElement, ParentElement, Pixels, Render, ScrollHandle, Styled as _, Subscription, Window, div, point, relative,
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::FilterState;
@@ -798,8 +797,8 @@ impl Render for SearchView {
 /// and the bottom (`-max`). A scroll offset grows more negative as the content moves up.
 fn next_offset(current: Pixels, delta: Pixels, max: Pixels) -> Pixels {
     let next = current - delta;
-    if next > px(0.) {
-        px(0.)
+    if next > pixels(0.) {
+        pixels(0.)
     } else if next < -max {
         -max
     } else {
@@ -813,16 +812,20 @@ mod tests {
 
     #[test]
     fn scrolls_within_the_notes_and_stops_at_their_ends() {
-        assert_eq!(next_offset(px(0.), px(40.), px(100.)), px(-40.));
+        assert_eq!(next_offset(pixels(0.), pixels(40.), pixels(100.)), pixels(-40.));
         assert_eq!(
-            next_offset(px(-80.), px(40.), px(100.)),
-            px(-100.),
+            next_offset(pixels(-80.), pixels(40.), pixels(100.)),
+            pixels(-100.),
             "stops at the bottom"
         );
-        assert_eq!(next_offset(px(-20.), px(-40.), px(100.)), px(0.), "stops at the top");
         assert_eq!(
-            next_offset(px(0.), px(40.), px(0.)),
-            px(0.),
+            next_offset(pixels(-20.), pixels(-40.), pixels(100.)),
+            pixels(0.),
+            "stops at the top"
+        );
+        assert_eq!(
+            next_offset(pixels(0.), pixels(40.), pixels(0.)),
+            pixels(0.),
             "short notes do not scroll"
         );
     }

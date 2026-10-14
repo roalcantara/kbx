@@ -1,0 +1,20 @@
+id: no-literal-design
+language: rust
+severity: error
+message: Sizes and colours come from DESIGN.md's tokens through ui::design (pt, pixels, design().colors).
+note: |
+  The design tokens live in one place (spec D18). A literal px(…), rgb(…) or rgba(…) in a view is a value the
+  design cannot change; read it from `design()` instead, adding a token to DESIGN.md's front matter if none fits.
+files:
+  - crates/kb-app/src/**/*.rs
+ignores:
+  - crates/kb-app/src/ui/design.rs
+  - crates/kb-app/src/tag_images.rs
+rule:
+  any:
+    - pattern: px($A)
+    - pattern: $P::px($A)
+    - pattern: rgb($A)
+    - pattern: $P::rgb($A)
+    - pattern: rgba($A)
+    - pattern: $P::rgba($A)
