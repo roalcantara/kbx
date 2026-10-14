@@ -104,7 +104,7 @@ pub struct ReportRow {
     pub path: String,
     /// What happened.
     pub kind: ReportKind,
-    /// The error's first line, the skipped entries, or how many it indexed.
+    /// How many entries it indexed.
     pub entries: usize,
     /// For a failed file, its error; for a skipped one, the skipped entries.
     pub detail: String,
@@ -363,7 +363,12 @@ impl Render for SyncView {
                                 "triangle-alert",
                                 c.yellow,
                                 row.entries.to_string(),
-                                fill(&m.report_skipped_entries, &[("entries", &row.detail)]),
+                                // A file with no entries at all has no skipped entries to name.
+                                if row.detail.is_empty() {
+                                    m.report_empty_file.clone()
+                                } else {
+                                    fill(&m.report_skipped_entries, &[("entries", &row.detail)])
+                                },
                             ),
                             ReportKind::Indexed => (
                                 "circle-check",
@@ -436,6 +441,16 @@ mod tests {
                 Vec::new()
             },
         }
+    }
+
+    #[test]
+    fn leaves_the_detail_empty_for_a_file_with_no_entries() {
+        let empty = FileReport {
+            issues: vec![FileIssue::Empty],
+            ..file("empty.yml", 0, false, false)
+        };
+        let row = &report_rows(&[empty])[0];
+        assert_eq!((row.kind, row.detail.as_str()), (ReportKind::Skipped, ""));
     }
 
     #[test]

@@ -324,7 +324,7 @@ impl ListDelegate for EntryList {
         Some(self.render_row(entry, ix.row, Some(ix) == self.selected))
     }
 
-    fn render_empty(&mut self, _: &mut Window, cx: &mut Context<ListState<Self>>) -> impl gpui_kit::IntoElement {
+    fn render_empty(&mut self, _: &mut Window, _: &mut Context<ListState<Self>>) -> impl gpui_kit::IntoElement {
         let d = design();
         let m = &self.catalog.messages;
         let view = if !self.has_index() {
@@ -354,7 +354,6 @@ impl ListDelegate for EntryList {
                 Sentence::of(template, self.query.trim()),
             )
         };
-        let _ = cx;
         view.into_any_element()
     }
 
