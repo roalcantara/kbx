@@ -305,8 +305,8 @@
 
 - [x] VHnE **-** Plan 8: review the plan until no findings remain
 
-- [x] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
-  - **Comments**: CT5F,HZc2
+- [~] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
+  - **Comments**: CT5F,HZc2,mmdD
 
 - [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
 
@@ -575,5 +575,8 @@
   - **Task**: y3ob
 
 - HZc2 **-** 2026-10-13: Plan 8 executed; shots and checklists in tools/design; change map written
+  - **Task**: y3ob
+
+- mmdD **-** 2026-10-14: reopened; 8h review found 5 of 13 compact shots show another screen and the checklist ticked them; the sign-off came from a run whose Gemini turns aborted on exhausted quota (owner)
   - **Task**: y3ob
 

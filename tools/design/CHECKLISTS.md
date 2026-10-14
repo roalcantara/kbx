@@ -81,4 +81,4 @@ on the showcase corpus (`tools/design/shots/`).
 
 ## Sign-off
 
-Approved by owner on 2026-10-14.
+Not signed off. The owner writes this line after reviewing every screenshot.
