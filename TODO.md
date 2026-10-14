@@ -300,13 +300,13 @@
 - [x] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
   - **Comments**: LGMU,ixvo,oSwX
 
-- [~] pMDV **-** Plan 8: write the plan from the spec
+- [x] pMDV **-** Plan 8: write the plan from the spec
   - **Comments**: gvTO,HuqS
 
-- [ ] VHnE **-** Plan 8: review the plan until no findings remain
+- [x] VHnE **-** Plan 8: review the plan until no findings remain
 
-- [ ] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
-  - **Comments**: CT5F
+- [x] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
+  - **Comments**: CT5F,HZc2
 
 - [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
 
@@ -572,5 +572,8 @@
   - **Task**: rPyR
 
 - CT5F **-** 2026-10-13 O2: A (owner)
+  - **Task**: y3ob
+
+- HZc2 **-** 2026-10-13: Plan 8 executed; shots and checklists in tools/design; change map written
   - **Task**: y3ob
 
