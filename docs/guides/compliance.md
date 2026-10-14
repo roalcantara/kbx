@@ -34,8 +34,7 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
       in a real window (`tests/ui.rs`).
 - [x] No state mutation or `notify` in `render`; entities and subscriptions are built once in `SearchView::new`.
 - [x] Root is the first level of the window and `gpui_kit::init` runs once before any view (`lib.rs::run`).
-- [x] The app follows the system appearance, and updates when it changes (`init_theme`; `observe_window_appearance`;
-      `follows_the_system_appearance`).
+- [x] The app is always dark (D1): one approved palette; a deliberate departure from GPUI Kit's appearance guidance.
 - [x] Async work is cancellable: the debounce task is dropped by the next query; a rebuild stops on Esc and rolls back
       (`entry_list::perform_search`, `SyncView::cancel`).
 
@@ -46,16 +45,16 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 - [x] Focus order follows the task, and focus returns after overlays (see the coding-guides item on focus).
 - [x] Icon-only controls have names and tooltips: the back button has an accessibility label and the "Back (Esc)"
       tooltip; the footer buttons carry their labels and key hints (`search_view::render_header`, `render_footer`).
-- [x] Status is not told by colour alone: type badges carry a glyph and the type in the metadata; tags carry their
-      `#name`; rebuild states have a title and text.
+- [x] Status is not told by colour alone: type tiles carry a glyph and the type's name in the row's accessibility label;
+      tags carry their `#name`; rebuild states have a title and text.
 - [x] Copy follows Raycast's Title Case, with an ellipsis only on commands that open more choices or ask for more input:
-      "Open in Browser", "Copy Command Snippet", "Rebuild Index…", "Copy…", "Clear All Filters"
+      "Open", "Copy", "Resize", "Links…", "More…", "Clear All"
       ([DESIGN.md, Adaptations](../../DESIGN.md#adaptations); an owner-approved deviation from the GPUI Kit Design
-      Guides) (`presentation.rs`, `assets/catalog.toml`). Messages stay sentences.
+      Guides) (`crates/kb-app/assets/catalog.toml`). Messages stay sentences.
 - [x] Errors read as what happened and what to do: "Couldn’t register ⌥K: … Another app may be using it."
-- [x] An app-level Quit command exists: ⌘Q (`keys::Quit`).
-- [x] Content remains usable at larger text: text sizes are in the rem scale and grow with the base font; the split is
-      a share of the window (⅓ list), and ⌘⇧F expands the window when the compact size is too small.
+- [x] An app-level Quit command exists: ⌘Q quits; the action panel has no Quit row (D9).
+- [x] Content remains usable at larger text: text sizes are in the rem scale and grow with the base font (design tokens in points, applied as rems by `ui::design::pt`); the split is
+      a share of the window (34% list), and ⌘⇧F expands the window when the compact size is too small.
 - [x] Assistive technology can read the controls and the list: GPUI exposes them through AccessKit once a client
       asks. The back, filter and footer buttons and the search field carry their names; each list row is named by its
       visible text — title, type, description, tags (`presentation::row_label`, `names_a_row_by_its_visible_text`).

@@ -91,13 +91,13 @@ Three folders at the root, each named by a widely used convention; the `root-lay
 ```text
 crates/                     Rust code: our crates, and patched third-party ones
   kb-domain/                  the engine; tests/fixtures/ holds the sample corpus and its goldens
-  kb-app/                     the GPUI Kit app
+  kb-app/                     the GPUI Kit app (assets/catalog.toml: entry types, actions, keys, words)
   third-party/                patched external crates, outside the workspace (see its README)
 docs/                       adr/, experiment/ (methodology, parity, results, report), superpowers/ (specs, plans)
 tools/                      developer tooling
   graph/                      code graphs for agents: CRG, Gortex, Graphify (see its README)
   bench/                      the benchmark kit: TS and Rust benchmarks, probes, report, their fixtures and tasks
-  design/                     the design kit: palettes, validation, the app theme, the comparison page
+  design/                     the design kit: palettes, validation, theme, showcase corpus, screenshots
   size/                       the release binary's size budget and its check
   ast-grep/ icon/ mdschema/   lint rules, the app icon's source, document schemas
 ```

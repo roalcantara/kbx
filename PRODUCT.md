@@ -40,8 +40,8 @@ Command"), no exclamation marks, no chatter.
 ## Design Principles
 
 1. **Keyboard first.** Every action has a shortcut, and the shortcut is shown where the action is.
-2. **Copy Raycast, adapt on purpose.** Raycast's kb Search is the reference; every departure is recorded in
-   [DESIGN.md](DESIGN.md#adaptations), with its reason.
+2. **Copy Raycast's behaviour, follow the approved design.** Raycast is the reference for behaviour; the approved
+   pages (`docs/guides/design/`) are the reference for the look; every departure is recorded in DESIGN.md's Adaptations.
 3. **Overlays open where they are invoked.** Actions above the Actions button, filters under the filter button.
 4. **Never block typing.** Search, sync and rendering never stall a keystroke.
 5. **As large as the task.** Two window sizes, compact and expanded, one shortcut apart (⌘⇧F).
@@ -63,6 +63,7 @@ Free, for personal use. No pricing, no accounts, no telemetry.
 - Reads source files; never writes them.
 - One user, one machine.
 - macOS first; other platforms only where GPUI Kit gives them for free.
+- Always dark: one approved palette.
 
 ## Stack
 
