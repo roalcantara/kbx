@@ -176,10 +176,11 @@ impl SyncView {
                     Err(SyncError::Cancelled) => SyncStatus::Cancelled,
                     Err(error) => SyncStatus::Failed(error.to_string()),
                 };
+                let m = &view.catalog.messages;
                 let message = match &view.status {
-                    SyncStatus::Done(summary) => summary_line(summary),
-                    SyncStatus::Cancelled => "Rebuild stopped".to_owned(),
-                    SyncStatus::Failed(message) => format!("Couldn’t rebuild the index: {message}"),
+                    SyncStatus::Done(summary) => summary_line(summary, m),
+                    SyncStatus::Cancelled => m.stopped_title.clone(),
+                    SyncStatus::Failed(error) => fill(&m.failed, &[("error", error)]),
                     SyncStatus::Running { .. } => String::new(),
                 };
                 cx.emit(SyncFinished { rebuilt, message });
@@ -234,17 +235,39 @@ fn issues_line(file: &FileReport) -> String {
     skipped.join(", ")
 }
 
-/// "4,233 entries from 68 files in 0.8 s", with failed files when there are any.
+/// Summarizes a sync from the catalog's message template, with failed and skipped file counts.
 #[must_use]
-pub fn summary_line(summary: &SyncSummary) -> String {
-    let mut line = format!(
-        "{} entries from {} files in {:.1} s",
-        thousands(summary.total_indexed),
-        summary.files_scanned,
-        Duration::from_millis(u64::try_from(summary.duration_ms).unwrap_or(u64::MAX)).as_secs_f64()
+pub fn summary_line(summary: &SyncSummary, messages: &crate::catalog::Messages) -> String {
+    let rows = report_rows(&summary.files);
+    let failed = rows.iter().filter(|r| r.kind == ReportKind::Failed).count();
+    let skipped = rows.iter().filter(|r| r.kind == ReportKind::Skipped).count();
+    let mut line = fill(
+        &messages.report_summary,
+        &[
+            ("entries", &thousands(summary.total_indexed)),
+            ("files", &summary.files_scanned.to_string()),
+            (
+                "seconds",
+                &format!(
+                    "{:.1}",
+                    Duration::from_millis(u64::try_from(summary.duration_ms).unwrap_or(u64::MAX)).as_secs_f64()
+                ),
+            ),
+        ],
     );
-    if summary.files_failed > 0 {
-        let _ = write!(line, ", {} failed", summary.files_failed);
+    if failed > 0 {
+        let _ = write!(
+            line,
+            " · {}",
+            fill(&messages.report_failed, &[("count", &failed.to_string())])
+        );
+    }
+    if skipped > 0 {
+        let _ = write!(
+            line,
+            " · {}",
+            fill(&messages.report_skipped, &[("count", &skipped.to_string())])
+        );
     }
     line
 }
@@ -262,7 +285,6 @@ fn thousands(n: usize) -> String {
 }
 
 impl Render for SyncView {
-    #[expect(clippy::too_many_lines, reason = "renders the four refresh screens")]
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         let d = design();
         let (c, m) = (&d.colors, &self.catalog.messages);
@@ -309,33 +331,7 @@ impl Render for SyncView {
             }
             SyncStatus::Done(summary) => {
                 let rows = report_rows(&summary.files);
-                let failed = rows.iter().filter(|r| r.kind == ReportKind::Failed).count();
-                let skipped = rows.iter().filter(|r| r.kind == ReportKind::Skipped).count();
-                let mut line = fill(
-                    &m.report_summary,
-                    &[
-                        ("entries", &thousands(summary.total_indexed)),
-                        ("files", &summary.files_scanned.to_string()),
-                        (
-                            "seconds",
-                            &format!(
-                                "{:.1}",
-                                Duration::from_millis(u64::try_from(summary.duration_ms).unwrap_or(u64::MAX))
-                                    .as_secs_f64()
-                            ),
-                        ),
-                    ],
-                );
-                if failed > 0 {
-                    let _ = write!(line, " · {}", fill(&m.report_failed, &[("count", &failed.to_string())]));
-                }
-                if skipped > 0 {
-                    let _ = write!(
-                        line,
-                        " · {}",
-                        fill(&m.report_skipped, &[("count", &skipped.to_string())])
-                    );
-                }
+                let line = summary_line(summary, m);
                 let s = &d.spacing.empty;
                 v_flex()
                     .id("report")
@@ -405,9 +401,13 @@ mod tests {
             files_failed: 1,
             duration_ms: 812,
             errors: Vec::new(),
-            files: Vec::new(),
+            files: vec![file("errors/x.yml", 0, true, false)],
         };
-        assert_eq!(summary_line(&summary), "4,233 entries from 68 files in 0.8 s, 1 failed");
+        let catalog = Catalog::default();
+        assert_eq!(
+            summary_line(&summary, &catalog.messages),
+            "4,233 entries from 68 files in 0.8 s · 1 failed"
+        );
     }
 
     use indexmap::IndexMap;
