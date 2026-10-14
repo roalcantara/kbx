@@ -9,10 +9,6 @@ use gpui_kit::{AnyElement, App, Hsla, IntoElement, ParentElement as _, RenderOnc
 use crate::ui::design::{TextRoleExt as _, design, no_ligatures, pt};
 
 /// A sentence with an optional highlighted part: `before`, `query`, `after`.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "Plan 8g Task 2 wires EmptyView and Sentence into EntryList")
-)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sentence {
     /// The text before the query.
@@ -25,10 +21,6 @@ pub struct Sentence {
 
 impl Sentence {
     /// `template` with `{query}` replaced by `query`, split around it; without `{query}`, plain.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "Plan 8g Task 2 wires Sentence::of into EntryList")
-    )]
     #[must_use]
     pub fn of(template: &str, query: &str) -> Self {
         match template.split_once("{query}") {
@@ -47,7 +39,6 @@ impl Sentence {
 }
 
 /// The empty view.
-#[expect(dead_code, reason = "Plan 8g Task 2 wires EmptyView into EntryList")]
 #[derive(IntoElement)]
 pub struct EmptyView {
     icon: String,
@@ -59,7 +50,6 @@ pub struct EmptyView {
 
 impl EmptyView {
     /// `icon` (a Lucide name) in `icon_color`, `title`, and `sentence`.
-    #[expect(dead_code, reason = "Plan 8g Task 2 wires EmptyView::new into EntryList")]
     #[must_use]
     pub fn new(icon: &str, icon_color: Hsla, title: impl Into<String>, sentence: Sentence) -> Self {
         Self {

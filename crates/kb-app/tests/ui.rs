@@ -727,3 +727,12 @@ fn caps_the_header_tags_to_three_in_the_split_pane(cx: &mut TestAppContext) {
     let filter = cx.read(|cx| view.read(cx).list().read(cx).delegate().filter().clone());
     assert_eq!(filter.tags, ["t1"]);
 }
+
+#[gpui_kit::test]
+fn offers_refresh_when_nothing_matches(cx: &mut TestAppContext) {
+    let (_home, _window, view) = open_with_query(cx, "zzqxj");
+    assert_eq!(titles(&view, cx), [] as [String; 0]);
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(keys, ["Refresh ↵", "Actions ⌘K"]);
+    assert_eq!(cx.read(|cx| view.read(cx).status_line(cx)), "Ready • 0 results");
+}

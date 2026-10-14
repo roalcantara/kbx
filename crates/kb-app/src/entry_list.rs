@@ -3,9 +3,8 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use gpui_kit::component::empty::{Empty, EmptyDescription, EmptyHeader, EmptyTitle};
 use gpui_kit::component::list::{ListDelegate, ListState};
-use gpui_kit::component::{ActiveTheme as _, IndexPath, h_flex};
+use gpui_kit::component::{IndexPath, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyElement, App, Context, IntoElement as _, ParentElement as _, SharedString, Styled as _, Task, Window,
@@ -21,6 +20,7 @@ use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::chip::{icon_chip, link_chip, pill};
 use crate::ui::design::{design, pt};
+use crate::ui::empty_view::{EmptyView, Sentence};
 use crate::ui::keycap::{ChipState, caps, keycap};
 use crate::ui::row::Row;
 use crate::ui::tile::{TileSize, favicon, tile};
@@ -325,22 +325,37 @@ impl ListDelegate for EntryList {
     }
 
     fn render_empty(&mut self, _: &mut Window, cx: &mut Context<ListState<Self>>) -> impl gpui_kit::IntoElement {
-        let (title, description) = if self.has_index() {
-            ("No matching entries", "Adjust the query or clear the filters.")
+        let d = design();
+        let m = &self.catalog.messages;
+        let view = if !self.has_index() {
+            EmptyView::new(
+                "database",
+                d.colors.faint,
+                m.no_index_title.clone(),
+                Sentence::of(&m.no_index, ""),
+            )
+        } else if self.query.trim().is_empty() && self.filter == FilterState::default() {
+            EmptyView::new(
+                "search",
+                d.colors.faint,
+                m.no_match_title.clone(),
+                Sentence::of(&m.no_entries, ""),
+            )
         } else {
-            (
-                "No entries indexed yet",
-                "Press ⌘R to rebuild the index from your sources.",
+            let template = if self.filter == FilterState::default() {
+                &m.no_match
+            } else {
+                &m.no_match_filtered
+            };
+            EmptyView::new(
+                "search",
+                d.colors.faint,
+                m.no_match_title.clone(),
+                Sentence::of(template, self.query.trim()),
             )
         };
-        Empty::new()
-            .header(
-                EmptyHeader::new()
-                    .title(EmptyTitle::new().child(title))
-                    .description(EmptyDescription::new().child(description)),
-            )
-            .text_color(cx.theme().muted_foreground)
-            .into_any_element()
+        let _ = cx;
+        view.into_any_element()
     }
 
     fn set_selected_index(&mut self, ix: Option<IndexPath>, _: &mut Window, cx: &mut Context<ListState<Self>>) {

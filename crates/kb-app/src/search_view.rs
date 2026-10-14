@@ -271,11 +271,20 @@ impl SearchView {
     }
 
     /// The screen whose keys apply now (8g adds the empty and refresh screens).
-    fn key_screen(&self) -> KeyScreen {
+    fn key_screen(&self, cx: &App) -> KeyScreen {
         match self.screen {
             Screen::Detail => KeyScreen::Detail,
             Screen::Rebuild(_) => KeyScreen::Refreshing,
-            Screen::Search => KeyScreen::List,
+            Screen::Search => {
+                let list = self.list.read(cx).delegate();
+                if !list.has_index() {
+                    KeyScreen::NoIndex
+                } else if list.entries().is_empty() {
+                    KeyScreen::Empty
+                } else {
+                    KeyScreen::List
+                }
+            }
         }
     }
 
@@ -283,7 +292,7 @@ impl SearchView {
     fn screen_keys(&self, cx: &App) -> Vec<KeyItem> {
         let selected = self.list.read(cx).delegate().selected_entry();
         let kind = selected.and_then(|entry| self.catalog.entry_type(&entry.entry_type));
-        self.catalog.keys_for(self.key_screen(), kind)
+        self.catalog.keys_for(self.key_screen(cx), kind)
     }
 
     /// Runs what the current screen binds to `keys` (`enter`, `cmd-enter`, `shift-cmd-enter`).

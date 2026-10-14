@@ -78,7 +78,7 @@ impl SearchView {
             Screen::Rebuild(_) => None,
             _ => list.selected_entry(),
         };
-        let screen = self.key_screen();
+        let screen = self.key_screen(cx);
         let query_empty = self.panel_query.read(cx).value().is_empty();
         match self.overlay {
             Overlay::None => Page::default(),
