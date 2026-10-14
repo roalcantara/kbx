@@ -380,6 +380,10 @@
 - [ ] 4hQn **-** Notes bold: **bold** renders regular in the notes body (with TextView and zorite-markdown alike): kb bundles Inter Regular, Medium, SemiBold and Italic but no Bold; bundle Inter Bold or map bold to SemiBold
   - **Created**: 2026-10-13 19:52
 
+- [ ] Z5GP **-** Action panel and filter take no keyboard in the running app: after ⌘K (and ⌘P), ↓ and typing reach nothing and ↵ runs the list's Details; the filter's footer keeps the list's keys. UI tests pass (the harness routes keys differently). Found by design:shots, 2026-10-14; More… is not captured until it is fixed
+  - **Priority**: high
+  - **Created**: 2026-10-14 02:53
+
 # Actors
 
 # Comments
