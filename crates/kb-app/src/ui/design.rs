@@ -1,10 +1,6 @@
 //! The design tokens: DESIGN.md's front matter, parsed once at start into typed values. The only
 //! place a token becomes a GPUI length or colour.
 
-// Plan 8d–8g's components read the remaining tokens; 8g Task 6 removes this and deletes any token
-// still unread.
-#![expect(dead_code, reason = "the components of Plan 8d–8g read the remaining tokens")]
-
 use std::sync::{Arc, LazyLock};
 
 use gpui_kit::{BoxShadow, FontFeatures, FontWeight, Hsla, Pixels, Rems, Styled, point, px, rems, rgb, rgba};
@@ -104,15 +100,11 @@ pub struct Colors {
     #[serde(deserialize_with = "color")]
     pub mantle: Hsla,
     #[serde(deserialize_with = "color")]
-    pub crust: Hsla,
-    #[serde(deserialize_with = "color")]
     pub selected: Hsla,
     #[serde(deserialize_with = "color")]
     pub hover: Hsla,
     #[serde(deserialize_with = "color")]
     pub badge: Hsla,
-    #[serde(deserialize_with = "color")]
-    pub code: Hsla,
     #[serde(deserialize_with = "color")]
     pub edge: Hsla,
     #[serde(deserialize_with = "color")]
@@ -200,9 +192,6 @@ pub struct TextRole {
     /// Italic.
     #[serde(default)]
     pub italic: bool,
-    /// Drawn in capitals (the caller upper-cases the text).
-    #[serde(default)]
-    pub uppercase: bool,
 }
 
 /// The type roles (DESIGN.md, Typography Rules).
@@ -290,7 +279,7 @@ points!(/// The filter pill's spacing.
 points!(/// A chip's spacing.
     ChipSpacing { pad_x, link_pad_x, link_gap });
 points!(/// A keycap's spacing.
-    KeycapSpacing { pad_x, gap });
+    KeycapSpacing { pad_x });
 points!(/// The empty view's spacing.
     EmptySpacing { pad_x, icon_gap, title_gap, bar_gap, summary_pad_x, summary_pad_top, summary_pad_bottom });
 points!(/// The quote's spacing.
@@ -338,15 +327,17 @@ points!(/// A keycap's sizes.
 points!(/// The type tile's sizes.
     TileSize { size, icon, small, small_icon, mini, mini_icon, alpha });
 points!(/// The favicon's sizes.
-    FaviconSize { size, inset });
+    FaviconSize { size });
 points!(/// The action panel's sizes.
-    PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check, offset });
+    PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check });
 points!(/// The footer's sizes.
     FooterSize { height, dot, dot_glow, dot_glow_alpha });
 points!(/// The split's shares.
     SplitSize { list });
 points!(/// The empty view's sizes.
     EmptySize { icon, text_max_width, bar_width, bar_height });
+points!(/// The detail screen's scrolling.
+    DetailSize { scroll_step });
 points!(/// The hero's sizes.
     HeroSize { thumb_split, thumb_detail, link_icon });
 points!(/// The quote's sizes.
@@ -378,14 +369,13 @@ pub struct Components {
     pub links: LinksSize,
     pub notice: NoticeSize,
     pub border: BorderSize,
+    pub detail: DetailSize,
 }
 
 /// Every design token.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Design {
-    /// The design's name.
-    pub name: String,
     /// Colour roles.
     pub colors: Colors,
     /// Families and type roles.

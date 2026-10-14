@@ -18,7 +18,7 @@ use crate::config::Config;
 use crate::keys::key_bindings;
 use crate::search_view::SearchView;
 use crate::trace;
-use crate::window_size::COMPACT;
+use crate::window_size::compact;
 
 /// How long a deactivation must last before the panel hides.
 const BLUR_SETTLE: Duration = Duration::from_millis(100);
@@ -39,7 +39,8 @@ pub fn window_options(cx: &App) -> WindowOptions {
             None,
             // The frame is in the platform's points and is fixed before the window has a rem
             // size; everything inside it is laid out in rems and follows the base font.
-            COMPACT, cx,
+            compact(),
+            cx,
         ))),
         is_movable: false,
         is_resizable: false,

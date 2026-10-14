@@ -4,7 +4,6 @@
 use kb_domain::search::FilterState;
 
 use crate::catalog::Catalog;
-use crate::presentation::type_label;
 
 /// The filter in a few words, for the pill: "All Entries", "Commands", "Commands, #k8s".
 #[must_use]
@@ -15,7 +14,7 @@ pub fn filter_summary(filter: &FilterState, catalog: &Catalog) -> String {
         .map(|t| {
             catalog
                 .entry_type(t)
-                .map_or_else(|| type_label(t), |kind| kind.label.clone())
+                .map_or_else(|| (*t).clone(), |kind| kind.label.clone())
         })
         .chain(filter.tags.iter().map(|t| format!("#{t}")))
         .collect();

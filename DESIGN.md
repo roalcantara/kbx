@@ -2,15 +2,12 @@
 # The design tokens: the only place a design value is written (spec D18). The app reads this front matter at start
 # (crates/kb-app/src/ui/design.rs); `mise run design:theme` writes GPUI Kit's theme from it; `design:validate` checks it.
 # Sizes are points. Colours are #RRGGBB or #RRGGBBAA.
-name: kb
 colors:
   window: "#24273A"
   mantle: "#1E2030"
-  crust: "#181926"
   selected: "#363A4F"
   hover: "#2F334A"
   badge: "#2E3248"
-  code: "#191B29"
   edge: "#6E738D1A"
   ring: "#CAD3F514"
   text: "#CAD3F5"
@@ -31,7 +28,7 @@ typography:
     title: { family: ui, size: 13, weight: 500 }
     description: { family: ui, size: 12, weight: 400 }
     label: { family: ui, size: 12, weight: 500 }
-    section: { family: ui, size: 10, weight: 600, uppercase: true }
+    section: { family: ui, size: 10, weight: 600 }
     footer: { family: ui, size: 11, weight: 400 }
     chip: { family: ui, size: 11, weight: 600 }
     count: { family: mono, size: 11, weight: 400 }
@@ -69,7 +66,7 @@ spacing:
   panel: { pad: 6, row_pad_x: 10, row_gap: 10, section_pad_top: 6, section_pad_x: 10, section_pad_bottom: 4, rule_margin: 4, search_pad_x: 12, search_gap: 8, crumb_pad_x: 12, crumb_gap: 6 }
   pill: { pad_x: 10, pad_y: 4, gap: 8 }
   chip: { pad_x: 8, link_pad_x: 6, link_gap: 4 }
-  keycap: { pad_x: 6, gap: 4 }
+  keycap: { pad_x: 6 }
   empty: { pad_x: 16, icon_gap: 12, title_gap: 4, bar_gap: 10, summary_pad_x: 16, summary_pad_top: 10, summary_pad_bottom: 4 }
   quote: { pad_left: 12, pad_y: 2 }
   card: { pad_x: 14, pad_y: 12, pad_right: 40, copy_inset: 8 }
@@ -83,11 +80,12 @@ components:
   chip: { height: 20, icon: 14, link_icon: 12 }
   keycap: { height: 20, min_width: 20 }
   tile: { size: 24, icon: 16, small: 20, small_icon: 13, mini: 18, mini_icon: 12, alpha: 0.15 }
-  favicon: { size: 16, inset: 4 }
-  panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14, offset: 8 }
+  favicon: { size: 16 }
+  panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14 }
   footer: { height: 40, dot: 6, dot_glow: 6, dot_glow_alpha: 0.7 }
   split: { list: 0.34 }
   empty: { icon: 56, text_max_width: 420, bar_width: 260, bar_height: 4 }
+  detail: { scroll_step: 60 }
   hero: { thumb_split: 150, thumb_detail: 250, link_icon: 14 }
   quote: { bar: 3 }
   links: { row: 28, url_chars: 32, title_share: 0.5 }

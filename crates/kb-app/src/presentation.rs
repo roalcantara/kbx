@@ -1,66 +1,7 @@
 //! What the screens show for an entry: labels, icons, the primary action and the metadata, as
 //! plain data. Kept apart from rendering so the Raycast behaviour it reproduces is tested directly.
 
-use gpui_kit::assets::IconName;
 use kb_domain::entry::Entry;
-
-/// An entry type, singular, as the actions and icons distinguish it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(not(test), expect(dead_code, reason = "kept for type categorization in tests"))]
-pub enum TypeKey {
-    /// `bookmarks`
-    Bookmark,
-    /// `commands`
-    Command,
-    /// `cheats`
-    Cheat,
-    /// `notes`
-    Note,
-    /// `tasks`
-    Task,
-    /// Any other type.
-    Other,
-}
-
-/// The type, trimmed, lowercased and singular: `Bookmarks` → `Bookmark`.
-#[cfg_attr(not(test), expect(dead_code, reason = "kept for type categorization in tests"))]
-#[must_use]
-pub fn type_key(entry_type: &str) -> TypeKey {
-    let normalized = entry_type.trim().to_lowercase();
-    match normalized.strip_suffix('s').unwrap_or(&normalized) {
-        "bookmark" => TypeKey::Bookmark,
-        "command" => TypeKey::Command,
-        "cheat" => TypeKey::Cheat,
-        "note" => TypeKey::Note,
-        "task" => TypeKey::Task,
-        _ => TypeKey::Other,
-    }
-}
-
-/// The type as people read it: the known names, else the type with its first letter capitalized.
-#[must_use]
-pub fn type_label(entry_type: &str) -> String {
-    let normalized = entry_type.trim().to_lowercase();
-    let known = match normalized.as_str() {
-        "bookmarks" => "Bookmarks",
-        "bookmark" => "Bookmark",
-        "commands" => "Commands",
-        "command" => "Command",
-        "cheats" => "Cheats",
-        "cheat" => "Cheat",
-        "notes" => "Notes",
-        "note" => "Note",
-        "tasks" => "Tasks",
-        "task" => "Task",
-        _ => {
-            let mut chars = normalized.chars();
-            return chars
-                .next()
-                .map_or_else(String::new, |first| first.to_uppercase().chain(chars).collect());
-        }
-    };
-    known.to_owned()
-}
 
 /// A colour role among the seven accents of DESIGN.md. Rendering resolves it for the current
 /// appearance (`accents::accent`), so badges and tags follow light and dark alike.
@@ -80,35 +21,6 @@ pub enum Hue {
     Yellow,
     /// Tags; the notes' description bar.
     Red,
-}
-
-/// The tinted icon that leads a list row.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(not(test), expect(dead_code, reason = "kept for type_badge parity"))]
-pub struct TypeBadge {
-    /// The type's icon, as Raycast's.
-    pub icon: IconName,
-    /// The type's hue.
-    pub hue: Hue,
-}
-
-/// The badge for an entry type: Raycast's icon and tint; an unknown type hashes its singular
-/// name, as the Raycast extension's `typeColor`.
-#[cfg_attr(not(test), expect(dead_code, reason = "kept for type_badge parity"))]
-#[must_use]
-pub fn type_badge(entry_type: &str) -> TypeBadge {
-    let (icon, hue) = match type_key(entry_type) {
-        TypeKey::Bookmark => (IconName::Globe, Hue::Purple),
-        TypeKey::Command => (IconName::SquareTerminal, Hue::Green),
-        TypeKey::Cheat => (IconName::FileText, Hue::Blue),
-        TypeKey::Note => (IconName::NotebookText, Hue::Orange),
-        TypeKey::Task => (IconName::CircleCheck, Hue::Magenta),
-        TypeKey::Other => {
-            let name = entry_type.trim().to_lowercase();
-            (IconName::FileText, tag_hue(name.strip_suffix('s').unwrap_or(&name)))
-        }
-    };
-    TypeBadge { icon, hue }
 }
 
 /// The order tags and unknown types hash into, as the Raycast extension's `accessories.ts`.
@@ -190,16 +102,6 @@ mod tests {
     use crate::fixture::entry;
 
     #[test]
-    fn reads_types_singular_and_case_insensitively() {
-        assert_eq!(type_key(" Bookmarks "), TypeKey::Bookmark);
-        assert_eq!(type_key("task"), TypeKey::Task);
-        assert_eq!(type_key("snippets"), TypeKey::Other);
-        assert_eq!(type_label("commands"), "Commands");
-        assert_eq!(type_label("snippets"), "Snippets");
-        assert_eq!(type_label(""), "");
-    }
-
-    #[test]
     fn names_a_row_by_its_visible_text() {
         let command = entry(
             "commands",
@@ -237,46 +139,6 @@ mod tests {
             assert_eq!(format!("{:?}", tag_hue(&tag)).to_lowercase(), accent, "#{tag}");
         }
         assert_eq!(tag_hue("Git"), tag_hue("git"));
-    }
-
-    #[test]
-    fn tints_each_type_as_raycast() {
-        assert_eq!(
-            type_badge("bookmarks"),
-            TypeBadge {
-                icon: IconName::Globe,
-                hue: Hue::Purple
-            }
-        );
-        assert_eq!(
-            type_badge("Commands"),
-            TypeBadge {
-                icon: IconName::SquareTerminal,
-                hue: Hue::Green
-            }
-        );
-        assert_eq!(
-            type_badge("cheats"),
-            TypeBadge {
-                icon: IconName::FileText,
-                hue: Hue::Blue
-            }
-        );
-        assert_eq!(
-            type_badge("notes"),
-            TypeBadge {
-                icon: IconName::NotebookText,
-                hue: Hue::Orange
-            }
-        );
-        assert_eq!(
-            type_badge("tasks"),
-            TypeBadge {
-                icon: IconName::CircleCheck,
-                hue: Hue::Magenta
-            }
-        );
-        assert_eq!(type_badge("snippets").hue, tag_hue("snippet"));
     }
 
     #[test]

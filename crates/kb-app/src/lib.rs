@@ -6,7 +6,6 @@
 
 #![warn(missing_docs)]
 
-mod accents;
 mod actions;
 mod assets;
 pub mod catalog;
@@ -55,7 +54,7 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
     let theme = Theme::global_mut(cx);
     theme.font_family = typography.ui.clone().into();
     theme.mono_font_family = typography.mono.clone().into();
-    theme.font_size = gpui_kit::px(ui::design::POINTS_PER_REM);
+    theme.font_size = ui::design::pixels(ui::design::POINTS_PER_REM);
     ui::notice::configure(Theme::global_mut(cx));
 }
 

@@ -35,7 +35,7 @@ use crate::trace;
 use crate::ui::design::{design, pixels, pt};
 use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
-use crate::window_size::{COMPACT, WindowSize};
+use crate::window_size::{WindowSize, compact};
 
 /// What fills the panel.
 #[derive(Debug)]
@@ -48,8 +48,9 @@ enum Screen {
     Rebuild(Entity<SyncView>),
 }
 
-/// How far ↓ and ↑ scroll the detail screen's notes: about three lines.
-const NOTES_LINE_STEP: Pixels = px(60.);
+fn notes_line_step() -> Pixels {
+    pixels(design().components.detail.scroll_step)
+}
 
 /// What is open over the screen: one overlay at a time.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -223,7 +224,7 @@ impl SearchView {
             return;
         }
         self.screen = Screen::Detail;
-        self.detail_scroll.set_offset(point(px(0.), px(0.)));
+        self.detail_scroll.set_offset(gpui_kit::Point::default());
         self.focus.focus(window, cx);
         cx.notify();
     }
@@ -471,15 +472,15 @@ impl SearchView {
 
     /// A page: the visible height, less a few lines kept for context.
     fn notes_page(&self) -> Pixels {
-        (self.detail_scroll.bounds().size.height - NOTES_LINE_STEP).max(NOTES_LINE_STEP)
+        (self.detail_scroll.bounds().size.height - notes_line_step()).max(notes_line_step())
     }
 
     fn scroll_notes_down(&mut self, _: &ScrollNotesDown, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(NOTES_LINE_STEP, cx);
+        self.scroll_notes(notes_line_step(), cx);
     }
 
     fn scroll_notes_up(&mut self, _: &ScrollNotesUp, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(-NOTES_LINE_STEP, cx);
+        self.scroll_notes(-notes_line_step(), cx);
     }
 
     fn page_notes_down(&mut self, _: &PageNotesDown, _: &mut Window, cx: &mut Context<Self>) {
@@ -494,7 +495,7 @@ impl SearchView {
         self.window_size = self.window_size.toggled();
         let display = window
             .display(cx)
-            .map_or(COMPACT, |display| display.visible_bounds().size);
+            .map_or_else(compact, |display| display.visible_bounds().size);
         window.resize(self.window_size.size(display));
         cx.notify();
     }
