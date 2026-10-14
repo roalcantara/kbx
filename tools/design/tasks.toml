@@ -438,7 +438,8 @@ depends = ["probes"]
 usage = 'flag "--scale <n>" help="1 to save at 1× (owner O2, option B); the screen scale by default"'
 run = '''
 #!/usr/bin/env bun
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 const root = process.cwd()
@@ -475,33 +476,48 @@ const launch = (dir: string) => {
   key(40, 'opt') // ⌥K shows the panel
   sleep(800)
 }
+const seen = new Map<string, string>()
 const shot = (name: string) => {
   sleep(700)
   const id = run([probe, 'window-id', 'kb'])
   const file = resolve(out, `${name}.png`)
   run(['screencapture', '-x', '-o', '-l', id, file])
+  const md5 = createHash('md5').update(readFileSync(file)).digest('hex')
+  if (seen.has(md5)) throw new Error(`duplicate screenshot: ${name} matches ${seen.get(md5)}`)
+  seen.set(md5, name)
   if (scale === '1') run(['sips', '-Z', '1040', file])
   console.log(`shot ${name}`)
 }
-const clear = () => { key(53); sleep(300) } // Esc clears query or closes overlay
+// Back to the plain list, whatever the screen: Esc closes an overlay, leaves a detail or the report, clears the query,
+// and on the empty list hides the panel; ⌥K shows it again. Stops as soon as the panel is hidden, so no Esc reaches
+// another app.
+const visible = () => run([probe, 'windows', 'kb']).includes('onscreen=true layer=101')
+const reset = () => {
+  for (let i = 0; i < 6 && visible(); i++) { key(53); sleep(300) }
+  if (visible()) throw new Error('the panel did not hide after six Esc')
+  key(40, 'opt'); sleep(800) // ⌥K
+  key(123); sleep(300) // ← hides the split pane, which stays open across screens; split shots press → themselves
+}
 
 run(['cargo', 'build', '--release', '-p', 'kb-app'])
 if (!existsSync(probe)) throw new Error(`need ${probe}; run mise run probes`)
+rmSync(out, { recursive: true, force: true }) // a screen no longer captured must not linger
 mkdirSync(out, { recursive: true })
 
+// More… (02-more) is not captured: in the running app the action panel does not take the keyboard (TODO Z5GP), so its rows
+// cannot be reached by keys. The refresh's running state (11) ends before a capture on ten entries: checked by eye.
 const screens = (size: string) => {
-  shot(`${size}-01-list`)
-  key(40, 'cmd'); shot(`${size}-02-actions`)
-  type('More'); key(36); shot(`${size}-02-more`); key(40, 'cmd'); sleep(400)
-  type('/terraform-plan'); sleep(400); shot(`${size}-03-empty`); key(53); sleep(400)
-  type('k8s'); sleep(400); key(124); shot(`${size}-04-split-command`); key(123); sleep(400); key(53); sleep(400)
-  type('k8s'); sleep(400); key(36); shot(`${size}-05-detail-command`); key(53); sleep(400); key(53); sleep(400)
-  type('tokio'); sleep(400); key(36); shot(`${size}-05-detail-bookmark-links`); key(53); sleep(400); key(53); sleep(400)
-  type('youtube'); sleep(400); key(124); shot(`${size}-04-split-bookmark-hero`); key(123); sleep(400); key(53); sleep(400)
-  type('ingress'); sleep(400); key(36); shot(`${size}-06-detail-cheat`); key(53); sleep(400); key(53); sleep(400)
-  key(35, 'cmd'); shot(`${size}-07-filter`); key(35, 'cmd'); sleep(400)
-  type('docker'); sleep(400); key(36, 'cmd'); shot(`${size}-17-notice`); key(53); sleep(400)
-  key(15, 'cmd'); sleep(200); shot(`${size}-11-refreshing`); sleep(2500); shot(`${size}-12-report`); key(36)
+  shot(`${size}-01-list`); reset()
+  key(40, 'cmd'); sleep(400); shot(`${size}-02-actions`); reset()
+  type('/terraform-plan'); sleep(500); shot(`${size}-03-empty`); reset()
+  type('k8s'); sleep(500); key(124); shot(`${size}-04-split-command`); reset()
+  type('async'); sleep(500); key(124); shot(`${size}-04-split-bookmark-hero`); reset()
+  type('k8s'); sleep(500); key(36); shot(`${size}-05-detail-command`); reset()
+  type('tokio'); sleep(500); key(36); shot(`${size}-05-detail-bookmark-links`); reset()
+  type('ingress'); sleep(500); key(36); shot(`${size}-06-detail-cheat`); reset()
+  key(35, 'cmd'); sleep(400); shot(`${size}-07-filter`); reset()
+  type('docker'); sleep(500); key(36, 'cmd'); shot(`${size}-17-notice`); reset()
+  key(15, 'cmd'); sleep(2500); shot(`${size}-12-report`); reset()
 }
 
 const indexed = home('shots-home', true)
