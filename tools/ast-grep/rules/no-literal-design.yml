@@ -5,6 +5,8 @@ message: Sizes and colours come from DESIGN.md's tokens through ui::design (pt, 
 note: |
   The design tokens live in one place (spec D18). A literal px(…), rgb(…) or rgba(…) in a view is a value the
   design cannot change; read it from `design()` instead, adding a token to DESIGN.md's front matter if none fits.
+  pt(…) and pixels(…) stay allowed: they are how a token's points become GPUI lengths, so a literal passed to them
+  is left to review (owner, 2026-10-13).
 files:
   - crates/kb-app/src/**/*.rs
 ignores:
