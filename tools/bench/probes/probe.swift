@@ -7,6 +7,7 @@
 //   probe key <keycode> [opt|cmd|shift|ctrl…]   one key press, modifiers joined by +
 //   probe type <text>                           types text, one character every 20 ms
 //   probe windows <owner>                       one line per window of the app
+//   probe window-id <owner>                     the window number of the app's largest window
 //   probe show <owner> <keycode> [mods]         ms from the key press to the app's first window on screen
 //   probe copy <keycode> [mods]                 ms from the key press to the clipboard changing
 import AppKit
@@ -115,6 +116,13 @@ case "copy":
         NSPasteboard.general.changeCount != before
     }
     print(copied < 0 ? "-1" : String(format: "%.1f", copied))
+case "window-id":
+    // The window number of the owner's largest on-screen window, for `screencapture -l`.
+    let ids = visibleWindows(args[2])
+        .sorted { (($0[kCGWindowBounds as String] as? [String: CGFloat])?["Width"] ?? 0) > (($1[kCGWindowBounds as String] as? [String: CGFloat])?["Width"] ?? 0) }
+        .compactMap { $0[kCGWindowNumber as String] as? Int }
+    guard let id = ids.first else { fputs("no window of \(args[2])\n", stderr); exit(1) }
+    print(id)
 default:
     fputs("unknown command \(args[1])\n", stderr)
     exit(2)
