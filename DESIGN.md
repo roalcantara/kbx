@@ -5,9 +5,11 @@
 colors:
   window: "#24273A"
   mantle: "#1E2030"
+  crust: "#181926"
   selected: "#363A4F"
   hover: "#2F334A"
   badge: "#2E3248"
+  code: "#191B29"
   edge: "#6E738D1A"
   ring: "#CAD3F514"
   text: "#CAD3F5"

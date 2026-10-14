@@ -99,12 +99,24 @@ pub struct Colors {
     pub window: Hsla,
     #[serde(deserialize_with = "color")]
     pub mantle: Hsla,
+    #[expect(
+        dead_code,
+        reason = "read by design:validate and design:theme (tools/design/tasks.toml), not by the app"
+    )]
+    #[serde(deserialize_with = "color")]
+    pub crust: Hsla,
     #[serde(deserialize_with = "color")]
     pub selected: Hsla,
     #[serde(deserialize_with = "color")]
     pub hover: Hsla,
     #[serde(deserialize_with = "color")]
     pub badge: Hsla,
+    #[expect(
+        dead_code,
+        reason = "read by design:validate and design:theme (tools/design/tasks.toml), not by the app"
+    )]
+    #[serde(deserialize_with = "color")]
+    pub code: Hsla,
     #[serde(deserialize_with = "color")]
     pub edge: Hsla,
     #[serde(deserialize_with = "color")]
