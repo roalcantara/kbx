@@ -435,3 +435,88 @@ for (const screen of chosen) {
   console.log(`rendered ${screen}/screen.png`)
 }
 '''
+
+["design:shots"]
+description = "Capture kb on the showcase corpus, every screen, compact and expanded, into tools/design/shots (needs Accessibility and Screen Recording for the terminal, and ⌥K free)"
+depends = ["probes"]
+usage = 'flag "--scale <n>" help="1 to save at 1× (owner O2, option B); the screen scale by default"'
+run = '''
+#!/usr/bin/env bun
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+const root = process.cwd()
+const probe = resolve(root, 'tmp/bin/probe')
+const kb = resolve(root, 'target/release/kb')
+const out = resolve(root, 'tools/design/shots')
+const scale = process.env.usage_scale
+
+const run = (cmd: string[], env: Record<string, string> = {}) => {
+  const r = Bun.spawnSync(cmd, { env: { ...process.env, ...env }, stdout: 'pipe', stderr: 'pipe' })
+  if (r.exitCode !== 0) throw new Error(`${cmd.join(' ')}: ${r.stderr.toString()}`)
+  return r.stdout.toString().trim()
+}
+const sleep = (ms: number) => Bun.sleepSync(ms)
+// Virtual key codes (US layout): Return 36, Escape 53, Right 124, K 40, P 35, R 15, F 3, A 0.
+const key = (code: number, mods = '') => run([probe, 'key', String(code), ...(mods ? [mods] : [])])
+const type = (text: string) => run([probe, 'type', text])
+
+const home = (name: string, withIndex: boolean) => {
+  const dir = resolve(root, 'tmp/design', name)
+  rmSync(dir, { recursive: true, force: true })
+  mkdirSync(resolve(dir, '.config/kb'), { recursive: true })
+  writeFileSync(
+    resolve(dir, '.config/kb/config.toml'),
+    `sources_path = "${resolve(root, 'tools/design/showcase')}"\ntag_images_path = "${resolve(root, 'tools/design/showcase-images')}"\n`
+  )
+  if (withIndex) run([kb, '--sync'], { HOME: dir })
+  return dir
+}
+const launch = (dir: string) => {
+  Bun.spawnSync(['pkill', '-x', 'kb'])
+  Bun.spawn([kb], { env: { ...process.env, HOME: dir }, stdout: 'ignore', stderr: 'ignore' })
+  sleep(3000)
+  key(40, 'opt') // ⌥K shows the panel
+  sleep(800)
+}
+const shot = (name: string) => {
+  sleep(700)
+  const id = run([probe, 'window-id', 'kb'])
+  const file = resolve(out, `${name}.png`)
+  run(['screencapture', '-x', '-o', '-l', id, file])
+  if (scale === '1') run(['sips', '-Z', '1040', file])
+  console.log(`shot ${name}`)
+}
+const clear = () => { key(53); sleep(300) } // Esc clears query or closes overlay
+
+run(['cargo', 'build', '--release', '-p', 'kb-app'])
+if (!existsSync(probe)) throw new Error(`need ${probe}; run mise run probes`)
+mkdirSync(out, { recursive: true })
+
+const screens = (size: string) => {
+  shot(`${size}-01-list`)
+  key(40, 'cmd'); shot(`${size}-02-actions`)
+  type('More'); key(36); shot(`${size}-02-more`); key(40, 'cmd'); sleep(400)
+  type('/terraform-plan'); sleep(400); shot(`${size}-03-empty`); key(53); sleep(400)
+  type('k8s'); sleep(400); key(124); shot(`${size}-04-split-command`); key(123); sleep(400); key(53); sleep(400)
+  type('k8s'); sleep(400); key(36); shot(`${size}-05-detail-command`); key(53); sleep(400); key(53); sleep(400)
+  type('tokio'); sleep(400); key(36); shot(`${size}-05-detail-bookmark-links`); key(53); sleep(400); key(53); sleep(400)
+  type('youtube'); sleep(400); key(124); shot(`${size}-04-split-bookmark-hero`); key(123); sleep(400); key(53); sleep(400)
+  type('ingress'); sleep(400); key(36); shot(`${size}-06-detail-cheat`); key(53); sleep(400); key(53); sleep(400)
+  key(35, 'cmd'); shot(`${size}-07-filter`); key(35, 'cmd'); sleep(400)
+  type('docker'); sleep(400); key(36, 'cmd'); shot(`${size}-17-notice`); key(53); sleep(400)
+  key(15, 'cmd'); sleep(200); shot(`${size}-11-refreshing`); sleep(2500); shot(`${size}-12-report`); key(36)
+}
+
+const indexed = home('shots-home', true)
+launch(indexed)
+screens('compact')
+key(3, 'shift+cmd'); sleep(800) // ⇧⌘F: expanded
+screens('expanded')
+key(3, 'shift+cmd')
+
+launch(home('shots-noindex', false))
+shot('compact-10-no-index')
+Bun.spawnSync(['pkill', '-x', 'kb'])
+console.log(`wrote ${out}`)
+'''

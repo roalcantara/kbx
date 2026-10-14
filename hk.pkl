@@ -189,7 +189,10 @@ local baseline_steps = new Mapping<String, Step> {
     ["mixed-line-ending"] = (Builtins.mixed_line_ending) {
         exclude = generated
     }
-    ["large-files"] = Builtins.check_added_large_files
+    ["large-files"] = (Builtins.check_added_large_files) {
+        // design:shots commits deliberate 2× screenshots (owner, 2026-10-13, O2).
+        exclude = List("tools/design/shots/**")
+    }
 
     ["private-key"] = Builtins.detect_private_key
     ["gitleaks"] = (Builtins.gitleaks) {
