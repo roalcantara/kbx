@@ -23,15 +23,15 @@ covers it, as the Note says).
 | Footer status `● Ready • N results` with the true count                                  | ✓       | ✓        | 9 results: the tenth entry is a note, not one of the four types |
 | Footer keys: _Details ↵ · Copy ⌘↵ · Actions ⌘K_ (bookmark: _Open ⌘↵ · Copy ⇧⌘↵_)         | ✓       | ✓        | bookmark keys seen in `04-split-bookmark-hero`                  |
 
-## Action panel (02) — `compact-02-actions.png`, `expanded-02-actions.png` vs `docs/guides/design/02-actions.html`
+## Action panel (02) — `*-02-actions.png`, `*-02-more.png` vs `docs/guides/design/02-actions.html`
 
-| Item                                                                         | Compact | Expanded | Note                                                                                                                                                                   |
-| ---------------------------------------------------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Opens above _Actions_, bottom right, 220 wide, rows 28, search at the bottom | ✓       | ✓        |                                                                                                                                                                        |
-| Root lists the screen's actions in D9's order with their keycaps             | ✓       | ✓        | Details, Copy, Resize, Links…, More…                                                                                                                                   |
-| _Links… ›_ only for entries with links                                       | —       | —        | only an entry with links is shot; UI tests cover it                                                                                                                    |
-| More… shows COPY and ADMINISTRATION under a `‹ More` header with no search   | ✗       | ✗        | not captured: in the running app the open panel does not take the keyboard (↓ and typing reach nothing, ↵ runs the list's Details), so More… cannot be reached by keys |
-| Typing in the root finds More…'s rows, marked _More_                         | ✗       | ✗        | same: typed text reaches neither search field                                                                                                                          |
+| Item                                                                         | Compact | Expanded | Note                                                                               |
+| ---------------------------------------------------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------- |
+| Opens above _Actions_, bottom right, 220 wide, rows 28, search at the bottom | ✓       | ✓        |                                                                                    |
+| Root lists the screen's actions in D9's order with their keycaps             | ✓       | ✓        | Details, Copy, Resize, Links…, More…                                               |
+| _Links… ›_ only for entries with links                                       | —       | —        | only an entry with links is shot; UI tests cover it                                |
+| More… shows COPY and ADMINISTRATION under a `‹ More` header with no search   | ✓       | ✓        | `compact-02-more.png`, `expanded-02-more.png`; reached with ↓×4 ↵                  |
+| Typing in the root finds More…'s rows, marked _More_                         | —       | —        | not shot; seen by hand (“res” finds Resize and Refresh, marked More) and UI-tested |
 
 ## Empty and no index (03, 10) — `compact-03-empty.png`, `expanded-03-empty.png`, `compact-10-no-index.png` vs `docs/guides/design/03-empty.html`
 
@@ -60,15 +60,15 @@ No approved page shows the no-index screen; it was checked against the catalog's
 
 ## Filter (07) — `compact-07-filter.png`, `expanded-07-filter.png` vs `docs/guides/design/07-filter.html`
 
-| Item                                                      | Compact | Expanded | Note                                                                                                       |
-| --------------------------------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| Under the pill, search at the bottom                      | ✓       | ✓        |                                                                                                            |
-| Four types with their tiles, tags with their icons or `#` | ✓       | ✓        | the visible tags have no image, so all show `#`                                                            |
-| ✓ only on chosen rows                                     | —       | —        | nothing chosen in the shot; UI tests cover it                                                              |
-| Stays open while picking                                  | —       | —        | UI tests cover it                                                                                          |
-| _n filters · Clear All_ first when filters are set        | —       | —        | UI tests cover it                                                                                          |
-| Pill names the filters                                    | —       | —        | UI tests cover it                                                                                          |
-| Footer _Toggle ↵ · Only ⌘↵_                               | ✗       | ✗        | the footer keeps the list's _Details · Copy · Actions_; likely the same keyboard-focus defect as the panel |
+| Item                                                      | Compact | Expanded | Note                                            |
+| --------------------------------------------------------- | ------- | -------- | ----------------------------------------------- |
+| Under the pill, search at the bottom                      | ✓       | ✓        |                                                 |
+| Four types with their tiles, tags with their icons or `#` | ✓       | ✓        | the visible tags have no image, so all show `#` |
+| ✓ only on chosen rows                                     | —       | —        | nothing chosen in the shot; UI tests cover it   |
+| Stays open while picking                                  | —       | —        | UI tests cover it                               |
+| _n filters · Clear All_ first when filters are set        | —       | —        | UI tests cover it                               |
+| Pill names the filters                                    | —       | —        | UI tests cover it                               |
+| Footer _Toggle ↵ · Only ⌘↵_                               | ✓       | ✓        |                                                 |
 
 ## Refresh (11–14) — `compact-12-report.png`, `expanded-12-report.png` vs `docs/guides/design/11-14-refresh.html`
 
