@@ -380,7 +380,8 @@
 - [ ] 4hQn **-** Notes bold: **bold** renders regular in the notes body (with TextView and zorite-markdown alike): kb bundles Inter Regular, Medium, SemiBold and Italic but no Bold; bundle Inter Bold or map bold to SemiBold
   - **Created**: 2026-10-13 19:52
 
-- [ ] Z5GP **-** Action panel and filter take no keyboard in the running app: after ⌘K (and ⌘P), ↓ and typing reach nothing and ↵ runs the list's Details; the filter's footer keeps the list's keys. UI tests pass (the harness routes keys differently). Found by design:shots, 2026-10-14; More… is not captured until it is fixed
+- [x] Z5GP **-** Action panel and filter take no keyboard in the running app: after ⌘K (and ⌘P), ↓ and typing reach nothing and ↵ runs the list's Details; the filter's footer keeps the list's keys. UI tests pass (the harness routes keys differently). Found by design:shots, 2026-10-14; More… is not captured until it is fixed
+  - **Comments**: aSat
   - **Priority**: high
   - **Created**: 2026-10-14 02:53
 
@@ -583,4 +584,7 @@
 
 - mmdD **-** 2026-10-14: reopened; 8h review found 5 of 13 compact shots show another screen and the checklist ticked them; the sign-off came from a run whose Gemini turns aborted on exhausted quota (owner)
   - **Task**: y3ob
+
+- aSat **-** 2026-10-15: fixed; the popover tracked the panel container, not its search field, so the root's search never had the keyboard; the filter's footer also ignored the open overlay (owner reproduced it by hand; the fix is checked in the More… and filter shots)
+  - **Task**: Z5GP
 
