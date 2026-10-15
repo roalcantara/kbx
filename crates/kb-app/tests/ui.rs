@@ -772,3 +772,35 @@ fn reports_a_refresh_and_goes_back_with_return(cx: &mut TestAppContext) {
         "Back ↵ returns to the list"
     );
 }
+
+#[gpui_kit::test]
+fn moves_one_row_per_arrow_in_the_action_panel(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).panel_labels(cx))[0][..2],
+        ["Details", "Copy"]
+    );
+    press(cx, window, "down");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)),
+        Some("Copied to clipboard".to_owned()),
+        "one ↓ selects Copy, the second row"
+    );
+}
+
+#[gpui_kit::test]
+fn shows_the_filter_s_keys_in_the_footer_while_it_is_open(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    open_filter(cx, window);
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert!(
+        keys[0].starts_with("Toggle") && keys[1].starts_with("Only"),
+        "the filter's keys (D7), not the list's: {keys:?}"
+    );
+}

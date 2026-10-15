@@ -272,6 +272,12 @@ impl SearchView {
 
     /// The screen whose keys apply now (8g adds the empty and refresh screens).
     fn key_screen(&self, cx: &App) -> KeyScreen {
+        // An open filter or Links… page has keys of its own (catalog `screens.filter`, `.links`).
+        match self.overlay {
+            Overlay::Filter => return KeyScreen::Filter,
+            Overlay::Actions(Some(crate::actions::Submenu::Links)) => return KeyScreen::Links,
+            _ => {}
+        }
         match &self.screen {
             Screen::Detail => KeyScreen::Detail,
             Screen::Rebuild(sync) => match sync.read(cx).phase() {

@@ -9,8 +9,8 @@ use gpui_kit::component::button::Button;
 use gpui_kit::component::input::{Input, InputEvent, InputState, MoveDown, MoveUp};
 use gpui_kit::component::popover::Popover;
 use gpui_kit::{
-    Anchor, AnyElement, App, Context, Entity, InteractiveElement as _, IntoElement as _, ParentElement as _,
-    Styled as _, Window, div,
+    Anchor, AnyElement, App, Context, Entity, Focusable as _, InteractiveElement as _, IntoElement as _,
+    ParentElement as _, Styled as _, Window, div,
 };
 use kb_domain::search::tags_for_types;
 
@@ -284,9 +284,15 @@ impl SearchView {
         let d = design();
         let view = cx.entity().downgrade();
         let on_change = view.clone();
-        // Without a tracked handle the popover focuses one of its own, taking the keyboard away
-        // from the panel; the panel's own handle is always rendered, unlike the search field.
-        let focus = self.panel_focus.clone();
+        // The popover moves the keyboard to the handle it tracks when it opens, after this view's
+        // own deferred focus, so it must track where the keys belong: the search field on a page
+        // that has one (the root, the filter), the panel itself on a submenu, which has none.
+        // Tracking the panel everywhere left the root's search field without the keyboard.
+        let focus = if matches!(self.overlay, Overlay::Actions(Some(_))) {
+            self.panel_focus.clone()
+        } else {
+            self.panel_query.read(cx).focus_handle(cx)
+        };
         Popover::new(id)
             .p_0()
             .rounded(pt(d.rounded.popover))
@@ -318,8 +324,14 @@ impl SearchView {
             let _ = view.update(cx, |this, cx| this.confirm(ix, false, window, cx));
         });
         let search = div()
-            .capture_action(cx.listener(|this, _: &MoveUp, _, cx| this.move_panel(-1, cx)))
-            .capture_action(cx.listener(|this, _: &MoveDown, _, cx| this.move_panel(1, cx)))
+            .capture_action(cx.listener(|this, _: &MoveUp, _, cx| {
+                this.move_panel(-1, cx);
+                cx.stop_propagation(); // or the panel's own ↑ would move it again
+            }))
+            .capture_action(cx.listener(|this, _: &MoveDown, _, cx| {
+                this.move_panel(1, cx);
+                cx.stop_propagation();
+            }))
             .child(Input::new(&self.panel_query).appearance(false).p_0())
             .into_any_element();
         panel(&page.page, &visible, self.panel_selected, &self.panel_scroll, Some(search), width, &on_row)
@@ -340,17 +352,10 @@ impl SearchView {
                 this.back(event, window, cx);
                 cx.stop_propagation();
             }))
-            .on_action(cx.listener(|this, _: &MoveUp, _, cx| {
-                // Only here: on a searchable page the search field's own capture handles ↑↓.
-                if matches!(this.overlay, Overlay::Actions(Some(_))) {
-                    this.move_panel(-1, cx);
-                }
-            }))
-            .on_action(cx.listener(|this, _: &MoveDown, _, cx| {
-                if matches!(this.overlay, Overlay::Actions(Some(_))) {
-                    this.move_panel(1, cx);
-                }
-            }))
+            // On a searchable page the search field's capture handles ↑↓ and stops them; these move
+            // the selection when the panel itself has the keyboard (a submenu).
+            .on_action(cx.listener(|this, _: &MoveUp, _, cx| this.move_panel(-1, cx)))
+            .on_action(cx.listener(|this, _: &MoveDown, _, cx| this.move_panel(1, cx)))
             .into_any_element()
     }
 }
