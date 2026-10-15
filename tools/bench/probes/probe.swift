@@ -8,6 +8,7 @@
 //   probe type <text>                           types text, one character every 20 ms
 //   probe windows <owner>                       one line per window of the app
 //   probe window-id <owner>                     the window number of the app's largest window
+//   probe park                                  moves the pointer to the screen's top-left corner, off any window
 //   probe show <owner> <keycode> [mods]         ms from the key press to the app's first window on screen
 //   probe copy <keycode> [mods]                 ms from the key press to the clipboard changing
 import AppKit
@@ -90,7 +91,7 @@ func pressAndWait(_ code: CGKeyCode, _ mods: CGEventFlags, timeout: Double, _ do
 }
 
 let args = CommandLine.arguments
-guard args.count >= 2 else { fputs("usage: probe key|type|windows|show|copy …\n", stderr); exit(2) }
+guard args.count >= 2 else { fputs("usage: probe key|type|windows|show|copy|window-id|park …\n", stderr); exit(2) }
 
 switch args[1] {
 case "key":
@@ -116,6 +117,9 @@ case "copy":
         NSPasteboard.general.changeCount != before
     }
     print(copied < 0 ? "-1" : String(format: "%.1f", copied))
+case "park":
+    // A moved event, not a warp: apps keep a hover until the pointer is seen to leave.
+    CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: 0, y: 0), mouseButton: .left)?.post(tap: .cghidEventTap)
 case "window-id":
     // The window number of the owner's largest on-screen window, for `screencapture -l`.
     let ids = visibleWindows(args[2])

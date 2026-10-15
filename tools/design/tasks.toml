@@ -478,6 +478,7 @@ const launch = (dir: string) => {
 }
 const seen = new Map<string, string>()
 const shot = (name: string) => {
+  run([probe, 'park']) // a pointer over the panel would draw a hover fill
   sleep(700)
   const id = run([probe, 'window-id', 'kb'])
   const file = resolve(out, `${name}.png`)
@@ -504,11 +505,12 @@ if (!existsSync(probe)) throw new Error(`need ${probe}; run mise run probes`)
 rmSync(out, { recursive: true, force: true }) // a screen no longer captured must not linger
 mkdirSync(out, { recursive: true })
 
-// More… (02-more) is not captured: in the running app the action panel does not take the keyboard (TODO Z5GP), so its rows
-// cannot be reached by keys. The refresh's running state (11) ends before a capture on ten entries: checked by eye.
+// The refresh's running state (11) ends before a capture on ten entries, so it is not shot.
 const screens = (size: string) => {
   shot(`${size}-01-list`); reset()
   key(40, 'cmd'); sleep(400); shot(`${size}-02-actions`); reset()
+  // More… is the root's fifth row on /docker-prune-all (Details, Copy, Resize, Links…, More…).
+  key(40, 'cmd'); sleep(400); for (let i = 0; i < 4; i++) { key(125); sleep(150) }; key(36); sleep(400); shot(`${size}-02-more`); reset()
   type('/terraform-plan'); sleep(500); shot(`${size}-03-empty`); reset()
   type('k8s'); sleep(500); key(124); shot(`${size}-04-split-command`); reset()
   type('async'); sleep(500); key(124); shot(`${size}-04-split-bookmark-hero`); reset()
