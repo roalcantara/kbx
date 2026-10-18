@@ -1,4 +1,4 @@
-//! `kb [--trace | --sync]`: resolves the configuration, then runs the panel or rebuilds the index.
+//! `kb [--trace | --sync [--source …]]`: resolves the configuration, then runs the panel or rebuilds the index.
 
 use std::fmt::Display;
 use std::io;
@@ -17,9 +17,10 @@ fn main() -> ExitCode {
     };
     match mode {
         // No panel shows a notice in a headless sync, so unreadable preferences stop it.
-        Mode::Sync => match Config::load(&home, &data) {
-            Ok(config) => match cli::sync(&config, &mut io::stderr().lock()) {
-                Ok(()) => ExitCode::SUCCESS,
+        Mode::Sync { selection } => match Config::load(&home, &data) {
+            Ok(config) => match cli::sync(&config, selection, &mut io::stderr().lock()) {
+                Ok(report) if report.has_failure() => ExitCode::FAILURE,
+                Ok(_) => ExitCode::SUCCESS,
                 Err(error) => fail(error),
             },
             Err(error) => fail(error),

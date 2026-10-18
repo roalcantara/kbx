@@ -6,15 +6,24 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
 
-fn sync_under(home: &Path, sources: &Path) -> Output {
+fn sync_under(home: &Path, sources: &Path, extra: &[&str]) -> Output {
+    use std::os::unix::fs::PermissionsExt as _;
     fs::create_dir_all(home.join(".config/kb")).unwrap();
+    let skills = home.join("skills");
+    fs::write(&skills, "#!/bin/sh\necho '[]'\n").unwrap();
+    fs::set_permissions(&skills, fs::Permissions::from_mode(0o755)).unwrap();
     fs::write(
         home.join(".config/kb/config.toml"),
-        format!("sources_path = \"{}\"\n", sources.display()),
+        format!(
+            "sources_path = \"{}\"\nskills_command = \"{}\"\n",
+            sources.display(),
+            skills.display()
+        ),
     )
     .unwrap();
     Command::new(env!("CARGO_BIN_EXE_kb"))
         .arg("--sync")
+        .args(extra)
         .env("HOME", home)
         .output()
         .unwrap()
@@ -28,11 +37,11 @@ fn syncs_the_configured_sources_into_the_data_directory() {
         .canonicalize()
         .unwrap();
 
-    let output = sync_under(home.path(), &sample);
+    let output = sync_under(home.path(), &sample, &[]);
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "{stderr}");
-    assert!(stderr.contains("kb: indexed "), "{stderr}");
+    assert!(stderr.contains("kb: yaml: indexed "), "{stderr}");
     assert!(
         home.path()
             .join("Library/Application Support/kb-native/kb.db")
@@ -44,9 +53,24 @@ fn syncs_the_configured_sources_into_the_data_directory() {
 fn fails_when_the_sources_directory_is_missing() {
     let home = tempfile::tempdir().unwrap();
 
-    let output = sync_under(home.path(), &home.path().join("nowhere"));
+    let output = sync_under(home.path(), &home.path().join("nowhere"), &[]);
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success());
     assert!(stderr.contains("cannot read the sources directory"), "{stderr}");
+}
+
+#[test]
+fn refreshes_one_source_and_rejects_an_unknown_one() {
+    let home = tempfile::tempdir().unwrap();
+
+    let output = sync_under(home.path(), &home.path().join("nowhere"), &["--source", "skills"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stderr}");
+    assert!(stderr.contains("kb: skills: indexed 0 entries"), "{stderr}");
+    assert!(!stderr.contains("kb: yaml:"), "{stderr}");
+
+    let output = sync_under(home.path(), &home.path().join("nowhere"), &["--source", "both"]);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("usage: kb"));
 }
