@@ -1,6 +1,6 @@
-# Skills entry and scoped refresh - design
+# Skills entry and scoped refresh — design
 
-- Status: draft for owner review
+- Status: reviewed; awaiting owner approval
 - Date: 2026-10-18
 - Task: Rkpg - Add Skills Entry Type and Source
 
@@ -9,195 +9,264 @@
 kb loads the global Skills catalog beside its YAML knowledge base. Every record
 from `skills ls --global --agent universal --json` becomes a searchable
 `skills` entry, and users can refresh YAML and Skills independently from the
-existing More action panel.
+existing More… action panel.
 
-The feature uses the existing SQLite `entries` and FTS5 index. It does not add
-a Skills-specific table or change the YAML source format.
+The feature uses the existing `entries`, `entries_fts` and `entry_tags` tables.
+It adds one column, `entries.source`, so a refresh can replace one source's
+rows. It does not change the YAML source format.
 
 ## Decisions
 
-**D1. The existing Refresh action remains the default.** Refresh continues to
-refresh all configured sources. A new **Refresh More...** action appears under
-**More -> Administration**. Its submenu contains exactly **Refresh YAML** and
-**Refresh Skills**. The submenu has no **All** item.
+**D1. The existing Refresh action remains the default.** Refresh (⌘R)
+continues to refresh all sources. A new **Refresh More…** submenu appears
+under **More… → Administration**, after Refresh. It contains exactly **Refresh
+YAML** and **Refresh Skills**; it has no **All** item.
 
 **D2. Skills use the existing entry model.** Skills have entry type `skills`,
 use the existing index and notes Markdown, and share the existing search,
-filter, detail, split-view, and refresh-report infrastructure.
+filter, detail, split-view and refresh infrastructure.
 
-**D3. The Skills key is the slash-prefixed name.** A Skills record with
-`name: testing-codegen` has key `/testing-codegen` and is copied as
-`/testing-codegen`. Skill names are unique in the command output. Duplicate
-names are a source validation error, not two entries with different hidden
-keys.
+**D3. The Skills key is the slash-prefixed name.** A record with
+`name: testing-codegen` has key and title `/testing-codegen` and is copied as
+`/testing-codegen`. Duplicate names are a source validation error, not two
+entries.
 
-**D4. Source adapters remain separate.** YAML discovery/parsing and Skills
-command parsing are separate source adapters behind the sync layer. The sync
-layer owns source selection, transactions, cancellation, reporting, and index
-replacement.
+**D4. Source adapters remain separate.** YAML discovery and parsing, and the
+Skills command and its JSON parsing, are separate source adapters behind the
+sync layer. The sync layer owns source selection, transactions, cancellation,
+reporting and index replacement.
 
-**D5. A source failure preserves that source's prior entries.** Invalid JSON,
-command warnings mixed into stdout, command failure, duplicate names, and
-cancellation do not delete or partially replace the previous Skills entries.
-The same rule applies to YAML entries during a YAML refresh.
+**D5. A source failure preserves that source's prior entries.** A command
+failure, invalid JSON, an invalid record, duplicate names or a cancellation
+does not delete or partially replace the previous Skills entries. The same
+rule applies to YAML entries during a YAML refresh.
 
-**D6. Local and web actions have different targets.** Edit opens the local
-`SKILL.md` with the system editor. The browser action opens `sourceUrl` when
-present. kb never fabricates a web URL from a Skill name or repository guess.
+**D6. The source URL is a link, never a fabricated one.** A record's
+`sourceUrl`, when present, becomes the entry's only link, so **Links…** opens
+or copies it. kb never derives a URL from a Skill name or repository guess.
+Edit (⌘O) opens the local `SKILL.md`.
 
-**D7. The command executable is configurable.** Configuration may override the
-Skills executable with `skills_command = "skills"`. The application always
-supplies the fixed arguments `ls --global --agent universal --json`.
+**D7. The command executable is configurable and found without a shell.**
+`skills_command` in `~/.config/kb/config.toml` names the executable or its
+path. The application always supplies the fixed arguments
+`ls --global --agent universal --json`.
+
+**D8. Rows record their source.** `entries.source` is `yaml` or `skills`. A
+scoped refresh deletes and inserts only rows of its source.
 
 ## Scope
 
 In scope:
 
+- The `entries.source` column and its migration.
 - Parse the global Skills JSON record shape: `name`, `path`, `scope`,
-  `agents`, `source`, `sourceUrl`, and `sourceType`.
-- Map every valid record to a `skills` entry with key `/<name>`.
-- Render the local Skill Markdown through the existing notes/file inclusion
-  behavior.
-- Add the `skills` catalog type and its actions.
-- Add source selection to the More action panel and sync CLI.
+  `agents`, `source`, `sourceUrl` and `sourceType`.
+- Map every valid record to a `skills` entry.
+- Read the description from each `SKILL.md` front matter; render the body
+  through the existing `file://` notes behaviour.
+- Add the `skills` catalog type, an optional catalog hero, and the
+  **Refresh More…** submenu with its two actions.
+- Source selection for the panel and for `kb --sync`.
+- Per-source sections in the refresh report and the `kb --sync` output.
 - Preserve source data on failure and cancellation.
-- Add focused domain, application, CLI, and action tests.
+- Focused domain, application, CLI and action tests.
 
 Out of scope:
 
-- A new Skills database table.
+- A Skills-specific table.
 - A project-local Skills source.
 - Changes to the external `skills` CLI.
 - Editing Skill documents inside kb.
-- Deriving `skills.sh` or GitHub URLs when `sourceUrl` is absent.
+- Tags on Skills entries (neither `scope`, always `global`, nor the 45 agent
+  names make useful tags).
+- Searching a Skill's body; search is revised in later work.
+- A timeout on the Skills command; Stop covers a hung command.
 - New keyboard shortcuts for the scoped refresh actions.
+- Restricting YAML to known top-level keys and removing `skills.yml`: both
+  are separate pending work.
 
-## Source and entry mapping
+## Schema and migration
 
-The Skills adapter executes the configured executable with the fixed arguments
-and parses stdout as one complete JSON document. A warning or any other
-non-JSON stdout content makes the complete refresh invalid.
+```sql
+ALTER TABLE entries ADD COLUMN source TEXT NOT NULL DEFAULT 'yaml';
+CREATE INDEX idx_entries_source ON entries(source);
+```
 
-Each returned record maps as follows:
+`schema.sql` creates `entries` with the column and sets `user_version` to 1
+for a new index. An existing
+index is migrated once, guarded by `PRAGMA user_version` (0 → 1): every row it
+holds came from YAML, so the `yaml` default is correct and nothing is
+discarded. The comment calling the schema the TypeScript engine's, statement
+for statement, is removed: the Raycast schema no longer constrains it. The
+goldens test selects named columns and is unaffected.
 
-| Skills field | Entry value                                             |
-| ------------ | ------------------------------------------------------- |
-| `name`       | Entry key `/<name>` and fallback primary content        |
-| `path`       | Local source path, normalized to the Skill's `SKILL.md` |
-| `scope`      | Metadata used for tags or report context                |
-| `agents`     | Metadata used for tags                                  |
-| `source`     | Source metadata used for report context                 |
-| `sourceUrl`  | Optional browser-action target                          |
-| `sourceType` | Source metadata used for report context                 |
+## Skills source
 
-The local source path is `~/.agents/skills/<name>/SKILL.md`. The path is
-expanded when the application opens or reads it. The adapter must use the
-record's `path` to locate the actual local document when it is provided, while
-normalizing a directory path to its `SKILL.md` child. The normalized path is
-stored in the entry's source-file field.
+### Finding the command
 
-The entry's notes are the Markdown contents of the local `SKILL.md`, compiled
-through the existing Markdown pipeline. A missing local document is reported
-for that record, but the record is still indexed with its key, primary
-content, source path, and available metadata; its notes Markdown is empty.
+When `skills_command` is a path (it contains `/`), kb runs it, `~/` expanded.
+Otherwise kb looks for that name (default `skills`) as an executable in
+`PATH`, then in `/opt/homebrew/bin`, `/usr/local/bin` and `~/.local/bin`, and
+uses the first found. The fallback
+folders exist because an app opened from Finder gets
+`PATH=/usr/bin:/bin:/usr/sbin:/sbin`.
 
-The adapter rejects a record without a non-empty `name`, rejects duplicate
-names, and rejects invalid JSON. It preserves the existing Skills set when any
-whole-source validation fails.
+| Situation                                           | Skills outcome                      |
+| --------------------------------------------------- | ----------------------------------- |
+| Not set, no `skills` found                          | Skipped: _not configured_; no error |
+| Set, cannot be run                                  | Failed; prior entries kept          |
+| Exits non-zero                                      | Failed; prior entries kept          |
+| Exits 0, stdout not one valid JSON array of records | Failed; prior entries kept          |
+| Exits 0, valid JSON                                 | Replaced                            |
 
-## Sync behavior
+stdout must be one complete JSON document; anything else in it fails the
+source. stderr is not a failure: each non-empty stderr line is reported as a
+Skills warning (the CLI writes, for example, `⚠ Skipped …/recon/SKILL.md —
+YAML parse error …` there and still exits 0).
 
-The sync API accepts a source selection with these values:
+The command takes about 8 s for 438 skills. While it runs, the refresh screen
+shows **Running skills…**. Cancelling kills the child process; nothing is
+committed for Skills.
 
-- `all`: refresh YAML and Skills. This is the default for the existing Refresh
-  action and for the CLI when `--source` is omitted.
-- `yaml`: refresh YAML only.
-- `skills`: refresh Skills only.
+### Records
 
-A scoped refresh changes only the selected source's entries. An `all` refresh
-runs both adapters but commits each source as its own transaction so a Skills
-failure does not remove successful YAML results, and a YAML failure does not
-remove successful Skills results.
+A record is valid when `name` and `path` are non-empty strings; `scope`,
+`agents`, `source`, `sourceUrl` and `sourceType` are optional and unknown
+fields are ignored. An invalid record or a duplicate `name` fails the whole
+Skills source (D5).
 
-A successful source refresh replaces that source's prior entries with the
-validated result. An unsuccessful or cancelled source refresh leaves its prior
-entries unchanged and adds a source-specific failure to the sync report. The
-report identifies YAML or Skills and includes the command or parse failure
-reason when available.
+### Entry mapping
 
-The refresh view remains cancellable. Cancellation is checked while collecting
-source output, parsing records, reading local Skill files, and writing index
-rows. Cancellation does not commit a partial source result.
+| Entry field       | Value                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| `entry_type`      | `skills`                                                               |
+| key, `title`      | `/<name>`                                                              |
+| `primary_content` | `/<name>`                                                              |
+| `description`     | `SKILL.md` front matter `description`, else none                       |
+| `notes`           | `file://<path>/SKILL.md`                                               |
+| `notes_markdown`  | Compiled by the existing pipeline, front matter stripped               |
+| `links`           | `[sourceUrl]` when present, else none                                  |
+| `tags`            | none                                                                   |
+| `source_file`     | `<path>/SKILL.md` (absolute)                                           |
+| `source_rel_path` | `<name>/SKILL.md`                                                      |
+| `id`              | `<name>/SKILL.md#skills#/<name>` (the usual `<rel path>#<type>#<key>`) |
+| `raw_yaml`        | The record, as YAML                                                    |
+| `source` (row)    | `skills`                                                               |
+
+`path` is the Skill's directory, as the CLI reports it. A YAML id's path ends
+in `.yml` or `.yaml`, so Skills and YAML ids cannot collide.
+
+A missing `SKILL.md` or unreadable front matter is a warning for that record;
+the record is still indexed with an empty description, and the notes render
+nothing.
+
+Full-text search matches the title and description. The `notes` column holds
+the `file://` reference, as for YAML `file://` notes, so a Skill's body is not
+searched.
+
+## Sync behaviour
+
+The sync API takes a source selection:
+
+- `all`: YAML, then Skills. The default for Refresh and for `kb --sync`.
+- `yaml`: YAML only.
+- `skills`: Skills only.
+
+Each selected source runs and commits in its own transaction:
+`DELETE FROM entries WHERE source = ?` (tags follow through
+`ON DELETE CASCADE`; the FTS rows through the delete trigger), then the
+inserts. In `all`, YAML commits before the Skills command starts, so a Skills
+failure or a cancellation during it keeps the fresh YAML entries, and a YAML
+failure does not stop Skills.
+
+Cancellation is checked between YAML files, while the Skills command runs,
+between Skills records, and before each commit. A cancelled source commits
+nothing; sources committed before it stay.
+
+## Refresh report and progress
+
+The report has one section per refreshed source; a scoped refresh shows only
+its source.
+
+- **YAML:** the per-file rows, as today.
+- **Skills:** one row: `438 entries`, _failed: <reason>_ (with "The previous
+  Skills entries are unchanged."), or _not configured_; then one warning row
+  per stderr line and per record warning.
+
+The summary line totals both sources. Progress reads
+`{done} of {total} files · {file}` during YAML and **Running skills…** during
+the Skills command.
+
+`kb --sync` prints the same: per source, its failures and warnings, then one
+line; then the summary.
 
 ## Catalog and actions
 
-The catalog adds a `skills` type with the following presentation and actions:
+```toml
+[types.skills]
+label = "Skills"
+icon = "notebook-text"
+tint = "yellow"
+primary = "copy"
+```
 
-- Label: `Skills`
-- Icon: `notebook-text`
-- Tint: yellow
-- Hero: none
-- Primary action: copy `/<name>`
-- Secondary action: open `sourceUrl` when present
-- Edit action: open the local `SKILL.md` with the system editor
+`hero` becomes optional: a type without one shows no hero. Skills has no
+secondary action; **Links…** carries `sourceUrl`. `notebook-text` must be a
+bundled icon (the icon test checks it).
 
-The full Skill Markdown is shown in split and detail views through the existing
-notes renderer. The existing action panel keeps its current More layout and
-adds **Refresh More...** under **Administration**. Its child actions are
-**Refresh YAML** and **Refresh Skills**.
+The More… page keeps its layout. **Administration** lists Edit, Refresh,
+**Refresh More…**, Configure. **Refresh More…** opens a submenu, with the `‹`
+header of the existing submenus, listing **Refresh YAML** (`refresh-yaml`) and
+**Refresh Skills** (`refresh-skills`). The root's search finds both, marked
+with their submenu. Labels live in the catalog like every other action.
+
+The `no_entries` message names Skills with the other types.
 
 ## CLI and configuration
 
-The sync CLI accepts:
-
 ```text
---source all|yaml|skills
+kb --sync [--source all|yaml|skills]
 ```
 
-The default is `all`. The application validates the value and reports an
-argument error for any other value.
-
-The configuration accepts:
+`--source` is valid only with `--sync`; its default is `all`. Any other value,
+or `--source` without `--sync`, is a usage error.
 
 ```toml
 skills_command = "skills"
 ```
 
-The value is the executable name or path. The application appends no
-user-configurable arguments; it always invokes:
+The value is an executable name or path. kb appends no user-configurable
+arguments; it always runs `<command> ls --global --agent universal --json`.
 
-```text
-skills ls --global --agent universal --json
-```
+## Documentation
 
-## Schema and compatibility
-
-No SQLite schema migration is required. The existing entry type and source
-fields already support arbitrary entry types and source paths. Existing YAML
-entries keep their current identity and behavior.
-
-The context glossary must update the definitions of Entry type, Source file,
-Sync, and Sync report to include Skills records and source-specific reports.
-The catalog and CLI documentation must use `Skills` and `Refresh More...`
-consistently.
+CONTEXT.md updates Entry type (five types), Source file (or a Skills record),
+Index (the `source` column), Sync (sources, selection) and Sync report
+(per-source sections, warnings), and adds **Skills source**. The catalog and
+CLI help use `Skills` and `Refresh More…` consistently.
 
 ## Tests and validation
 
-The implementation adds focused tests for the following behaviors:
+Skills has no TypeScript counterpart, so its tests use hand-written
+expectations; the goldens rule still covers YAML, which must keep matching.
 
-- Parse valid Skills JSON records.
-- Reject malformed JSON and mixed-output command streams.
-- Reject empty names and duplicate names.
-- Map records to entry type `skills` with key `/<name>`.
-- Copy `/<name>` as the primary action value.
-- Resolve the local `SKILL.md` and render its Markdown notes.
-- Open `sourceUrl` for the browser action when it exists.
-- Preserve Skills entries after command failure, parse failure, duplicate names,
-  missing source data, or cancellation.
-- Refresh YAML without changing Skills and Skills without changing YAML.
-- Refresh both sources independently when the selection is `all`.
-- Parse CLI source selections and reject invalid values.
-- Expose the catalog type and More submenu actions.
+- Parse valid Skills JSON; ignore unknown fields.
+- Fail on malformed JSON, non-JSON stdout, a non-zero exit, an invalid record
+  and duplicate names, keeping prior Skills rows each time.
+- Report stderr lines as warnings without failing.
+- Report _not configured_ when no command is set or found.
+- Find the command in `PATH`, then in the fallback folders.
+- Map a record: key, title, primary, description from front matter, notes,
+  link, source file, rel path, id, source.
+- Index a record whose `SKILL.md` is missing, with a warning.
+- Kill the command on cancel; commit nothing for Skills.
+- Refresh YAML without changing Skills rows, and Skills without changing YAML
+  rows.
+- In `all`, keep fresh YAML rows when Skills fails or is cancelled.
+- Migrate an index at `user_version` 0, keeping its rows as `yaml`.
+- Parse `--source` values and reject invalid ones and `--source` alone.
+- Expose the `skills` catalog type, the optional hero and the Refresh More…
+  submenu, including from the root's search.
 
 Run focused tests for the changed crates first. Finish with:
 
@@ -205,4 +274,4 @@ Run focused tests for the changed crates first. Finish with:
 mise run gate
 ```
 
-The gate must continue to run with its existing commands and thresholds.
+The gate keeps its existing commands and thresholds.
