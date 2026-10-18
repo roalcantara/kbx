@@ -15,7 +15,9 @@ use gpui_kit::{
 use kb_domain::search::tags_for_types;
 
 use super::{Overlay, Screen, SearchView};
-use crate::actions::{Page, PanelCommand, Submenu, filter_page, links_page, more_page, root_page, search_page};
+use crate::actions::{
+    Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, root_page, search_page,
+};
 use crate::catalog::Screen as CatalogScreen;
 use crate::keys::Back;
 use crate::ui::action_panel::{OnRow, matches, panel};
@@ -85,6 +87,7 @@ impl SearchView {
             Overlay::Actions(None) if query_empty => root_page(&self.catalog, screen, entry),
             Overlay::Actions(None) => search_page(&self.catalog, screen, entry),
             Overlay::Actions(Some(Submenu::More)) => more_page(&self.catalog, entry),
+            Overlay::Actions(Some(Submenu::Refresh)) => refresh_page(&self.catalog),
             Overlay::Actions(Some(Submenu::Links)) => {
                 entry.map_or_else(Page::default, |e| links_page(&self.catalog, e))
             }

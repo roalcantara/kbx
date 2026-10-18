@@ -19,6 +19,8 @@ pub enum Submenu {
     Links,
     /// COPY and ADMINISTRATION.
     More,
+    /// The scoped refreshes, from More….
+    Refresh,
 }
 
 /// What a row does when confirmed (↵, or ⌘↵ where the screen gives ⌘↵ a meaning).
@@ -147,12 +149,20 @@ pub fn more_page(catalog: &Catalog, entry: Option<&Entry>) -> Page {
             .collect()
     });
     page.section(Some(catalog.panel.copy_section.clone()), copy);
-    let admin = catalog
-        .panel
-        .more_admin
-        .iter()
-        .map(|id| action_row(catalog, id))
-        .collect();
+    let mut admin = Vec::new();
+    for id in &catalog.panel.more_admin {
+        admin.push(action_row(catalog, id));
+        if id == "refresh" && !catalog.panel.more_refresh.is_empty() {
+            admin.push((
+                PanelRow {
+                    label: catalog.panel.refresh_more.clone(),
+                    submenu: true,
+                    ..PanelRow::default()
+                },
+                PanelCommand::Open(Submenu::Refresh),
+            ));
+        }
+    }
     page.section(Some(catalog.panel.admin_section.clone()), admin);
     page
 }
@@ -196,8 +206,23 @@ pub fn links_page(catalog: &Catalog, entry: &Entry) -> Page {
     page
 }
 
-/// The root's search page: the root's rows (Links… and More… included), then More…'s and Links…'s
-/// rows, marked with their submenu (`more_origin`, `links_origin`).
+/// Refresh More…: one row per scoped refresh (spec D1).
+#[must_use]
+pub fn refresh_page(catalog: &Catalog) -> Page {
+    let mut page = Page::default();
+    page.page.crumb = Some(catalog.panel.refresh_more.trim_end_matches('…').to_owned());
+    let rows = catalog
+        .panel
+        .more_refresh
+        .iter()
+        .map(|id| action_row(catalog, id))
+        .collect();
+    page.section(None, rows);
+    page
+}
+
+/// The root's search page: the root's rows (Links… and More… included), then More…'s, Refresh
+/// More…'s and Links…'s rows, marked with their submenu (`more_origin`, `refresh_origin`, `links_origin`).
 #[must_use]
 pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> Page {
     let mut page = root_page(catalog, screen, entry);
@@ -216,6 +241,7 @@ pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> 
         }
     };
     marked(more_page(catalog, entry), &catalog.messages.more_origin);
+    marked(refresh_page(catalog), &catalog.messages.refresh_origin);
     if let Some(entry) = entry.filter(|e| !e.links.is_empty()) {
         marked(links_page(catalog, entry), &catalog.messages.links_origin);
     }
@@ -368,11 +394,38 @@ mod tests {
             labels(&page),
             [
                 vec!["Description", "Notes", "Path"],
-                vec!["Edit", "Refresh", "Configure"]
+                vec!["Edit", "Refresh", "Refresh More…", "Configure"]
             ]
         );
         assert_eq!(page.command(0, 1), Some(&PanelCommand::Copy("N".into())));
-        assert_eq!(labels(&more_page(&catalog, None)), [["Edit", "Refresh", "Configure"]]);
+        assert_eq!(page.command(1, 2), Some(&PanelCommand::Open(Submenu::Refresh)));
+        assert_eq!(
+            labels(&more_page(&catalog, None)),
+            [["Edit", "Refresh", "Refresh More…", "Configure"]]
+        );
+    }
+
+    #[test]
+    fn lists_the_scoped_refreshes() {
+        let catalog = Catalog::default();
+        let page = refresh_page(&catalog);
+        assert_eq!(page.page.crumb.as_deref(), Some("Refresh More"));
+        assert_eq!(labels(&page), [["Refresh YAML", "Refresh Skills"]]);
+        assert_eq!(page.command(0, 1), Some(&PanelCommand::Action("refresh-skills".into())));
+    }
+
+    #[test]
+    fn finds_the_scoped_refreshes_from_the_root() {
+        let catalog = Catalog::default();
+        let page = search_page(&catalog, Screen::List, None);
+        let row = page
+            .page
+            .sections
+            .iter()
+            .flat_map(|s| &s.rows)
+            .find(|r| r.label == "Refresh Skills")
+            .unwrap();
+        assert_eq!(row.origin.as_deref(), Some("Refresh More"));
     }
 
     #[test]

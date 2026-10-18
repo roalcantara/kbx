@@ -560,6 +560,9 @@ impl SearchView {
                 return self.set_panel_query("", window, cx);
             }
             let next = match self.overlay {
+                Overlay::Actions(Some(crate::actions::Submenu::Refresh)) => {
+                    Overlay::Actions(Some(crate::actions::Submenu::More))
+                }
                 Overlay::Actions(Some(_)) => Overlay::Actions(None),
                 _ => Overlay::None,
             };

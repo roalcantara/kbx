@@ -306,7 +306,10 @@ fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppCo
     cx.run_until_parked();
     assert_eq!(
         cx.read(|cx| view.read(cx).panel_labels(cx)),
-        [vec!["Notes", "Path"], vec!["Edit", "Refresh", "Configure"]],
+        [
+            vec!["Notes", "Path"],
+            vec!["Edit", "Refresh", "Refresh More…", "Configure"]
+        ],
         "the cheat sheet has no description"
     );
     press(cx, window, "escape");
@@ -319,6 +322,27 @@ fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppCo
         titles(&view, cx),
         ["Interactive rebase"],
         "Esc closed the panel, not the query"
+    );
+}
+
+#[gpui_kit::test]
+fn opens_refresh_more_and_returns_to_more_with_escape(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "rebase");
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    type_text(cx, window, "Refresh More");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).panel_labels(cx)),
+        [["Refresh YAML", "Refresh Skills"]]
+    );
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).panel_labels(cx))[1],
+        ["Edit", "Refresh", "Refresh More…", "Configure"]
     );
 }
 
