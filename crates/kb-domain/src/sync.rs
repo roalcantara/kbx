@@ -5,12 +5,13 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
-use rusqlite::{Connection, ErrorCode, params};
+use rusqlite::{Connection, ErrorCode, Statement, Transaction, params};
 
 use crate::entry::{Entry, normalize_entry};
 use crate::markdown::build_entry_markdown;
 use crate::report::{FileReport, file_report};
 use crate::row::entry_to_row;
+use crate::selection::SourceKind;
 use crate::source::{SourceError, find_source_files, parse_source_file};
 
 /// The index schema.
@@ -121,8 +122,67 @@ fn open_initialized(path: &Path) -> rusqlite::Result<Connection> {
     }
 }
 
-/// Rebuilds the index at `database_path` from the source files under `sources_dir`, in one
-/// transaction: a failure or a cancellation leaves the previous index as it was.
+const INSERT_ENTRY: &str = "INSERT INTO entries (id, title, description, type, notes, notes_markdown, \
+    primary_content, links_json, source_file, source_rel_path, raw_yaml, source) \
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+const INSERT_TAG: &str = "INSERT OR IGNORE INTO entry_tags (entry_id, tag) VALUES (?, ?)";
+
+/// Opens the index at `database_path`, creating its directory and schema.
+fn open_index(database_path: &Path) -> Result<Connection, SyncError> {
+    if let Some(parent) = database_path.parent() {
+        fs::create_dir_all(parent).map_err(SyncError::IndexDirectory)?;
+    }
+    Ok(open_initialized(database_path)?)
+}
+
+/// Deletes `kind`'s rows (tags through `ON DELETE CASCADE`, full text through the delete trigger).
+/// When no other source has rows, the full-text table is emptied at once instead, as fast as before
+/// sources existed.
+fn clear_source(transaction: &Transaction<'_>, kind: SourceKind) -> rusqlite::Result<()> {
+    let others: bool = transaction.query_row(
+        "SELECT EXISTS (SELECT 1 FROM entries WHERE source != ?)",
+        [kind.column()],
+        |row| row.get(0),
+    )?;
+    if others {
+        transaction.execute("DELETE FROM entries WHERE source = ?", [kind.column()])?;
+    } else {
+        transaction.execute_batch("DELETE FROM entries; INSERT INTO entries_fts(entries_fts) VALUES('delete-all');")?;
+    }
+    Ok(())
+}
+
+/// Writes `entry` and its tags as a row of `kind`.
+fn insert_entry(
+    entries: &mut Statement<'_>,
+    tags: &mut Statement<'_>,
+    entry: &Entry,
+    kind: SourceKind,
+) -> rusqlite::Result<()> {
+    let row = entry_to_row(entry);
+    entries.execute(params![
+        row.id,
+        row.title,
+        row.description,
+        row.entry_type,
+        row.notes,
+        row.notes_markdown,
+        row.primary_content,
+        row.links_json,
+        row.source_file,
+        row.source_rel_path,
+        row.raw_yaml,
+        kind.column()
+    ])?;
+    for tag in &entry.tags {
+        tags.execute(params![row.id, tag])?;
+    }
+    Ok(())
+}
+
+/// Rebuilds the YAML entries of the index at `database_path` from the source files under
+/// `sources_dir`, in one transaction: a failure or a cancellation leaves the previous index as it
+/// was. Other sources' entries are kept.
 ///
 /// # Errors
 ///
@@ -131,17 +191,23 @@ pub fn sync_knowledge_base(
     sources_dir: &Path,
     database_path: &Path,
     cancel: &AtomicBool,
+    on_progress: impl FnMut(SyncProgress<'_>),
+) -> Result<SyncSummary, SyncError> {
+    let mut connection = open_index(database_path)?;
+    index_yaml(&mut connection, sources_dir, cancel, on_progress)
+}
+
+/// The YAML source: replaces its rows with the source files' entries, in one transaction.
+fn index_yaml(
+    connection: &mut Connection,
+    sources_dir: &Path,
+    cancel: &AtomicBool,
     mut on_progress: impl FnMut(SyncProgress<'_>),
 ) -> Result<SyncSummary, SyncError> {
     let started = Instant::now();
     let files = find_source_files(sources_dir)?;
-    if let Some(parent) = database_path.parent() {
-        fs::create_dir_all(parent).map_err(SyncError::IndexDirectory)?;
-    }
-    let mut connection = open_initialized(database_path)?;
     let transaction = connection.transaction()?;
-    // entry_tags empties through its ON DELETE CASCADE.
-    transaction.execute_batch("DELETE FROM entries; INSERT INTO entries_fts(entries_fts) VALUES('delete-all');")?;
+    clear_source(&transaction, SourceKind::Yaml)?;
 
     let mut summary = SyncSummary {
         total_indexed: 0,
@@ -152,11 +218,8 @@ pub fn sync_knowledge_base(
         files: Vec::new(),
     };
     {
-        let mut insert_entry = transaction.prepare(
-            "INSERT INTO entries (id, title, description, type, notes, notes_markdown, primary_content, \
-             links_json, source_file, source_rel_path, raw_yaml) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )?;
-        let mut insert_tag = transaction.prepare("INSERT OR IGNORE INTO entry_tags (entry_id, tag) VALUES (?, ?)")?;
+        let mut entries = transaction.prepare(INSERT_ENTRY)?;
+        let mut tags = transaction.prepare(INSERT_TAG)?;
         for (index, file) in files.iter().enumerate() {
             if cancel.load(Ordering::Relaxed) {
                 return Err(SyncError::Cancelled);
@@ -177,23 +240,7 @@ pub fn sync_knowledge_base(
                 let mut entry: Entry =
                     normalize_entry(&file_path, &rel_path, &record.entry_type, &record.key, &record.raw);
                 entry.notes_markdown = build_entry_markdown(&entry);
-                let row = entry_to_row(&entry);
-                insert_entry.execute(params![
-                    row.id,
-                    row.title,
-                    row.description,
-                    row.entry_type,
-                    row.notes,
-                    row.notes_markdown,
-                    row.primary_content,
-                    row.links_json,
-                    row.source_file,
-                    row.source_rel_path,
-                    row.raw_yaml
-                ])?;
-                for tag in &entry.tags {
-                    insert_tag.execute(params![row.id, tag])?;
-                }
+                insert_entry(&mut entries, &mut tags, &entry, SourceKind::Yaml)?;
                 summary.total_indexed += 1;
             }
             on_progress(SyncProgress {
@@ -204,6 +251,9 @@ pub fn sync_knowledge_base(
             });
             summary.files.push(report);
         }
+    }
+    if cancel.load(Ordering::Relaxed) {
+        return Err(SyncError::Cancelled);
     }
     transaction.commit()?;
     summary.duration_ms = started.elapsed().as_millis();
@@ -324,5 +374,34 @@ mod tests {
             .query_row("SELECT source FROM entries", [], |r| r.get(0))
             .unwrap();
         assert_eq!((version, source.as_str()), (1, "yaml"));
+    }
+
+    fn count_source(path: &Path, source: &str) -> i64 {
+        open_database(path)
+            .unwrap()
+            .query_row("SELECT count(*) FROM entries WHERE source = ?", [source], |r| r.get(0))
+            .unwrap()
+    }
+
+    #[test]
+    fn a_yaml_sync_keeps_the_rows_of_other_sources() {
+        let root = sources(&[("a.yml", "notes:\n  one: {}\n")]);
+        let db = tempfile::tempdir().unwrap();
+        let path = db.path().join("kb.db");
+        sync_knowledge_base(root.path(), &path, &AtomicBool::new(false), |_| {}).unwrap();
+        open_database(&path)
+            .unwrap()
+            .execute(
+                "INSERT INTO entries (id, title, description, type, notes, notes_markdown, primary_content, \
+                 links_json, source_file, source_rel_path, raw_yaml, source) \
+                 VALUES ('t/SKILL.md#skills#/t', '/t', '', 'skills', '', '', '/t', '[]', '/x/t/SKILL.md', \
+                 't/SKILL.md', '{}', 'skills')",
+                [],
+            )
+            .unwrap();
+        fs::write(root.path().join("a.yml"), "notes:\n  one: {}\n  two: {}\n").unwrap();
+        sync_knowledge_base(root.path(), &path, &AtomicBool::new(false), |_| {}).unwrap();
+        assert_eq!((count_source(&path, "yaml"), count_source(&path, "skills")), (2, 1));
+        assert_eq!(count(&path, "entries_fts('\"two\"*')"), 1);
     }
 }
