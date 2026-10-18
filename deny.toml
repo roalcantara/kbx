@@ -12,6 +12,9 @@ ignore = [
   { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile, via GPUI Kit's HTTP client" },
   { id = "RUSTSEC-2026-0192", reason = "ttf-parser, via GPUI's text system" },
   { id = "RUSTSEC-2026-0206", reason = "rustybuzz, via GPUI's text system" },
+  { id = "RUSTSEC-2026-0370", reason = "zvariant, via GPUI Kit's dependency tree" },
+  { id = "RUSTSEC-2026-0371", reason = "zbus_names, via GPUI Kit's dependency tree" },
+  { id = "RUSTSEC-2026-0372", reason = "zvariant_derive, via GPUI Kit's dependency tree" },
 ]
 
 [licenses]

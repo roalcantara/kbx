@@ -125,21 +125,21 @@ a tag's identity (its icon), and state (the status dot). Always dark: kb has one
 
 The roles, by name (the hexes are in the front matter):
 
-| Role       | Job                                                                                                                                                                    |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `window`   | The panel                                                                                                                                                              |
-| `mantle`   | Live chips and keycaps; popovers; command cards and the link hero                                                                                                      |
-| `crust`    | The notice                                                                                                                                                             |
-| `selected` | The selected row and panel row; popover and card borders                                                                                                               |
-| `hover`    | A hovered row                                                                                                                                                          |
-| `badge`    | Rest chips; the filter pill; keycaps on the darker popover and notice surfaces                                                                                         |
-| `code`     | Code blocks in the notes                                                                                                                                               |
-| `edge`     | Hairlines (faint at 10 %)                                                                                                                                              |
-| `ring`     | The panel's 1 pt outline (text at 8 %)                                                                                                                                 |
-| `text`     | Titles, the query, values                                                                                                                                              |
-| `muted`    | Descriptions, labels, live chip text, keycap text                                                                                                                      |
-| `faint`    | Tertiary text: placeholders, counts, section labels, URLs, rest link chips; icons in the header                                                                        |
-| accents    | `mauve` (selection bar, caret, Cheat Sheets), `blue` (Bookmarks, links), `green` (Commands, ready), `pink` (Tasks), `peach`, `yellow`, `red` (the quote bar, failures) |
+| Role       | Job                                                                                                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `window`   | The panel                                                                                                                                                                       |
+| `mantle`   | Live chips and keycaps; popovers; command cards and the link hero                                                                                                               |
+| `crust`    | The notice                                                                                                                                                                      |
+| `selected` | The selected row and panel row; popover and card borders                                                                                                                        |
+| `hover`    | A hovered row                                                                                                                                                                   |
+| `badge`    | Rest chips; the filter pill; keycaps on the darker popover and notice surfaces                                                                                                  |
+| `code`     | Code blocks in the notes                                                                                                                                                        |
+| `edge`     | Hairlines (faint at 10 %)                                                                                                                                                       |
+| `ring`     | The panel's 1 pt outline (text at 8 %)                                                                                                                                          |
+| `text`     | Titles, the query, values                                                                                                                                                       |
+| `muted`    | Descriptions, labels, live chip text, keycap text                                                                                                                               |
+| `faint`    | Tertiary text: placeholders, counts, section labels, URLs, rest link chips; icons in the header                                                                                 |
+| accents    | `mauve` (selection bar, caret, Cheat Sheets), `blue` (Bookmarks, links), `green` (Commands, ready), `pink` (Tasks), `peach`, `yellow` (Skills), `red` (the quote bar, failures) |
 
 - **Type tiles:** a type's accent at 15 % behind its icon in the accent (24 pt in rows, 20 in the footer and the pane
   header, 18 in the filter). The type → accent pairs are the catalog's (`tint`).

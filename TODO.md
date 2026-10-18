@@ -385,7 +385,8 @@
   - **Priority**: high
   - **Created**: 2026-10-14 02:53
 
-- [ ] Rkpg **-** Add Skills Entry Type and Source
+- [x] Rkpg **-** Add Skills Entry Type and Source
+  - **Comments**: 57h9
   - **Priority**: high
   - **Created**: 2026-10-18 09:58
   - **Tags**: feat, skills
@@ -592,4 +593,7 @@
 
 - aSat **-** 2026-10-15: fixed; the popover tracked the panel container, not its search field, so the root's search never had the keyboard; the filter's footer also ignored the open overlay (owner reproduced it by hand; the fix is checked in the More… and filter shots)
   - **Task**: Z5GP
+
+- 57h9 **-** 2026-10-18: Implemented per docs/superpowers/plans/2026-10-18-skills-entry-and-scoped-refresh.md
+  - **Task**: Rkpg
 
