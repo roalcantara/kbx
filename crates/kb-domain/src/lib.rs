@@ -42,6 +42,7 @@ pub mod query;
 pub mod report;
 pub mod row;
 pub mod search;
+pub mod selection;
 pub mod source;
 pub mod sync;
 pub mod yaml;
