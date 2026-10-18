@@ -1,5 +1,7 @@
 //! The Skills source: the records `skills ls --global --agent universal --json` prints, and the
 //! entries they become.
+pub mod command;
+
 use std::collections::HashSet;
 use std::path::Path;
 
