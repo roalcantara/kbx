@@ -335,7 +335,7 @@ points!(/// A row's sizes.
 points!(/// A chip's sizes.
     ChipSize { height, icon, link_icon });
 points!(/// A keycap's sizes.
-    KeycapSize { height, min_width });
+    KeycapSize { height });
 points!(/// The type tile's sizes.
     TileSize { size, icon, small, small_icon, mini, mini_icon, alpha });
 points!(/// The favicon's sizes.

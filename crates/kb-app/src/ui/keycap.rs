@@ -58,6 +58,18 @@ pub fn caps(keys: &str) -> String {
     text
 }
 
+/// The visual width bucket for a keycap: normalize all shortcuts to a few widths so rows stay
+/// aligned even when labels differ in glyph count.
+#[must_use]
+pub fn keycap_width(text: &str) -> f32 {
+    match text.chars().count() {
+        1 => 28.0,
+        2 => 36.0,
+        3 => 42.0,
+        _ => 48.0,
+    }
+}
+
 /// A keycap reading `text`: live (mantle, muted text) or, on the popover and notice surfaces,
 /// rest (badge, faint text).
 #[must_use]
@@ -67,10 +79,11 @@ pub fn keycap(text: impl Into<SharedString>, state: ChipState) -> Div {
         ChipState::Live => d.colors.muted,
         ChipState::Rest => d.colors.faint,
     };
+    let text = text.into();
     div()
         .flex_none()
         .h(pt(d.components.keycap.height))
-        .min_w(pt(d.components.keycap.min_width))
+        .w(pt(keycap_width(text.as_ref())))
         .px(pt(d.spacing.keycap.pad_x))
         .flex()
         .items_center()
@@ -79,7 +92,7 @@ pub fn keycap(text: impl Into<SharedString>, state: ChipState) -> Div {
         .bg(state.fill())
         .text_color(text_color)
         .text_role(&d.typography.roles.keycap)
-        .child(text.into())
+        .child(text)
 }
 
 #[cfg(test)]
@@ -101,5 +114,14 @@ mod tests {
         let colors = &design().colors;
         assert_eq!(ChipState::of(true).fill(), colors.mantle);
         assert_eq!(ChipState::of(false).fill(), colors.badge);
+    }
+
+    #[test]
+    fn normalizes_keycap_width_by_visual_bucket() {
+        assert_eq!(keycap_width("⌘"), 28.0);
+        assert_eq!(keycap_width("⌘1"), 36.0);
+        assert_eq!(keycap_width("⌘K"), 36.0);
+        assert_eq!(keycap_width("⇧⌘↵"), 42.0);
+        assert_eq!(keycap_width("esc"), 42.0);
     }
 }

@@ -68,7 +68,12 @@ pub fn status(dot: Dot, word: impl Into<SharedString>, count: Option<String>) ->
         .items_center()
         .gap(pt(d.spacing.footer.left_gap))
         .child(dot)
-        .child(div().text_color(d.colors.muted).child(word.into()))
+        .child(
+            div()
+                .text_role(&d.typography.roles.footer)
+                .text_color(d.colors.muted)
+                .child(word.into()),
+        )
         .when_some_count(count)
 }
 
@@ -112,6 +117,7 @@ pub fn key_item(label: impl Into<SharedString>, keys_caps: impl Into<SharedStrin
     h_flex()
         .items_center()
         .gap(pt(d.spacing.footer.item_gap))
+        .text_role(&d.typography.roles.footer)
         .text_color(d.colors.muted)
         .child(label.into())
         .child(keycap(keys_caps, ChipState::Live))

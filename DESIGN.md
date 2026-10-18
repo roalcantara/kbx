@@ -80,7 +80,7 @@ components:
   header: { height: 56, icon: 20, pill_icon: 15, pill_max_width: 220 }
   row: { height: 56, bar_width: 2.5, bar_inset: 6, glow: 8, glow_alpha: 0.6, max_tags: 3 }
   chip: { height: 20, icon: 14, link_icon: 12 }
-  keycap: { height: 20, min_width: 20 }
+  keycap: { height: 20 }
   tile: { size: 24, icon: 16, small: 20, small_icon: 13, mini: 18, mini_icon: 12, alpha: 0.15 }
   favicon: { size: 16 }
   panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14 }
