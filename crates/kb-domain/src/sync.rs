@@ -11,7 +11,9 @@ use crate::entry::{Entry, normalize_entry};
 use crate::markdown::build_entry_markdown;
 use crate::report::{FileReport, file_report};
 use crate::row::entry_to_row;
-use crate::selection::SourceKind;
+use crate::selection::{Selection, SourceKind};
+use crate::skills::command::{CommandError, run_command};
+use crate::skills::{SKILLS_ARGS, parse_skills, skill_entry};
 use crate::source::{SourceError, find_source_files, parse_source_file};
 
 /// The index schema.
@@ -81,6 +83,189 @@ pub struct SyncSummary {
     pub errors: Vec<SourceError>,
     /// Every file, in processing order.
     pub files: Vec<FileReport>,
+}
+
+/// What a sync refreshes.
+#[derive(Debug, Clone, Copy)]
+pub struct SyncRequest<'a> {
+    /// The sources to refresh.
+    pub selection: Selection,
+    /// The YAML sources directory.
+    pub sources_dir: &'a Path,
+    /// The Skills command; `None` when it is not configured.
+    pub skills_command: Option<&'a Path>,
+}
+
+/// What a sync reports while it runs.
+#[derive(Debug, Clone, Copy)]
+pub enum Progress<'a> {
+    /// A YAML file was indexed.
+    Yaml(SyncProgress<'a>),
+    /// The Skills command started.
+    Skills,
+}
+
+/// The YAML source's outcome.
+#[derive(Debug, Clone)]
+pub enum YamlOutcome {
+    /// Its entries were replaced.
+    Indexed(SyncSummary),
+    /// The sources directory could not be read; the previous YAML entries are unchanged.
+    Failed(String),
+}
+
+/// The Skills source's outcome.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SkillsOutcome {
+    /// No command is set and none was found: nothing ran, nothing changed.
+    NotConfigured,
+    /// Its entries were replaced.
+    Indexed {
+        /// Entries indexed.
+        entries: usize,
+        /// The command's stderr lines, then records whose `SKILL.md` could not be read.
+        warnings: Vec<String>,
+    },
+    /// The command or its output failed; the previous Skills entries are unchanged.
+    Failed {
+        /// Why.
+        reason: String,
+        /// The command's stderr lines.
+        warnings: Vec<String>,
+    },
+}
+
+/// A finished sync: each selected source's outcome (`None` for a source it did not select).
+#[derive(Debug, Clone)]
+pub struct SyncReport {
+    /// The YAML source.
+    pub yaml: Option<YamlOutcome>,
+    /// The Skills source.
+    pub skills: Option<SkillsOutcome>,
+    /// How long it took.
+    pub duration_ms: u128,
+}
+
+impl SyncReport {
+    /// Entries indexed, by every source that indexed.
+    #[must_use]
+    pub fn total_indexed(&self) -> usize {
+        let yaml = match &self.yaml {
+            Some(YamlOutcome::Indexed(summary)) => summary.total_indexed,
+            _ => 0,
+        };
+        let skills = match &self.skills {
+            Some(SkillsOutcome::Indexed { entries, .. }) => *entries,
+            _ => 0,
+        };
+        yaml + skills
+    }
+
+    /// Whether a selected source failed; a source not configured has not.
+    #[must_use]
+    pub fn has_failure(&self) -> bool {
+        matches!(self.yaml, Some(YamlOutcome::Failed(_))) || matches!(self.skills, Some(SkillsOutcome::Failed { .. }))
+    }
+}
+
+/// Refreshes the selected sources of the index at `database_path`: YAML, then Skills, each
+/// committed in its own transaction, so a source's failure or cancellation never touches the
+/// other's entries, nor its own previous ones.
+///
+/// # Errors
+///
+/// SQLite fails, the index directory cannot be created, or `cancel` was set; sources committed
+/// before then stay.
+pub fn sync_sources(
+    request: &SyncRequest<'_>,
+    database_path: &Path,
+    cancel: &AtomicBool,
+    mut on_progress: impl FnMut(Progress<'_>),
+) -> Result<SyncReport, SyncError> {
+    let started = Instant::now();
+    let mut connection = open_index(database_path)?;
+    let yaml = if request.selection.includes(SourceKind::Yaml) {
+        let outcome = index_yaml(&mut connection, request.sources_dir, cancel, |p| {
+            on_progress(Progress::Yaml(p));
+        });
+        Some(match outcome {
+            Ok(summary) => YamlOutcome::Indexed(summary),
+            Err(error @ SyncError::Sources(_)) => YamlOutcome::Failed(error.to_string()),
+            Err(error) => return Err(error),
+        })
+    } else {
+        None
+    };
+    let skills = if request.selection.includes(SourceKind::Skills) {
+        Some(match request.skills_command {
+            None => SkillsOutcome::NotConfigured,
+            Some(program) => {
+                on_progress(Progress::Skills);
+                index_skills(&mut connection, program, cancel)?
+            }
+        })
+    } else {
+        None
+    };
+    Ok(SyncReport {
+        yaml,
+        skills,
+        duration_ms: started.elapsed().as_millis(),
+    })
+}
+
+/// The Skills source: runs the command and, when its output is a valid Skills set, replaces the
+/// Skills rows with its records' entries, in one transaction.
+fn index_skills(connection: &mut Connection, program: &Path, cancel: &AtomicBool) -> Result<SkillsOutcome, SyncError> {
+    let output = match run_command(program, &SKILLS_ARGS, cancel) {
+        Ok(output) => output,
+        Err(CommandError::Cancelled) => return Err(SyncError::Cancelled),
+        Err(error) => {
+            return Ok(SkillsOutcome::Failed {
+                reason: error.to_string(),
+                warnings: Vec::new(),
+            });
+        }
+    };
+    let mut warnings: Vec<String> = output
+        .stderr
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_owned)
+        .collect();
+    if !output.status.success() {
+        return Ok(SkillsOutcome::Failed {
+            reason: format!("{} exited with {}", program.display(), output.status),
+            warnings,
+        });
+    }
+    let records = match parse_skills(&output.stdout) {
+        Ok(records) => records,
+        Err(reason) => return Ok(SkillsOutcome::Failed { reason, warnings }),
+    };
+    let transaction = connection.transaction()?;
+    clear_source(&transaction, SourceKind::Skills)?;
+    {
+        let mut entries = transaction.prepare(INSERT_ENTRY)?;
+        let mut tags = transaction.prepare(INSERT_TAG)?;
+        for record in &records {
+            if cancel.load(Ordering::Relaxed) {
+                return Err(SyncError::Cancelled);
+            }
+            let (entry, warning) = skill_entry(record);
+            warnings.extend(warning);
+            insert_entry(&mut entries, &mut tags, &entry, SourceKind::Skills)?;
+        }
+    }
+    if cancel.load(Ordering::Relaxed) {
+        return Err(SyncError::Cancelled);
+    }
+    transaction.commit()?;
+    Ok(SkillsOutcome::Indexed {
+        entries: records.len(),
+        warnings,
+    })
 }
 
 /// Opens the index with foreign keys on.
@@ -403,5 +588,177 @@ mod tests {
         sync_knowledge_base(root.path(), &path, &AtomicBool::new(false), |_| {}).unwrap();
         assert_eq!((count_source(&path, "yaml"), count_source(&path, "skills")), (2, 1));
         assert_eq!(count(&path, "entries_fts('\"two\"*')"), 1);
+    }
+
+    use std::os::unix::fs::PermissionsExt as _;
+    use std::path::PathBuf;
+
+    use crate::selection::Selection;
+
+    /// An executable that prints `stdout`, then `stderr` to stderr, and exits with `code`.
+    fn fake_skills(dir: &Path, stdout: &str, stderr: &str, code: i32) -> PathBuf {
+        let path = dir.join(format!("skills-{code}-{}", stdout.len()));
+        fs::write(
+            &path,
+            format!("#!/bin/sh\ncat <<'JSON'\n{stdout}\nJSON\nprintf '%s' '{stderr}' >&2\nexit {code}\n"),
+        )
+        .unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        path
+    }
+
+    /// The JSON of Skills named `names`, each with a `SKILL.md` under `dir`.
+    fn skills_json(dir: &Path, names: &[&str]) -> String {
+        let records: Vec<String> = names
+            .iter()
+            .map(|name| {
+                let skill = dir.join(name);
+                fs::create_dir_all(&skill).unwrap();
+                fs::write(
+                    skill.join("SKILL.md"),
+                    format!("---\ndescription: Drives {name} agents\n---\nBody\n"),
+                )
+                .unwrap();
+                format!(r#"{{"name":"{name}","path":"{}"}}"#, skill.display())
+            })
+            .collect();
+        format!("[{}]", records.join(","))
+    }
+
+    fn run(selection: Selection, sources: &Path, skills: Option<&Path>, db: &Path, cancel: bool) -> SyncReport {
+        try_run(selection, sources, skills, db, cancel).unwrap()
+    }
+
+    fn try_run(
+        selection: Selection,
+        sources: &Path,
+        skills: Option<&Path>,
+        db: &Path,
+        cancel: bool,
+    ) -> Result<SyncReport, SyncError> {
+        let request = SyncRequest {
+            selection,
+            sources_dir: sources,
+            skills_command: skills,
+        };
+        sync_sources(&request, db, &AtomicBool::new(cancel), |_| {})
+    }
+
+    #[test]
+    fn refreshes_each_source_without_touching_the_other() {
+        let root = sources(&[("a.yml", "notes:\n  one: {}\n")]);
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let skills = fake_skills(home.path(), &skills_json(home.path(), &["tdd", "act"]), "", 0);
+
+        run(Selection::Yaml, root.path(), Some(&skills), &db, false);
+        let report = run(Selection::Skills, root.path(), Some(&skills), &db, false);
+        assert!(report.yaml.is_none());
+        assert_eq!(
+            report.skills,
+            Some(SkillsOutcome::Indexed {
+                entries: 2,
+                warnings: Vec::new()
+            })
+        );
+        assert_eq!((count_source(&db, "yaml"), count_source(&db, "skills")), (1, 2));
+        assert_eq!(
+            count(&db, "entries_fts('\"agents\"*')"),
+            2,
+            "descriptions are searchable"
+        );
+
+        fs::write(root.path().join("a.yml"), "notes:\n  one: {}\n  two: {}\n").unwrap();
+        run(Selection::Yaml, root.path(), Some(&skills), &db, false);
+        assert_eq!((count_source(&db, "yaml"), count_source(&db, "skills")), (2, 2));
+    }
+
+    #[test]
+    fn keeps_the_previous_skills_when_the_command_fails() {
+        let root = sources(&[]);
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let good = fake_skills(home.path(), &skills_json(home.path(), &["tdd"]), "", 0);
+        run(Selection::Skills, root.path(), Some(&good), &db, false);
+
+        let failing = [
+            fake_skills(home.path(), "[]", "", 1),
+            fake_skills(home.path(), "not json", "", 0),
+            fake_skills(
+                home.path(),
+                r#"[{"name":"a","path":"/a"},{"name":"a","path":"/b"}]"#,
+                "",
+                0,
+            ),
+        ];
+        for command in &failing {
+            let report = run(Selection::Skills, root.path(), Some(command), &db, false);
+            assert!(
+                matches!(report.skills, Some(SkillsOutcome::Failed { .. })),
+                "{command:?}"
+            );
+            assert!(report.has_failure());
+            assert_eq!(count_source(&db, "skills"), 1, "{command:?}");
+        }
+        let missing = home.path().join("no-such-skills");
+        let report = run(Selection::Skills, root.path(), Some(&missing), &db, false);
+        assert!(matches!(report.skills, Some(SkillsOutcome::Failed { .. })));
+        assert_eq!(count_source(&db, "skills"), 1);
+    }
+
+    #[test]
+    fn reports_stderr_lines_as_warnings() {
+        let root = sources(&[]);
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let skills = fake_skills(home.path(), "[]", "⚠ Skipped x\n\n", 0);
+        let report = run(Selection::Skills, root.path(), Some(&skills), &db, false);
+        assert_eq!(
+            report.skills,
+            Some(SkillsOutcome::Indexed {
+                entries: 0,
+                warnings: vec!["⚠ Skipped x".into()]
+            })
+        );
+        assert!(!report.has_failure());
+    }
+
+    #[test]
+    fn reports_skills_not_configured_without_failing() {
+        let root = sources(&[("a.yml", "notes:\n  one: {}\n")]);
+        let db = tempfile::tempdir().unwrap();
+        let report = run(Selection::All, root.path(), None, &db.path().join("kb.db"), false);
+        assert_eq!(report.skills, Some(SkillsOutcome::NotConfigured));
+        assert!(!report.has_failure());
+        assert_eq!(report.total_indexed(), 1);
+    }
+
+    #[test]
+    fn keeps_fresh_yaml_when_skills_fail_or_stop() {
+        let root = sources(&[("a.yml", "notes:\n  one: {}\n")]);
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let failing = fake_skills(home.path(), "[]", "", 1);
+        run(Selection::All, root.path(), Some(&failing), &db, false);
+        assert_eq!(count_source(&db, "yaml"), 1);
+
+        let good = fake_skills(home.path(), &skills_json(home.path(), &["tdd"]), "", 0);
+        run(Selection::Skills, root.path(), Some(&good), &db, false);
+        let result = try_run(Selection::Skills, root.path(), Some(&good), &db, true);
+        assert!(matches!(result, Err(SyncError::Cancelled)));
+        assert_eq!(count_source(&db, "skills"), 1, "a cancelled source commits nothing");
+    }
+
+    #[test]
+    fn runs_skills_when_the_sources_directory_is_missing() {
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let skills = fake_skills(home.path(), &skills_json(home.path(), &["tdd"]), "", 0);
+        let report = run(Selection::All, &home.path().join("nowhere"), Some(&skills), &db, false);
+        assert!(
+            matches!(&report.yaml, Some(YamlOutcome::Failed(reason)) if reason.contains("cannot read the sources directory"))
+        );
+        assert_eq!(count_source(&db, "skills"), 1);
+        assert!(report.has_failure());
     }
 }
