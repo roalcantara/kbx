@@ -242,7 +242,7 @@ impl EntryList {
                 d.colors.named(&kind.tint).unwrap_or(d.colors.faint),
                 kind.label.as_str(),
                 kind.mono_title,
-                kind.hero == Hero::Media,
+                kind.hero == Some(Hero::Media),
             )
         });
         let lead = match media.then(|| favicon_url(&entry.primary_content)).flatten() {

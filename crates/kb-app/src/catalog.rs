@@ -11,7 +11,7 @@ use serde::Deserialize;
 const CATALOG: &str = include_str!("../assets/catalog.toml");
 
 /// The actions kb knows how to run; a catalog names exactly these.
-pub const ACTION_IDS: [&str; 20] = [
+pub const ACTION_IDS: [&str; 22] = [
     "details",
     "open",
     "copy",
@@ -21,6 +21,8 @@ pub const ACTION_IDS: [&str; 20] = [
     "copy-path",
     "edit",
     "refresh",
+    "refresh-yaml",
+    "refresh-skills",
     "configure",
     "actions",
     "filter",
@@ -69,8 +71,9 @@ pub struct EntryType {
     pub icon: String,
     /// A colour token: the tile's accent.
     pub tint: String,
-    /// What the entry view's hero shows.
-    pub hero: Hero,
+    /// What the entry view's hero shows; none when absent.
+    #[serde(default)]
+    pub hero: Option<Hero>,
     /// Titles in `JetBrains` Mono.
     #[serde(default)]
     pub mono_title: bool,
@@ -156,6 +159,8 @@ pub struct Panel {
     pub links: String,
     /// The More… row.
     pub more: String,
+    /// The Refresh More… row, after Refresh in More….
+    pub refresh_more: String,
     /// The search field's placeholder.
     pub search: String,
     /// More…'s first section.
@@ -172,8 +177,9 @@ pub struct Panel {
     pub more_copy: Vec<String>,
     /// More…'s administration rows.
     pub more_admin: Vec<String>,
+    /// Refresh More…'s rows.
+    pub more_refresh: Vec<String>,
 }
-
 /// The words kb shows; `{name}` is filled in with [`fill`].
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -197,6 +203,7 @@ pub struct Messages {
     pub no_index: String,
     pub refreshing_title: String,
     pub refreshing_progress: String,
+    pub running_skills: String,
     pub report_summary: String,
     pub report_failed: String,
     pub report_failed_chip: String,
@@ -204,6 +211,12 @@ pub struct Messages {
     pub report_indexed: String,
     pub report_skipped_entries: String,
     pub report_empty_file: String,
+    pub report_yaml_section: String,
+    pub report_skills_section: String,
+    pub report_source_failed: String,
+    pub report_not_configured: String,
+    pub report_warning_chip: String,
+    pub report_not_configured_chip: String,
     pub stopped_title: String,
     pub stopped: String,
     pub failed_title: String,
@@ -213,8 +226,8 @@ pub struct Messages {
     pub links_label: String,
     pub more_origin: String,
     pub links_origin: String,
+    pub refresh_origin: String,
 }
-
 /// The catalog.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -420,6 +433,7 @@ impl Catalog {
             .iter()
             .chain(&self.panel.more_copy)
             .chain(&self.panel.more_admin)
+            .chain(&self.panel.more_refresh)
         {
             if !self.actions.contains_key(id) {
                 return invalid(format!("panel: {id} is not an action"));
@@ -529,7 +543,7 @@ mod tests {
         let catalog = Catalog::default();
         assert_eq!(
             catalog.types.keys().map(String::as_str).collect::<Vec<_>>(),
-            ["bookmarks", "cheats", "commands", "tasks"]
+            ["bookmarks", "cheats", "commands", "skills", "tasks"]
         );
         assert_eq!(catalog.types["bookmarks"].secondary.as_deref(), Some("copy"));
         assert_eq!(catalog.screens.list["shift-cmd-enter"], ENTRY_SECONDARY);
@@ -658,5 +672,23 @@ mod tests {
             ["sources_path"],
             "only the location is live"
         );
+    }
+
+    #[test]
+    fn ships_skills_without_a_hero_and_the_scoped_refreshes() {
+        let catalog = Catalog::default();
+        let skills = catalog.entry_type("skills").unwrap();
+        assert_eq!(
+            (skills.label.as_str(), skills.icon.as_str(), skills.tint.as_str()),
+            ("Skills", "notebook-text", "yellow")
+        );
+        assert_eq!(
+            (skills.hero, skills.primary.as_str(), skills.secondary.as_deref()),
+            (None, "copy", None)
+        );
+        assert_eq!(catalog.label("refresh-yaml"), "Refresh YAML");
+        assert_eq!(catalog.label("refresh-skills"), "Refresh Skills");
+        assert_eq!(catalog.panel.refresh_more, "Refresh More…");
+        assert_eq!(catalog.panel.more_refresh, ["refresh-yaml", "refresh-skills"]);
     }
 }

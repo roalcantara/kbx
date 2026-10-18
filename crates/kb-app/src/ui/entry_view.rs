@@ -51,7 +51,7 @@ pub enum HeroKind {
 /// The hero for `entry` of `kind`.
 #[must_use]
 pub fn hero_of(entry: &Entry, kind: Option<&EntryType>) -> HeroKind {
-    match kind.map(|k| k.hero) {
+    match kind.and_then(|k| k.hero) {
         Some(Hero::Command) => HeroKind::Card(entry.primary_content.clone()),
         Some(Hero::Snippet) => snippet(entry).map_or(HeroKind::None, HeroKind::Card),
         Some(Hero::Media) => match kb_domain::markdown::youtube_video_id(&entry.primary_content) {
@@ -161,7 +161,7 @@ impl RenderOnce for EntryView {
 
         let lead = match kind
             .as_ref()
-            .filter(|k| k.hero == Hero::Media)
+            .filter(|k| k.hero == Some(Hero::Media))
             .and_then(|_| favicon_url(&self.entry.primary_content))
         {
             Some(url) => favicon(url, icon.clone(), tint, TileSize::Small).into_any_element(),
