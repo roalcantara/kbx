@@ -29,7 +29,22 @@ fn sample_config(home: &Path) -> Config {
         .unwrap();
     let preferences = home.join(".config/kb/config.toml");
     fs::create_dir_all(preferences.parent().unwrap()).unwrap();
-    fs::write(&preferences, format!("sources_path = \"{}\"\n", sample.display())).unwrap();
+    // A Skills command that lists no skills, so a refresh never runs the machine's own `skills`.
+    let skills = home.join("skills");
+    fs::write(&skills, "#!/bin/sh\necho '[]'\n").unwrap();
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        fs::set_permissions(&skills, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    fs::write(
+        &preferences,
+        format!(
+            "sources_path = \"{}\"\nskills_command = \"{}\"\n",
+            sample.display(),
+            skills.display()
+        ),
+    )
+    .unwrap();
     let config = Config::load(home, &home.join("data")).unwrap();
     kb_domain::sync::sync_knowledge_base(config.sources_dir(), config.database(), &AtomicBool::new(false), |_| {})
         .unwrap();
@@ -343,6 +358,22 @@ fn opens_refresh_more_and_returns_to_more_with_escape(cx: &mut TestAppContext) {
     assert_eq!(
         cx.read(|cx| view.read(cx).panel_labels(cx))[1],
         ["Edit", "Refresh", "Refresh More…", "Configure"]
+    );
+}
+
+#[gpui_kit::test]
+fn refreshes_skills_alone_from_the_action_panel(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    type_text(cx, window, "Refresh Skills");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).refresh_selection(cx)),
+        Some(kb_domain::selection::Selection::Skills)
     );
 }
 

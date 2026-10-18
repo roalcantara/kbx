@@ -13,6 +13,7 @@ use gpui_kit::{
 };
 use kb_domain::entry::Entry;
 use kb_domain::search::FilterState;
+use kb_domain::selection::Selection;
 use kb_domain::sync::open_readonly;
 
 mod footer;
@@ -28,7 +29,7 @@ use crate::keys::{
     RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter,
     ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::sync_view::{Phase, SyncFinished, SyncView};
+use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pixels, pt};
@@ -336,6 +337,8 @@ impl SearchView {
             ("open", Some(url)) => cx.open_url(&url),
             ("copy", Some(text)) => self.copy(text, window, cx),
             ("refresh", _) => self.rebuild(&Rebuild, window, cx),
+            ("refresh-yaml", _) => self.refresh(Selection::Yaml, window, cx),
+            ("refresh-skills", _) => self.refresh(Selection::Skills, window, cx),
             ("configure", _) => self.open_preferences(&OpenPreferences, window, cx),
             ("resize", _) => self.toggle_window_size(&ToggleWindowSize, window, cx),
             ("edit", _) => self.open_source_file(&OpenSourceFile, window, cx),
@@ -347,8 +350,12 @@ impl SearchView {
             }
             ("back", _) => self.back(&Back, window, cx),
             ("retry", _) => {
-                // A finished or failed sync lets `rebuild` start a new one.
-                self.rebuild(&Rebuild, window, cx);
+                // A finished or failed refresh lets `refresh` start a new one, of the same sources.
+                let selection = match &self.screen {
+                    Screen::Rebuild(sync) => sync.read(cx).selection(),
+                    _ => Selection::All,
+                };
+                self.refresh(selection, window, cx);
             }
             _ => {}
         }
@@ -528,18 +535,25 @@ impl SearchView {
     }
 
     fn rebuild(&mut self, _: &Rebuild, window: &mut Window, cx: &mut Context<Self>) {
+        self.refresh(Selection::All, window, cx);
+    }
+
+    /// Refreshes `selection`'s sources on the refresh screen, unless a refresh is running.
+    fn refresh(&mut self, selection: Selection, window: &mut Window, cx: &mut Context<Self>) {
         if matches!(&self.screen, Screen::Rebuild(sync) if sync.read(cx).is_running()) {
             return;
         }
-        let (sources, database) = (
-            self.config.sources_dir().to_path_buf(),
-            self.config.database().to_path_buf(),
-        );
+        let job = SyncJob {
+            selection,
+            sources: self.config.sources_dir().to_path_buf(),
+            skills_command: self.config.skills_command(),
+            database: self.config.database().to_path_buf(),
+        };
         let catalog = self.catalog.clone();
-        let sync = cx.new(|cx| SyncView::start(sources, database, catalog, cx));
+        let sync = cx.new(|cx| SyncView::start(job, catalog, cx));
         let subscription = cx.subscribe_in(&sync, window, |this, _, finished: &SyncFinished, window, cx| {
             window.push_notification(finished.message.clone(), cx);
-            if finished.rebuilt {
+            if finished.changed {
                 let connection = open_readonly(this.config.database()).ok();
                 this.list.update(cx, |list, cx| {
                     list.delegate_mut().set_connection(connection);
@@ -551,6 +565,15 @@ impl SearchView {
         self.screen = Screen::Rebuild(sync);
         self.focus.focus(window, cx);
         cx.notify();
+    }
+
+    /// The sources of the refresh on screen, for tests.
+    #[must_use]
+    pub fn refresh_selection(&self, cx: &App) -> Option<Selection> {
+        match &self.screen {
+            Screen::Rebuild(sync) => Some(sync.read(cx).selection()),
+            _ => None,
+        }
     }
 
     fn back(&mut self, _: &Back, window: &mut Window, cx: &mut Context<Self>) {

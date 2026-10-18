@@ -16,9 +16,10 @@ use gpui_kit::{
     SharedString, StatefulInteractiveElement as _, Styled as _, Task, Window, div,
 };
 use kb_domain::report::{FileIssue, FileReport};
-use kb_domain::sync::{SyncError, SyncSummary, sync_knowledge_base};
+use kb_domain::selection::Selection;
+use kb_domain::sync::{Progress, SkillsOutcome, SyncError, SyncReport, SyncRequest, YamlOutcome, sync_sources};
 
-use crate::catalog::{Catalog, fill};
+use crate::catalog::{Catalog, Messages, fill};
 use crate::ui::chip::pill;
 use crate::ui::design::{TextRoleExt as _, design, pt};
 use crate::ui::empty_view::{EmptyView, Sentence, progress_bar};
@@ -26,6 +27,18 @@ use crate::ui::keycap::ChipState;
 use crate::ui::row::Row;
 use crate::ui::tile::{TileSize, tile};
 
+/// What a refresh runs.
+#[derive(Debug, Clone)]
+pub struct SyncJob {
+    /// The sources to refresh.
+    pub selection: Selection,
+    /// The YAML sources directory.
+    pub sources: PathBuf,
+    /// The Skills command; `None` when it is not configured.
+    pub skills_command: Option<PathBuf>,
+    /// The index.
+    pub database: PathBuf,
+}
 /// Where a sync stands.
 #[derive(Debug)]
 pub enum SyncStatus {
@@ -38,8 +51,10 @@ pub enum SyncStatus {
         /// The file just processed.
         current: String,
     },
-    /// The index was rebuilt.
-    Done(SyncSummary),
+    /// The Skills command is running.
+    RunningSkills,
+    /// The selected sources were refreshed.
+    Done(SyncReport),
     /// The previous index is unchanged.
     Cancelled,
     /// The sync stopped; the previous index is unchanged.
@@ -49,9 +64,8 @@ pub enum SyncStatus {
 /// Emitted once, when a sync stops for any reason.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SyncFinished {
-    /// Whether the index was rebuilt.
-    pub rebuilt: bool,
-    /// What to tell the user: the summary line, or why it stopped.
+    /// Whether the index may have changed: it finished, or it stopped after committing a source.
+    pub changed: bool,
     pub message: String,
 }
 
@@ -61,16 +75,20 @@ pub struct SyncView {
     status: SyncStatus,
     catalog: Rc<Catalog>,
     cancel: Arc<AtomicBool>,
+    job: SyncJob,
     _run: Task<()>,
 }
 
 impl EventEmitter<SyncFinished> for SyncView {}
 
 /// One progress report, owned, sent from the sync thread.
-struct SyncTick {
-    files_scanned: usize,
-    files_total: usize,
-    current: String,
+enum SyncTick {
+    File {
+        files_scanned: usize,
+        files_total: usize,
+        current: String,
+    },
+    Skills,
 }
 
 /// Which refresh screen shows (D16).
@@ -95,6 +113,10 @@ pub enum ReportKind {
     Skipped,
     /// Indexed in full.
     Indexed,
+    /// Something the Skills command or a Skill's `SKILL.md` warned about.
+    Warning,
+    /// The Skills command is not configured.
+    NotConfigured,
 }
 
 /// One report row.
@@ -138,52 +160,130 @@ pub fn report_rows(files: &[FileReport]) -> Vec<ReportRow> {
         ReportKind::Failed => 0,
         ReportKind::Skipped => 1,
         ReportKind::Indexed => 2,
+        ReportKind::Warning => 3,
+        ReportKind::NotConfigured => 4,
     });
     rows
 }
 
+/// One source's rows in the report, under its label.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReportSection {
+    /// `YAML` or `Skills`.
+    pub label: String,
+    /// Its rows.
+    pub rows: Vec<ReportRow>,
+}
+
+/// The report's sections, one per refreshed source (spec, "Refresh report and progress"):
+/// YAML's files, or one failed row naming `sources_dir`; Skills' outcome row, then its warnings.
+#[must_use]
+pub fn report_sections(report: &SyncReport, sources_dir: &str, m: &Messages) -> Vec<ReportSection> {
+    let mut sections = Vec::new();
+    if let Some(yaml) = &report.yaml {
+        let rows = match yaml {
+            YamlOutcome::Indexed(summary) => report_rows(&summary.files),
+            YamlOutcome::Failed(reason) => vec![ReportRow {
+                path: sources_dir.to_owned(),
+                kind: ReportKind::Failed,
+                entries: 0,
+                detail: fill(&m.report_source_failed, &[("error", reason)]),
+            }],
+        };
+        sections.push(ReportSection {
+            label: m.report_yaml_section.clone(),
+            rows,
+        });
+    }
+    if let Some(skills) = &report.skills {
+        let row = |kind, entries, detail: String| ReportRow {
+            path: kb_domain::skills::SKILLS_TYPE.to_owned(),
+            kind,
+            entries,
+            detail,
+        };
+        let (outcome, warnings): (ReportRow, &[String]) = match skills {
+            SkillsOutcome::NotConfigured => (row(ReportKind::NotConfigured, 0, m.report_not_configured.clone()), &[]),
+            SkillsOutcome::Indexed { entries, warnings } => {
+                (row(ReportKind::Indexed, *entries, String::new()), warnings.as_slice())
+            }
+            SkillsOutcome::Failed { reason, warnings } => (
+                row(
+                    ReportKind::Failed,
+                    0,
+                    fill(&m.report_source_failed, &[("error", reason)]),
+                ),
+                warnings.as_slice(),
+            ),
+        };
+        let mut rows = vec![outcome];
+        rows.extend(warnings.iter().map(|w| row(ReportKind::Warning, 0, w.clone())));
+        sections.push(ReportSection {
+            label: m.report_skills_section.clone(),
+            rows,
+        });
+    }
+    sections
+}
+
 impl SyncView {
-    /// Starts rebuilding `database` from `sources`.
-    pub fn start(sources: PathBuf, database: PathBuf, catalog: Rc<Catalog>, cx: &mut Context<Self>) -> Self {
+    /// Starts refreshing `job`'s sources.
+    pub fn start(job: SyncJob, catalog: Rc<Catalog>, cx: &mut Context<Self>) -> Self {
         let cancel = Arc::new(AtomicBool::new(false));
         let flag = cancel.clone();
+        let run_job = job.clone();
         let run = cx.spawn(async move |view, cx| {
             let (sender, mut progress) = mpsc::unbounded::<SyncTick>();
-            let job = cx.background_spawn(async move {
-                sync_knowledge_base(&sources, &database, &flag, |p| {
-                    let _ = sender.unbounded_send(SyncTick {
-                        files_scanned: p.files_scanned,
-                        files_total: p.files_total,
-                        current: p.file.rel_path.clone(),
+            let task = cx.background_spawn(async move {
+                let request = SyncRequest {
+                    selection: run_job.selection,
+                    sources_dir: &run_job.sources,
+                    skills_command: run_job.skills_command.as_deref(),
+                };
+                sync_sources(&request, &run_job.database, &flag, |p| {
+                    let _ = sender.unbounded_send(match p {
+                        Progress::Yaml(p) => SyncTick::File {
+                            files_scanned: p.files_scanned,
+                            files_total: p.files_total,
+                            current: p.file.rel_path.clone(),
+                        },
+                        Progress::Skills => SyncTick::Skills,
                     });
                 })
             });
-            while let Some(p) = progress.next().await {
+            while let Some(tick) = progress.next().await {
                 let _ = view.update(cx, |view, cx| {
-                    view.status = SyncStatus::Running {
-                        files_scanned: p.files_scanned,
-                        files_total: p.files_total,
-                        current: p.current,
+                    view.status = match tick {
+                        SyncTick::File {
+                            files_scanned,
+                            files_total,
+                            current,
+                        } => SyncStatus::Running {
+                            files_scanned,
+                            files_total,
+                            current,
+                        },
+                        SyncTick::Skills => SyncStatus::RunningSkills,
                     };
                     cx.notify();
                 });
             }
-            let outcome = job.await;
+            let outcome = task.await;
             let _ = view.update(cx, |view, cx| {
-                let rebuilt = outcome.is_ok();
+                let changed = matches!(outcome, Ok(_) | Err(SyncError::Cancelled));
                 view.status = match outcome {
-                    Ok(summary) => SyncStatus::Done(summary),
+                    Ok(report) => SyncStatus::Done(report),
                     Err(SyncError::Cancelled) => SyncStatus::Cancelled,
                     Err(error) => SyncStatus::Failed(error.to_string()),
                 };
                 let m = &view.catalog.messages;
                 let message = match &view.status {
-                    SyncStatus::Done(summary) => summary_line(summary, m),
+                    SyncStatus::Done(report) => summary_line(report, m),
                     SyncStatus::Cancelled => m.stopped_title.clone(),
                     SyncStatus::Failed(error) => fill(&m.failed, &[("error", error)]),
-                    SyncStatus::Running { .. } => String::new(),
+                    SyncStatus::Running { .. } | SyncStatus::RunningSkills => String::new(),
                 };
-                cx.emit(SyncFinished { rebuilt, message });
+                cx.emit(SyncFinished { changed, message });
                 cx.notify();
             });
         });
@@ -196,21 +296,28 @@ impl SyncView {
             status,
             catalog,
             cancel,
+            job,
             _run: run,
         }
+    }
+
+    /// The sources this refresh runs: Retry runs them again.
+    #[must_use]
+    pub fn selection(&self) -> Selection {
+        self.job.selection
     }
 
     /// Whether the sync is still running.
     #[must_use]
     pub fn is_running(&self) -> bool {
-        matches!(self.status, SyncStatus::Running { .. })
+        matches!(self.status, SyncStatus::Running { .. } | SyncStatus::RunningSkills)
     }
 
     /// The screen to show.
     #[must_use]
     pub fn phase(&self) -> Phase {
         match self.status {
-            SyncStatus::Running { .. } => Phase::Running,
+            SyncStatus::Running { .. } | SyncStatus::RunningSkills => Phase::Running,
             SyncStatus::Done(_) => Phase::Report,
             SyncStatus::Cancelled => Phase::Stopped,
             SyncStatus::Failed(_) => Phase::Failed,
@@ -235,22 +342,25 @@ fn issues_line(file: &FileReport) -> String {
     skipped.join(", ")
 }
 
-/// Summarizes a sync from the catalog's message template, with failed and skipped file counts.
+/// Summarizes a sync from the catalog's message template: entries from every source, then the
+/// failed files and sources, then the files with skipped entries.
 #[must_use]
-pub fn summary_line(summary: &SyncSummary, messages: &crate::catalog::Messages) -> String {
-    let rows = report_rows(&summary.files);
+pub fn summary_line(report: &SyncReport, messages: &Messages) -> String {
+    let rows: Vec<ReportRow> = report_sections(report, "", messages)
+        .into_iter()
+        .flat_map(|s| s.rows)
+        .collect();
     let failed = rows.iter().filter(|r| r.kind == ReportKind::Failed).count();
     let skipped = rows.iter().filter(|r| r.kind == ReportKind::Skipped).count();
     let mut line = fill(
         &messages.report_summary,
         &[
-            ("entries", &thousands(summary.total_indexed)),
-            ("files", &summary.files_scanned.to_string()),
+            ("entries", &thousands(report.total_indexed())),
             (
                 "seconds",
                 &format!(
                     "{:.1}",
-                    Duration::from_millis(u64::try_from(summary.duration_ms).unwrap_or(u64::MAX)).as_secs_f64()
+                    Duration::from_millis(u64::try_from(report.duration_ms).unwrap_or(u64::MAX)).as_secs_f64()
                 ),
             ),
         ],
@@ -317,6 +427,13 @@ impl Render for SyncView {
                 .extra(progress_bar(fraction))
                 .into_any_element()
             }
+            SyncStatus::RunningSkills => EmptyView::new(
+                "refresh-cw",
+                c.faint,
+                m.refreshing_title.clone(),
+                Sentence::of(&m.running_skills, ""),
+            )
+            .into_any_element(),
             SyncStatus::Cancelled => EmptyView::new(
                 "circle-stop",
                 c.yellow,
@@ -329,55 +446,95 @@ impl Render for SyncView {
                 EmptyView::new("circle-alert", c.red, m.failed_title.clone(), Sentence::of(&text, ""))
                     .into_any_element()
             }
-            SyncStatus::Done(summary) => {
-                let rows = report_rows(&summary.files);
-                let line = summary_line(summary, m);
-                let s = &d.spacing.empty;
-                v_flex()
-                    .id("report")
-                    .size_full()
-                    .overflow_y_scroll()
-                    .px(pt(d.spacing.list.pad))
-                    .child(
-                        div()
-                            .px(pt(s.summary_pad_x))
-                            .pt(pt(s.summary_pad_top))
-                            .pb(pt(s.summary_pad_bottom))
-                            .text_role(&d.typography.roles.description)
-                            .text_color(c.muted)
-                            .child(line),
-                    )
-                    .children(rows.into_iter().enumerate().map(|(ix, row)| {
-                        let (icon, tint, chip, detail) = match row.kind {
-                            ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
-                            ReportKind::Skipped => (
-                                "triangle-alert",
-                                c.yellow,
-                                row.entries.to_string(),
-                                // A file with no entries at all has no skipped entries to name.
-                                if row.detail.is_empty() {
-                                    m.report_empty_file.clone()
-                                } else {
-                                    fill(&m.report_skipped_entries, &[("entries", &row.detail)])
-                                },
-                            ),
-                            ReportKind::Indexed => (
-                                "circle-check",
-                                c.green,
-                                row.entries.to_string(),
-                                m.report_indexed.clone(),
-                            ),
-                        };
-                        Row::new(SharedString::from(format!("report-{ix}")), row.path.clone())
-                            .lead(tile(icon, tint, TileSize::Row))
-                            .mono(true)
-                            .description(Some(detail))
-                            .trailing(vec![pill(chip, ChipState::of(ix == 0)).into_any_element()])
-                            .selected(ix == 0)
-                    }))
-                    .into_any_element()
+            SyncStatus::Done(report) => self.render_report(report, d, c, m).into_any_element(),
+        }
+    }
+}
+
+impl SyncView {
+    fn render_report(
+        &self,
+        report: &SyncReport,
+        d: &crate::ui::design::Design,
+        c: &crate::ui::design::Colors,
+        m: &Messages,
+    ) -> impl IntoElement {
+        let sources = self.job.sources.display().to_string();
+        let sections = report_sections(report, &sources, m);
+        let line = summary_line(report, m);
+        let s = &d.spacing.empty;
+        let mut ix = 0;
+        let mut children: Vec<gpui_kit::AnyElement> = Vec::new();
+        for section in sections {
+            children.push(
+                div()
+                    .px(pt(s.summary_pad_x))
+                    .pt(pt(s.summary_pad_top))
+                    .text_role(&d.typography.roles.section)
+                    .text_color(c.faint)
+                    .child(section.label)
+                    .into_any_element(),
+            );
+            for row in section.rows {
+                let (icon, tint, chip, detail) = match row.kind {
+                    ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
+                    ReportKind::Skipped => (
+                        "triangle-alert",
+                        c.yellow,
+                        row.entries.to_string(),
+                        // A file with no entries at all has no skipped entries to name.
+                        if row.detail.is_empty() {
+                            m.report_empty_file.clone()
+                        } else {
+                            fill(&m.report_skipped_entries, &[("entries", &row.detail)])
+                        },
+                    ),
+                    ReportKind::Indexed => (
+                        "circle-check",
+                        c.green,
+                        row.entries.to_string(),
+                        m.report_indexed.clone(),
+                    ),
+                    ReportKind::Warning => (
+                        "triangle-alert",
+                        c.yellow,
+                        m.report_warning_chip.clone(),
+                        row.detail.clone(),
+                    ),
+                    ReportKind::NotConfigured => (
+                        "circle",
+                        c.faint,
+                        m.report_not_configured_chip.clone(),
+                        row.detail.clone(),
+                    ),
+                };
+                children.push(
+                    Row::new(SharedString::from(format!("report-{ix}")), row.path.clone())
+                        .lead(tile(icon, tint, TileSize::Row))
+                        .mono(true)
+                        .description(Some(detail))
+                        .trailing(vec![pill(chip, ChipState::of(ix == 0)).into_any_element()])
+                        .selected(ix == 0)
+                        .into_any_element(),
+                );
+                ix += 1;
             }
         }
+        v_flex()
+            .id("report")
+            .size_full()
+            .overflow_y_scroll()
+            .px(pt(d.spacing.list.pad))
+            .child(
+                div()
+                    .px(pt(s.summary_pad_x))
+                    .pt(pt(s.summary_pad_top))
+                    .pb(pt(s.summary_pad_bottom))
+                    .text_role(&d.typography.roles.description)
+                    .text_color(c.muted)
+                    .child(line),
+            )
+            .children(children)
     }
 }
 
@@ -393,21 +550,91 @@ mod tests {
         );
     }
 
-    #[test]
-    fn summarizes_a_sync() {
-        let summary = SyncSummary {
-            total_indexed: 4233,
-            files_scanned: 68,
-            files_failed: 1,
-            duration_ms: 812,
+    use kb_domain::sync::SyncSummary;
+
+    fn yaml_summary(files: Vec<FileReport>, total: usize) -> SyncSummary {
+        SyncSummary {
+            total_indexed: total,
+            files_scanned: files.len(),
+            files_failed: files.iter().filter(|f| f.error.is_some()).count(),
+            duration_ms: 0,
             errors: Vec::new(),
-            files: vec![file("errors/x.yml", 0, true, false)],
+            files,
+        }
+    }
+
+    #[test]
+    fn summarizes_every_source() {
+        let report = SyncReport {
+            yaml: Some(YamlOutcome::Indexed(yaml_summary(
+                vec![file("errors/x.yml", 0, true, false)],
+                4233,
+            ))),
+            skills: Some(SkillsOutcome::Indexed {
+                entries: 438,
+                warnings: Vec::new(),
+            }),
+            duration_ms: 812,
         };
         let catalog = Catalog::default();
         assert_eq!(
-            summary_line(&summary, &catalog.messages),
-            "4,233 entries from 68 files in 0.8 s · 1 failed"
+            summary_line(&report, &catalog.messages),
+            "4,671 entries in 0.8 s · 1 failed"
         );
+    }
+
+    #[test]
+    fn reports_skills_in_a_section_of_their_own() {
+        let m = Catalog::default().messages;
+        let report = SyncReport {
+            yaml: None,
+            skills: Some(SkillsOutcome::Failed {
+                reason: "skills exited with exit status: 1".into(),
+                warnings: vec!["⚠ Skipped recon".into()],
+            }),
+            duration_ms: 0,
+        };
+        let sections = report_sections(&report, "/s", &m);
+        assert_eq!(sections.len(), 1);
+        assert_eq!(sections[0].label, "Skills");
+        let kinds: Vec<ReportKind> = sections[0].rows.iter().map(|r| r.kind).collect();
+        assert_eq!(kinds, [ReportKind::Failed, ReportKind::Warning]);
+        assert_eq!(
+            sections[0].rows[0].detail,
+            "skills exited with exit status: 1 The previous entries are unchanged."
+        );
+        assert_eq!(sections[0].rows[1].detail, "⚠ Skipped recon");
+        assert_eq!(summary_line(&report, &m), "0 entries in 0.0 s · 1 failed");
+    }
+
+    #[test]
+    fn reports_yaml_files_then_skills_not_configured() {
+        let m = Catalog::default().messages;
+        let report = SyncReport {
+            yaml: Some(YamlOutcome::Indexed(yaml_summary(
+                vec![file("a.yml", 3, false, false)],
+                3,
+            ))),
+            skills: Some(SkillsOutcome::NotConfigured),
+            duration_ms: 0,
+        };
+        let sections = report_sections(&report, "/s", &m);
+        let labels: Vec<&str> = sections.iter().map(|s| s.label.as_str()).collect();
+        assert_eq!(labels, ["YAML", "Skills"]);
+        assert_eq!(sections[0].rows[0].path, "a.yml");
+        assert_eq!(sections[1].rows[0].kind, ReportKind::NotConfigured);
+    }
+
+    #[test]
+    fn reports_an_unreadable_sources_directory_as_a_failed_yaml_row() {
+        let m = Catalog::default().messages;
+        let report = SyncReport {
+            yaml: Some(YamlOutcome::Failed("cannot read the sources directory: gone".into())),
+            skills: None,
+            duration_ms: 0,
+        };
+        let row = &report_sections(&report, "/s", &m)[0].rows[0];
+        assert_eq!((row.path.as_str(), row.kind), ("/s", ReportKind::Failed));
     }
 
     use indexmap::IndexMap;
