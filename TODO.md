@@ -385,6 +385,11 @@
   - **Priority**: high
   - **Created**: 2026-10-14 02:53
 
+- [ ] Rkpg **-** Add Skills Entry Type and Source
+  - **Priority**: high
+  - **Created**: 2026-10-18 09:58
+  - **Tags**: feat, skills
+
 # Actors
 
 # Comments
