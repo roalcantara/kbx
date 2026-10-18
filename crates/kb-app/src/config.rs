@@ -6,10 +6,10 @@
 //! ```toml
 //! sources_path = "~/Work/knowledge"
 //! tag_images_path = "~/Pictures/kb-tags"
-//!
-//! [actions.copy]
-//! label = "Yank"
+//! skills_command = "skills"
 //! ```
+//!
+//! `skills_command` names the Skills command (spec D7); unset, kb looks for `skills` (`crate::command_path`).
 //!
 //! Without it the sources are `~/.config/kodexb/sources`, as in the Raycast extension. The index
 //! is the app's own file in its data directory; the Raycast index is never opened.
@@ -53,6 +53,7 @@ pub enum ConfigError {
 struct Preferences {
     sources_path: Option<String>,
     tag_images_path: Option<String>,
+    skills_command: Option<String>,
 }
 
 /// The top-level tables of config.toml that override the catalog (`crate::catalog`).
@@ -61,8 +62,10 @@ const CATALOG_TABLES: [&str; 5] = ["types", "actions", "screens", "panel", "mess
 /// The resolved locations, the catalog overrides and what was ignored.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
+    home: PathBuf,
     sources_dir: PathBuf,
     tag_images: PathBuf,
+    skills_command: Option<String>,
     database: PathBuf,
     preferences: PathBuf,
     overrides: toml::Table,
@@ -93,7 +96,7 @@ impl Config {
         let (mut locations, mut overrides, mut notices) = (toml::Table::new(), toml::Table::new(), Vec::new());
         for (key, value) in table {
             match key.as_str() {
-                "sources_path" | "tag_images_path" => {
+                "sources_path" | "tag_images_path" | "skills_command" => {
                     locations.insert(key, value);
                 }
                 k if CATALOG_TABLES.contains(&k) => {
@@ -134,8 +137,10 @@ impl Config {
             .tag_images_path
             .map_or_else(|| home.join(DEFAULT_TAG_IMAGES), |path| expand_home(&path, home));
         Self {
+            home: home.to_path_buf(),
             sources_dir,
             tag_images,
+            skills_command: parsed.skills_command,
             database: data_dir.join("kb-native").join("kb.db"),
             preferences: home.join(PREFERENCES),
             overrides,
@@ -155,6 +160,16 @@ impl Config {
         &self.tag_images
     }
 
+    /// The Skills command to run, found as [`crate::command_path::skills_command`] finds it;
+    /// `None` when it is not configured.
+    #[must_use]
+    pub fn skills_command(&self) -> Option<PathBuf> {
+        crate::command_path::skills_command(
+            self.skills_command.as_deref(),
+            std::env::var_os("PATH").as_deref(),
+            &self.home,
+        )
+    }
     /// The index file.
     #[must_use]
     pub fn database(&self) -> &Path {
@@ -181,7 +196,7 @@ impl Config {
 }
 
 /// `~` and `~/…` relative to `home`; any other path as written.
-fn expand_home(path: &str, home: &Path) -> PathBuf {
+pub(crate) fn expand_home(path: &str, home: &Path) -> PathBuf {
     match path.strip_prefix('~') {
         Some("") => home.to_path_buf(),
         Some(rest) if rest.starts_with('/') => home.join(&rest[1..]),
@@ -209,6 +224,14 @@ mod tests {
         let config = Config::load(home.path(), Path::new("/data")).unwrap();
         assert_eq!(config.sources_dir(), home.path().join(".config/kodexb/sources"));
         assert_eq!(config.database(), Path::new("/data/kb-native/kb.db"));
+    }
+
+    #[test]
+    fn reads_the_skills_command_and_expands_home() {
+        let home = home_with(Some("skills_command = \"~/bin/skills\"\n"));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        assert_eq!(config.skills_command(), Some(home.path().join("bin/skills")));
+        assert_eq!(config.notices(), [] as [String; 0]);
     }
 
     #[test]

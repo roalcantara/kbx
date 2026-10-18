@@ -10,6 +10,7 @@ mod actions;
 mod assets;
 pub mod catalog;
 pub mod cli;
+pub mod command_path;
 pub mod config;
 pub mod entry_list;
 mod filter;
