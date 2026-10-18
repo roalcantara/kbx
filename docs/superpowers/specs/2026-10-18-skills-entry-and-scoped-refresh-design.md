@@ -1,6 +1,6 @@
 # Skills entry and scoped refresh — design
 
-- Status: reviewed; awaiting owner approval
+- Status: approved
 - Date: 2026-10-18
 - Task: Rkpg - Add Skills Entry Type and Source
 
