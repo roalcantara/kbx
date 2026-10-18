@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS entries (
   links_json TEXT NOT NULL,
   source_file TEXT NOT NULL,
   source_rel_path TEXT NOT NULL,
-  raw_yaml TEXT NOT NULL
+  raw_yaml TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'yaml'
 );
 
 CREATE TABLE IF NOT EXISTS entry_tags (
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS entry_tags (
 CREATE INDEX IF NOT EXISTS idx_entries_type ON entries(type);
 CREATE INDEX IF NOT EXISTS idx_entries_title ON entries(title);
 CREATE INDEX IF NOT EXISTS idx_entry_tags_tag ON entry_tags(tag);
+CREATE INDEX IF NOT EXISTS idx_entries_source ON entries(source);
 -- Virtual table for full-text search with unicode61 tokenizer (ADR 0004)
 -- Note on indexed columns: entries_fts indexes notes (clean text tokens) rather than notes_markdown.
 -- Indexing raw text tokens avoids indexing markdown syntax punctuation, producing cleaner bm25 relevance scores.

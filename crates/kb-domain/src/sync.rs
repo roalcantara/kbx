@@ -13,8 +13,27 @@ use crate::report::{FileReport, file_report};
 use crate::row::entry_to_row;
 use crate::source::{SourceError, find_source_files, parse_source_file};
 
-/// The index schema, statement for statement the TypeScript engine's.
+/// The index schema.
 pub const SCHEMA_DDL: &str = include_str!("schema.sql");
+
+/// The schema version this engine writes (`PRAGMA user_version`): 1 added `entries.source`.
+const SCHEMA_VERSION: i64 = 1;
+
+/// Brings an index to [`SCHEMA_VERSION`], then applies the schema. An index at 0 that has `entries`
+/// gains `source`, every row `yaml`: no other source existed before it.
+fn initialize(connection: &Connection) -> rusqlite::Result<()> {
+    let version: i64 = connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
+    let has_entries: bool = connection.query_row(
+        "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'entries')",
+        [],
+        |row| row.get(0),
+    )?;
+    if version < 1 && has_entries {
+        connection.execute_batch("ALTER TABLE entries ADD COLUMN source TEXT NOT NULL DEFAULT 'yaml';")?;
+    }
+    connection.execute_batch(SCHEMA_DDL)?;
+    connection.pragma_update(None, "user_version", SCHEMA_VERSION)
+}
 
 /// Why a sync stopped.
 #[derive(Debug, thiserror::Error)]
@@ -86,7 +105,7 @@ pub fn open_readonly(path: &Path) -> rusqlite::Result<Connection> {
 /// Opens the index with its schema, replacing the file only when SQLite says it is corrupt: the
 /// index is derived, so a corrupt one costs nothing to discard; any other failure is returned.
 fn open_initialized(path: &Path) -> rusqlite::Result<Connection> {
-    let attempt = open_database(path).and_then(|c| c.execute_batch(SCHEMA_DDL).map(|()| c));
+    let attempt = open_database(path).and_then(|c| initialize(&c).map(|()| c));
     match attempt {
         Err(rusqlite::Error::SqliteFailure(e, _))
             if matches!(e.code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase) =>
@@ -95,7 +114,7 @@ fn open_initialized(path: &Path) -> rusqlite::Result<Connection> {
                 let _ = fs::remove_file(format!("{}{suffix}", path.display()));
             }
             let connection = open_database(path)?;
-            connection.execute_batch(SCHEMA_DDL)?;
+            initialize(&connection)?;
             Ok(connection)
         }
         other => other,
@@ -269,5 +288,41 @@ mod tests {
         .unwrap();
         let summary = sync_knowledge_base(root.path(), &path, &AtomicBool::new(false), |_| {}).unwrap();
         assert_eq!(summary.total_indexed, 1);
+    }
+
+    #[test]
+    fn creates_an_index_at_the_current_schema_version() {
+        let db = tempfile::tempdir().unwrap();
+        let connection = open_initialized(&db.path().join("kb.db")).unwrap();
+        let version: i64 = connection
+            .pragma_query_value(None, "user_version", |r| r.get(0))
+            .unwrap();
+        assert_eq!(version, 1);
+        connection.execute("SELECT source FROM entries", []).unwrap();
+    }
+
+    #[test]
+    fn migrates_an_index_without_sources_keeping_its_rows_as_yaml() {
+        let db = tempfile::tempdir().unwrap();
+        let path = db.path().join("kb.db");
+        open_database(&path)
+            .unwrap()
+            .execute_batch(
+                "CREATE TABLE entries (id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL, \
+                 type TEXT NOT NULL, notes TEXT NOT NULL, notes_markdown TEXT NOT NULL, primary_content TEXT NOT NULL, \
+                 links_json TEXT NOT NULL, source_file TEXT NOT NULL, source_rel_path TEXT NOT NULL, \
+                 raw_yaml TEXT NOT NULL); \
+                 INSERT INTO entries VALUES ('f.yml#notes#one', 'one', '', 'notes', '', '', 'one', '[]', '/s/f.yml', \
+                 'f.yml', '{}');",
+            )
+            .unwrap();
+        let connection = open_initialized(&path).unwrap();
+        let version: i64 = connection
+            .pragma_query_value(None, "user_version", |r| r.get(0))
+            .unwrap();
+        let source: String = connection
+            .query_row("SELECT source FROM entries", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!((version, source.as_str()), (1, "yaml"));
     }
 }
