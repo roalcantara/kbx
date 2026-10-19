@@ -18,10 +18,9 @@ pub enum Dot {
     Off,
 }
 
-/// The footer's row; `entry` (a pane or the detail screen is open) narrows its right inset and
-/// key gap, as the template page does.
+/// The footer's row: one bar on the window's content edge, its keys one gap apart (spec 2026-10-19 spacing D3).
 #[must_use]
-pub fn footer(left: impl IntoElement, right: Vec<gpui_kit::AnyElement>, entry: bool) -> Div {
+pub fn footer(left: impl IntoElement, right: Vec<gpui_kit::AnyElement>) -> Div {
     let d = design();
     let s = &d.spacing.footer;
     h_flex()
@@ -30,20 +29,13 @@ pub fn footer(left: impl IntoElement, right: Vec<gpui_kit::AnyElement>, entry: b
         .flex_none()
         .items_center()
         .justify_between()
-        .pl(pt(s.pad_left))
-        .pr(pt(if entry { s.entry_pad_right } else { s.pad_right }))
+        .px(pt(d.content_inset()))
         .border_t(pt(d.components.border.hairline))
         .border_color(d.colors.edge)
         .text_role(&d.typography.roles.footer)
         .text_color(d.colors.faint)
         .child(div().min_w_0().child(left))
-        .child(
-            h_flex()
-                .flex_none()
-                .items_center()
-                .gap(pt(if entry { s.entry_gap } else { s.gap }))
-                .children(right),
-        )
+        .child(h_flex().flex_none().items_center().gap(pt(s.gap)).children(right))
 }
 
 /// `● Ready • 12 results`: the dot, the word in muted text, then the count.
@@ -121,13 +113,6 @@ pub fn key_item(label: impl Into<SharedString>, keys_caps: impl Into<SharedStrin
         .gap(pt(d.spacing.footer.item_gap))
         .text_role(&d.typography.roles.footer)
         .text_color(d.colors.muted)
-        // A least width, right-aligned: the caps stay put when the label changes (Open ↔ Copy, D5).
-        .child(
-            div()
-                .min_w(pt(d.components.footer.label_slot))
-                .flex()
-                .justify_end()
-                .child(label.into()),
-        )
+        .child(label.into())
         .child(keycap(keys_caps, ChipState::Live))
 }

@@ -16,7 +16,7 @@ pub fn header() -> Div {
         .w_full()
         .flex_none()
         .items_center()
-        .px(pt(d.spacing.header.pad_x))
+        .px(pt(d.content_inset()))
         .gap(pt(d.spacing.header.gap))
         .border_b(pt(d.components.border.hairline))
         .border_color(d.colors.edge)

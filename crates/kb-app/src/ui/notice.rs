@@ -20,10 +20,11 @@ pub fn configure(theme: &mut Theme) {
     let s = &d.spacing.notice;
     theme.notification.placement = Anchor::BottomRight;
     theme.notification.margins = Edges {
-        top: pixels(s.right),
-        right: pixels(s.right),
+        // The window's content edge, so the notice lines up with the footer (spec 2026-10-19 spacing D2).
+        top: pixels(d.content_inset()),
+        right: pixels(d.content_inset()),
         bottom: pixels(s.bottom),
-        left: pixels(s.right),
+        left: pixels(d.content_inset()),
     };
     theme.notification.width = pixels(d.components.notice.width);
 }

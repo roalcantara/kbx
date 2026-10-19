@@ -274,16 +274,19 @@ macro_rules! points {
     };
 }
 
+points!(/// The GPUI Kit Design Guides' spacing ramp (spec 2026-10-19 spacing D1): every spacing value is one of these.
+    #[cfg_attr(not(test), expect(dead_code, reason = "a test keeps every spacing token on it; views read the tokens"))]
+    Scale { xxs, xs, sm, md, lg, xl, xxl });
 points!(/// The header's spacing.
-    HeaderSpacing { pad_x, gap });
+    HeaderSpacing { gap });
 points!(/// The list's spacing.
     ListSpacing { pad, gap });
 points!(/// A row's spacing.
-    RowSpacing { pad_x, gap, text_gap, trailing_gap, tags_gap, split_pad_x, split_gap });
+    RowSpacing { pad_x, gap, text_gap, trailing_gap, tags_gap });
 points!(/// The entry view's spacing.
-    PaneSpacing { split_pad_x, split_pad_y, detail_pad_x, detail_pad_y, gap, header_gap });
+    PaneSpacing { split_pad_y, detail_pad_y, gap, header_gap });
 points!(/// The footer's spacing.
-    FooterSpacing { pad_left, pad_right, entry_pad_right, gap, entry_gap, item_gap, left_gap });
+    FooterSpacing { gap, item_gap, left_gap });
 points!(/// The action panel's spacing.
     PanelSpacing { pad, row_pad_x, row_gap, section_pad_top, section_pad_x, section_pad_bottom, rule_margin, search_pad_x, search_gap, crumb_pad_x, crumb_gap });
 points!(/// The filter pill's spacing.
@@ -303,12 +306,17 @@ points!(/// The link hero's spacing.
 points!(/// The Links section's spacing.
     LinksSpacing { gap, label_gap, label_pad_top, label_pad_bottom, row_pad_x, row_gap });
 points!(/// The notice's spacing.
-    NoticeSpacing { gap, hint_gap, right, bottom });
+    NoticeSpacing { gap, hint_gap, bottom });
 
 /// Spacing, by component.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Spacing {
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "read by the test that keeps every spacing token on it")
+    )]
+    pub scale: Scale,
     pub header: HeaderSpacing,
     pub list: ListSpacing,
     pub row: RowSpacing,
@@ -342,8 +350,8 @@ points!(/// The favicon's sizes.
     FaviconSize { size });
 points!(/// The action panel's sizes.
     PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check });
-points!(/// The footer's sizes; `label_slot` is a key label's least width.
-    FooterSize { height, dot, dot_glow, dot_glow_alpha, label_slot });
+points!(/// The footer's sizes.
+    FooterSize { height, dot, dot_glow, dot_glow_alpha });
 points!(/// The split's shares.
     SplitSize { list });
 points!(/// The empty view's sizes.
@@ -398,6 +406,15 @@ pub struct Design {
     pub spacing: Spacing,
     /// Component sizes.
     pub components: Components,
+}
+
+impl Design {
+    /// The window's content edge (spec 2026-10-19 spacing D2): the list's padding plus a row's, so the header,
+    /// footer, panes and notice line up with the rows' content.
+    #[must_use]
+    pub fn content_inset(&self) -> f32 {
+        self.spacing.list.pad + self.spacing.row.pad_x
+    }
 }
 
 /// Parses the YAML front matter of `markdown`.
@@ -503,9 +520,42 @@ mod tests {
         assert_eq!(role.family, Family::Ui);
         assert!(near(role.size, 10.) && near(role.weight, 400.));
         assert!(near(d.components.row.key_slot, 42.));
-        assert!(near(d.components.footer.label_slot, 56.));
         assert!(near(d.components.header.pill_min_width, 160.));
         assert!(near(d.components.chip.link_outline_alpha, 0.45));
+    }
+
+    #[test]
+    fn keeps_every_spacing_on_the_ramp() {
+        let d = parse(DESIGN_MD).unwrap();
+        let s = &d.spacing.scale;
+        let ramp = [0., s.xxs, s.xs, s.sm, s.md, s.lg, s.xl, s.xxl];
+        assert_eq!(ramp, [0., 2., 4., 8., 12., 16., 24., 32.]);
+        // Composite clearances, not gaps (spec 2026-10-19 spacing D6).
+        let exceptions = ["card.pad_right", "notice.bottom"];
+        let rest = DESIGN_MD.strip_prefix("---\n").unwrap();
+        let front = &rest[..rest.find("\n---\n").unwrap()];
+        let json = kb_domain::yaml::to_json(&kb_domain::yaml::load(front).unwrap().unwrap());
+        for (component, fields) in json["spacing"].as_object().unwrap() {
+            if component == "scale" {
+                continue;
+            }
+            for (field, value) in fields.as_object().unwrap() {
+                let name = format!("{component}.{field}");
+                #[expect(clippy::cast_possible_truncation, reason = "token values are small whole points")]
+                let v = value.as_f64().unwrap() as f32;
+                assert!(
+                    exceptions.contains(&name.as_str()) || ramp.iter().any(|r| (r - v).abs() < f32::EPSILON),
+                    "spacing.{name} = {v} is off the ramp"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn shares_one_content_edge() {
+        let d = parse(DESIGN_MD).unwrap();
+        assert!((d.content_inset() - (d.spacing.list.pad + d.spacing.row.pad_x)).abs() < f32::EPSILON);
+        assert!((d.content_inset() - 20.).abs() < f32::EPSILON);
     }
 
     #[test]

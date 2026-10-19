@@ -290,7 +290,6 @@ impl EntryList {
             .mono(mono)
             .description(entry.description.clone())
             .trailing(trailing)
-            .compact(self.compact)
     }
 
     /// A tag: its image when the tag-images folder has one, else its grey pill.

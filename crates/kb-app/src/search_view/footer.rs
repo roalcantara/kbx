@@ -139,6 +139,6 @@ impl SearchView {
             )
             .into_any_element(),
         );
-        footer(left, right, names_entry)
+        footer(left, right)
     }
 }

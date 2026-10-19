@@ -22,7 +22,6 @@ pub struct Row {
     mono: bool,
     description: Option<SharedString>,
     trailing: Vec<AnyElement>,
-    compact: bool,
     selected: bool,
 }
 
@@ -32,7 +31,6 @@ impl std::fmt::Debug for Row {
             .field("id", &self.id)
             .field("title", &self.title)
             .field("mono", &self.mono)
-            .field("compact", &self.compact)
             .field("selected", &self.selected)
             .finish_non_exhaustive()
     }
@@ -51,7 +49,6 @@ impl Row {
             mono: false,
             description: None,
             trailing: Vec::new(),
-            compact: false,
             selected: false,
         }
     }
@@ -91,13 +88,6 @@ impl Row {
         self.trailing = trailing;
         self
     }
-
-    /// Beside the split pane: the narrower inset of `04-entry-template.html`.
-    #[must_use]
-    pub fn compact(mut self, compact: bool) -> Self {
-        self.compact = compact;
-        self
-    }
 }
 
 impl Selectable for Row {
@@ -115,11 +105,7 @@ impl RenderOnce for Row {
     fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
         let d = design();
         let (colors, spacing, size) = (&d.colors, &d.spacing.row, &d.components.row);
-        let (pad_x, gap) = if self.compact {
-            (spacing.split_pad_x, spacing.split_gap)
-        } else {
-            (spacing.pad_x, spacing.gap)
-        };
+        let (pad_x, gap) = (spacing.pad_x, spacing.gap);
         let mono = self.mono;
         div()
             .id(self.id)

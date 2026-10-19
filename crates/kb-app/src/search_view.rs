@@ -657,10 +657,10 @@ impl SearchView {
         let (share, pad, role) = match layout {
             Layout::Split => (
                 1. - d.components.split.list,
-                d.spacing.pane.split_pad_x,
+                d.content_inset(),
                 &d.typography.roles.card_split,
             ),
-            Layout::Detail => (1., d.spacing.pane.detail_pad_x, &d.typography.roles.card_detail),
+            Layout::Detail => (1., d.content_inset(), &d.typography.roles.card_detail),
         };
         let width = viewport * share
             - 2. * pad

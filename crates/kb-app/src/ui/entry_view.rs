@@ -426,11 +426,8 @@ impl RenderOnce for EntryView {
                 }))
         });
 
-        let (pad_x, pad_y) = if detail {
-            (p.detail_pad_x, p.detail_pad_y)
-        } else {
-            (p.split_pad_x, p.split_pad_y)
-        };
+        // The window's content edge in both layouts (spec 2026-10-19 spacing D2).
+        let (pad_x, pad_y) = (d.content_inset(), if detail { p.detail_pad_y } else { p.split_pad_y });
         v_flex()
             .id(id("scroll"))
             .size_full()
