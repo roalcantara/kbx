@@ -56,6 +56,13 @@ pub fn init_theme(cx: &mut gpui_kit::App) {
     ui::notice::configure(Theme::global_mut(cx));
 }
 
+/// Makes `palette` kb's colours now: the views' tokens, GPUI Kit's theme, and a redraw (themes spec D5).
+pub fn apply_palette(palette: theme::scheme::Palette, cx: &mut gpui_kit::App) {
+    theme::set_active(palette);
+    init_theme(cx);
+    cx.refresh_windows();
+}
+
 /// Starts the app and blocks until it quits. `notices` are shown in the panel once it opens:
 /// problems found before there was a window to report them in, such as unreadable preferences.
 /// `trace` logs the show and keystroke latencies to stderr (`kb --trace`).

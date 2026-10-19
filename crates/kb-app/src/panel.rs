@@ -134,10 +134,12 @@ fn hide_on_blur(view: &Entity<SearchView>, window: gpui_kit::AnyWindowHandle, cx
                     // Showing the app again after a hide delivers one stale deactivation before
                     // the activation it asked for. Hide only if the window is still inactive
                     // once that settles.
-                    cx.spawn_in(window, async move |_, cx| {
+                    cx.spawn_in(window, async move |view, cx| {
                         cx.background_executor().timer(BLUR_SETTLE).await;
                         let _ = cx.update(|window, cx| {
                             if !window.is_window_active() {
+                                // A theme previewed but not kept goes back to the one in use.
+                                let _ = view.update(cx, |view, cx| view.cancel_theme_preview(cx));
                                 cx.hide();
                             }
                         });

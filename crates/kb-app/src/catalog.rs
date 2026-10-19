@@ -161,6 +161,8 @@ pub struct Panel {
     pub more: String,
     /// The Refresh More… row, after Refresh in More….
     pub refresh_more: String,
+    /// The Theme… row, after Refresh More… in More….
+    pub theme: String,
     /// The search field's placeholder.
     pub search: String,
     /// More…'s first section.
@@ -227,6 +229,9 @@ pub struct Messages {
     pub more_origin: String,
     pub links_origin: String,
     pub refresh_origin: String,
+    pub theme_origin: String,
+    pub theme_chosen: String,
+    pub theme_weak: String,
 }
 /// The catalog.
 #[derive(Debug, Clone, PartialEq, Deserialize)]

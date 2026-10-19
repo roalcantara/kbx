@@ -157,11 +157,12 @@ cmd-enter = "configure"
 
 # The action panel (D9): after the screen's keys, the root lists `root`, then Links… (with links) and
 # More…; More… lists `more_copy` under `copy_section`, then `more_admin` under `admin_section`, with
-# `refresh_more` after Refresh opening `more_refresh`.
+# `refresh_more` after Refresh opening `more_refresh`, then `theme` opening the themes (~/.config/kb/themes).
 [panel]
 links = "Links…"
 more = "More…"
 refresh_more = "Refresh More…"
+theme = "Theme…"
 search = "Search"
 copy_section = "Copy"
 admin_section = "Administration"
@@ -215,3 +216,6 @@ links_label = "Links"
 more_origin = "More"
 links_origin = "Links"
 refresh_origin = "Refresh More"
+theme_origin = "Theme"
+theme_chosen = "Theme: {name}"
+theme_weak = "{name}: {failure}"

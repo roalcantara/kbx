@@ -1,6 +1,7 @@
 //! The action panel's pages for a screen and an entry, from the catalog (D9), and the filter's
 //! page (D15): each row paired with what it does.
 
+use gpui_kit::Hsla;
 use kb_domain::entry::Entry;
 use kb_domain::markdown::notes_body;
 use kb_domain::search::FilterState;
@@ -19,6 +20,8 @@ pub enum Submenu {
     Links,
     /// COPY and ADMINISTRATION.
     More,
+    /// The themes, from More….
+    Theme,
     /// The scoped refreshes, from More….
     Refresh,
 }
@@ -34,6 +37,8 @@ pub enum PanelCommand {
     Link(String),
     /// Copy this text.
     Copy(String),
+    /// A theme: moving onto it previews it, ↵ keeps it (themes spec D7).
+    Theme(String),
     /// A filter row: ↵ gives `toggle` and keeps the filter open; ⌘↵ gives `only` and closes it.
     Filter {
         /// The filter after toggling the row.
@@ -161,6 +166,14 @@ pub fn more_page(catalog: &Catalog, entry: Option<&Entry>) -> Page {
                 },
                 PanelCommand::Open(Submenu::Refresh),
             ));
+            admin.push((
+                PanelRow {
+                    label: catalog.panel.theme.clone(),
+                    submenu: true,
+                    ..PanelRow::default()
+                },
+                PanelCommand::Open(Submenu::Theme),
+            ));
         }
     }
     page.section(Some(catalog.panel.admin_section.clone()), admin);
@@ -206,6 +219,48 @@ pub fn links_page(catalog: &Catalog, entry: &Entry) -> Page {
     page
 }
 
+/// A theme as Theme… lists it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThemeRow {
+    /// Its id: the file stem config.toml names.
+    pub id: String,
+    /// Its label.
+    pub label: String,
+    /// Its mauve, blue, green and peach.
+    pub swatch: Vec<Hsla>,
+    /// Why the file is not a theme.
+    pub broken: Option<String>,
+    /// The theme in use.
+    pub current: bool,
+}
+
+/// Theme…: one row per theme file (themes spec D7), the current one checked, a broken one dimmed with its reason.
+#[must_use]
+pub fn theme_page(catalog: &Catalog, themes: &[ThemeRow]) -> Page {
+    let mut page = Page::default();
+    page.page.crumb = Some(catalog.panel.theme.trim_end_matches('…').to_owned());
+    let rows = themes
+        .iter()
+        .map(|t| {
+            (
+                PanelRow {
+                    label: t
+                        .broken
+                        .as_ref()
+                        .map_or_else(|| t.label.clone(), |why| format!("{} — {why}", t.label)),
+                    lead: Some(RowLead::Swatch(t.swatch.clone())),
+                    checked: t.current,
+                    muted: t.broken.is_some(),
+                    ..PanelRow::default()
+                },
+                PanelCommand::Theme(t.id.clone()),
+            )
+        })
+        .collect();
+    page.section(None, rows);
+    page
+}
+
 /// Refresh More…: one row per scoped refresh (spec D1).
 #[must_use]
 pub fn refresh_page(catalog: &Catalog) -> Page {
@@ -222,9 +277,10 @@ pub fn refresh_page(catalog: &Catalog) -> Page {
 }
 
 /// The root's search page: the root's rows (Links… and More… included), then More…'s, Refresh
-/// More…'s and Links…'s rows, marked with their submenu (`more_origin`, `refresh_origin`, `links_origin`).
+/// More…'s, Theme…'s and Links…'s rows, marked with their submenu (`more_origin`, `refresh_origin`,
+/// `theme_origin`, `links_origin`).
 #[must_use]
-pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> Page {
+pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>, themes: &[ThemeRow]) -> Page {
     let mut page = root_page(catalog, screen, entry);
     let mut marked = |sub: Page, origin: &str| {
         for (section, commands) in sub.page.sections.into_iter().zip(sub.commands) {
@@ -242,6 +298,7 @@ pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> 
     };
     marked(more_page(catalog, entry), &catalog.messages.more_origin);
     marked(refresh_page(catalog), &catalog.messages.refresh_origin);
+    marked(theme_page(catalog, themes), &catalog.messages.theme_origin);
     if let Some(entry) = entry.filter(|e| !e.links.is_empty()) {
         marked(links_page(catalog, entry), &catalog.messages.links_origin);
     }
@@ -394,15 +451,56 @@ mod tests {
             labels(&page),
             [
                 vec!["Description", "Notes", "Path"],
-                vec!["Edit", "Refresh", "Refresh More…", "Configure"]
+                vec!["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
             ]
         );
         assert_eq!(page.command(0, 1), Some(&PanelCommand::Copy("N".into())));
         assert_eq!(page.command(1, 2), Some(&PanelCommand::Open(Submenu::Refresh)));
         assert_eq!(
             labels(&more_page(&catalog, None)),
-            [["Edit", "Refresh", "Refresh More…", "Configure"]]
+            [["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]]
         );
+    }
+
+    fn themes() -> Vec<ThemeRow> {
+        let row = |id: &str, label: &str, broken: Option<&str>, current: bool| ThemeRow {
+            id: id.into(),
+            label: label.into(),
+            swatch: Vec::new(),
+            broken: broken.map(str::to_owned),
+            current,
+        };
+        vec![
+            row("archwave", "Archwave", None, false),
+            row("kb-native", "kb native", None, true),
+            row("bad", "bad", Some("no base01"), false),
+        ]
+    }
+
+    #[test]
+    fn lists_the_themes_with_the_current_one_checked() {
+        let catalog = Catalog::default();
+        let page = theme_page(&catalog, &themes());
+        assert_eq!(page.page.crumb.as_deref(), Some("Theme"));
+        let rows = &page.page.sections[0].rows;
+        assert_eq!(rows[0].label, "Archwave");
+        assert!(rows[1].checked && !rows[0].checked);
+        assert!(rows[2].muted && rows[2].label.contains("no base01"));
+        assert_eq!(page.command(0, 0), Some(&PanelCommand::Theme("archwave".into())));
+    }
+
+    #[test]
+    fn finds_themes_from_the_root() {
+        let catalog = Catalog::default();
+        let page = search_page(&catalog, Screen::List, None, &themes());
+        let row = page
+            .page
+            .sections
+            .iter()
+            .flat_map(|s| &s.rows)
+            .find(|r| r.label == "Archwave")
+            .unwrap();
+        assert_eq!(row.origin.as_deref(), Some("Theme"));
     }
 
     #[test]
@@ -417,7 +515,7 @@ mod tests {
     #[test]
     fn finds_the_scoped_refreshes_from_the_root() {
         let catalog = Catalog::default();
-        let page = search_page(&catalog, Screen::List, None);
+        let page = search_page(&catalog, Screen::List, None, &[]);
         let row = page
             .page
             .sections
@@ -431,7 +529,7 @@ mod tests {
     #[test]
     fn finds_the_submenus_rows_from_the_root() {
         let catalog = Catalog::default();
-        let page = search_page(&catalog, Screen::List, Some(&bookmark()));
+        let page = search_page(&catalog, Screen::List, Some(&bookmark()), &[]);
         let all = labels(&page);
         assert_eq!(all[0], ["Details", "Open", "Copy", "Resize", "Links…", "More…"]);
         assert!(all.iter().flatten().any(|l| l == "Path"));

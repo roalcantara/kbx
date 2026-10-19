@@ -32,6 +32,8 @@ pub enum RowLead {
     Hash,
     /// The Clear All row's ✕.
     Clear,
+    /// A theme's accents, as dots.
+    Swatch(Vec<Hsla>),
 }
 
 /// One row.
@@ -215,6 +217,15 @@ fn row(row: &PanelRow, ix: usize, selected: bool, on_row: &OnRow) -> impl gpui_k
                     .path("icons/x.svg")
                     .size(pt(d.components.tile.mini_icon))
                     .text_color(c.faint),
+            )
+            .into_any_element(),
+        RowLead::Swatch(colors) => h_flex()
+            .flex_none()
+            .gap(pt(s.swatch_gap))
+            .children(
+                colors
+                    .into_iter()
+                    .map(|color| div().size(pt(k.swatch)).rounded_full().bg(color)),
             )
             .into_any_element(),
     });

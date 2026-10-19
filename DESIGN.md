@@ -48,7 +48,7 @@ spacing:
   row: { pad_x: 12, gap: 12, text_gap: 2, trailing_gap: 12, tags_gap: 8 }
   pane: { split_pad_y: 16, detail_pad_y: 24, gap: 12, header_gap: 8 }
   footer: { gap: 16, item_gap: 8, left_gap: 8 }
-  panel: { pad: 4, row_pad_x: 8, row_gap: 8, section_pad_top: 8, section_pad_x: 8, section_pad_bottom: 4, rule_margin: 4, search_pad_x: 12, search_gap: 8, crumb_pad_x: 12, crumb_gap: 4 }
+  panel: { pad: 4, row_pad_x: 8, row_gap: 8, section_pad_top: 8, section_pad_x: 8, section_pad_bottom: 4, rule_margin: 4, search_pad_x: 12, search_gap: 8, crumb_pad_x: 12, crumb_gap: 4, swatch_gap: 2 }
   pill: { pad_x: 8, pad_y: 4, gap: 8 }
   chip: { pad_x: 8, link_pad_x: 8, link_gap: 4 }
   keycap: { gap: 2 }
@@ -66,7 +66,7 @@ components:
   keycap: { height: 20, width: 20, word_width: 28 }
   tile: { size: 24, icon: 16, small: 20, small_icon: 13, mini: 18, mini_icon: 12, alpha: 0.15 }
   favicon: { size: 16 }
-  panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14 }
+  panel: { width: 220, filter_width: 230, row: 28, search: 36, crumb: 26, max_height: 300, chevron: 14, search_icon: 16, crumb_icon: 12, check: 14, swatch: 8 }
   footer: { height: 40, dot: 6, dot_glow: 6, dot_glow_alpha: 0.7 }
   split: { list: 0.34 }
   empty: { icon: 56, text_max_width: 420, bar_width: 260, bar_height: 4 }

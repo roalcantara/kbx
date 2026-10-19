@@ -269,7 +269,7 @@ points!(/// The entry view's spacing.
 points!(/// The footer's spacing.
     FooterSpacing { gap, item_gap, left_gap });
 points!(/// The action panel's spacing.
-    PanelSpacing { pad, row_pad_x, row_gap, section_pad_top, section_pad_x, section_pad_bottom, rule_margin, search_pad_x, search_gap, crumb_pad_x, crumb_gap });
+    PanelSpacing { pad, row_pad_x, row_gap, section_pad_top, section_pad_x, section_pad_bottom, rule_margin, search_pad_x, search_gap, crumb_pad_x, crumb_gap, swatch_gap });
 points!(/// The filter pill's spacing.
     PillSpacing { pad_x, pad_y, gap });
 points!(/// A chip's spacing.
@@ -330,7 +330,7 @@ points!(/// The type tile's sizes.
 points!(/// The favicon's sizes.
     FaviconSize { size });
 points!(/// The action panel's sizes.
-    PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check });
+    PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check, swatch });
 points!(/// The footer's sizes.
     FooterSize { height, dot, dot_glow, dot_glow_alpha });
 points!(/// The split's shares.

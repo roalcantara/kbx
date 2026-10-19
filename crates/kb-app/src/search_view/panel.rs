@@ -16,7 +16,7 @@ use kb_domain::search::tags_for_types;
 
 use super::{Overlay, Screen, SearchView};
 use crate::actions::{
-    Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, root_page, search_page,
+    Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, root_page, search_page, theme_page,
 };
 use crate::catalog::Screen as CatalogScreen;
 use crate::keys::Back;
@@ -74,7 +74,7 @@ impl SearchView {
     }
 
     /// The open overlay's page.
-    fn current_page(&self, cx: &App) -> Page {
+    pub(super) fn current_page(&self, cx: &App) -> Page {
         let list = self.list.read(cx).delegate();
         let entry = match self.screen {
             Screen::Rebuild(_) => None,
@@ -85,9 +85,10 @@ impl SearchView {
         match self.overlay {
             Overlay::None => Page::default(),
             Overlay::Actions(None) if query_empty => root_page(&self.catalog, screen, entry),
-            Overlay::Actions(None) => search_page(&self.catalog, screen, entry),
+            Overlay::Actions(None) => search_page(&self.catalog, screen, entry, &self.themes),
             Overlay::Actions(Some(Submenu::More)) => more_page(&self.catalog, entry),
             Overlay::Actions(Some(Submenu::Refresh)) => refresh_page(&self.catalog),
+            Overlay::Actions(Some(Submenu::Theme)) => theme_page(&self.catalog, &self.themes),
             Overlay::Actions(Some(Submenu::Links)) => {
                 entry.map_or_else(Page::default, |e| links_page(&self.catalog, e))
             }
@@ -107,6 +108,12 @@ impl SearchView {
     pub(super) fn show_overlay(&mut self, overlay: Overlay, window: &mut Window, cx: &mut Context<Self>) {
         self.overlay = overlay;
         self.panel_selected = 0;
+        if matches!(overlay, Overlay::Actions(_)) {
+            self.reload_themes();
+        }
+        if overlay == Overlay::Actions(Some(Submenu::Theme)) {
+            self.begin_theme_preview();
+        }
         self.panel_query.update(cx, |input, cx| input.set_value("", window, cx));
         match overlay {
             Overlay::None => self.focus_screen(window, cx),
@@ -152,6 +159,7 @@ impl SearchView {
         if count > 0 {
             self.panel_selected = self.panel_selected.saturating_add_signed(delta).min(count - 1);
             self.panel_scroll.scroll_to_item(self.panel_selected);
+            self.preview_selected_theme(cx);
             cx.notify();
         }
     }
@@ -185,6 +193,7 @@ impl SearchView {
         };
         match command {
             PanelCommand::Open(submenu) => self.show_overlay(Overlay::Actions(Some(submenu)), window, cx),
+            PanelCommand::Theme(id) => self.keep_theme(&id, window, cx),
             PanelCommand::Action(id) => {
                 self.show_overlay(Overlay::None, window, cx);
                 self.run_action(&id, window, cx);

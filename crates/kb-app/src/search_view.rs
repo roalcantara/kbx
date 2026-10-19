@@ -19,6 +19,7 @@ use kb_domain::sync::open_readonly;
 mod footer;
 mod header;
 mod panel;
+mod theme;
 
 use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen};
 use crate::config::Config;
@@ -88,6 +89,12 @@ pub struct SearchView {
     overlay: Overlay,
     /// The last notice the view showed (D17).
     last_notice: Option<String>,
+    /// The theme files, as Theme… lists them (read when the action panel opens).
+    themes: Vec<crate::actions::ThemeRow>,
+    /// The theme in use: config.toml's, else the default.
+    theme_id: String,
+    /// The palette in use when Theme… opened, restored unless a theme is kept.
+    theme_preview: Option<crate::theme::scheme::Palette>,
     subscriptions: Vec<Subscription>,
 }
 
@@ -98,6 +105,13 @@ impl std::fmt::Debug for SearchView {
             .field("show_details", &self.show_details)
             .finish_non_exhaustive()
     }
+}
+
+/// The theme in use at start: config.toml's, else DESIGN.md's default (themes spec D4).
+fn theme_id_of(config: &Config) -> String {
+    config
+        .theme()
+        .map_or_else(|| crate::ui::design::design().theme.clone(), str::to_owned)
 }
 
 impl SearchView {
@@ -131,6 +145,7 @@ impl SearchView {
         });
         let list_sub = cx.subscribe_in(&list, window, Self::on_list_event);
         let input_sub = cx.subscribe_in(&query_input, window, Self::on_query_input_event);
+        let theme_id = theme_id_of(&config);
         Self {
             config,
             catalog,
@@ -148,6 +163,9 @@ impl SearchView {
             panel_scroll: ScrollHandle::new(),
             overlay: Overlay::None,
             last_notice: None,
+            themes: Vec::new(),
+            theme_id,
+            theme_preview: None,
             subscriptions: vec![list_sub, input_sub, panel_sub],
         }
     }
@@ -267,7 +285,10 @@ impl SearchView {
                 self.ladder(keys, window, cx);
             }
             // Esc in the list leaves the panel, as it closes the Raycast command.
-            ListEvent::Cancel => cx.hide(),
+            ListEvent::Cancel => {
+                self.cancel_theme_preview(cx);
+                cx.hide();
+            }
         }
     }
 
@@ -582,8 +603,10 @@ impl SearchView {
             if !self.panel_query.read(cx).value().is_empty() {
                 return self.set_panel_query("", window, cx);
             }
+            // Leaving Theme… without ↵ restores the theme it opened on.
+            self.cancel_theme_preview(cx);
             let next = match self.overlay {
-                Overlay::Actions(Some(crate::actions::Submenu::Refresh)) => {
+                Overlay::Actions(Some(crate::actions::Submenu::Refresh | crate::actions::Submenu::Theme)) => {
                     Overlay::Actions(Some(crate::actions::Submenu::More))
                 }
                 Overlay::Actions(Some(_)) => Overlay::Actions(None),
@@ -595,6 +618,7 @@ impl SearchView {
             Screen::Rebuild(sync) if sync.read(cx).is_running() => sync.read(cx).cancel(),
             Screen::Search => {
                 if self.query_input.read(cx).value().is_empty() {
+                    self.cancel_theme_preview(cx);
                     cx.hide();
                 } else {
                     self.query_input.update(cx, |input, cx| {

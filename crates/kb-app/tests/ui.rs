@@ -324,7 +324,7 @@ fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppCo
         cx.read(|cx| view.read(cx).panel_labels(cx)),
         [
             vec!["Notes", "Path"],
-            vec!["Edit", "Refresh", "Refresh More…", "Configure"]
+            vec!["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
         ],
         "the cheat sheet has no description"
     );
@@ -358,7 +358,7 @@ fn opens_refresh_more_and_returns_to_more_with_escape(cx: &mut TestAppContext) {
     cx.run_until_parked();
     assert_eq!(
         cx.read(|cx| view.read(cx).panel_labels(cx))[1],
-        ["Edit", "Refresh", "Refresh More…", "Configure"]
+        ["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
     );
 }
 
@@ -874,4 +874,44 @@ fn shows_the_filter_s_keys_in_the_footer_while_it_is_open(cx: &mut TestAppContex
         keys[0].starts_with("Toggle") && keys[1].starts_with("Only"),
         "the filter's keys (D7), not the list's: {keys:?}"
     );
+}
+
+#[gpui_kit::test]
+fn previews_a_theme_restores_it_on_escape_and_keeps_it_on_return(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let config = sample_config(home.path());
+    kb_app::theme::folder::seed(&config.themes_dir()).unwrap();
+    let preferences = config.preferences().to_path_buf();
+    let (window, _view) = open(cx, config);
+    let window_colour = || kb_app::theme::active_palette().role("window").hex();
+    let native = window_colour();
+    let open_themes = |cx: &mut TestAppContext| {
+        press(cx, window, "cmd-k");
+        cx.run_until_parked();
+        type_text(cx, window, "Theme");
+        cx.run_until_parked();
+        press(cx, window, "enter"); // Theme…, its selection on the theme in use
+        cx.run_until_parked();
+    };
+    open_themes(cx);
+    press(cx, window, "down");
+    cx.run_until_parked();
+    assert_ne!(window_colour(), native, "moving the selection previews");
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    assert_eq!(window_colour(), native, "Esc restores");
+    press(cx, window, "escape");
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    open_themes(cx);
+    press(cx, window, "down");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_ne!(window_colour(), native, "↵ keeps");
+    assert!(
+        fs::read_to_string(&preferences).unwrap().contains("theme = "),
+        "and saves"
+    );
+    kb_app::theme::set_active(kb_app::theme::folder::native());
 }
