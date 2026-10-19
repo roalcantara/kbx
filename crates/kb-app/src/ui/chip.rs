@@ -29,38 +29,30 @@ pub fn pill(text: impl Into<SharedString>, state: ChipState) -> Div {
         .child(text.into())
 }
 
-/// The `↗ n` link chip: its text muted when live, faint at rest.
+/// The `↗ n` link count (spec 2026-10-19 D4): a round pill with a faint outline and no fill, the
+/// same on every row, so it never reads as a key. Its digits are mono, so already tabular.
 #[must_use]
-pub fn link_chip(count: usize, state: ChipState) -> Div {
+pub fn link_chip(count: usize) -> Div {
     let d = design();
-    let color = link_text(state);
+    let c = &d.components.chip;
     h_flex()
         .flex_none()
-        .h(pt(d.components.chip.height))
+        .h(pt(c.height))
         .px(pt(d.spacing.chip.link_pad_x))
         .gap(pt(d.spacing.chip.link_gap))
         .items_center()
-        .rounded(pt(d.rounded.chip))
-        .bg(state.fill())
-        .text_color(color)
+        .rounded_full()
+        .border(pt(d.components.border.hairline))
+        .border_color(d.colors.faint.opacity(c.link_outline_alpha))
+        .text_color(d.colors.faint)
         .text_role(&d.typography.roles.count)
         .child(
             svg()
                 .path("icons/arrow-up-right.svg")
-                .size(pt(d.components.chip.link_icon))
-                .text_color(color),
+                .size(pt(c.link_icon))
+                .text_color(d.colors.faint),
         )
         .child(count.to_string())
-}
-
-/// The link chip's text colour in `state`.
-#[must_use]
-pub fn link_text(state: ChipState) -> Hsla {
-    let colors = &design().colors;
-    match state {
-        ChipState::Live => colors.muted,
-        ChipState::Rest => colors.faint,
-    }
 }
 
 /// A tag drawn as its image: a shape takes the tag's hue, a brand keeps its colours; its name in
@@ -89,16 +81,4 @@ pub fn icon_chip(id: SharedString, image: &TagImage, hue: Hsla, state: ChipState
         .bg(state.fill())
         .child(drawn)
         .tooltip(move |window, cx| Tooltip::new(name.clone()).build(window, cx))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dims_the_link_count_at_rest_only() {
-        let colors = &design().colors;
-        assert_eq!(link_text(ChipState::Live), colors.muted);
-        assert_eq!(link_text(ChipState::Rest), colors.faint);
-    }
 }

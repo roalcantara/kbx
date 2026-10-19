@@ -7,7 +7,7 @@ use kb_domain::entry::Entry;
 
 use super::header::plain_button;
 use super::{Screen, SearchView};
-use crate::catalog::fill;
+use crate::catalog::{KeyItem, fill};
 use crate::ui::design::design;
 use crate::ui::footer::{Dot, entry_status, footer, key_item, status};
 use crate::ui::keycap::caps;
@@ -46,11 +46,20 @@ impl SearchView {
         (messages.ready.clone(), Some(count))
     }
 
+    /// The screen's keys the footer shows: all but ⇧⌘↵ (spec D9), which would come and go with
+    /// the entry type and move the others; it still runs, and the action panel lists it.
+    fn footer_items(&self, cx: &App) -> Vec<KeyItem> {
+        self.screen_keys(cx)
+            .into_iter()
+            .filter(|item| item.keys != "shift-cmd-enter")
+            .collect()
+    }
+
     /// The footer's right side as text, for tests: "Details ↵", …, "Actions ⌘K".
     #[must_use]
     pub fn footer_keys(&self, cx: &App) -> Vec<String> {
         let mut keys: Vec<String> = self
-            .screen_keys(cx)
+            .footer_items(cx)
             .into_iter()
             .map(|item| format!("{} {}", item.label, item.caps))
             .collect();
@@ -103,7 +112,7 @@ impl SearchView {
         };
         let plain = plain_button(cx);
         let mut right: Vec<AnyElement> = self
-            .screen_keys(cx)
+            .footer_items(cx)
             .into_iter()
             .enumerate()
             .map(|(ix, item)| {

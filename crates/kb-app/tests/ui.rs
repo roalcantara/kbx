@@ -706,7 +706,22 @@ fn shows_the_status_line_and_the_screen_keys_in_the_footer(cx: &mut TestAppConte
     let (_home, _window, view) = open_with_query(cx, "conference");
     let (status, keys) = cx.read(|cx| (view.read(cx).status_line(cx), view.read(cx).footer_keys(cx)));
     assert_eq!(status, "Ready • 1 result");
-    assert_eq!(keys, ["Details ↵", "Open ⌘↵", "Copy ⇧⌘↵", "Actions ⌘K"]);
+    assert_eq!(
+        keys,
+        ["Details ↵", "Open ⌘↵", "Actions ⌘K"],
+        "no ⇧⌘↵ in the footer (D9)"
+    );
+}
+
+#[gpui_kit::test]
+fn shows_the_same_three_footer_keys_for_a_command(cx: &mut TestAppContext) {
+    let (_home, _window, view) = open_with_query(cx, "rebase");
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(keys.len(), 3, "{keys:?}");
+    assert!(
+        keys[0].starts_with("Details") && keys[2].starts_with("Actions"),
+        "{keys:?}"
+    );
 }
 
 #[gpui_kit::test]

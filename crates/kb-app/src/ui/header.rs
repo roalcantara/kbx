@@ -51,6 +51,8 @@ pub fn filter_pill(label: impl Into<SharedString>, keys_caps: impl Into<SharedSt
     let d = design();
     h_flex()
         .flex_none()
+        // Never narrower than with "All Entries", so a filter's shorter name does not move the query's end (D7).
+        .min_w(pt(d.components.header.pill_min_width))
         .items_center()
         .gap(pt(d.spacing.pill.gap))
         .px(pt(d.spacing.pill.pad_x))
@@ -67,6 +69,7 @@ pub fn filter_pill(label: impl Into<SharedString>, keys_caps: impl Into<SharedSt
         )
         .child(
             div()
+                .flex_1()
                 .max_w(pt(d.components.header.pill_max_width))
                 .truncate()
                 .child(label.into()),

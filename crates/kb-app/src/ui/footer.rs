@@ -4,7 +4,7 @@
 use gpui_kit::component::h_flex;
 use gpui_kit::{Div, IntoElement, ParentElement as _, SharedString, Styled as _, div};
 
-use crate::ui::design::{TextRoleExt as _, design, glow, pt};
+use crate::ui::design::{TextRoleExt as _, design, glow, pt, tabular_digits};
 use crate::ui::keycap::{ChipState, keycap};
 
 /// The status dot.
@@ -74,6 +74,8 @@ pub fn status(dot: Dot, word: impl Into<SharedString>, count: Option<String>) ->
                 .text_color(d.colors.muted)
                 .child(word.into()),
         )
+        // Tabular digits: the count keeps its width as the user types (D6).
+        .font_features(tabular_digits())
         .when_some_count(count)
 }
 
@@ -119,6 +121,13 @@ pub fn key_item(label: impl Into<SharedString>, keys_caps: impl Into<SharedStrin
         .gap(pt(d.spacing.footer.item_gap))
         .text_role(&d.typography.roles.footer)
         .text_color(d.colors.muted)
-        .child(label.into())
+        // A least width, right-aligned: the caps stay put when the label changes (Open ↔ Copy, D5).
+        .child(
+            div()
+                .min_w(pt(d.components.footer.label_slot))
+                .flex()
+                .justify_end()
+                .child(label.into()),
+        )
         .child(keycap(keys_caps, ChipState::Live))
 }

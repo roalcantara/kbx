@@ -290,8 +290,8 @@ points!(/// The filter pill's spacing.
     PillSpacing { pad_x, pad_y, gap });
 points!(/// A chip's spacing.
     ChipSpacing { pad_x, link_pad_x, link_gap });
-points!(/// A keycap's spacing.
-    KeycapSpacing { pad_x });
+points!(/// A keycap's spacing: `gap` between the caps of one shortcut.
+    KeycapSpacing { gap });
 points!(/// The empty view's spacing.
     EmptySpacing { pad_x, icon_gap, title_gap, bar_gap, summary_pad_x, summary_pad_top, summary_pad_bottom });
 points!(/// The quote's spacing.
@@ -328,22 +328,22 @@ pub struct Spacing {
 
 points!(/// The window's sizes.
     WindowSize { width, height, expanded_share });
-points!(/// The header's sizes.
-    HeaderSize { height, icon, pill_icon, pill_max_width });
-points!(/// A row's sizes.
-    RowSize { height, bar_width, bar_inset, glow, glow_alpha, max_tags });
-points!(/// A chip's sizes.
-    ChipSize { height, icon, link_icon });
-points!(/// A keycap's sizes.
-    KeycapSize { height });
+points!(/// The header's sizes; `pill_min_width` keeps the filter pill's width when its label changes.
+    HeaderSize { height, icon, pill_icon, pill_max_width, pill_min_width });
+points!(/// A row's sizes; `key_slot` holds `↵` or `⌘ n` at one width.
+    RowSize { height, bar_width, bar_inset, glow, glow_alpha, max_tags, key_slot });
+points!(/// A chip's sizes; `link_outline_alpha` is the link pill's outline.
+    ChipSize { height, icon, link_icon, link_outline_alpha });
+points!(/// A keycap's sizes: one key's cap, and a word key's (`esc`).
+    KeycapSize { height, width, word_width });
 points!(/// The type tile's sizes.
     TileSize { size, icon, small, small_icon, mini, mini_icon, alpha });
 points!(/// The favicon's sizes.
     FaviconSize { size });
 points!(/// The action panel's sizes.
     PanelSize { width, filter_width, row, search, crumb, max_height, chevron, search_icon, crumb_icon, check });
-points!(/// The footer's sizes.
-    FooterSize { height, dot, dot_glow, dot_glow_alpha });
+points!(/// The footer's sizes; `label_slot` is a key label's least width.
+    FooterSize { height, dot, dot_glow, dot_glow_alpha, label_slot });
 points!(/// The split's shares.
     SplitSize { list });
 points!(/// The empty view's sizes.
@@ -420,6 +420,12 @@ pub fn no_ligatures() -> FontFeatures {
     FontFeatures(Arc::new(vec![("liga".into(), 0), ("calt".into(), 0)]))
 }
 
+/// Tabular digits: a count keeps its width as its digits change (Inter's `tnum`).
+#[must_use]
+pub fn tabular_digits() -> FontFeatures {
+    FontFeatures(Arc::new(vec![("tnum".into(), 1)]))
+}
+
 /// The bundled fonts: Inter 400, 500, 600 and 400 italic, then `JetBrains` Mono 400 and 500.
 pub const FONTS: [&[u8]; 6] = [
     include_bytes!("../../assets/fonts/Inter-Regular.ttf"),
@@ -484,6 +490,22 @@ mod tests {
         assert!((d.components.row.height - 56.).abs() < f32::EPSILON);
         assert!((d.components.split.list - 0.34).abs() < f32::EPSILON);
         assert!((d.rounded.window - 14.).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn reads_the_keycap_and_slot_tokens() {
+        let d = parse(DESIGN_MD).unwrap();
+        let near = |a: f32, b: f32| (a - b).abs() < f32::EPSILON;
+        let k = &d.components.keycap;
+        assert!(near(k.height, 20.) && near(k.width, 20.) && near(k.word_width, 28.));
+        assert!(near(d.spacing.keycap.gap, 2.));
+        let role = &d.typography.roles.keycap;
+        assert_eq!(role.family, Family::Ui);
+        assert!(near(role.size, 9.) && near(role.weight, 400.));
+        assert!(near(d.components.row.key_slot, 42.));
+        assert!(near(d.components.footer.label_slot, 56.));
+        assert!(near(d.components.header.pill_min_width, 160.));
+        assert!(near(d.components.chip.link_outline_alpha, 0.45));
     }
 
     #[test]

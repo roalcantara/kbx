@@ -7,7 +7,7 @@ use gpui_kit::component::list::{ListDelegate, ListState};
 use gpui_kit::component::{IndexPath, h_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyElement, App, Context, IntoElement as _, ParentElement as _, SharedString, Styled as _, Task, Window,
+    AnyElement, App, Context, IntoElement as _, ParentElement as _, SharedString, Styled as _, Task, Window, div,
 };
 use kb_domain::Connection;
 use kb_domain::entry::Entry;
@@ -270,12 +270,20 @@ impl EntryList {
                 );
             }
             if !entry.links.is_empty() {
-                trailing.push(link_chip(entry.links.len(), state).into_any_element());
+                trailing.push(link_chip(entry.links.len()).into_any_element());
             }
         }
-        if let Some(key) = Self::row_keycap(ix, selected) {
-            trailing.push(keycap(key, ChipState::Live).into_any_element());
-        }
+        // A fixed, right-aligned slot: `↵` and `⌘ n` take the same room, so the chips beside them
+        // never move with the selection (spec D3). Rows past the ninth keep the empty slot.
+        trailing.push(
+            div()
+                .flex_none()
+                .w(pt(design().components.row.key_slot))
+                .flex()
+                .justify_end()
+                .children(Self::row_keycap(ix, selected).map(|key| keycap(key, ChipState::Live)))
+                .into_any_element(),
+        );
         Row::new(SharedString::from(entry.id.clone()), entry.title.clone())
             .label(row_label(entry, label))
             .lead(lead)
@@ -399,5 +407,17 @@ mod tests {
         assert_eq!(no_match_template(m, "  ", true), m.no_entries_filtered);
         assert_eq!(no_match_template(m, "kube", true), m.no_match_filtered);
         assert_eq!(no_match_template(m, "kube", false), m.no_match);
+    }
+
+    #[test]
+    fn every_row_key_fits_the_row_slot() {
+        let slot = design().components.row.key_slot;
+        for ix in 0..12 {
+            for selected in [true, false] {
+                if let Some(key) = EntryList::row_keycap(ix, selected) {
+                    assert!(crate::ui::keycap::keycap_width(&key) <= slot, "{key} in row {ix}");
+                }
+            }
+        }
     }
 }

@@ -1,5 +1,7 @@
-//! D2's keycap (01-chips): one cap per shortcut (`⌘K`, `⇧⌘,`), 20 tall, `JetBrains` Mono 11.
+//! Keycaps (spec 2026-10-19 D1): one 20 × 20 cap per key (`⌘` `K`), 2 apart, Inter 9; a word key
+//! (`esc`) 28 wide.
 
+use gpui_kit::component::h_flex;
 use gpui_kit::{Div, Hsla, Keystroke, ParentElement as _, SharedString, Styled as _, div};
 
 use crate::ui::design::{TextRoleExt as _, design, pt};
@@ -58,20 +60,46 @@ pub fn caps(keys: &str) -> String {
     text
 }
 
-/// The visual width bucket for a keycap: normalize all shortcuts to a few widths so rows stay
-/// aligned even when labels differ in glyph count.
+/// The modifier glyphs `caps` puts before the key.
+const MODIFIERS: [char; 4] = ['⌃', '⌥', '⇧', '⌘'];
+
+/// A shortcut as `caps` spells it, split into its keys: each leading modifier is a key, the rest
+/// is one key (`⇧⌘,` → `⇧` `⌘` `,`; `esc` → `esc`).
 #[must_use]
-pub fn keycap_width(text: &str) -> f32 {
-    match text.chars().count() {
-        1 => 28.0,
-        2 => 36.0,
-        3 => 42.0,
-        _ => 48.0,
+pub fn keys(text: &str) -> Vec<String> {
+    let mut keys = Vec::new();
+    let mut rest = String::new();
+    for ch in text.chars() {
+        if rest.is_empty() && MODIFIERS.contains(&ch) {
+            keys.push(ch.to_string());
+        } else {
+            rest.push(ch);
+        }
     }
+    if !rest.is_empty() {
+        keys.push(rest);
+    }
+    keys
 }
 
-/// A keycap reading `text`: live (mantle, muted text) or, on the popover and notice surfaces,
-/// rest (badge, faint text).
+/// One key's cap width: a glyph's, or a word's (`esc`).
+fn cap_width(key: &str) -> f32 {
+    let k = &design().components.keycap;
+    if key.chars().count() > 1 { k.word_width } else { k.width }
+}
+
+/// The width `keycap(text)` draws: its caps and the gaps between them (the tests check slots with it).
+#[cfg(test)]
+#[must_use]
+pub(crate) fn keycap_width(text: &str) -> f32 {
+    let keys = keys(text);
+    #[expect(clippy::cast_precision_loss, reason = "a shortcut has at most five keys")]
+    let gaps = keys.len().saturating_sub(1) as f32 * design().spacing.keycap.gap;
+    keys.iter().map(|key| cap_width(key)).sum::<f32>() + gaps
+}
+
+/// A shortcut's keycaps: one cap per key, 2 apart. Live (mantle, muted text) or, on the popover
+/// and notice surfaces, rest (badge, faint text).
 #[must_use]
 pub fn keycap(text: impl Into<SharedString>, state: ChipState) -> Div {
     let d = design();
@@ -79,20 +107,25 @@ pub fn keycap(text: impl Into<SharedString>, state: ChipState) -> Div {
         ChipState::Live => d.colors.muted,
         ChipState::Rest => d.colors.faint,
     };
-    let text = text.into();
-    div()
+    let text: SharedString = text.into();
+    h_flex()
         .flex_none()
-        .h(pt(d.components.keycap.height))
-        .w(pt(keycap_width(text.as_ref())))
-        .px(pt(d.spacing.keycap.pad_x))
-        .flex()
         .items_center()
-        .justify_center()
-        .rounded(pt(d.rounded.chip))
-        .bg(state.fill())
-        .text_color(text_color)
-        .text_role(&d.typography.roles.keycap)
-        .child(text)
+        .gap(pt(d.spacing.keycap.gap))
+        .children(keys(&text).into_iter().map(|key| {
+            div()
+                .flex_none()
+                .h(pt(d.components.keycap.height))
+                .w(pt(cap_width(&key)))
+                .flex()
+                .items_center()
+                .justify_center()
+                .rounded(pt(d.rounded.chip))
+                .bg(state.fill())
+                .text_color(text_color)
+                .text_role(&d.typography.roles.keycap)
+                .child(key)
+        }))
 }
 
 #[cfg(test)]
@@ -117,11 +150,26 @@ mod tests {
     }
 
     #[test]
-    fn normalizes_keycap_width_by_visual_bucket() {
-        assert_eq!(keycap_width("⌘"), 28.0);
-        assert_eq!(keycap_width("⌘1"), 36.0);
-        assert_eq!(keycap_width("⌘K"), 36.0);
-        assert_eq!(keycap_width("⇧⌘↵"), 42.0);
-        assert_eq!(keycap_width("esc"), 42.0);
+    fn splits_a_shortcut_into_its_keys() {
+        assert_eq!(keys("⌘↵"), ["⌘", "↵"]);
+        assert_eq!(keys("⇧⌘,"), ["⇧", "⌘", ","]);
+        assert_eq!(keys("⌥⌘C"), ["⌥", "⌘", "C"]);
+        assert_eq!(keys("⌘1"), ["⌘", "1"]);
+        assert_eq!(keys("↵"), ["↵"]);
+        assert_eq!(keys("esc"), ["esc"]);
+    }
+
+    #[test]
+    fn gives_every_key_the_same_cap() {
+        let k = &design().components.keycap;
+        let gap = design().spacing.keycap.gap;
+        for one in ["↵", "⌘", "K", "3", ","] {
+            assert!((keycap_width(one) - k.width).abs() < f32::EPSILON, "{one}");
+        }
+        for two in ["⌘↵", "⌘1", "⌘K", "⌘P"] {
+            assert!((keycap_width(two) - (2. * k.width + gap)).abs() < f32::EPSILON, "{two}");
+        }
+        assert!((keycap_width("esc") - k.word_width).abs() < f32::EPSILON);
+        assert!((keycap_width("⇧⌘↵") - (3. * k.width + 2. * gap)).abs() < f32::EPSILON);
     }
 }
