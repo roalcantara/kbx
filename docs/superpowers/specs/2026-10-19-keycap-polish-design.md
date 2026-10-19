@@ -38,28 +38,34 @@ their gap (42), so `↵` and `⌘ 3` take the same room and the chips beside the
 **D4. The link count is an outlined pill.** `link_chip` loses its fill: a round pill (full radius) with a 1 pt outline
 in `faint` at 45 % alpha, faint text and icon, the same in the live and rest states. Only keys have filled square caps.
 
-**D5. Footer keys sit in fixed slots.** Each key item on the footer's right side is at least `footer.slot` wide, its
-label right-aligned against its caps, so the caps stay put when the label changes. A label longer than the slot
-(a catalog override) widens its item rather than being cut.
+**D5. Footer labels sit in fixed slots.** Each key item's label on the footer's right side is at least
+`footer.label_slot` wide and right-aligned against its caps, so the caps stay put when the label changes (Open ↔
+Copy). A label longer than the slot (a catalog override) widens its item rather than being cut.
 
 **D6. Counts use tabular digits.** The status line's count, the refresh report's counts and the link pill's number
 use the `tnum` font feature.
 
-**D7. The filter pill has a minimum width.** `filter_pill.min_width` fits "All Entries" and its `⌘ P`, so the pill
+**D7. The filter pill has a minimum width.** `header.pill_min_width` fits "All Entries" and its `⌘ P`, so the pill
 keeps its width when it switches to "n filters".
 
 **D8. Every value is a design token.** No literal sizes in the components (the 8g rule): the caps, gaps, slots and
 widths below live in DESIGN.md's front matter and `ui/design.rs`.
 
+**D9. The list footer shows ↵, ⌘↵ and ⌘K only.** A screen key bound to `shift-cmd-enter` is left out of the footer
+(owner, 2026-10-19): an entry type with a secondary action (bookmarks) would otherwise add a footer item that a type
+without one (commands) removes, moving every item beside it. ⇧⌘↵ still runs the secondary action and is still listed
+in the action panel, as Raycast does.
+
 ## Scope
 
 In scope:
 
-- `ui/keycap.rs`: `caps` returns the keys; `keycaps` draws them; the width buckets go.
+- `ui/keycap.rs`: `caps` keeps spelling a shortcut as one string (`⌘↵`), which the catalog, the panel and the tests
+  compare; `keys` splits that string into keys; `keycap` draws one cap per key; the width buckets go.
 - Every caller: header (filter pill), list rows, footer (key items and the entry status's copy-path keys), action
   panel rows, the entry view's link numbers, the notice's `⌘ V`.
 - `ui/chip.rs`: the outlined link pill.
-- `ui/footer.rs`: fixed slots; tabular count.
+- `ui/footer.rs`: fixed label slots; tabular count. `search_view/footer.rs`: no `shift-cmd-enter` item (D9).
 - `ui/header.rs`: the pill's minimum width.
 - `sync_view.rs`: tabular counts in the report.
 - DESIGN.md tokens and component notes, `ui/design.rs`, the generated theme, the design shots, CHANGE-MAP.md.
@@ -72,18 +78,18 @@ Out of scope:
 
 ## Tokens
 
-| Token (DESIGN.md front matter)       | Value                                                                                                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `typography.roles.keycap`            | `{ family: ui, size: 9, weight: 400, line_height: 16 }` (was mono 11)                                                                                                   |
-| `components.keycap`                  | `{ height: 20, width: 20, word_width: 28 }`                                                                                                                             |
-| `spacing.keycap`                     | `{ gap: 2 }` (replaces `pad_x: 6`)                                                                                                                                      |
-| `components.row.key_slot`            | `42` (two caps and their gap)                                                                                                                                           |
-| `components.footer.slot`             | the widest shipped label (Details, Open, Copy, Actions, Back, Retry, Stop, Configure, Toggle, Only) with its caps, measured in the app and fixed as a whole point value |
-| `components.filter_pill.min_width`   | "All Entries", its icon, gaps and `⌘ P`, measured likewise                                                                                                              |
-| `components.chip.link_outline_alpha` | `0.45`                                                                                                                                                                  |
+| Token (DESIGN.md front matter)       | Value                                                                                                                         |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `typography.roles.keycap`            | `{ family: ui, size: 9, weight: 400, line_height: 16 }` (was mono 11)                                                         |
+| `components.keycap`                  | `{ height: 20, width: 20, word_width: 28 }`                                                                                   |
+| `spacing.keycap`                     | `{ gap: 2 }` (replaces `pad_x: 6`)                                                                                            |
+| `components.row.key_slot`            | `42` (two caps and their gap)                                                                                                 |
+| `components.footer.label_slot`       | `56`: fits the widest shipped label, "Configure" (about 52 in Inter 11); checked on the design shots                          |
+| `components.header.pill_min_width`   | `160`: padding 10 + 10, icon 15, gaps 8 + 8, "All Entries" (about 64 in Inter 12 / 500), caps 42; checked on the design shots |
+| `components.chip.link_outline_alpha` | `0.45`                                                                                                                        |
 
-The two measured values are taken from the running app (a debug print of the laid-out widths, removed afterwards)
-and written into DESIGN.md; `design:validate` checks them like any token.
+The two text-dependent values are estimates from Inter's metrics; the design shots confirm them (no label wider than
+its slot, the pill the same width with and without filters) and the plan adjusts them there if not.
 
 ## Behaviour
 
