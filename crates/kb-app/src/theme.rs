@@ -3,5 +3,6 @@
 
 pub mod color;
 pub mod folder;
+pub mod gpui;
 pub mod legibility;
 pub mod scheme;
