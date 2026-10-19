@@ -87,15 +87,16 @@ for behaviour. Read this file before any UI change.
 
 Every value lives in one place:
 
-| What                                   | Where                                                                    | Read by                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| Colours, type, radii, spacing, sizes   | This file's front matter (the design tokens)                             | the app (`ui/design.rs`); `design:theme`, `design:validate`     |
-| Entry types, actions, keys, words      | [`crates/kb-app/assets/catalog.toml`](crates/kb-app/assets/catalog.toml) | the app (`catalog.rs`); `~/.config/kb/config.toml` overrides it |
-| GPUI Kit's theme                       | [`kb.json`](crates/kb-app/assets/themes/kb.json), generated              | GPUI Kit's own components                                       |
-| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)               | whoever changes a value                                         |
+| What                                   | Where                                                                                                           | Read by                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Type, radii, spacing, sizes            | This file's front matter (the design tokens)                                                                    | the app (`ui/design.rs`)                                              |
+| Colours                                | Theme files: [`crates/kb-app/assets/themes/`](crates/kb-app/assets/themes/), seeded into `~/.config/kb/themes/` | the app (`theme.rs`); the front matter names the default, `kb-native` |
+| Entry types, actions, keys, words      | [`crates/kb-app/assets/catalog.toml`](crates/kb-app/assets/catalog.toml)                                        | the app (`catalog.rs`); `~/.config/kb/config.toml` overrides it       |
+| GPUI Kit's theme                       | Built from the active theme by `theme::gpui`                                                                    | GPUI Kit's own components                                             |
+| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)                                                      | whoever changes a value                                               |
 
-`mise run design:theme` regenerates `kb.json` after a colour changes; `mise run design:validate` checks contrast;
-`mise run design:shots` captures the app on the showcase corpus for comparison with the approved pages.
+`theme::legibility` checks every shipped theme's contrast in a test; `mise run design:validate` scores the comparison
+palettes; `mise run design:shots` captures the app on the showcase corpus for comparison with the approved pages.
 
 ## 1. Visual Theme & Atmosphere
 
@@ -106,7 +107,7 @@ a tag's identity (its icon), and state (the status dot). Always dark: kb has one
 
 ## 2. Color Palette & Roles
 
-The roles, by name (the hexes are in the front matter):
+The roles, by name. Their values come from the active theme (below); kb-native's are kb's own:
 
 | Role       | Job                                                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -131,6 +132,15 @@ The roles, by name (the hexes are in the front matter):
   `#tag` pill. Colour is never the only cue: pills carry the name, icon chips a tooltip.
 - **Chip state** (D3): _live_ (mantle, muted text) on every keycap and on the selected row's chips; _rest_ (badge)
   elsewhere, tag text muted, the link count faint.
+
+**Themes** (spec 2026-10-19-themes): the colours come from a theme file, a base24 (or base16) scheme in
+`~/.config/kb/themes/`, where kb seeds its eight (kb-native, Neon Dusk, Archwave, Azure Glow, Aetheria, Monokai,
+Sapphire, Nagai Poolside; page 19) and never overwrites one. kb maps a scheme onto the roles by each colour's base24
+meaning (base00 window, base01 badge, base02 selected, base03 faint, base04 muted, base05 text, base10 and base11 the
+darker layers, base08–base0E the accents, base0E the main accent `mauve`); a file's `kb:` section pins any role
+exactly. config.toml names the theme (`theme = "neon-dusk"`, kb-native without one) and may override single roles in
+`[colors]`. More… → Theme… lists the files and previews each as the selection moves; ↵ keeps and saves one, Esc
+restores the one in use. A theme below the legibility rules still loads, with a notice saying why.
 
 ## 3. Typography Rules
 

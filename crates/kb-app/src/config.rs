@@ -7,9 +7,15 @@
 //! sources_path = "~/Work/knowledge"
 //! tag_images_path = "~/Pictures/kb-tags"
 //! skills_command = "skills"
+//! theme = "neon-dusk"
+//!
+//! [colors]
+//! mauve = "#FF00AA"
 //! ```
 //!
 //! `skills_command` names the Skills command (spec D7); unset, kb looks for `skills` (`crate::command_path`).
+//! `theme` names a file in `~/.config/kb/themes/` (`crate::theme`; kb-native when unset) and `[colors]` overrides
+//! single colour roles over it.
 //!
 //! Without it the sources are `~/.config/kodexb/sources`, as in the Raycast extension. The index
 //! is the app's own file in its data directory; the Raycast index is never opened.
