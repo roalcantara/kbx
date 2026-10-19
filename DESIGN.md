@@ -158,6 +158,14 @@ dense type: titles 13 medium, descriptions 12, labels 12 medium, the footer 11, 
 the query 15; the pane's heading 15 semibold; the quote 14 italic. Command titles are mono (the catalog's
 `mono_title`). The type roles are the front matter's `typography.roles`.
 
+**Spacing** follows the GPUI Kit Design Guides' ramp, `spacing.scale`: 2 · 4 · 8 · 12 · 16 · 24 · 32. A gap is chosen
+by what it separates: parts of one control 4, related controls 8 (a label and its keys), one content group 12,
+separate groups 16 (footer items), sections 24, region boundaries 32; the keys of one shortcut sit 2 apart. The window
+has one content edge, `content_inset()` = the list's padding 8 + a row's 12 = 20: the header, rows, footer, panes and
+notice all start and end on it, so the filter pill, the rows' keys and the footer's keys line up. The action panel,
+a separate surface, has its own 12 (4 + 8). A test fails on any spacing value off the ramp, except two composite
+clearances (the command card's room for its copy button, 40; the notice above the footer, 48).
+
 ## 4. Component Stylings
 
 Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an approved page:
@@ -174,8 +182,8 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   never narrower than `pill_min_width`.
 - **Footer** (`footer.rs`; 01-list, 04-entry-template): 40 tall, a hairline over it; left the status line on the
   list (`● Ready • N results`) or, with a pane or the detail screen, the entry's tile, file and `⌥⌘C`; right the
-  screen's ↵ and ⌘↵ keys and _Actions ⌘K_ (never ⇧⌘↵, which the action panel lists), each label in a fixed slot;
-  counts in tabular digits.
+  screen's ↵ and ⌘↵ keys and _Actions ⌘K_ (never ⇧⌘↵, which the action panel lists), 16 apart, each label 8 from its
+  keys; counts in tabular digits.
 - **Action panel** (`action_panel.rs`; 02-actions, 07-filter): mantle, 14 pt corners, 220 wide (the filter 230),
   28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus.
 - **Empty view** (`empty_view.rs`; 03-empty, 11-14-refresh): one 56 pt icon, a 15 pt title, a sentence; the query in
