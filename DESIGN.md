@@ -162,7 +162,8 @@ the query 15; the pane's heading 15 semibold; the quote 14 italic. Command title
 by what it separates: parts of one control 4, related controls 8 (a label and its keys), one content group 12,
 separate groups 16 (footer items), sections 24, region boundaries 32; the keys of one shortcut sit 2 apart. The window
 has one content edge, `content_inset()` = the list's padding 8 + a row's 12 = 20: the header, rows, footer, panes and
-notice all start and end on it, so the filter pill, the rows' keys and the footer's keys line up. The action panel,
+notice all start and end on it, so the filter pill, the rows' keys and the footer's keys line up. A control with its own fill (a
+selected row, the filter pill) lets the fill reach into the margin by its padding; its contents stay on the edge. The action panel,
 a separate surface, has its own 12 (4 + 8). A test fails on any spacing value off the ramp, except two composite
 clearances (the command card's room for its copy button, 40; the notice above the footer, 48).
 
