@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb · 19 Colours · approved</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+<style>
+  /* Page chrome (not the design) */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 900px; }
+  .stage { display: grid; grid-template-columns: 900px 1fr; gap: 28px; align-items: start; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { font: 500 13px Inter; color: #a5adcb; background: #24273a; border: 1px solid #363a4f; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  .tabs button.on { color: #11121a; background: #c6a0f6; border-color: #c6a0f6; }
+  .tabs label { margin-left: auto; font-size: 13px; color: #a5adcb; display: flex; align-items: center; gap: 6px; }
+  .frame { position: relative; width: 900px; height: 560px; display: flex; align-items: center; justify-content: center; background: radial-gradient(#2a2d40, #14151f); border-radius: 12px; }
+  .frame img { width: 900px; height: auto; display: block; border-radius: 12px; }
+  .view { display: none; } .view.on { display: flex; }
+  .legend { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 19px; }
+  .legend h2 { font-size: 15px; font-weight: 600; margin: 6px 0 2px; }
+  .note { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; }
+  .note b { color: #cad3f5; font-weight: 600; }
+  .note p { color: #a5adcb; }
+  .num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 11px Inter; color: #11121a; }
+  .num.keep { background: #a6da95; } .num.adjust { background: #eed49f; } .num.ask { background: #f5a97f; }
+  .key { display: flex; gap: 14px; font-size: 12px; color: #a5adcb; }
+  .key span { display: flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .questions h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .questions .q { margin-bottom: 18px; }
+  .questions .q p { color: #a5adcb; font-size: 13px; margin-bottom: 8px; }
+  .questions .opts { display: flex; gap: 10px; }
+  .questions .opt { flex: 1; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; line-height: 18px; color: #a5adcb; }
+  .questions .opt b { color: #cad3f5; display: block; margin-bottom: 2px; }
+  .questions .opt.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .marker { position: absolute; z-index: 50; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 10px Inter; color: #11121a; box-shadow: 0 0 0 2px #11121a; pointer-events: none; }
+  .hide-markers .marker { display: none; }
+
+  /* ===== The proposal: kb's 01 List, in your design's values (Catppuccin Macchiato) ===== */
+  .kb { --window: #24273a; --selected: #363a4f; --hover: #2f334a; --badge: #2e3248; --toast: #181926; --mantle: #1e2030;
+        --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
+        --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95; --peach: #f5a97f; --pink: #f5bde6; --yellow: #eed49f; --red: #ed8796;
+        --edge: rgba(110, 115, 141, 0.10);
+        position: relative; width: 860px; height: 520px; display: flex; flex-direction: column; overflow: hidden;
+        background: var(--window); border-radius: 14px; font-family: Inter, sans-serif; color: var(--text);
+        box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(202,211,245,.08); -webkit-font-smoothing: antialiased; }
+  .kb svg { stroke-width: 2; flex: none; }
+  .kb .mono { font-family: 'JetBrains Mono', monospace; }
+  .kb .hd { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--edge); }
+  .kb .hd .glass { width: 20px; height: 20px; color: var(--faint); }
+  .kb .hd .q { flex: 1; font-size: 15px; display: flex; align-items: center; }
+  .kb .hd .caret { width: 1.5px; height: 16px; background: var(--mauve); margin-left: 2px; }
+  .kb .fp { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; }
+  .kb .fp svg { width: 15px; height: 15px; color: var(--faint); }
+
+  .kb .ls { flex: 1; min-height: 0; padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+  .kb .r { position: relative; height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 6px; }
+  .kb .r.sel { background: var(--selected); }
+  .kb .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); box-shadow: 0 0 8px rgba(198,160,246,.6); }
+  .kb .tile { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .kb .tile svg { width: 16px; height: 16px; }
+  .kb .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .kb .tt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .ds { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .tr { flex: none; display: flex; align-items: center; gap: 12px; }
+  .kb .tags { display: flex; align-items: center; gap: 6px; }
+  .kb .ti { width: 20px; height: 20px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; }
+  .kb .r.sel .ti, .kb .r.sel .tp, .kb .r.sel .lc { background: var(--mantle); } .kb .r.sel .tp, .kb .r.sel .lc { color: var(--muted); }
+  .kb .ti svg { width: 14px; height: 14px; }
+  .kb .tp { height: 20px; display: inline-flex; align-items: center; line-height: 16px; padding: 0 8px; border-radius: 4px; background: var(--badge); color: var(--muted); font-size: 11px; font-weight: 600; }
+  .kb .lc { height: 20px; display: flex; align-items: center; gap: 4px; padding: 0 6px; line-height: 16px; border-radius: 4px; background: var(--badge); color: var(--faint); font: 400 11px 'JetBrains Mono', monospace; }
+  .kb .lc svg { width: 12px; height: 12px; }
+  .kb kbd, .kb .mini { height: 20px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--mantle); color: var(--muted); font: 400 11px/16px 'JetBrains Mono', monospace; margin: 0; box-shadow: none; }
+
+  .kb .ft { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--edge); font-size: 11px; color: var(--faint); }
+  .kb .ft .l, .kb .ft .rt, .kb .ft .it { display: flex; align-items: center; gap: 8px; }
+  .kb .ft .rt { gap: 20px; } .kb .ft .it { gap: 6px; color: var(--muted); }
+  .kb .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(166,218,149,.7); }
+  .kb .toast { position: absolute; right: 16px; bottom: 48px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--toast); box-shadow: 0 12px 32px rgba(0,0,0,.65), 0 0 0 1px rgba(198,160,246,.3); font-size: 13px; font-weight: 500; }
+  .kb .toast .ok { width: 20px; height: 20px; border-radius: 50%; background: rgba(166,218,149,.2); border: 1px solid rgba(166,218,149,.4); color: var(--green); display: flex; align-items: center; justify-content: center; }
+  .kb .toast .ok svg { width: 13px; height: 13px; }
+  .kb .toast .hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 400; } .kb .toast .hint kbd { background: var(--badge); }
+  .kb .toast .x { color: var(--faint); } .kb .toast .x svg { width: 15px; height: 15px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <h1>01 · List — your design, made into kb <span style="font-size:13px;color:#a6da95;font-weight:500">v5: the fill decides the text: on mantle (live) every chip and keycap reads muted</span></h1>
+    <p class="lead">Left: switch between <b>your design</b> (the Stitch screen) and <b>the proposal</b> (the same screen built from your design's
+    own values, with realistic data in kb's shapes). Everything is kept as you drew it unless a note on the right says otherwise.
+    The circled numbers point at each spot that needed a decision.</p>
+  </div>
+
+  <div class="stage">
+    <div>
+      <div class="tabs">
+        <button data-show="mine" onclick="show('mine', this)">Your design</button>
+        <button class="on" data-show="prop" onclick="show('prop', this)">Proposal</button>
+        <label><input type="checkbox" checked onchange="document.body.classList.toggle('hide-markers', !this.checked)"> numbers</label>
+      </div>
+      <div class="frame">
+        <div class="view" id="mine"><img src="requested-01.png" alt="Your design"></div>
+        <div class="view on" id="prop">
+          <div class="kb">
+            <div class="hd">
+              <i class="glass" data-lucide="search"></i>
+              <div class="q">/k8s<span class="caret"></span></div>
+              <div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div>
+            </div>
+            <div class="ls">
+              <div class="r sel">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods with zero downtime restart strategy</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#k8s"><i data-lucide="network"></i></span><span class="tp">#devops</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>2</span><kbd>↵</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/docker-prune-all</span><span class="ds">Remove unused containers, dangling networks, dangling images, and volumes</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#docker"><i data-lucide="box"></i></span><span class="tp">#cleanup</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>1</span><kbd>⌘2</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/git-undo-commit</span><span class="ds">Undo last git commit while preserving staged changes in index</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#git"><i data-lucide="git-commit-horizontal"></i></span><span class="tp">#vcs</span></span><kbd>⌘3</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span>
+                <span class="tx"><span class="tt">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span><span class="ds">Cert-manager annotations, cluster issuer configs, and TLS secrets matrix</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#k8s"><i data-lucide="network"></i></span><span class="tp">#networking</span><span class="tp">#yaml</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>4</span><kbd>⌘4</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span>
+                <span class="tx"><span class="tt">Rust Memory Safety &amp; Lifetimes Reference</span><span class="ds">Borrow checker rules, Rc&lt;RefCell&gt; patterns, and unsafe block guidelines</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#rust"><i data-lucide="cog"></i></span><span class="tp">#systems</span></span><kbd>⌘5</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span>
+                <span class="tx"><span class="tt">Tokio Tutorial — Async in Depth</span><span class="ds">tokio.rs · How futures, wakers and the executor fit together</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#rust"><i data-lucide="cog"></i></span><span class="tp">#async</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>3</span><kbd>⌘6</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span>
+                <span class="tx"><span class="tt">AWS EKS VPC CNI Subnet Exhaustion Playbook</span><span class="ds">Remediation steps for secondary CIDR assignment and prefix delegation flags</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--yellow)" title="#aws"><i data-lucide="cloud"></i></span><span class="tp">#eks</span></span><kbd>⌘7</kbd></span>
+              </div>
+            </div>
+            <div class="toast">
+              <span class="ok"><i data-lucide="check"></i></span>
+              <span>Copied command to clipboard</span>
+              <span class="hint"><kbd>⌘V</kbd> to paste</span>
+              <span class="x"><i data-lucide="x"></i></span>
+            </div>
+            <div class="ft">
+              <div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>12 results</span></div>
+              <div class="rt"><span class="it">Show Details<kbd>↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div>
+            </div>
+            <!-- markers -->
+            <span class="marker" style="left:30px;top:6px;background:#eed49f">1</span>
+            <span class="marker" style="left:640px;top:6px;background:#a6da95">2</span>
+            <span class="marker" style="left:96px;top:66px;background:#a6da95">3</span>
+            <span class="marker" style="left:300px;top:70px;background:#eed49f">4</span>
+            <span class="marker" style="left:610px;top:70px;background:#eed49f">5</span>
+            <span class="marker" style="left:790px;top:118px;background:#f5a97f">6</span>
+            <span class="marker" style="left:30px;top:250px;background:#eed49f">7</span>
+            <span class="marker" style="left:30px;top:370px;background:#eed49f">8</span>
+            <span class="marker" style="left:560px;top:420px;background:#eed49f">9</span>
+            <span class="marker" style="left:30px;top:470px;background:#a6da95">10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="key"><span><i style="background:#a6da95"></i>kept as you drew it</span><span><i style="background:#eed49f"></i>adjusted, and why</span><span><i style="background:#f5a97f"></i>your call</span></div>
+      <h2>What the proposal keeps</h2>
+      <div class="note"><span class="num keep">✓</span><p><b>Everything visual</b>: Catppuccin Macchiato colours, 14 pt window corners, hairlines under the header and above the footer, 56 pt rows 4 pt apart with 6 pt corners, the mauve bar with its glow, tinted icon tiles, neutral grey tag pills, icon chips for tags, the ↗ link chip, small type (13 / 12 / 11), Inter + JetBrains Mono, monospace keycaps, the filter pill with ⌘P, the toast.</p></div>
+      <div class="note"><span class="num keep">2</span><p><b>Filter pill</b> as drawn: sliders icon, label, ⌘P. kb's current funnel and chevron go.</p></div>
+      <div class="note"><span class="num keep">3</span><p><b>Command titles in monospace</b>: only entries of type <i>commands</i>; everything else in Inter, as drawn.</p></div>
+      <div class="note"><span class="num keep">10</span><p><b>Status line</b> as drawn: the true result count comes from the index.</p></div>
+
+      <h2>What had to be adjusted</h2>
+      <div class="note"><span class="num adjust">1</span><p><b>Magnifier on the list, back chevron elsewhere.</b> Your list shows a search icon; kb needs a back button on the detail and rebuild screens, so it appears only there.</p></div>
+      <div class="note"><span class="num adjust">4</span><p><b>The <span class="mono">deploy/api</span> chip is gone.</b> kb entries have no field it could come from (title, description, tags, links, type only).</p></div>
+      <div class="note"><span class="num adjust">5</span><p><b>Tag icons come from your tag-images folder</b> (<span class="mono">~/.config/kb/images/&lt;tag&gt;.svg</span>), tinted in the tag's colour. A tag without an image is a grey pill. The icons here are stand-ins for your real logos.</p></div>
+      <div class="note"><span class="num adjust">7</span><p><b>Type colours follow your design</b>: commands green, cheat sheets mauve with a book, bookmarks blue with a bookmark, notes peach. kb today has cheats blue and bookmarks purple; this swaps them.</p></div>
+      <div class="note"><span class="num adjust">8</span><p><b>Your icons are Google's Material set; kb draws Lucide</b> (the set its UI toolkit ships). Each was swapped for its nearest twin, so shapes differ slightly.</p></div>
+      <div class="note"><span class="num adjust">9</span><p><b>Toast hint says ⌘V</b>, not ⌥V: paste on macOS is ⌘V.</p></div>
+      <div class="note"><span class="num ask">6</span><p><b>⌘2…⌘7 on each row</b> need a new feature: ⌘&lt;n&gt; runs row n's main action. Small to build, but new behaviour. Your call below.</p></div>
+    </div>
+  </div>
+
+  <div class="questions">
+    <h2>Your call</h2>
+    <div class="q">
+      <p><b>6 · Quick picks:</b> keep the ⌘1–⌘9 hints on rows (and build the shortcut)?</p>
+      <div class="opts options">
+        <div class="opt option" data-choice="quickpick-yes" onclick="toggleSelect(this)"><b>Yes, build it</b>⌘1…⌘9 run the first nine rows' main action, as drawn.</div>
+        <div class="opt option" data-choice="quickpick-no" onclick="toggleSelect(this)"><b>No, drop the hints</b>Rows end with their link chip; only the selected row shows ↵.</div>
+      </div>
+    </div>
+    <div class="q">
+      <p><b>Overall:</b> does this feel like the design you brought?</p>
+      <div class="opts options">
+        <div class="opt option" data-choice="overall-yes" onclick="toggleSelect(this)"><b>Yes</b>Apply the same approach to the other screens.</div>
+        <div class="opt option" data-choice="overall-tweak" onclick="toggleSelect(this)"><b>Almost</b>I'll say what to change in the terminal.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function show(id, btn) {
+    for (const v of document.querySelectorAll('.view')) v.classList.toggle('on', v.id === id)
+    for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b === btn)
+  }
+  lucide.createIcons()
+</script>
+<!-- ===== Added for the keycap question. Everything above is 01-list.html verbatim; the windows below are clones
+     of its proposal window, with only the keycaps (and the footer's third shortcut, as the app has it) changed. ===== -->
+<style>
+  .page { display: none; }
+  #kc { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  #kc h1 { font-size: 22px; font-weight: 600; }
+  #kc .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 980px; }
+  #kc .lead b { color: #cad3f5; }
+  #kc .bar { display: flex; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 60; background: #11121a; padding: 10px 0; }
+  #kc .bar button { font: 500 13px Inter; color: #11121a; background: #c6a0f6; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  #kc .bar label { font-size: 13px; color: #a5adcb; display: flex; gap: 6px; align-items: center; }
+  #kc .variant { display: grid; grid-template-columns: 900px 1fr; gap: 24px; align-items: start; }
+  #kc .stagewrap { width: 900px; padding: 20px; background: radial-gradient(#2a2d40, #15161f); border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  #kc .side { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 19px; color: #a5adcb; }
+  #kc .side h2 { font-size: 16px; color: #cad3f5; }
+  #kc .side b { color: #cad3f5; }
+  #kc .side .opt { background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+  #kc .side .opt.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  #kc .good { color: #a6da95; } #kc .bad { color: #ed8796; }
+  /* the action panel strip: right-aligned caps, as the panel's rows have them */
+  .kb.strip { height: auto; width: 860px; padding: 8px; gap: 2px; }
+  .kb.strip .pr { height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-radius: 6px; font-size: 13px; }
+  .kb.strip .pr:first-child { background: var(--selected); }
+  /* B · one cap, every glyph readable: Inter (the system's ⌘ ⇧ ⌥ ↵), 12 / 500, 2 apart, one width for one or two keys */
+  .vb kbd { font: 500 12px/16px Inter, -apple-system, sans-serif; padding: 0; gap: 2px; justify-content: center; }
+  .vb kbd .k { display: inline-block; min-width: 8px; text-align: center; }
+  /* C · one cap per key, 4 apart: the gap is the "these go together" cue. v3: glyphs 11 / 400 (was 12 / 500) */
+  .vc .keys { display: inline-flex; gap: 2px; justify-content: flex-end; }
+  .vc .keys.slot { width: 42px; }
+  .vc kbd { font: 400 10px/16px Inter, -apple-system, sans-serif; width: 20px; min-width: 20px; padding: 0; }
+  .vc kbd.word { width: 28px; }
+  /* v3 · the link count no longer looks like a key */
+  .l1 .lc, .l1 .r.sel .lc { background: transparent !important; padding: 0 2px; color: var(--faint) !important; }
+  .l2 .lc, .l2 .r.sel .lc { background: transparent !important; border-radius: 9999px; padding: 0 8px; color: var(--faint) !important;
+                            box-shadow: inset 0 0 0 1px rgba(110, 115, 141, 0.45); }
+  /* v3 · glyph sizes, side by side */
+  #gs { display: grid; grid-template-columns: 900px 1fr; gap: 24px; align-items: start; }
+  #gs .sizes { width: 900px; padding: 20px 28px; background: #24273a; border-radius: 12px; display: flex; flex-direction: column; gap: 14px; }
+  #gs .line { display: flex; align-items: center; gap: 22px; }
+  #gs .line .name { width: 190px; font-size: 13px; color: #a5adcb; }
+  #gs .line .set { display: inline-flex; gap: 4px; }
+  #gs kbd { height: 20px; width: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;
+            background: #1e2030; color: #a5adcb; font-family: Inter, -apple-system, sans-serif; }
+  #gs kbd.word { width: 28px; }
+  #gs .s12 kbd { font-size: 12px; font-weight: 500; } #gs .s11 kbd { font-size: 11px; font-weight: 400; } #gs .s10 kbd { font-size: 10px; font-weight: 400; }
+</style>
+<div id="kc">
+  <div>
+    <h1>19 · Colours — approved: Neon Dusk <span style="font-size:13px;color:#a6da95;font-weight:500">2026-10-19: chosen from seven omarchy community themes; the others kept for comparison</span></h1>
+    <p class="lead">Each window is the approved list (page 18, one edge at 20) recoloured from an omarchy theme's own palette,
+    mapped onto kb's 19 colour roles. Every scheme passes kb's legibility rules (text and muted 4.5:1 on every surface,
+    faint 3:1, each accent 3:1 on its tile). The <b>frame</b> is part of the scheme: <b>none</b> (no hairlines, no outline;
+    surfaces separate by tone), <b>accent</b> (the panel outlined in the theme's accent, as Hyprland draws an active
+    window), or <b>lines</b> (visible hairlines). Click the ones worth keeping.</p>
+  </div>
+  <div class="bar">
+    <button onclick="moveSel()">Move selection ↓</button>
+  </div>
+</div>
+<script>
+  const VARIANTS = [
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-today",
+    "title": "Today · Catppuccin Macchiato · frame: lines",
+    "choice": "today",
+    "edges": [],
+    "text": "The current tokens, for comparison."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-neon-dusk",
+    "title": "Neon Dusk · frame: accent",
+    "choice": "neon-dusk",
+    "edges": [],
+    "text": "Violet night, hot-pink accent, cyan and gold; the panel framed in pink."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-archwave",
+    "title": "Archwave · frame: none",
+    "choice": "archwave",
+    "edges": [],
+    "text": "Synthwave pastels: pink, cyan, lime-yellow on deep purple; no lines at all."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-azure-glow",
+    "title": "Azure Glow · frame: accent",
+    "choice": "azure-glow",
+    "edges": [],
+    "text": "One electric hue: azure and cyan on near-black blue; the panel framed in azure."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-aetheria",
+    "title": "Aetheria · frame: none",
+    "choice": "aetheria",
+    "edges": [],
+    "text": "Bold and unusual: teal secondary text, crimson accent, lime and orange on dark violet; no lines."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-monokai",
+    "title": "Monokai (omarchy) · frame: lines",
+    "choice": "monokai",
+    "edges": [],
+    "text": "Monokai Pro on navy: cyan accent, classic Monokai hues; visible hairlines."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-sapphire",
+    "title": "Sapphire · frame: accent",
+    "choice": "sapphire",
+    "edges": [],
+    "text": "Deep sapphire navy with soft coral-pink accent and pastels; the panel framed in pink."
+  },
+  {
+    "id": "c",
+    "cls": "vc l2 sp-20 th-nagai-poolside",
+    "title": "Nagai Poolside · frame: none",
+    "choice": "nagai-poolside",
+    "edges": [],
+    "text": "Calm teal-slate, pool blue accent, sand and sun tones; a faint blue outline only."
+  }
+]
+  const MODS = new Set(['⌃', '⌥', '⇧', '⌘'])
+  const keysOf = t => { const ks = []; let rest = ''; for (const ch of t) { if (MODS.has(ch) && !rest) ks.push(ch); else rest += ch } if (rest) ks.push(rest); return ks }
+  function paint(kbd, text, v, slot) {
+    const ks = keysOf(text)
+    if (v === 'a') { kbd.textContent = text; kbd.style.width = ([28, 28, 36, 42][[...text].length] || 48) + 'px'; kbd.style.padding = '0'; return kbd }
+    if (v === 'b') { kbd.innerHTML = ks.map(k => `<span class="k">${k}</span>`).join(''); kbd.style.width = (ks.length <= 2 ? 40 : 52) + 'px'; return kbd }
+    const g = document.createElement('span'); g.className = 'keys' + (slot ? ' slot' : '')
+    for (const k of ks) { const c = document.createElement("kbd"); c.textContent = k; if ([...k].length > 1) c.className = "word"; g.appendChild(c) }
+    kbd.replaceWith(g); return g
+  }
+  const base = document.querySelector('#prop .kb')
+  const host = document.getElementById('kc')
+  const windows = []
+  for (const v of VARIANTS) {
+    const w = base.cloneNode(true)
+    w.querySelectorAll('.marker, .toast').forEach(n => n.remove())
+    w.querySelector('.ft .rt').innerHTML = '<span class="it">Details<kbd>↵</kbd></span><span class="it">Copy<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span>'
+    const strip = document.createElement('div'); strip.className = 'kb strip'
+    strip.innerHTML = [['Copy', '⌘↵'], ['Edit', '⌘O'], ['Refresh', '⌘R'], ['Copy Path', '⌥⌘C'], ['Configure', '⇧⌘,'], ['Stop', 'esc']]
+      .map(([l, k]) => `<div class="pr"><span>${l}</span><kbd>${k}</kbd></div>`).join('')
+    const sec = document.createElement('div'); sec.className = 'variant ' + v.cls
+    sec.innerHTML = `<div class="stagewrap"></div><div class="side"><h2>${v.title}</h2><p>${v.text}</p></div>`
+    sec.firstChild.append(w, strip); host.appendChild(sec)
+    for (const k of [...w.querySelectorAll('.hd kbd, .ft kbd'), ...strip.querySelectorAll('kbd')]) paint(k, k.textContent, v.id, false)
+    windows.push({ w, v: v.id })
+  }
+  let sel = 0
+  function render() {
+    for (const { w, v } of windows) {
+      w.querySelectorAll('.ls .r').forEach((r, i) => {
+        r.classList.toggle('sel', i === sel)
+        const old = r.querySelector('.tr kbd, .tr .keys')
+        const k = document.createElement('kbd'); old.replaceWith(k)
+        paint(k, i === sel ? '↵' : '⌘' + (i + 1), v, true)
+      })
+    }
+  }
+  function moveSel() { sel = (sel + 1) % 7; render() }
+  document.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); moveSel() } })
+  render()
+</script>
+<!-- Added for the spacing question: per-variant spacing, and a red line at each region's right edge. -->
+<style>
+  .sp-20 .kb .hd, .sp-20 .kb .ft { padding-left: 20px; padding-right: 20px; }
+  .sp-24 .kb .hd, .sp-24 .kb .ft { padding-left: 24px; padding-right: 24px; }
+  .sp-20 .kb .r { padding: 0 12px; } .sp-24 .kb .r { padding: 0 16px; }
+  .sp-20 .kb .ft .rt, .sp-24 .kb .ft .rt { gap: 16px; }
+  .sp-20 .kb .ft .it, .sp-24 .kb .ft .it, .sp-20 .kb .ft .l, .sp-24 .kb .ft .l { gap: 8px; }
+  .sp-20 .kb .tags, .sp-24 .kb .tags { gap: 8px; }
+  .sp-20 .kb .fp, .sp-24 .kb .fp { padding: 4px 8px; }
+  .sp-20 .kb.strip, .sp-24 .kb.strip { padding: 4px; }
+  .sp-20 .kb.strip .pr, .sp-24 .kb.strip .pr { padding: 0 8px; }
+  .edge { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(237, 135, 150, 0.8); z-index: 40; pointer-events: none; }
+</style>
+<script>
+  windows.forEach(({ w }, i) => {
+    for (const px of VARIANTS[i].edges) {
+      const line = document.createElement('div'); line.className = 'edge'; line.style.right = px + 'px'; w.appendChild(line)
+    }
+  })
+</script>
+
+<!-- Added: recolour each window (and its panel strip) from its scheme's roles. -->
+<style>
+  .kb .tile { background: color-mix(in srgb, currentColor 15%, transparent) !important; }
+  .kb .r.sel::before { box-shadow: 0 0 8px color-mix(in srgb, var(--mauve) 60%, transparent) !important; }
+  .kb .dot { box-shadow: 0 0 6px color-mix(in srgb, var(--green) 70%, transparent) !important; }
+  .kb .hd { border-bottom-color: var(--edge) !important; } .kb .ft { border-top-color: var(--edge) !important; }
+  .kb .caret { background: var(--mauve) !important; }
+</style>
+<script>
+  const SCHEMES = {"today":{"id":"today","frame":"lines","roles":{"window":"#24273A","mantle":"#1E2030","crust":"#181926","selected":"#363A4F","hover":"#2F334A","badge":"#2E3248","code":"#191B29","edge":"#6E738D1A","ring":"#CAD3F514","text":"#CAD3F5","muted":"#A5ADCB","faint":"#6E738D","mauve":"#C6A0F6","blue":"#8AADF4","green":"#A6DA95","peach":"#F5A97F","pink":"#F5BDE6","yellow":"#EED49F","red":"#ED8796"}},"neon-dusk":{"id":"neon-dusk","frame":"accent","roles":{"window":"#16122A","mantle":"#0D0A18","crust":"#07050D","selected":"#382654","hover":"#221B3C","badge":"#221B3C","code":"#0D0A18","edge":"#3A315480","ring":"#E85FAF","text":"#F0EAFF","muted":"#CFC7E8","faint":"#8E84B0","mauve":"#E85FAF","blue":"#7B8FF2","green":"#4BE09A","peach":"#F2874A","pink":"#C77DF5","yellow":"#EEC06A","red":"#F2596C"}},"archwave":{"id":"archwave","frame":"none","roles":{"window":"#1A0D2E","mantle":"#12081F","crust":"#0B0516","selected":"#2D1B4E","hover":"#24153F","badge":"#2D1B4E","code":"#12081F","edge":"#00000000","ring":"#00000000","text":"#FEF6FF","muted":"#D4A5FF","faint":"#9A7CC4","mauve":"#FF6EC7","blue":"#8B9AFF","green":"#5FFBF1","peach":"#FFB86E","pink":"#F4A5FF","yellow":"#F9F871","red":"#FF5577"}},"azure-glow":{"id":"azure-glow","frame":"accent","roles":{"window":"#0A0F14","mantle":"#101820","crust":"#06090D","selected":"#1C2833","hover":"#131D27","badge":"#101820","code":"#06090D","edge":"#00BFFF26","ring":"#00BFFF","text":"#E6F6FF","muted":"#A9DFFF","faint":"#6A93AB","mauve":"#00BFFF","blue":"#33D4FF","green":"#2AFFD5","peach":"#FFA24C","pink":"#9A6BFF","yellow":"#FFD43B","red":"#FF4C4C"}},"aetheria":{"id":"aetheria","frame":"none","roles":{"window":"#0E091D","mantle":"#08050F","crust":"#050309","selected":"#22143D","hover":"#170E2B","badge":"#1A1030","code":"#08050F","edge":"#00000000","ring":"#00000000","text":"#E3FBFA","muted":"#14B9B5","faint":"#7C6CA0","mauve":"#FD3E6A","blue":"#04C5F0","green":"#7CD699","peach":"#FF7F41","pink":"#C56FE0","yellow":"#C8E967","red":"#F93D3B"}},"monokai":{"id":"monokai","frame":"lines","roles":{"window":"#0A1220","mantle":"#080E18","crust":"#050910","selected":"#18294A","hover":"#111F37","badge":"#111F37","code":"#050910","edge":"#555C6580","ring":"#555C6566","text":"#F0F2F5","muted":"#B3BDCC","faint":"#7A8494","mauve":"#78DCE8","blue":"#ABA0F2","green":"#B2D977","peach":"#F28B66","pink":"#F25E86","yellow":"#F2C063","red":"#FF4F5E"}},"sapphire":{"id":"sapphire","frame":"accent","roles":{"window":"#060D1F","mantle":"#080C12","crust":"#030710","selected":"#262E40","hover":"#151B26","badge":"#151B26","code":"#030710","edge":"#7576B633","ring":"#F7C3C6","text":"#F6F8FF","muted":"#C8D2E6","faint":"#8586C4","mauve":"#F7C3C6","blue":"#6488EA","green":"#85CEC4","peach":"#FFA69E","pink":"#E8A0D8","yellow":"#E5C697","red":"#E95C4B"}},"nagai-poolside":{"id":"nagai-poolside","frame":"none","roles":{"window":"#0F1B22","mantle":"#0B141A","crust":"#070D11","selected":"#243C47","hover":"#152B34","badge":"#152B34","code":"#0B141A","edge":"#00000000","ring":"#58AFD855","text":"#E6F1F4","muted":"#C7DDE3","faint":"#88A6AE","mauve":"#58AFD8","blue":"#8CCBF2","green":"#9CC45F","peach":"#D8C3A6","pink":"#E79BC4","yellow":"#EED59A","red":"#FF6B6B"}}}
+  const VARS = { window: '--window', mantle: '--mantle', crust: '--toast', selected: '--selected', hover: '--hover', badge: '--badge',
+    edge: '--edge', text: '--text', muted: '--muted', faint: '--faint', mauve: '--mauve', blue: '--blue', green: '--green',
+    peach: '--peach', pink: '--pink', yellow: '--yellow', red: '--red' }
+  windows.forEach(({ w }, i) => {
+    const s = SCHEMES[VARIANTS[i].choice]
+    for (const el of [w, w.nextElementSibling]) {
+      if (!el) continue
+      for (const [role, v] of Object.entries(VARS)) el.style.setProperty(v, s.roles[role])
+      el.style.boxShadow = '0 24px 64px rgba(0,0,0,.55), 0 0 0 ' + (s.frame === 'accent' ? '1.5px ' : '1px ') + s.roles.ring
+    }
+  })
+</script>
+</body>
+</html>

@@ -148,7 +148,7 @@ fn color<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Hsla, D::E
 }
 
 impl Colors {
-    /// A tag hue's colour: the Raycast hash's seven hues in Catppuccin's names.
+    /// A tag hue's colour: the Raycast hash's seven hues in the colour tokens' names.
     #[must_use]
     pub fn hue(&self, hue: Hue) -> Hsla {
         match hue {
@@ -499,8 +499,8 @@ mod tests {
     #[test]
     fn reads_the_tokens_of_design_md() {
         let d = parse(DESIGN_MD).unwrap();
-        assert_eq!(d.colors.window, Hsla::from(rgb(0x0024_273A)));
-        assert_eq!(d.colors.edge, Hsla::from(rgba(0x6E73_8D1A)));
+        assert_eq!(d.colors.window, Hsla::from(rgb(0x0016_122A)));
+        assert_eq!(d.colors.edge, Hsla::from(rgba(0x3A31_5480)));
         assert_eq!(d.typography.ui, "Inter");
         assert_eq!(d.typography.mono, "JetBrains Mono");
         assert!((d.typography.roles.title.size - 13.).abs() < f32::EPSILON);
@@ -561,7 +561,7 @@ mod tests {
     #[test]
     fn rejects_a_file_without_front_matter_or_with_a_missing_token() {
         assert!(matches!(parse("# Design\n"), Err(DesignError::NoFrontMatter)));
-        let without_window = DESIGN_MD.replacen("  window: \"#24273A\"\n", "", 1);
+        let without_window = DESIGN_MD.replacen("  window: \"#16122A\"\n", "", 1);
         assert!(matches!(parse(&without_window), Err(DesignError::Shape(_))));
     }
 
