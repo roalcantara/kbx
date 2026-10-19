@@ -21,7 +21,7 @@ use kb_domain::sync::{Progress, SkillsOutcome, SyncError, SyncReport, SyncReques
 
 use crate::catalog::{Catalog, Messages, fill};
 use crate::ui::chip::pill;
-use crate::ui::design::{TextRoleExt as _, design, pt};
+use crate::ui::design::{TextRoleExt as _, design, pt, tabular_digits};
 use crate::ui::empty_view::{EmptyView, Sentence, progress_bar};
 use crate::ui::keycap::ChipState;
 use crate::ui::row::Row;
@@ -531,6 +531,7 @@ impl SyncView {
                     .pt(pt(s.summary_pad_top))
                     .pb(pt(s.summary_pad_bottom))
                     .text_role(&d.typography.roles.description)
+                    .font_features(tabular_digits())
                     .text_color(c.muted)
                     .child(line),
             )

@@ -9,7 +9,7 @@ use gpui_kit::{
 };
 
 use crate::tag_images::TagImage;
-use crate::ui::design::{TextRoleExt as _, design, pt};
+use crate::ui::design::{TextRoleExt as _, design, pt, tabular_digits};
 use crate::ui::keycap::ChipState;
 
 /// A text chip: `#tag`, `+2`, a task's status. Its text is muted in both states.
@@ -26,6 +26,8 @@ pub fn pill(text: impl Into<SharedString>, state: ChipState) -> Div {
         .bg(state.fill())
         .text_color(d.colors.muted)
         .text_role(&d.typography.roles.chip)
+        // Tabular digits: the report's counts and `+n` keep their width (D6); letters are unaffected.
+        .font_features(tabular_digits())
         .child(text.into())
 }
 
