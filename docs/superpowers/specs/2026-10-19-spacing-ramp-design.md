@@ -1,6 +1,6 @@
 # Spacing on the ramp — design
 
-- Status: draft for owner review
+- Status: approved
 - Date: 2026-10-19
 - Research: [2026-10-19-spacing-system.md](../research/2026-10-19-spacing-system.md)
 - Decided with the owner in the companion (`spacing.html`, option B): one shared edge at 20; the keys' 2 pt gap kept.
@@ -44,7 +44,7 @@ and asserts `content_inset()` is the rows' content edge.
 
 In scope: DESIGN.md's `spacing` section and the components that read it (`header.rs`, `footer.rs`, `row.rs`,
 `entry_list.rs`, `search_view.rs`, `entry_view.rs`, `action_panel.rs`, `empty_view.rs`, `sync_view.rs`, `notice.rs`,
-`command_card.rs`), `ui/design.rs`, DESIGN.md's prose, the shots.
+`command_card.rs`), `ui/design.rs`, DESIGN.md's prose.
 
 Out of scope: colours, type, radii, component heights and sizes (`components.*` other than `footer.label_slot`),
 keycaps and the link pill (2026-10-19 keycap spec), and the refresh report's behaviour (a later pass).
@@ -113,6 +113,5 @@ Every spacing value, today → on the ramp. Unchanged values are listed so the w
 - `ui::design`: every value under `spacing` (except `scale` itself and D6's two) is a value of `spacing.scale`;
   `content_inset()` equals `list.pad + row.pad_x`.
 - The existing unit and UI tests pass; tests that name removed tokens are updated.
-- `mise run design:validate`, `mise run design:shots` (with a Skills fixture so the shots show only the showcase:
-  the shots task's config sets `skills_command` to a script printing `[]`), the owner's look at the shots, then
-  `mise run gate`.
+- `mise run design:validate` and `mise run gate`; the owner checks the running app. The design shots wait until
+  the UI adjustments of this pass are all done (owner, 2026-10-19), with the Skills fixture they need then.
