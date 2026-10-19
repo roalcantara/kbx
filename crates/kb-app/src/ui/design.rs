@@ -1,9 +1,9 @@
 //! The design tokens: DESIGN.md's front matter, parsed once at start into typed values. The only
 //! place a token becomes a GPUI length or colour.
 
-use std::sync::{Arc, LazyLock};
+use std::sync::{Arc, LazyLock, PoisonError, RwLock};
 
-use gpui_kit::{BoxShadow, FontFeatures, FontWeight, Hsla, Pixels, Rems, Styled, point, px, rems, rgb, rgba};
+use gpui_kit::{BoxShadow, FontFeatures, FontWeight, Hsla, Pixels, Rems, Styled, point, px, rems};
 use serde::Deserialize;
 
 use crate::presentation::Hue;
@@ -54,97 +54,78 @@ pub enum DesignError {
     Shape(String),
 }
 
-/// The tokens, parsed once. The front matter is compiled in and a test parses it, so a failure
-/// here is a broken build, not a user's mistake.
-#[must_use]
+/// The tokens: DESIGN.md's front matter, parsed once, with the active theme's colours, which a theme change replaces
+/// (themes spec D5).
 #[expect(
     clippy::expect_used,
     reason = "the compiled-in front matter is checked by a unit test"
 )]
-pub fn design() -> &'static Design {
-    static DESIGN: LazyLock<Design> = LazyLock::new(|| parse(DESIGN_MD).expect("DESIGN.md's front matter is valid"));
-    &DESIGN
+static DESIGN: LazyLock<RwLock<Arc<Design>>> =
+    LazyLock::new(|| RwLock::new(Arc::new(parse(DESIGN_MD).expect("DESIGN.md's front matter is valid"))));
+
+/// The tokens, as they are now. The front matter is compiled in and a test parses it, so a failure here is a broken
+/// build, not a user's mistake.
+#[must_use]
+pub fn design() -> Arc<Design> {
+    DESIGN.read().unwrap_or_else(PoisonError::into_inner).clone()
 }
 
-/// A colour token: `#RRGGBB` or `#RRGGBBAA`.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Color(pub Hsla);
+/// Replaces the colours every view reads from now on: a theme change (themes spec D5).
+pub fn set_colors(colors: Colors) {
+    let mut guard = DESIGN.write().unwrap_or_else(PoisonError::into_inner);
+    let mut next = (**guard).clone();
+    next.colors = colors;
+    *guard = Arc::new(next);
+}
 
-impl<'de> Deserialize<'de> for Color {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let text = String::deserialize(deserializer)?;
-        hex(&text)
-            .map(Color)
-            .ok_or_else(|| serde::de::Error::custom(format!("{text} is not #RRGGBB or #RRGGBBAA")))
-    }
+/// kb-native's colours: what the views draw before a theme is set.
+fn native_colors() -> Colors {
+    crate::theme::folder::native().colors()
 }
 
 /// `#RRGGBB` or `#RRGGBBAA` as a colour.
+#[cfg(test)]
 #[must_use]
 pub fn hex(text: &str) -> Option<Hsla> {
     let digits = text.strip_prefix('#')?;
     let value = u32::from_str_radix(digits, 16).ok()?;
     match digits.len() {
-        6 => Some(rgb(value).into()),
-        8 => Some(rgba(value).into()),
+        6 => Some(gpui_kit::rgb(value).into()),
+        8 => Some(gpui_kit::rgba(value).into()),
         _ => None,
     }
 }
 
-/// The colour roles (DESIGN.md, Color Palette & Roles).
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
+/// The colour roles (DESIGN.md, Color Palette & Roles), from the active theme.
+#[derive(Debug, Clone)]
 pub struct Colors {
-    #[serde(deserialize_with = "color")]
     pub window: Hsla,
-    #[serde(deserialize_with = "color")]
     pub mantle: Hsla,
     #[expect(
         dead_code,
-        reason = "read by design:validate and design:theme (tools/design/tasks.toml), not by the app"
+        reason = "read through the theme's palette (theme::legibility, theme::gpui), not by kb's views"
     )]
-    #[serde(deserialize_with = "color")]
     pub crust: Hsla,
-    #[serde(deserialize_with = "color")]
     pub selected: Hsla,
-    #[serde(deserialize_with = "color")]
     pub hover: Hsla,
-    #[serde(deserialize_with = "color")]
     pub badge: Hsla,
     #[expect(
         dead_code,
-        reason = "read by design:validate and design:theme (tools/design/tasks.toml), not by the app"
+        reason = "read through the theme's palette (theme::legibility, theme::gpui), not by kb's views"
     )]
-    #[serde(deserialize_with = "color")]
     pub code: Hsla,
-    #[serde(deserialize_with = "color")]
     pub edge: Hsla,
-    #[serde(deserialize_with = "color")]
     pub ring: Hsla,
-    #[serde(deserialize_with = "color")]
     pub text: Hsla,
-    #[serde(deserialize_with = "color")]
     pub muted: Hsla,
-    #[serde(deserialize_with = "color")]
     pub faint: Hsla,
-    #[serde(deserialize_with = "color")]
     pub mauve: Hsla,
-    #[serde(deserialize_with = "color")]
     pub blue: Hsla,
-    #[serde(deserialize_with = "color")]
     pub green: Hsla,
-    #[serde(deserialize_with = "color")]
     pub peach: Hsla,
-    #[serde(deserialize_with = "color")]
     pub pink: Hsla,
-    #[serde(deserialize_with = "color")]
     pub yellow: Hsla,
-    #[serde(deserialize_with = "color")]
     pub red: Hsla,
-}
-
-fn color<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Hsla, D::Error> {
-    Color::deserialize(deserializer).map(|c| c.0)
 }
 
 impl Colors {
@@ -396,7 +377,10 @@ pub struct Components {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Design {
-    /// Colour roles.
+    /// The theme kb uses when config.toml names none.
+    pub theme: String,
+    /// The active theme's colours (`crate::theme` sets them); kb-native's until it does.
+    #[serde(skip, default = "native_colors")]
     pub colors: Colors,
     /// Families and type roles.
     pub typography: Typography,
@@ -495,12 +479,14 @@ impl<T: Styled> TextRoleExt for T {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui_kit::{rgb, rgba};
 
     #[test]
     fn reads_the_tokens_of_design_md() {
         let d = parse(DESIGN_MD).unwrap();
         assert_eq!(d.colors.window, Hsla::from(rgb(0x0024_273A)));
         assert_eq!(d.colors.edge, Hsla::from(rgba(0x6E73_8D1A)));
+        assert_eq!(d.theme, "kb-native");
         assert_eq!(d.typography.ui, "Inter");
         assert_eq!(d.typography.mono, "JetBrains Mono");
         assert!((d.typography.roles.title.size - 13.).abs() < f32::EPSILON);
@@ -561,8 +547,8 @@ mod tests {
     #[test]
     fn rejects_a_file_without_front_matter_or_with_a_missing_token() {
         assert!(matches!(parse("# Design\n"), Err(DesignError::NoFrontMatter)));
-        let without_window = DESIGN_MD.replacen("  window: \"#24273A\"\n", "", 1);
-        assert!(matches!(parse(&without_window), Err(DesignError::Shape(_))));
+        let without_theme = DESIGN_MD.replacen("theme: kb-native\n", "", 1);
+        assert!(matches!(parse(&without_theme), Err(DesignError::Shape(_))));
     }
 
     #[test]
@@ -583,7 +569,8 @@ mod tests {
 
     #[test]
     fn gives_gpui_kit_the_tokens() {
-        let theme: serde_json::Value = serde_json::from_str(include_str!("../../assets/themes/kb.json")).unwrap();
+        let theme: serde_json::Value =
+            serde_json::from_str(include_str!("../../tests/fixtures/kb-native-gpui-theme.json")).unwrap();
         let colors = &theme["themes"][0]["colors"];
         let token = |key: &str| hex(colors[key].as_str().unwrap()).unwrap();
         let c = &design().colors;

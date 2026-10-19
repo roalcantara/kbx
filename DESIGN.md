@@ -1,27 +1,9 @@
 ---
 # The design tokens: the only place a design value is written (spec D18). The app reads this front matter at start
-# (crates/kb-app/src/ui/design.rs); `mise run design:theme` writes GPUI Kit's theme from it; `design:validate` checks it.
-# Sizes are points. Colours are #RRGGBB or #RRGGBBAA.
-colors:
-  window: "#24273A"
-  mantle: "#1E2030"
-  crust: "#181926"
-  selected: "#363A4F"
-  hover: "#2F334A"
-  badge: "#2E3248"
-  code: "#191B29"
-  edge: "#6E738D1A"
-  ring: "#CAD3F514"
-  text: "#CAD3F5"
-  muted: "#A5ADCB"
-  faint: "#6E738D"
-  mauve: "#C6A0F6"
-  blue: "#8AADF4"
-  green: "#A6DA95"
-  peach: "#F5A97F"
-  pink: "#F5BDE6"
-  yellow: "#EED49F"
-  red: "#ED8796"
+# (crates/kb-app/src/ui/design.rs). Sizes are points.
+# The theme kb uses when config.toml names none (spec 2026-10-19-themes). Colours live in theme files:
+# crates/kb-app/assets/themes/<id>.yaml, seeded into ~/.config/kb/themes/.
+theme: kb-native
 typography:
   ui: Inter
   mono: JetBrains Mono

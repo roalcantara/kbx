@@ -160,13 +160,13 @@ console.log(`wrote ${OUT}`)
 ]
 
 ["design:validate"]
-description = "Check the design tokens in DESIGN.md (WCAG 2.2 contrast of every text role on its surfaces; accents apart under normal, protan and deutan vision, as warnings, D19) and the comparison palettes in palettes.json, into tools/design/validation.json; fail when a token check fails"
+description = "Score the comparison palettes in palettes.json (WCAG 2.2 contrast of text on surfaces, accents on pills, accents apart under normal, protan and deutan vision) into tools/design/validation.json. kb's own themes are checked by the theme::legibility tests (themes spec D9)"
 run = [
   '''
 #!/usr/bin/env bun
 import { readFileSync, writeFileSync } from 'node:fs'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { ACCENTS, contrast, frontMatter, lin, mix, pill, rgb } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { ACCENTS, contrast, lin, pill, rgb } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const dir = 'tools/design/'
 const CVD = {
@@ -214,27 +214,6 @@ const separation = (colors, names) => {
   return checks
 }
 
-// The tokens: what the app draws. These checks fail the task.
-const t = frontMatter(readFileSync('DESIGN.md', 'utf8')).colors
-const tokenChecks = []
-for (const surface of ['window', 'mantle', 'selected', 'badge', 'crust']) {
-  tokenChecks.push(check(`text on ${surface}`, contrast(t.text, t[surface]), 4.5))
-  tokenChecks.push(check(`muted on ${surface}`, contrast(t.muted, t[surface]), 4.5))
-}
-// O1 (owner, see TODO pMDV): FAINT_RULE is 'tertiary' (answer A) or 'aa' (answer B).
-const FAINT_RULE = 'tertiary'
-for (const surface of ['window', 'mantle', 'crust']) {
-  tokenChecks.push(check(`faint on ${surface}`, contrast(t.faint, t[surface]), FAINT_RULE === 'aa' ? 4.5 : 3))
-}
-tokenChecks.push(check('faint on badge', contrast(t.faint, t.badge), FAINT_RULE === 'aa' ? 4.5 : 3, FAINT_RULE === 'aa' ? undefined : 2.5))
-const tints = ['mauve', 'blue', 'green', 'peach', 'pink', 'yellow', 'red']
-for (const a of tints) {
-  // A type tile: the accent at 15 % over the window, its icon in the accent (non-text, 3:1).
-  tokenChecks.push(check(`${a} on its tile`, contrast(t[a], mix(t[a], t.window, 0.15)), 3))
-}
-tokenChecks.push(...separation(t, tints))
-const tokenFailed = tokenChecks.filter((c) => c.status === 'fail')
-
 // The comparison palettes: informational, they draw nothing.
 const palettes = JSON.parse(readFileSync(`${dir}palettes.json`, 'utf8'))
 const paletteResults = palettes.map(({ id, roles: r }) => {
@@ -251,157 +230,34 @@ const paletteResults = palettes.map(({ id, roles: r }) => {
   return { id, failed: checks.filter((c) => c.status === 'fail').length, warned: checks.filter((c) => c.status === 'warn').length, checks }
 })
 
-const results = [
-  { id: 'kb (DESIGN.md)', failed: tokenFailed.length, warned: tokenChecks.filter((c) => c.status === 'warn').length, checks: tokenChecks },
-  ...paletteResults
-]
+const results = paletteResults
 writeFileSync(`${dir}validation.json`, `${JSON.stringify(results, null, 2)}\n`)
 for (const { id, failed, warned } of results) {
   console.log(`${id.padEnd(32)} ${failed ? `${failed} fail` : 'pass'}${warned ? `, ${warned} warn` : ''}`)
-}
-if (tokenFailed.length) {
-  console.error(`DESIGN.md's tokens fail: ${tokenFailed.map((c) => `${c.name} ${c.value}`).join(', ')}`)
-  process.exit(1)
 }
 ''',
   "dprint fmt tools/design/validation.json",
 ]
 
-["design:theme"]
-description = "Write GPUI Kit's dark theme (crates/kb-app/assets/themes/kb.json) and the tag-accent fixture from the design tokens in DESIGN.md"
+["design:tag-accents"]
+description = "Write the tag-accent fixture (the Raycast extension's tag hash) the Rust hash is tested against (presentation.rs); kb's GPUI Kit theme is built in Rust now (theme::gpui)"
 run = [
   '''
 #!/usr/bin/env bun
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 // mise runs an inline script from a temporary file, so modules are imported from the project root.
-const { AA, contrast, frontMatter, mix, tagAccent, tint } = await import(`${process.cwd()}/tools/design/color.ts`)
+const { tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const root = process.cwd()
-const out = resolve(root, 'crates/kb-app/assets/themes/kb.json')
-const t = frontMatter(readFileSync(resolve(root, 'DESIGN.md'), 'utf8')).colors
-const CLEAR = '#00000000'
-
-// Token → GPUI Kit key. The panel draws its own rounded surface on a transparent window (DESIGN.md, Shape), so the
-// root and list backgrounds are clear; kb's components draw rows, chips and panels from the tokens themselves.
-const colors = {
-  background: CLEAR,
-  'list.background': CLEAR,
-  'list.even.background': CLEAR,
-  'list.head.background': CLEAR,
-  'table.background': t.window,
-  'title_bar.background': t.window,
-  'list.active.background': tint(t.selected, t.window, 0.2),
-  'list.active.border': t.selected,
-  'accent.background': t.selected,
-  'accent.foreground': t.text,
-  'secondary.background': t.badge,
-  'secondary.hover.background': t.selected,
-  'secondary.active.background': t.selected,
-  'secondary.foreground': t.text,
-  'popover.background': t.mantle,
-  'popover.foreground': t.text,
-  'muted.background': t.code,
-  'muted.foreground': t.muted,
-  border: t.selected,
-  'input.border': t.selected,
-  'title_bar.border': t.selected,
-  'window.border': t.selected,
-  foreground: t.text,
-  caret: t.mauve,
-  'selection.background': `${t.mauve}4D`,
-  ring: t.mauve,
-  'link.foreground': t.blue,
-  'progress_bar.background': t.blue
-}
-for (const [hue, token] of Object.entries({ blue: 'blue', cyan: 'blue', green: 'green', red: 'red', yellow: 'yellow', magenta: 'pink' })) {
-  colors[`base.${hue}`] = t[token]
-  colors[`base.${hue}.light`] = mix(t[token], t.window, 0.2)
-}
-
-// GPUI Kit caps these keys' opacity (theme/schema.rs, clamp_alpha).
-const CAPPED = { 'list.active.background': 0.2, 'selection.background': 0.3 }
-for (const [key, cap] of Object.entries(CAPPED)) {
-  const value = colors[key]
-  const alpha = value.length === 9 ? Number.parseInt(value.slice(7), 16) / 255 : 1
-  if (alpha > cap + 0.005) throw new Error(`${key} is ${value}: GPUI Kit draws it at most ${cap} opaque`)
-}
-const defaults = JSON.parse(readFileSync(defaultThemePath(), 'utf8')).themes.find((x) => x.mode === 'dark').colors
-const unknown = Object.keys(colors).filter((k) => !(k in defaults))
-if (unknown.length) throw new Error(`Not GPUI Kit dark theme keys: ${unknown.join(', ')}`)
-
-// Code blocks in the notes: each syntax colour lifted toward `text` only as far as AA needs on `code`.
-const readable = (accent) => {
-  let c = accent
-  for (let lift = 0.05; contrast(c, t.code) < AA && lift <= 1; lift += 0.05) c = mix(t.text, accent, lift)
-  return c
-}
-const color = (token) => ({ color: readable(t[token]) })
-const highlight = {
-  'editor.foreground': t.text,
-  'editor.background': t.code,
-  'editor.active_line.background': t.selected,
-  'editor.line_number': readable(t.faint),
-  'editor.active_line_number': t.muted,
-  syntax: {
-    attribute: color('blue'),
-    boolean: color('peach'),
-    comment: color('faint'),
-    'comment.doc': color('faint'),
-    constant: color('peach'),
-    constructor: color('mauve'),
-    embedded: color('text'),
-    emphasis: { font_style: 'italic' },
-    'emphasis.strong': { font_weight: 700 },
-    function: color('blue'),
-    keyword: color('mauve'),
-    link_text: { ...color('blue'), font_style: 'normal' },
-    link_uri: { ...color('blue'), font_style: 'italic' },
-    number: color('peach'),
-    operator: color('muted'),
-    property: color('text'),
-    punctuation: color('muted'),
-    string: color('green'),
-    'string.escape': color('yellow'),
-    'string.regex': color('yellow'),
-    'string.special': color('green'),
-    'string.special.symbol': color('green'),
-    tag: color('red'),
-    'text.literal': color('green'),
-    'text.code.span': color('green'),
-    title: { ...color('text'), font_weight: 600 },
-    type: color('yellow'),
-    variable: color('text'),
-    'variable.special': color('red')
-  }
-}
-const theme = {
-  name: 'kb',
-  author: 'kb',
-  themes: [{ name: 'kb Dark', mode: 'dark', colors: Object.fromEntries(Object.entries(colors).sort()), highlight }]
-}
-writeFileSync(out, `${JSON.stringify(theme, null, 2)}\n`)
-console.log(`wrote ${out.replace(`${root}/`, '')} from DESIGN.md`)
-
 // Tag → hue by the Raycast extension's hash: the Rust hash is tested against it (presentation.rs).
 const fixtureOut = resolve(root, 'crates/kb-app/tests/fixtures/tag-accents.json')
 const sampleTags = ['git', 'docker', 'kube', 'rust', 'kb', 'video', 'talks', 'docs', 'containers', 'mixed-case', 'aws', 'nu', 'linux', 'gradle', 'grails', 'schedule', 'ai', 'react', 'café']
 mkdirSync(dirname(fixtureOut), { recursive: true })
 writeFileSync(fixtureOut, `${JSON.stringify(Object.fromEntries(sampleTags.map((x) => [x, tagAccent(x)])), null, 2)}\n`)
 console.log(`wrote ${fixtureOut.replace(`${root}/`, '')}`)
-
-// GPUI Kit's default-theme.json in the Cargo registry, at the version Cargo.lock pins.
-function defaultThemePath() {
-  const lock = readFileSync(resolve(root, 'Cargo.lock'), 'utf8')
-  const version = lock.match(/name = "gpui-component"\nversion = "([^"]+)"/)?.[1]
-  const home = process.env.CARGO_HOME ?? resolve(process.env.HOME, '.cargo')
-  const registry = resolve(home, 'registry', 'src')
-  const index = readdirSync(registry).find((d) => existsSync(resolve(registry, d, `gpui-component-${version}`)))
-  if (!index) throw new Error(`gpui-component ${version} is not in ${registry}: run cargo fetch.`)
-  return resolve(registry, index, `gpui-component-${version}`, 'src/theme/default-theme.json')
-}
 ''',
-  "dprint fmt crates/kb-app/assets/themes/kb.json crates/kb-app/tests/fixtures/tag-accents.json",
+  "dprint fmt crates/kb-app/tests/fixtures/tag-accents.json",
 ]
 
 ["design:prototypes"]

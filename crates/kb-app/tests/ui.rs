@@ -109,7 +109,8 @@ fn draws_gpui_kit_components_in_the_design_tokens(cx: &mut gpui_kit::TestAppCont
     cx.update(|cx| {
         gpui_kit::init(cx);
         kb_app::init_theme(cx);
-        let theme: serde_json::Value = serde_json::from_str(include_str!("../assets/themes/kb.json")).unwrap();
+        let theme: serde_json::Value =
+            serde_json::from_str(include_str!("fixtures/kb-native-gpui-theme.json")).unwrap();
         let popover = theme["themes"][0]["colors"]["popover.background"].as_str().unwrap();
         let popover = u32::from_str_radix(popover.trim_start_matches('#'), 16).unwrap();
         assert_eq!(cx.theme().popover, gpui_kit::rgb(popover).into());

@@ -50,7 +50,6 @@ impl Palette {
 
     /// The colours kb's views draw with.
     #[must_use]
-    #[expect(dead_code, reason = "the active theme uses it from the theme tasks that follow")]
     pub(crate) fn colors(&self) -> crate::ui::design::Colors {
         let c = |role: &str| self.role(role).hsla();
         crate::ui::design::Colors {

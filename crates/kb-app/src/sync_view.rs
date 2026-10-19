@@ -446,7 +446,7 @@ impl Render for SyncView {
                 EmptyView::new("circle-alert", c.red, m.failed_title.clone(), Sentence::of(&text, ""))
                     .into_any_element()
             }
-            SyncStatus::Done(report) => self.render_report(report, d, c, m).into_any_element(),
+            SyncStatus::Done(report) => self.render_report(report, &d, c, m).into_any_element(),
         }
     }
 }

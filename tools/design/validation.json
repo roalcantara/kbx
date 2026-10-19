@@ -1,36 +1,5 @@
 [
   {
-    "id": "kb (DESIGN.md)",
-    "failed": 0,
-    "warned": 4,
-    "checks": [
-      { "name": "text on window", "value": 9.92, "status": "pass" },
-      { "name": "muted on window", "value": 6.62, "status": "pass" },
-      { "name": "text on mantle", "value": 10.85, "status": "pass" },
-      { "name": "muted on mantle", "value": 7.24, "status": "pass" },
-      { "name": "text on selected", "value": 7.55, "status": "pass" },
-      { "name": "muted on selected", "value": 5.03, "status": "pass" },
-      { "name": "text on badge", "value": 8.49, "status": "pass" },
-      { "name": "muted on badge", "value": 5.67, "status": "pass" },
-      { "name": "text on crust", "value": 11.73, "status": "pass" },
-      { "name": "muted on crust", "value": 7.83, "status": "pass" },
-      { "name": "faint on window", "value": 3.15, "status": "pass" },
-      { "name": "faint on mantle", "value": 3.45, "status": "pass" },
-      { "name": "faint on crust", "value": 3.73, "status": "pass" },
-      { "name": "faint on badge", "value": 2.7, "status": "warn" },
-      { "name": "mauve on its tile", "value": 5.11, "status": "pass" },
-      { "name": "blue on its tile", "value": 4.93, "status": "pass" },
-      { "name": "green on its tile", "value": 6.41, "status": "pass" },
-      { "name": "peach on its tile", "value": 5.58, "status": "pass" },
-      { "name": "pink on its tile", "value": 6.47, "status": "pass" },
-      { "name": "yellow on its tile", "value": 6.98, "status": "pass" },
-      { "name": "red on its tile", "value": 4.64, "status": "pass" },
-      { "name": "accents apart (normal)", "value": 8.51, "status": "warn", "pair": "mauve/blue" },
-      { "name": "accents apart (protan)", "value": 1.18, "status": "warn", "pair": "mauve/blue" },
-      { "name": "accents apart (deutan)", "value": 2.79, "status": "warn", "pair": "mauve/blue" }
-    ]
-  },
-  {
     "id": "tokyo-night-storm-flat-separated",
     "failed": 0,
     "warned": 0,

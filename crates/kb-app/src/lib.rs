@@ -35,19 +35,15 @@ use crate::config::Config;
 /// The bundle identifier, shared by the `.app`'s `Info.plist` and GPUI's app identity.
 pub const APP_ID: &str = "dev.roalcantara.kb";
 
-/// kb's GPUI Kit theme: DESIGN.md's palette, written by `mise run design:theme`.
-const THEME: &str = include_str!("../assets/themes/kb.json");
-/// The dark theme's name in [`THEME`].
-const DARK_THEME: &str = "kb Dark";
-
-/// kb's GPUI Kit theme, always dark (D1): the tokens' colours (`kb.json`, written by
-/// `mise run design:theme`), Inter and `JetBrains` Mono, and GPUI Kit's base font size kept at the
-/// 16 points the design module counts rems in.
+/// kb's GPUI Kit theme, always dark (D1): built from the active theme's palette (`theme::gpui`), Inter
+/// and `JetBrains` Mono, and GPUI Kit's base font size kept at the 16 points the design module counts
+/// rems in. Called again after a theme change.
 pub fn init_theme(cx: &mut gpui_kit::App) {
     let registry = ThemeRegistry::global_mut(cx);
-    // The theme is compiled in and a UI test loads it: should it ever fail, the default dark stays.
-    if registry.load_themes_from_str(THEME).is_ok()
-        && let Some(dark) = registry.themes().get(DARK_THEME).cloned()
+    let json = theme::gpui::theme_json(&theme::active_palette());
+    // The JSON is built from a palette and a UI test loads it: should it ever fail, the default dark stays.
+    if registry.load_themes_from_str(&json).is_ok()
+        && let Some(dark) = registry.themes().get(theme::gpui::THEME_NAME).cloned()
     {
         Theme::global_mut(cx).dark_theme = dark;
     }
@@ -77,6 +73,15 @@ pub fn run(config: Config, notices: Vec<String>, trace: bool) {
                     eprintln!("kb: {error}");
                 }
             }
+            let mut notices = notices;
+            let dir = config.themes_dir();
+            if let Err(error) = theme::folder::seed(&dir) {
+                notices.push(format!("Couldn’t write kb’s themes to {}: {error}", dir.display()));
+            }
+            let (_, palette, theme_notices) =
+                theme::resolve(&dir, config.theme(), &ui::design::design().theme, config.colors());
+            notices.extend(theme_notices);
+            theme::set_active(palette);
             init_theme(cx);
             if trace {
                 trace::enable(cx);

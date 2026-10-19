@@ -54,6 +54,7 @@ struct Preferences {
     sources_path: Option<String>,
     tag_images_path: Option<String>,
     skills_command: Option<String>,
+    theme: Option<String>,
 }
 
 /// The top-level tables of config.toml that override the catalog (`crate::catalog`).
@@ -66,6 +67,8 @@ pub struct Config {
     sources_dir: PathBuf,
     tag_images: PathBuf,
     skills_command: Option<String>,
+    theme: Option<String>,
+    colors: toml::Table,
     database: PathBuf,
     preferences: PathBuf,
     overrides: toml::Table,
@@ -94,11 +97,16 @@ impl Config {
             }
         };
         let (mut locations, mut overrides, mut notices) = (toml::Table::new(), toml::Table::new(), Vec::new());
+        let mut colors = toml::Table::new();
         for (key, value) in table {
             match key.as_str() {
-                "sources_path" | "tag_images_path" | "skills_command" => {
+                "sources_path" | "tag_images_path" | "skills_command" | "theme" => {
                     locations.insert(key, value);
                 }
+                "colors" => match value {
+                    toml::Value::Table(table) => colors = table,
+                    _ => notices.push(format!("Ignored `colors` in {}: not a table", preferences.display())),
+                },
                 k if CATALOG_TABLES.contains(&k) => {
                     overrides.insert(key, value);
                 }
@@ -114,18 +122,28 @@ impl Config {
                 path: preferences.clone(),
                 source: Box::new(source),
             })?;
-        Ok(Self::from_preferences(parsed, overrides, notices, home, data_dir))
+        Ok(Self::from_preferences(
+            parsed, overrides, colors, notices, home, data_dir,
+        ))
     }
 
     /// The locations without preferences: the Raycast sources directory and the app's index.
     #[must_use]
     pub fn defaults(home: &Path, data_dir: &Path) -> Self {
-        Self::from_preferences(Preferences::default(), toml::Table::new(), Vec::new(), home, data_dir)
+        Self::from_preferences(
+            Preferences::default(),
+            toml::Table::new(),
+            toml::Table::new(),
+            Vec::new(),
+            home,
+            data_dir,
+        )
     }
 
     fn from_preferences(
         parsed: Preferences,
         overrides: toml::Table,
+        colors: toml::Table,
         notices: Vec<String>,
         home: &Path,
         data_dir: &Path,
@@ -141,6 +159,8 @@ impl Config {
             sources_dir,
             tag_images,
             skills_command: parsed.skills_command,
+            theme: parsed.theme,
+            colors,
             database: data_dir.join("kb-native").join("kb.db"),
             preferences: home.join(PREFERENCES),
             overrides,
@@ -170,6 +190,47 @@ impl Config {
             &self.home,
         )
     }
+
+    /// The theme config.toml names (themes spec D4), if any.
+    #[must_use]
+    pub fn theme(&self) -> Option<&str> {
+        self.theme.as_deref()
+    }
+
+    /// config.toml's `[colors]`: single colour roles over the theme's.
+    #[must_use]
+    pub fn colors(&self) -> &toml::Table {
+        &self.colors
+    }
+
+    /// The themes folder, beside config.toml.
+    #[must_use]
+    pub fn themes_dir(&self) -> PathBuf {
+        self.home.join(".config/kb/themes")
+    }
+
+    /// Writes `theme = "<id>"` into config.toml, keeping every other line, comment and blank line (`toml_edit`); creates
+    /// the file when it is absent.
+    ///
+    /// # Errors
+    ///
+    /// The file cannot be read, is not TOML, or cannot be written.
+    pub fn save_theme(&self, id: &str) -> io::Result<()> {
+        let text = match fs::read_to_string(&self.preferences) {
+            Ok(text) => text,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
+            Err(error) => return Err(error),
+        };
+        let mut doc: toml_edit::DocumentMut = text
+            .parse()
+            .map_err(|e: toml_edit::TomlError| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        doc["theme"] = toml_edit::value(id);
+        if let Some(parent) = self.preferences.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&self.preferences, doc.to_string())
+    }
+
     /// The index file.
     #[must_use]
     pub fn database(&self) -> &Path {
@@ -216,6 +277,37 @@ mod tests {
             fs::write(file, text).unwrap();
         }
         home
+    }
+
+    #[test]
+    fn reads_the_theme_and_colour_overrides() {
+        let home = home_with(Some("theme = \"archwave\"\n[colors]\nmauve = \"#FF00AA\"\n"));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        assert_eq!(config.theme(), Some("archwave"));
+        assert_eq!(config.colors()["mauve"].as_str(), Some("#FF00AA"));
+        assert_eq!(config.themes_dir(), home.path().join(".config/kb/themes"));
+        assert!(config.notices().is_empty(), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn saves_the_theme_keeping_everything_else() {
+        let text = "# my settings\nsources_path = \"~/k\"   # where\n\n[actions.copy]\nlabel = \"Yank\"\n";
+        let home = home_with(Some(text));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        config.save_theme("neon-dusk").unwrap();
+        let saved = fs::read_to_string(config.preferences()).unwrap();
+        assert!(
+            saved.contains("# my settings\nsources_path = \"~/k\"   # where\n"),
+            "{saved}"
+        );
+        assert!(saved.contains("theme = \"neon-dusk\""), "{saved}");
+        assert!(saved.contains("[actions.copy]\nlabel = \"Yank\""), "{saved}");
+        let home = home_with(None);
+        Config::load(home.path(), &home.path().join("data"))
+            .unwrap()
+            .save_theme("archwave")
+            .unwrap();
+        assert!(home.path().join(PREFERENCES).is_file(), "created when absent");
     }
 
     #[test]
