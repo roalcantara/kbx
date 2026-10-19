@@ -29,7 +29,7 @@ count changes. Keys read clearly, including compound ones (`⌘ ↵`), and nothi
 is `⌘` `↵`; `shift-cmd-,` is `⇧` `⌘` `,`. Every cap is 20 × 20; a word key (`esc`) is 28 wide. Caps of one shortcut
 are 2 apart; the tight gap groups them (everything else around them is 6 or more apart).
 
-**D2. Glyphs in Inter 9 / 400.** The keycap text role becomes `{ family: ui, size: 9, weight: 400, line_height: 16 }`,
+**D2. Glyphs in Inter 10 / 400** (9 at first; the owner raised it to 10 on the running app, 2026-10-19). The keycap text role becomes `{ family: ui, size: 10, weight: 400, line_height: 16 }`,
 centred, in the state's text colour (live: muted; rest: faint). Inter draws the system's own ⌘ ⇧ ⌥ ↵.
 
 **D3. Rows reserve a two-cap slot.** A list row's trailing keycap sits in a right-aligned slot as wide as two caps and
@@ -80,7 +80,7 @@ Out of scope:
 
 | Token (DESIGN.md front matter)       | Value                                                                                                                         |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `typography.roles.keycap`            | `{ family: ui, size: 9, weight: 400, line_height: 16 }` (was mono 11)                                                         |
+| `typography.roles.keycap`            | `{ family: ui, size: 10, weight: 400, line_height: 16 }` (was mono 11)                                                        |
 | `components.keycap`                  | `{ height: 20, width: 20, word_width: 28 }`                                                                                   |
 | `spacing.keycap`                     | `{ gap: 2 }` (replaces `pad_x: 6`)                                                                                            |
 | `components.row.key_slot`            | `42` (two caps and their gap)                                                                                                 |

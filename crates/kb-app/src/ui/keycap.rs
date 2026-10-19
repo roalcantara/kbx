@@ -1,4 +1,4 @@
-//! Keycaps (spec 2026-10-19 D1): one 20 × 20 cap per key (`⌘` `K`), 2 apart, Inter 9; a word key
+//! Keycaps (spec 2026-10-19 D1): one 20 × 20 cap per key (`⌘` `K`), 2 apart, Inter 10; a word key
 //! (`esc`) 28 wide.
 
 use gpui_kit::component::h_flex;

@@ -501,7 +501,7 @@ mod tests {
         assert!(near(d.spacing.keycap.gap, 2.));
         let role = &d.typography.roles.keycap;
         assert_eq!(role.family, Family::Ui);
-        assert!(near(role.size, 9.) && near(role.weight, 400.));
+        assert!(near(role.size, 10.) && near(role.weight, 400.));
         assert!(near(d.components.row.key_slot, 42.));
         assert!(near(d.components.footer.label_slot, 56.));
         assert!(near(d.components.header.pill_min_width, 160.));

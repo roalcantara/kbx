@@ -34,7 +34,7 @@ typography:
     footer: { family: ui, size: 11, weight: 400 }
     chip: { family: ui, size: 11, weight: 600 }
     count: { family: mono, size: 11, weight: 400 }
-    keycap: { family: ui, size: 9, weight: 400, line_height: 16 }
+    keycap: { family: ui, size: 10, weight: 400, line_height: 16 }
     heading: { family: ui, size: 15, weight: 600, line_height: 24 }
     quote: { family: ui, size: 14, weight: 400, line_height: 21, italic: true }
     body: { family: ui, size: 13, weight: 400, line_height: 20 }
@@ -162,7 +162,7 @@ the query 15; the pane's heading 15 semibold; the quote 14 italic. Command title
 Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an approved page:
 
 - **Keycap** (`keycap.rs`; spec 2026-10-19 D1): one 20 × 20 cap per key, 2 apart (`⌘` `K`, `⇧` `⌘` `,`); a word key
-  (`esc`) 28 wide; Inter 9 / 400; live or rest.
+  (`esc`) 28 wide; Inter 10 / 400; live or rest.
 - **Chip** (`chip.rs`; 01-list, 01-chips): 20 tall, 4 pt corners: tag pills, tag icon chips, task chips; live or rest. The `↗ n`
   link count is a round pill with a faint outline and no fill, never a key's shape.
 - **Tile** (`tile.rs`; 01-list): the tinted type tile, or a bookmark's favicon with the tile as its fallback.
