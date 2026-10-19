@@ -23,6 +23,7 @@ mod presentation;
 pub mod search_view;
 mod sync_view;
 mod tag_images;
+pub mod theme;
 mod trace;
 mod ui;
 pub mod window_size;
