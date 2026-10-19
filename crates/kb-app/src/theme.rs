@@ -2,4 +2,5 @@
 //! picked from More… → Theme… and saved by name in config.toml.
 
 pub mod color;
+pub mod legibility;
 pub mod scheme;
