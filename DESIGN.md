@@ -3,28 +3,25 @@
 # (crates/kb-app/src/ui/design.rs); `mise run design:theme` writes GPUI Kit's theme from it; `design:validate` checks it.
 # Sizes are points. Colours are #RRGGBB or #RRGGBBAA.
 colors:
-  # Neon Dusk, from the omarchy community theme by daniel-felipe
-  # (https://github.com/daniel-felipe/omarchy-neon-dusk-theme), mapped onto kb's roles; chosen 2026-10-19
-  # (docs/guides/design/19-colours.html). mauve is the theme's accent (hot pink); ring is the accent outline.
-  window: "#16122A"
-  mantle: "#0D0A18"
-  crust: "#07050D"
-  selected: "#382654"
-  hover: "#221B3C"
-  badge: "#221B3C"
-  code: "#0D0A18"
-  edge: "#3A315480"
-  ring: "#E85FAF"
-  text: "#F0EAFF"
-  muted: "#CFC7E8"
-  faint: "#8E84B0"
-  mauve: "#E85FAF"
-  blue: "#7B8FF2"
-  green: "#4BE09A"
-  peach: "#F2874A"
-  pink: "#C77DF5"
-  yellow: "#EEC06A"
-  red: "#F2596C"
+  window: "#24273A"
+  mantle: "#1E2030"
+  crust: "#181926"
+  selected: "#363A4F"
+  hover: "#2F334A"
+  badge: "#2E3248"
+  code: "#191B29"
+  edge: "#6E738D1A"
+  ring: "#CAD3F514"
+  text: "#CAD3F5"
+  muted: "#A5ADCB"
+  faint: "#6E738D"
+  mauve: "#C6A0F6"
+  blue: "#8AADF4"
+  green: "#A6DA95"
+  peach: "#F5A97F"
+  pink: "#F5BDE6"
+  yellow: "#EED49F"
+  red: "#ED8796"
 typography:
   ui: Inter
   mono: JetBrains Mono
@@ -120,10 +117,9 @@ Every value lives in one place:
 
 ## 1. Visual Theme & Atmosphere
 
-A dark, vivid launcher in Neon Dusk (an omarchy community theme; 19-colours): a violet-night panel with 14 pt
-corners, outlined in its hot-pink accent, floating over the desktop; flat surfaces close in tone, hairlines only under
-the header and above the footer. Hierarchy comes from type weight, a selected row's fill and its accent bar
-(the `mauve` role, pink in this palette), never from boxes. Colour is reserved for meaning: an entry's type (its tile),
+A calm, dark launcher in Catppuccin Macchiato: a navy panel with 14 pt corners floating over the desktop, flat
+surfaces close in tone, hairlines only under the header and above the footer. Hierarchy comes from type weight, a
+selected row's fill and its mauve bar, never from boxes. Colour is reserved for meaning: an entry's type (its tile),
 a tag's identity (its icon), and state (the status dot). Always dark: kb has one approved palette.
 
 ## 2. Color Palette & Roles

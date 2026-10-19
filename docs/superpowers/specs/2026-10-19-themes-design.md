@@ -1,9 +1,11 @@
 # Themes — design
 
-- Status: draft for owner review
+- Status: approved
 - Date: 2026-10-19
-- Context: page 19 (`docs/guides/design/19-colours.html`) showed eight colour schemes on the approved list; the owner
-  chose Neon Dusk and asked to make all of them, and any others, selectable from the app.
+- Context: page 19 (`docs/guides/design/19-colours.html`) showed seven omarchy colour schemes beside kb's own on the
+  approved list; the owner picked Neon Dusk and asked to make all of them, and any others, selectable from the app.
+  kb's own colours stay the default (`kb-native`); Neon Dusk is a theme the owner picks (owner, 2026-10-19; the
+  colour change 35e28c1 was undone in favour of this).
 
 ## Goal
 
@@ -19,7 +21,7 @@ schemes drops in. kb reads YAML schemes (`*.yaml`, `*.yml`), the format that eco
 ```yaml
 system: "base24"
 name: "Neon Dusk"
-author: "daniel-felipe (omarchy-neon-dusk-theme), mapped for kb"
+author: "daniel-felipe (github.com/daniel-felipe/omarchy-neon-dusk-theme), mapped onto kb's roles"
 variant: "dark"
 palette:
   base00: "#16122A"
@@ -61,11 +63,21 @@ The file's `kb:` section then overrides any role, and `config.toml`'s `[colors]`
 **D3. The themes folder, seeded.** `~/.config/kb/themes/` (beside `config.toml`). At start kb writes each of its
 shipped themes there **if no file of that name exists**, never overwriting one: edits survive upgrades and a deleted
 theme comes back. The shipped eight, from page 19, each with a full `kb:` section so they render exactly as
-approved: `neon-dusk` (the default), `kb-original` (Catppuccin Macchiato, kb's colours until 2026-10-19), `archwave`,
-`azure-glow`, `aetheria`, `monokai`, `sapphire`, `nagai-poolside`. They live in the repo as
+approved, and an `author` line crediting its origin:
+
+- `kb-native`: kb's own colours, the default; Catppuccin Macchiato (catppuccin.com, MIT), as DESIGN.md had them;
+- `neon-dusk`: daniel-felipe, github.com/daniel-felipe/omarchy-neon-dusk-theme;
+- `archwave`: davidguttman, github.com/davidguttman/archwave;
+- `azure-glow`: Hydradevx, github.com/Hydradevx/omarchy-azure-glow-theme;
+- `aetheria`: JJDizz1L, github.com/JJDizz1L/aetheria;
+- `monokai`: bjarneo, github.com/bjarneo/omarchy-monokai-theme;
+- `sapphire`: HANCORE-linux, github.com/HANCORE-linux/omarchy-sapphire-theme;
+- `nagai-poolside`: mwaltzer, github.com/mwaltzer/omarchy-nagai-poolside-theme.
+
+Each file's header comment adds that the colours were mapped onto kb's roles for kb (page 19, 2026-10-19). They live in the repo as
 `crates/kb-app/assets/themes/*.yaml`, compiled in.
 
-**D4. `config.toml` names the theme.** `theme = "neon-dusk"` (default `neon-dusk` when absent). An optional
+**D4. `config.toml` names the theme.** `theme = "neon-dusk"`; without a `theme`, kb uses `kb-native`. An optional
 `[colors]` table overrides single roles (`mauve = "#FF00AA"`), as `[actions.copy]` overrides the catalog. Saving
 writes only the `theme` line, through `toml_edit`, keeping every other setting, comment and blank line.
 
@@ -76,7 +88,7 @@ spacing, sizes) stay in DESIGN.md and fixed at start.
 **D6. kb builds its GPUI Kit theme itself.** The mapping `design:theme` writes into `assets/themes/kb.json` (a
 GPUI Kit theme from kb's roles: list, popover, input, selection, code highlighting) moves into Rust (`ui/theme.rs`),
 so any theme and any `[colors]` override reach GPUI Kit's own parts too. `kb.json` and the `design:theme` task go; a
-test pins the Rust output for Neon Dusk to today's `kb.json`. A highlight GPUI Kit draws translucently (the selected
+test pins the Rust output for `kb-native` to today's `kb.json`. A highlight GPUI Kit draws translucently (the selected
 list row at 20 %, text selection at 30 %) is clamped to the nearest colour it can reach instead of failing.
 
 **D7. The picker.** More… → Administration lists **Theme…** after Refresh More…; it opens a submenu (with the `‹`
@@ -92,13 +104,13 @@ header, like Refresh More…):
 **D8. Broken and weak themes.** A file that does not parse, or lacks base00–base0F, is listed dimmed with the reason
 as its row's text and cannot be previewed. A theme that fails kb's legibility rules (D9) loads, and choosing it shows
 a notice naming the first failure (e.g. "Theme Foo: muted on badge is 3.9:1, below 4.5:1"). A `theme` in
-`config.toml` naming no file, or a bad `[colors]` value, becomes a notice and falls back to `neon-dusk`, then to the
-compiled-in copy if the folder cannot be read or written.
+`config.toml` naming no file, or a bad `[colors]` value, becomes a notice and falls back to `kb-native`, from the folder or,
+if the folder cannot be read or written, from the compiled-in copy.
 
 **D9. Legibility moves into Rust.** The contrast rules `design:validate` applies to DESIGN.md's colours today
 (text and muted 4.5:1 on window, mantle, selected, badge, crust; faint 3:1 on window, mantle, crust and 2.5:1 on
 badge; each accent 3:1 on its 15 % tile) become a Rust function used by D8 and by a test over every shipped theme.
-DESIGN.md's `colors` block is replaced by `theme: neon-dusk`; `design:validate` keeps scoring `palettes.json` and
+DESIGN.md's `colors` block is replaced by `theme: kb-native` (its values move into `kb-native.yaml`); `design:validate` keeps scoring `palettes.json` and
 drops its DESIGN.md colour checks (the accent-separation advisory goes with them; the shipped themes were checked
 by hand on page 19).
 
@@ -132,7 +144,7 @@ selection moves → load that theme → replace the global (preview)
 
 - Mapping: a base16 file and a base24 file map to the D2 roles; `kb:` overrides the mapping; `[colors]` overrides
   `kb:`.
-- The Rust GPUI Kit theme for Neon Dusk equals today's `assets/themes/kb.json`, key for key.
+- The Rust GPUI Kit theme for `kb-native` equals today's `assets/themes/kb.json`, key for key.
 - Every shipped theme passes D9's rules; a clamped highlight never fails.
 - Seeding writes missing files and leaves existing ones untouched.
 - Saving changes only the `theme` line of a `config.toml` with comments and other settings.
