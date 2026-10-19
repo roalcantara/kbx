@@ -77,10 +77,11 @@ impl Row {
         self
     }
 
-    /// The line under the title.
+    /// The line under the title: one line, whatever line breaks the description has (a Skill's
+    /// often lists its uses on lines of their own), cut with an ellipsis where it overflows.
     #[must_use]
     pub fn description(mut self, description: Option<String>) -> Self {
-        self.description = description.map(Into::into);
+        self.description = description.map(|d| one_line(&d).into());
         self
     }
 
@@ -187,5 +188,25 @@ impl RenderOnce for Row {
                             .children(self.trailing),
                     ),
             )
+    }
+}
+
+/// `text` with every run of whitespace, line breaks included, as one space: `truncate` keeps a row
+/// to one line only when the text has no line break of its own.
+fn one_line(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn keeps_the_description_on_one_line() {
+        assert_eq!(
+            one_line("Patterns for agents. Use when:\n- Building agents\r\n-  Auditing\tthem\n"),
+            "Patterns for agents. Use when: - Building agents - Auditing them"
+        );
+        assert_eq!(one_line("Plain"), "Plain");
     }
 }
