@@ -151,7 +151,7 @@ The roles, by name (the hexes are in the front matter):
 
 ## 3. Typography Rules
 
-Inter for the interface, JetBrains Mono for commands, code, keycaps, counts and URLs; both bundled
+Inter for the interface and keycaps, JetBrains Mono for commands, code, counts and URLs; both bundled
 (`crates/kb-app/assets/fonts`), ligatures off wherever mono text is drawn, so what you read is what you copy. Small,
 dense type: titles 13 medium, descriptions 12, labels 12 medium, the footer 11, section labels 10 semibold uppercase;
 the query 15; the pane's heading 15 semibold; the quote 14 italic. Command titles are mono (the catalog's
@@ -161,17 +161,20 @@ the query 15; the pane's heading 15 semibold; the quote 14 italic. Command title
 
 Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an approved page:
 
-- **Keycap** (`keycap.rs`; 01-chips): one cap per shortcut (`⌘K`, `⇧⌘,`), 20 tall, JetBrains Mono 11, live.
-- **Chip** (`chip.rs`; 01-list, 01-chips): 20 tall, 4 pt corners: tag pills, tag icon chips, the `↗ n` link chip,
-  task chips; live or rest.
+- **Keycap** (`keycap.rs`; spec 2026-10-19 D1): one 20 × 20 cap per key, 2 apart (`⌘` `K`, `⇧` `⌘` `,`); a word key
+  (`esc`) 28 wide; Inter 9 / 400; live or rest.
+- **Chip** (`chip.rs`; 01-list, 01-chips): 20 tall, 4 pt corners: tag pills, tag icon chips, task chips; live or rest. The `↗ n`
+  link count is a round pill with a faint outline and no fill, never a key's shape.
 - **Tile** (`tile.rs`; 01-list): the tinted type tile, or a bookmark's favicon with the tile as its fallback.
-- **Row** (`row.rs`; 01-list): 56 tall, 4 apart, 6 pt corners; tile, title over description, tags, link chip, keycap
-  (`↵` selected, `⌘1`…`⌘9` the first nine rows); the selected row on `selected` with a 2.5 pt mauve bar and its glow.
+- **Row** (`row.rs`; 01-list): 56 tall, 4 apart, 6 pt corners; tile, title over description, tags, link pill, then a
+  fixed key slot (`↵` selected, `⌘ 1`…`⌘ 9` the first nine rows, empty after); the selected row on `selected` with a 2.5 pt mauve bar and its glow.
 - **Header** (`header.rs`; 01-list, 07-filter): 56 tall, a hairline under it; the magnifier on the list, the back
-  chevron elsewhere; the query at 15; the filter pill (sliders, the filter's name, `⌘P`).
+  chevron elsewhere; the query at 15; the filter pill (sliders, the filter's name, `⌘ P`),
+  never narrower than `pill_min_width`.
 - **Footer** (`footer.rs`; 01-list, 04-entry-template): 40 tall, a hairline over it; left the status line on the
   list (`● Ready • N results`) or, with a pane or the detail screen, the entry's tile, file and `⌥⌘C`; right the
-  screen's keys and _Actions ⌘K_.
+  screen's ↵ and ⌘↵ keys and _Actions ⌘K_ (never ⇧⌘↵, which the action panel lists), each label in a fixed slot;
+  counts in tabular digits.
 - **Action panel** (`action_panel.rs`; 02-actions, 07-filter): mantle, 14 pt corners, 220 wide (the filter 230),
   28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus.
 - **Empty view** (`empty_view.rs`; 03-empty, 11-14-refresh): one 56 pt icon, a 15 pt title, a sentence; the query in
