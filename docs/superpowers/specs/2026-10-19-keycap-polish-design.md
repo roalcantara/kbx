@@ -93,10 +93,11 @@ its slot, the pill the same width with and without filters) and the plan adjusts
 
 ## Behaviour
 
-- `caps("cmd-enter") == ["⌘", "↵"]`; `caps("escape") == ["esc"]`; `caps("shift-cmd-,") == ["⇧", "⌘", ","]`;
-  `caps("cmd-1") == ["⌘", "1"]`. A key that does not parse is one cap holding its text.
-- `keycaps(keys, state)` draws the caps in a row 2 apart; a cap is 20 wide unless its key has more than one character
-  (28).
+- `caps` is unchanged (`caps("cmd-enter") == "⌘↵"`). `keys` splits a caps string: `keys("⌘↵") == ["⌘", "↵"]`;
+  `keys("esc") == ["esc"]`; `keys("⇧⌘,") == ["⇧", "⌘", ","]`; `keys("⌘1") == ["⌘", "1"]`; leading modifiers each
+  become a key, the rest is one key.
+- `keycap(text, state)` draws `keys(text)` as caps in a row 2 apart; a cap is 20 wide unless its key has more than
+  one character (28). `keycap_width(text)` is that row's width.
 - A list row's slot holds `↵` on the selected row and `⌘ n` on rows 1–9; rows from 10 on have an empty slot of the
   same width.
 - The action panel's rows right-align their caps; shortcuts of one, two or three keys differ in width there by
@@ -104,10 +105,11 @@ its slot, the pill the same width with and without filters) and the plan adjusts
 
 ## Tests and validation
 
-- `caps` splits each shape above; `keycaps` gives every one-key cap the same width and a word key 28.
-- The row slot is the same width for `↵` and `⌘ 9`, and for a row past the ninth.
-- A footer item's width does not change between labels that fit its slot.
-- UI test: moving the selection down the list leaves every other row's trailing width unchanged.
+- `keys` splits each shape above; `keycap_width` is 20 for any one key, 42 for any two single-character keys, 28
+  for `esc`.
+- Every row's keys (`↵`, `⌘ 1` … `⌘ 9`) fit the row slot, which is a fixed width whatever the row holds.
+- The footer label slot fits every shipped label of the list, detail, refresh and filter screens.
+- UI test: the list footer shows `Details ↵`, the primary action and `Actions ⌘K` for a bookmark and for a command.
 - The ast-grep literal-size rule passes on the changed components.
 - `mise run design:validate`, `mise run design:theme`, `mise run design:shots`, then `mise run gate`.
 - By hand on the packaged app: the list, the action panel, the footer on a bookmark and on a command, the filter pill
