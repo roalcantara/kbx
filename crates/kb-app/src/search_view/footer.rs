@@ -2,7 +2,7 @@
 //! the detail screen is open; the screen's keys and Actions.
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
-use gpui_kit::{AnyElement, App, Context, IntoElement, ParentElement as _, SharedString, Window};
+use gpui_kit::{AnyElement, App, Context, IntoElement, ParentElement as _, SharedString, Styled as _, Window};
 use kb_domain::entry::Entry;
 
 use super::header::plain_button;
@@ -124,6 +124,8 @@ impl SearchView {
                 let keys = item.keys;
                 Button::new(id)
                     .custom(plain)
+                    // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
+                    .px_0()
                     .child(key_item(item.label, item.caps))
                     .on_click(cx.listener(move |this, _, window, cx| this.ladder(keys, window, cx)))
                     .into_any_element()
@@ -133,6 +135,8 @@ impl SearchView {
             self.actions_popover(
                 Button::new("footer-open-actions")
                     .custom(plain)
+                    // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
+                    .px_0()
                     // The popover opens on its trigger's click; a handler here would close it again.
                     .child(key_item(self.catalog.label("actions").to_owned(), self.actions_caps())),
                 cx,

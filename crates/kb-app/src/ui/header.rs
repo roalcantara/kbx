@@ -16,7 +16,10 @@ pub fn header() -> Div {
         .w_full()
         .flex_none()
         .items_center()
-        .px(pt(d.content_inset()))
+        .pl(pt(d.content_inset()))
+        // The filter pill's fill reaches into the margin by its own padding, as a selected row's does, so its keys
+        // end on the content edge with the rows' and the footer's.
+        .pr(pt(d.content_inset() - d.spacing.pill.pad_x))
         .gap(pt(d.spacing.header.gap))
         .border_b(pt(d.components.border.hairline))
         .border_color(d.colors.edge)

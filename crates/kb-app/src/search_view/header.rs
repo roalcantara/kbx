@@ -51,6 +51,8 @@ impl SearchView {
             return row.child(
                 Button::new("back-button")
                     .custom(plain_button(cx))
+                    // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
+                    .px_0()
                     .child(lead_icon("chevron-left"))
                     .accessibility_label("Back")
                     .tooltip("Back (Esc)")
@@ -92,6 +94,8 @@ impl SearchView {
                     self.filter_popover(
                         Button::new("filter-button")
                             .custom(plain_button(cx))
+                    // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
+                    .px_0()
                             .child(filter_pill(label, filter_caps)),
                         cx,
                     ),
