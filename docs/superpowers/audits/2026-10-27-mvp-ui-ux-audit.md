@@ -2,11 +2,34 @@
 
 Audit of kb against itself (catalog, footer, ⌘K, DESIGN.md, specs, approved pages), per
 `docs/superpowers/handoffs/2026-10-27-mvp-ui-ux-audit.md`. Reproduction tests live on the branch
-`chore/audit-mvp-reproductions` (the brief named `audit/mvp-reproductions`; the commit hook `cchk.toml` rejects the `audit/` branch type) (never merged), in `crates/kb-app/tests/ui.rs`.
+`chore/audit-mvp-reproductions` (never merged), in `crates/kb-app/tests/ui.rs`, all named `audit_*`. The brief named the
+branch `audit/mvp-reproductions`; the commit hook (`cchk.toml`, Conventional Branch) rejects an `audit/` type, so it
+uses `chore/`.
+
+**The earlier run's leads**, each settled:
+
+| Lead                                                                                                     | Outcome                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Changing the filter resets `panel_selected` without scrolling; reopening an overlay keeps `panel_scroll` | Confirmed: A09 (and A01 for the list's own selection)                                                                                                                                                                                                                                                                         |
+| The footer shows _Actions ⌘K_ under the filter or a submenu, and ⌘K there reopens the panel              | Confirmed in part: A10. ⌘K closes the panel from a submenu (a toggle) and swaps to it from the filter; the larger problem is the screen's keys shown under the panel                                                                                                                                                          |
+| ⌘⇧R is bound everywhere but only the report handles it                                                   | Confirmed, with ⌘⇧L and ⌘⇧E: A12                                                                                                                                                                                                                                                                                              |
+| Keys bound only in `Search` (⌘Q) may be dead while the action panel has focus                            | Dismissed: the panel's element is a descendant of `SearchView`'s root, so `Search` bindings fire from it. Shown by `audit_closing_theme_with_cmd_k_restores_the_theme` (⌘K reaches `open_actions` from Theme…) and `audit_cmd_number_under_the_action_panel_runs_no_row` (⌘2 reaches `run_row`). The opposite is the bug: A07 |
+| `SearchView::render` calls `set_compact` every frame                                                     | Confirmed: A16                                                                                                                                                                                                                                                                                                                |
+
+**Not checked**, and why: anything that needs a real screen, keyboard or pointer (the brief forbids screenshots and
+probes): pixel truncation of long titles and descriptions, tag images at size, hover and focus-ring rendering, the
+panel's state after a real focus-loss hide and ⌥K reopen, and VoiceOver semantics. A17 and A18 stay Suspected for the
+same reason.
 
 ## 1. Verdict
 
-_Pending: written last._
+kb is close: 21 findings, **0 Blockers, 6 Majors, 12 Minors (2 of them Suspected) and 3 Polish**; finding an entry,
+using it and refreshing all work, and the six Majors are all small (effort S). Most findings come from two causes: a
+**selection index changed without scrolling to it or resetting it** (A01, A02, A09, A17), and **handlers on
+`SearchView` that act whatever the screen or overlay**, so a key bound in the `Search` context reaches a screen or a
+panel it was not meant for (A05–A08, A12, A13). A third cause, **each list answering its own set of navigation keys**,
+explains K1 and K3 (A03, A04). Fix batches 1–3 below (every Major and the Minors that share their cause) and the MVP's
+keyboard promises hold.
 
 ## 2. Key matrix
 
@@ -20,27 +43,27 @@ an overlay open unless the panel or its field handles the key first. Flagged cel
 
 | Key                    | List                                        | Detail                     | Report                                          | Rep. detail                           | R/S/F                                       | Panel                                 | Submenu                                                  | Filter                             |
 | ---------------------- | ------------------------------------------- | -------------------------- | ----------------------------------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
-| ↑ ↓                    | Row ±1                                      | Scroll a line              | Row ±1, kept in view                            | Row ±1 under the pane **[A03]**       | Nothing                                     | Row ±1                                | Row ±1                                                   | Row ±1, can leave view **[A01]**   |
-| ⌘↑ ⌘↓                  | Caret only **[A02]**                        | Page the notes             | First / last row                                | First / last row **[A03]**            | Nothing                                     | Caret only **[A02]**                  | Nothing **[A02]**                                        | Caret only **[A02]**               |
-| Page Up/Down, Home/End | Caret only **[A02]**                        | Nothing **[A02]**          | Nothing **[A02]**                               | Nothing (pane unscrollable) **[A03]** | Nothing                                     | Caret only                            | Nothing                                                  | Caret only                         |
-| → ←                    | Split on / off (caret at end)               | Nothing (D20)              | Split on / off                                  | Nothing                               | Flips the hidden list's split **[A13]**     | Caret                                 | Split under the panel **[A06]**                          | Caret                              |
+| ↑ ↓                    | Row ±1                                      | Scroll a line              | Row ±1, kept in view                            | Row ±1 under the pane **[A04]**       | Nothing                                     | Row ±1                                | Row ±1                                                   | Row ±1, can leave view **[A02]**   |
+| ⌘↑ ⌘↓                  | Caret only **[A03]**                        | Page the notes             | First / last row                                | First / last row **[A04]**            | Nothing                                     | Caret only **[A03]**                  | Nothing **[A03]**                                        | Caret only **[A03]**               |
+| Page Up/Down, Home/End | Caret only **[A03]**                        | Nothing **[A03]**          | Nothing **[A03]**                               | Nothing (pane unscrollable) **[A04]** | Nothing                                     | Caret only                            | Nothing                                                  | Caret only                         |
+| → ←                    | Split on / off (caret at end)               | Nothing (D20)              | Split on / off                                  | Nothing                               | Flips the hidden list's split **[A13]**     | Caret                                 | Split under the panel **[A07]**                          | Caret                              |
 | ↵                      | Details                                     | Entry primary              | Details                                         | Edit                                  | Running: nothing; Stopped and Failed: Retry | Selected row                          | Selected row                                             | Toggle                             |
 | ⌘↵                     | Entry primary                               | Entry secondary            | Edit                                            | Copy Location                         | Failed: Configure; else nothing             | Row showing ⌘↵, else the selected row | Links…: Copy link; else the selected row                 | Only                               |
 | ⇧⌘↵                    | Entry secondary (in ⌘K, not the footer, D9) | Nothing                    | Copy Location (in ⌘K, not the footer)           | Nothing                               | Nothing                                     | Row showing ⇧⌘↵                       | Row showing ⇧⌘↵                                          | Nothing                            |
 | Esc                    | Clear the query, else hide                  | Back to the list           | Split / list → search list                      | Back to the report level it came from | Running: Stop; else back to the list        | Clear the search, else close          | Clear, else up one level (Theme…, Refresh More… → More…) | Clear the search, else close       |
-| ⌘K                     | Open the panel                              | Open the panel             | Open the panel                                  | Open the panel                        | Open the panel                              | Close                                 | Close all (not up a level) **[A11]**                     | Swap to the action panel **[A11]** |
+| ⌘K                     | Open the panel                              | Open the panel             | Open the panel                                  | Open the panel                        | Open the panel                              | Close                                 | Close all (not up a level) **[A10]**                     | Swap to the action panel **[A10]** |
 | ⌘P                     | Open the filter                             | Invisible filter **[A05]** | Invisible filter **[A05]**                      | Invisible filter **[A05]**            | Invisible filter **[A05]**                  | Swap to the filter                    | Swap to the filter                                       | Close                              |
-| ⌘R                     | Refresh all                                 | Refresh all                | Refresh all, not the report's sources **[A04]** | Same **[A04]**                        | Running: ignored; else refresh all          | Refresh all                           | Refresh all                                              | Refresh all                        |
+| ⌘R                     | Refresh all                                 | Refresh all                | Refresh all, not the report's sources **[A06]** | Same **[A06]**                        | Running: ignored; else refresh all          | Refresh all                           | Refresh all                                              | Refresh all                        |
 | ⌘O (Edit)              | Entry's file in the editor                  | Same                       | Row's file at its line, or Configure            | Same                                  | Hidden list entry's file **[A08]**          | Selected entry's file                 | Same                                                     | Same                               |
 | ⌥⌘C (Path)             | Copy the entry's path                       | Same                       | Row's path                                      | Same                                  | Hidden entry's path **[A08]**               | Entry's path                          | Same                                                     | Same                               |
 | ⌘⇧L ⌘⇧E ⌘⇧R            | Nothing **[A12]**                           | Nothing **[A12]**          | Copy Location / Copy Error / Reveal             | Same                                  | Nothing                                     | Nothing **[A12]**                     | Nothing                                                  | Nothing                            |
 | ⌘⇧F                    | Resize                                      | Resize                     | Resize                                          | Resize                                | Resize                                      | Resize                                | Resize                                                   | Resize                             |
 | ⌘⇧,                    | Configure                                   | Configure                  | Configure                                       | Configure                             | Configure                                   | Configure                             | Configure                                                | Configure                          |
-| ⌘1–⌘9                  | Row n's primary                             | Link n                     | Nothing                                         | Nothing                               | Nothing                                     | Runs row n behind the panel **[A06]** | Same **[A06]**                                           | Same **[A06]**                     |
+| ⌘1–⌘9                  | Row n's primary                             | Link n                     | Nothing                                         | Nothing                               | Nothing                                     | Runs row n behind the panel **[A07]** | Same **[A07]**                                           | Same **[A07]**                     |
 | ⌘Q                     | Quit                                        | Quit                       | Quit                                            | Quit                                  | Quit                                        | Quit                                  | Quit                                                     | Quit                               |
 
 Footer against keys: the list, detail, report, report detail, refresh screens, filter and Links… show the keys that
-work. The action panel's root, More…, Refresh More… and Theme… show the screen's keys instead **[A11]**; while the
+work. The action panel's root, More…, Refresh More… and Theme… show the screen's keys instead **[A10]**; while the
 invisible filter of A05 is open, the detail and report screens show _Toggle ↵ · Only ⌘↵_ **[A05]**.
 
 ## 3. Findings
@@ -51,7 +74,21 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 `chore/audit-mvp-reproductions` (run with `cargo nextest run -p kb-app --test ui <name>`). The branch adds one accessor,
 `SearchView::panel_scroll_handle`, so a test can read the panel's row bounds.
 
-### A01 (K2). The filter's selected row scrolls out of sight behind the Search field
+### A01. A new filter leaves the list with nothing selected (or a different entry), so ↵, ⌘↵ and ⌘K act on nothing
+
+| Field            | Content                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity         | Major                                                                                                                                                                                                                                                                                                                                                                             |
+| Status           | Confirmed (failing test)                                                                                                                                                                                                                                                                                                                                                          |
+| Screen and state | List after a filter change (⌘P Toggle ↵ / Only ⌘↵ / Clear All, or a tag clicked in the split pane or detail screen); also the list after a refresh                                                                                                                                                                                                                                |
+| Steps            | ⌥K, ↓ ×7, ⌘P, type `docker`, ⌘↵                                                                                                                                                                                                                                                                                                                                                   |
+| Expected         | The first result is selected, as after a new query (`SearchView::new` comment "The first row starts selected … so Enter and ⌘K act on it at once"; test `selects_the_first_result_of_a_new_query`); task T3 ends on a filtered list                                                                                                                                               |
+| Actual           | No row is selected: the old index 7 points past the one result. The footer loses its entry, ↵ and ⌘↵ do nothing, ⌘K has no Details. With a longer result list the old index silently selects another entry. ↓ recovers                                                                                                                                                            |
+| Evidence         | `audit_a_new_filter_selects_its_first_result` (left `None`, right `Some("docker ps -a")`). `entry_list.rs:145-149` `set_filter` and `entry_list.rs:121-124` `set_connection` re-run the query but keep `selected`; the query path goes through `ListState::set_query`, which resets it. Callers: `search_view.rs:828` `apply_filter`, `:880` `filter_by_tag`, `:702` after a sync |
+| Suggested fix    | After `set_filter` / `set_connection`, select row 0 (or keep the same entry id when it is still listed after a sync) through `ListState::set_selected_index` and scroll to it                                                                                                                                                                                                     |
+| Effort           | S                                                                                                                                                                                                                                                                                                                                                                                 |
+
+### A02 (K2). The filter's selected row scrolls out of sight behind the Search field
 
 | Field            | Content                                                                                                                                                                                                                                                                                                                                                                           |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -65,7 +102,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Map the row index to its child index in `panel()` (or wrap each section's label with its first row, or give each row its own scroll target by id) and scroll to that                                                                                                                                                                                                              |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                                                 |
 
-### A02 (K1). ⌘↑ and ⌘↓ do nothing on the list; each list-like surface answers a different set of navigation keys
+### A03 (K1). ⌘↑ and ⌘↓ do nothing on the list; each list-like surface answers a different set of navigation keys
 
 | Field            | Content                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -79,7 +116,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | One navigation-key model for every list: capture `MoveToStart`/`MoveToEnd` (and `MovePageUp`/`MovePageDown`) on the query box and the panel search the way ↑↓ are captured, and bind `cmd-up`/`cmd-down` to First/Last in `PANEL_CONTEXT`                                                                                                                                                                                  |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-### A03 (K3). On the report's detail screen ↑↓ swap the row instead of scrolling it, and the pane cannot be scrolled by keyboard at all
+### A04 (K3). On the report's detail screen ↑↓ swap the row instead of scrolling it, and the pane cannot be scrolled by keyboard at all
 
 | Field            | Content                                                                                                                                                                                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,20 +129,6 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Evidence         | `audit_k3_arrows_on_the_report_detail_keep_its_row`. `keys.rs:135-138` binds `NextRow`…`FirstRow` in `REFRESH_CONTEXT` for every report level; `search_view.rs:790-796` `report_step` checks only the overlay, not `ReportLevel::Detail`                         |
 | Suggested fix    | Add a detail-level key context (or check the level in `report_step`) and route ↑↓/⌘↑↓ to a tracked `ScrollHandle` on the report pane, reusing `next_offset`                                                                                                      |
 | Effort           | S                                                                                                                                                                                                                                                                |
-
-### A04. ⌘R on a report refreshes every source, while its ⌘K Refresh row reruns the report's own sources
-
-| Field            | Content                                                                                                                                                                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Severity         | Major                                                                                                                                                                                                                                     |
-| Status           | Confirmed (failing test)                                                                                                                                                                                                                  |
-| Screen and state | Refresh report after Refresh YAML or Refresh Skills                                                                                                                                                                                       |
-| Steps            | ⌥K, ⌘K, type `Refresh Skills`, ↵ (report), ⌘R                                                                                                                                                                                             |
-| Expected         | Spec 2026-10-27 D3: "Refresh (⌘R) on the report reruns the same selection: after Refresh YAML it refreshes YAML." The ⌘K row labelled _Refresh ⌘R_ does this                                                                              |
-| Actual           | The key runs `Selection::All`; the same label and cap in ⌘K run `Selection::Skills`                                                                                                                                                       |
-| Evidence         | `audit_cmd_r_on_a_skills_report_refreshes_skills_again` (left `Some(All)`). The key dispatches `Rebuild` → `search_view.rs:680-682` `refresh(Selection::All)`; only `run_action("refresh")` (`search_view.rs:422`) checks `self.report()` |
-| Suggested fix    | Make `rebuild` call `run_action("refresh")` (or check `self.report()` first), so the key and the row share one path                                                                                                                       |
-| Effort           | S                                                                                                                                                                                                                                         |
 
 ### A05. ⌘P away from the list opens an invisible filter that swallows ↵ and the arrows and rewrites the footer
 
@@ -121,7 +144,21 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Ignore `OpenFilter` unless `Screen::Search` (as `run_row` checks the screen), and say so in `keys.rs`                                                                                                                                                                                                                                                                                                                                                          |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
-### A06. ⌘1–⌘9 (and → / ← on a submenu) act on the screen behind the open action panel or filter
+### A06. ⌘R on a report refreshes every source, while its ⌘K Refresh row reruns the report's own sources
+
+| Field            | Content                                                                                                                                                                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity         | Major                                                                                                                                                                                                                                     |
+| Status           | Confirmed (failing test)                                                                                                                                                                                                                  |
+| Screen and state | Refresh report after Refresh YAML or Refresh Skills                                                                                                                                                                                       |
+| Steps            | ⌥K, ⌘K, type `Refresh Skills`, ↵ (report), ⌘R                                                                                                                                                                                             |
+| Expected         | Spec 2026-10-27 D3: "Refresh (⌘R) on the report reruns the same selection: after Refresh YAML it refreshes YAML." The ⌘K row labelled _Refresh ⌘R_ does this                                                                              |
+| Actual           | The key runs `Selection::All`; the same label and cap in ⌘K run `Selection::Skills`                                                                                                                                                       |
+| Evidence         | `audit_cmd_r_on_a_skills_report_refreshes_skills_again` (left `Some(All)`). The key dispatches `Rebuild` → `search_view.rs:680-682` `refresh(Selection::All)`; only `run_action("refresh")` (`search_view.rs:422`) checks `self.report()` |
+| Suggested fix    | Make `rebuild` call `run_action("refresh")` (or check `self.report()` first), so the key and the row share one path                                                                                                                       |
+| Effort           | S                                                                                                                                                                                                                                         |
+
+### A07. ⌘1–⌘9 (and → / ← on a submenu) act on the screen behind the open action panel or filter
 
 | Field            | Content                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -134,20 +171,6 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Evidence         | `audit_cmd_number_under_the_action_panel_runs_no_row`. `search_view.rs:513-538` `run_row` checks the screen but not `self.overlay`; ⌘n is bound in `Search`, which is an ancestor of `ActionPanel`                                                                                                                                                                                                        |
 | Suggested fix    | Return early from `run_row`, `show_details` and `hide_details` when `self.overlay != Overlay::None`, like `ladder` and `report_step`                                                                                                                                                                                                                                                                      |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                                                                         |
-
-### A07. Leaving Theme… with ⌘K, ⌘P or a click outside keeps the previewed theme on screen without saving it
-
-| Field            | Content                                                                                                                                                                                                                                                                             |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Severity         | Minor                                                                                                                                                                                                                                                                               |
-| Status           | Confirmed (failing test)                                                                                                                                                                                                                                                            |
-| Screen and state | Action panel → More… → Theme…, after moving the selection                                                                                                                                                                                                                           |
-| Steps            | ⌥K, ⌘K, type `Theme`, ↵, ↓, ⌘K                                                                                                                                                                                                                                                      |
-| Expected         | Themes spec D7 and `search_view/theme.rs:1-2`: the preview is "restored when the submenu or the panel closes without one"                                                                                                                                                           |
-| Actual           | The panel closes with the previewed palette still applied (`#0A1220` instead of `#24273A`); config.toml still names the old theme, so the next start or the next Esc-to-hide (which calls `cancel_theme_preview`) flips it back unexpectedly                                        |
-| Evidence         | `audit_closing_theme_with_cmd_k_restores_the_theme`. Only `back` (`search_view.rs:729`), Esc on the list and the blur hide (`panel.rs:142`) call `cancel_theme_preview`; `open_actions`, `open_filter` and the popover's `on_open_change` go through `show_overlay`, which does not |
-| Suggested fix    | Call `cancel_theme_preview` in `show_overlay` whenever the new overlay is not Theme… (`keep_theme` already clears `theme_preview` first)                                                                                                                                            |
-| Effort           | S                                                                                                                                                                                                                                                                                   |
 
 ### A08. Edit and Copy Path on a stopped, failed or running refresh act on the hidden list entry
 
@@ -171,27 +194,13 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Status           | Confirmed (failing test)                                                                                                                                                                                                                                                                                                                                        |
 | Screen and state | Filter or action panel reopened after scrolling; also after typing in the panel's search, and after Toggle ↵                                                                                                                                                                                                                                                    |
 | Steps            | ⌥K, ⌘P, ↓ ×12, Esc, ⌘P                                                                                                                                                                                                                                                                                                                                          |
-| Expected         | The selected row is in view (same rule as A01)                                                                                                                                                                                                                                                                                                                  |
+| Expected         | The selected row is in view (same rule as A02)                                                                                                                                                                                                                                                                                                                  |
 | Actual           | Row 0 is selected but the rows open 49 px down, so the selection and _Clear All_ / the first type are above the visible rows. `show_overlay`, `set_panel_query` and `on_panel_query_event` reset `panel_selected` to 0 (`search_view/panel.rs:122,150,164`) without touching `panel_scroll`; Toggle re-finds the row (`panel.rs:250`) but does not scroll to it |
-| Evidence         | `audit_reopening_the_filter_starts_at_the_top` (left −49 px). Same cause as A01: the selection moves without a scroll                                                                                                                                                                                                                                           |
-| Suggested fix    | One `select_panel_row(ix)` that sets `panel_selected` and scrolls (with A01's child index); call it from every place that sets `panel_selected`                                                                                                                                                                                                                 |
+| Evidence         | `audit_reopening_the_filter_starts_at_the_top` (left −49 px). Same cause as A02: the selection moves without a scroll                                                                                                                                                                                                                                           |
+| Suggested fix    | One `select_panel_row(ix)` that sets `panel_selected` and scrolls (with A02's child index); call it from every place that sets `panel_selected`                                                                                                                                                                                                                 |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                               |
 
-### A10. A new filter leaves the list with nothing selected (or a different entry), so ↵, ⌘↵ and ⌘K act on nothing
-
-| Field            | Content                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Severity         | Major                                                                                                                                                                                                                                                                                                                                                                             |
-| Status           | Confirmed (failing test)                                                                                                                                                                                                                                                                                                                                                          |
-| Screen and state | List after a filter change (⌘P Toggle ↵ / Only ⌘↵ / Clear All, or a tag clicked in the split pane or detail screen); also the list after a refresh                                                                                                                                                                                                                                |
-| Steps            | ⌥K, ↓ ×7, ⌘P, type `docker`, ⌘↵                                                                                                                                                                                                                                                                                                                                                   |
-| Expected         | The first result is selected, as after a new query (`SearchView::new` comment "The first row starts selected … so Enter and ⌘K act on it at once"; test `selects_the_first_result_of_a_new_query`); task T3 ends on a filtered list                                                                                                                                               |
-| Actual           | No row is selected: the old index 7 points past the one result. The footer loses its entry, ↵ and ⌘↵ do nothing, ⌘K has no Details. With a longer result list the old index silently selects another entry. ↓ recovers                                                                                                                                                            |
-| Evidence         | `audit_a_new_filter_selects_its_first_result` (left `None`, right `Some("docker ps -a")`). `entry_list.rs:145-149` `set_filter` and `entry_list.rs:121-124` `set_connection` re-run the query but keep `selected`; the query path goes through `ListState::set_query`, which resets it. Callers: `search_view.rs:828` `apply_filter`, `:880` `filter_by_tag`, `:702` after a sync |
-| Suggested fix    | After `set_filter` / `set_connection`, select row 0 (or keep the same entry id when it is still listed after a sync) through `ListState::set_selected_index` and scroll to it                                                                                                                                                                                                     |
-| Effort           | S                                                                                                                                                                                                                                                                                                                                                                                 |
-
-### A11. The footer shows the screen's keys under the action panel, where ↵ and ⌘↵ do something else
+### A10. The footer shows the screen's keys under the action panel, where ↵ and ⌘↵ do something else
 
 | Field            | Content                                                                                                                                                                                                                                                                                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -204,6 +213,20 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Evidence         | `search_view.rs:297-303` `key_screen` returns early only for `Overlay::Filter` and `Submenu::Links`, then falls back to the screen; `search_view/footer.rs` `footer_items`; `search_view.rs:798-805` `open_actions`                                                                                                                                 |
 | Suggested fix    | Give the action panel its own footer keys (for example the root's _Run ↵_ or the selected row's label), as `screens.filter` and `screens.links` do, and decide whether ⌘K inside a submenu closes or goes to the root                                                                                                                               |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                   |
+
+### A11. Leaving Theme… with ⌘K, ⌘P or a click outside keeps the previewed theme on screen without saving it
+
+| Field            | Content                                                                                                                                                                                                                                                                             |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity         | Minor                                                                                                                                                                                                                                                                               |
+| Status           | Confirmed (failing test)                                                                                                                                                                                                                                                            |
+| Screen and state | Action panel → More… → Theme…, after moving the selection                                                                                                                                                                                                                           |
+| Steps            | ⌥K, ⌘K, type `Theme`, ↵, ↓, ⌘K                                                                                                                                                                                                                                                      |
+| Expected         | Themes spec D7 and `search_view/theme.rs:1-2`: the preview is "restored when the submenu or the panel closes without one"                                                                                                                                                           |
+| Actual           | The panel closes with the previewed palette still applied (`#0A1220` instead of `#24273A`); config.toml still names the old theme, so the next start or the next Esc-to-hide (which calls `cancel_theme_preview`) flips it back unexpectedly                                        |
+| Evidence         | `audit_closing_theme_with_cmd_k_restores_the_theme`. Only `back` (`search_view.rs:729`), Esc on the list and the blur hide (`panel.rs:142`) call `cancel_theme_preview`; `open_actions`, `open_filter` and the popover's `on_open_change` go through `show_overlay`, which does not |
+| Suggested fix    | Call `cancel_theme_preview` in `show_overlay` whenever the new overlay is not Theme… (`keep_theme` already clears `theme_preview` first)                                                                                                                                            |
+| Effort           | S                                                                                                                                                                                                                                                                                   |
 
 ### A12. ⌘⇧R, ⌘⇧L and ⌘⇧E are bound on every screen but act only on the report
 
@@ -233,19 +256,19 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Act only on `Screen::Search`                                                                                                                  |
 | Effort           | S                                                                                                                                             |
 
-### A14. The list's compact flag is mutated in `render`
+### A14. A missing or unreadable sources directory is reported, but its row offers no way to fix it
 
-| Field            | Content                                                                                                                                                                                         |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Severity         | Minor                                                                                                                                                                                           |
-| Status           | Confirmed (code read)                                                                                                                                                                           |
-| Screen and state | List with the split pane                                                                                                                                                                        |
-| Steps            | ⌥K, →                                                                                                                                                                                           |
-| Expected         | GPUI Kit Coding Guides, "Common failure modes": no state mutation or work in `render`; derive it where the state changes                                                                        |
-| Actual           | Every frame `SearchView::render` compares and calls `set_compact` on the list's delegate, so the rows learn their layout one frame late and the list entity is updated during a parent's render |
-| Evidence         | `search_view.rs:949-952`                                                                                                                                                                        |
-| Suggested fix    | Set compact in `show_details` / `hide_details` / when the screen or selection changes, or pass it to the rows at render time without storing it                                                 |
-| Effort           | S                                                                                                                                                                                               |
+| Field            | Content                                                                                                                                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Severity         | Minor                                                                                                                                                                                                                                                              |
+| Status           | Confirmed (code read)                                                                                                                                                                                                                                              |
+| Screen and state | Refresh report, YAML section, the one failed row naming the sources directory                                                                                                                                                                                      |
+| Steps            | Set `sources_path` to a folder that does not exist, ⌥K, ⌘R, ⌘K                                                                                                                                                                                                     |
+| Expected         | The same remedy as the Skills rows: a failed or unconfigured Skills row's Edit opens Configure (spec 2026-10-27 D4), and the failed screen's ⌘↵ is Configure (`failed = "{error} Check it in Configure."`). The fix for a wrong `sources_path` is in Configure too |
+| Actual           | ↵ opens the row; ⌘↵ (Edit, shown in the footer) does nothing; ⌘K offers only Details, Copy Error, Refresh and Resize. The quote says "The previous entries are unchanged." without naming where to fix it                                                          |
+| Evidence         | `report_list.rs:65-80`: `file()` is `None` and `configures()` is false for `Subject::SourcesDir`; `actions.rs` `report_page` `allowed("edit")`                                                                                                                     |
+| Suggested fix    | Treat `Subject::SourcesDir` as `configures()` (Edit opens config.toml), and end its message with "Check it in Configure." like `failed`                                                                                                                            |
+| Effort           | S                                                                                                                                                                                                                                                                  |
 
 ### A15. Theme… disappears from More… when Refresh More… is configured away
 
@@ -261,7 +284,21 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Push Theme… outside that condition (after the admin rows, or from its own catalog list)                                                                                                                                                               |
 | Effort           | S                                                                                                                                                                                                                                                     |
 
-### A16. The report pane's scroll position carries from row to row (Suspected)
+### A16. The list's compact flag is mutated in `render`
+
+| Field            | Content                                                                                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity         | Minor                                                                                                                                                                                           |
+| Status           | Confirmed (code read)                                                                                                                                                                           |
+| Screen and state | List with the split pane                                                                                                                                                                        |
+| Steps            | ⌥K, →                                                                                                                                                                                           |
+| Expected         | GPUI Kit Coding Guides, "Common failure modes": no state mutation or work in `render`; derive it where the state changes                                                                        |
+| Actual           | Every frame `SearchView::render` compares and calls `set_compact` on the list's delegate, so the rows learn their layout one frame late and the list entity is updated during a parent's render |
+| Evidence         | `search_view.rs:949-952`                                                                                                                                                                        |
+| Suggested fix    | Set compact in `show_details` / `hide_details` / when the screen or selection changes, or pass it to the rows at render time without storing it                                                 |
+| Effort           | S                                                                                                                                                                                               |
+
+### A17. The report pane's scroll position carries from row to row (Suspected)
 
 | Field            | Content                                                                                                                                               |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -272,10 +309,10 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Expected         | A newly selected row's pane starts at its top, as the entry detail does (`show_detail_screen` resets `detail_scroll`)                                 |
 | Actual           | Likely keeps the previous offset: the pane's scroll state is keyed by the one id `"report-pane"` for every row and both levels, and nothing resets it |
 | Evidence         | `ui/report_pane.rs:330-333`; compare `ui/entry_view.rs:160,432` (`entry-scroll-<entry id>`)                                                           |
-| Suggested fix    | Track a `ScrollHandle` on `SyncView` (also needed for A03) and reset it when the selection or level changes                                           |
+| Suggested fix    | Track a `ScrollHandle` on `SyncView` (also needed for A04) and reset it when the selection or level changes                                           |
 | Effort           | S                                                                                                                                                     |
 
-### A17. The report's excerpt lines do not wrap or scroll sideways (Suspected)
+### A18. The report's excerpt lines do not wrap or scroll sideways (Suspected)
 
 | Field            | Content                                                                                                                                                                           |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -289,7 +326,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Truncate with an ellipsis (the location and Copy Error carry the rest) or give the block `overflow_x_scroll`                                                                      |
 | Effort           | S                                                                                                                                                                                 |
 
-### A18. Some user-facing words bypass the catalog
+### A19. Some user-facing words bypass the catalog
 
 | Field            | Content                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -302,7 +339,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Move them to `[messages]` with `{file}` / `{error}` placeholders; take the tooltip from `actions.back`                                                                                                                                                                                                                                                                                                               |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-### A19. Empty sources say "No matching entries found" with nothing typed
+### A20. Empty sources say "No matching entries found" with nothing typed
 
 | Field            | Content                                                                                                                                                                                                                                            |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -316,7 +353,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | A `no_entries_title` (for example "No entries yet"), and build the type list from the catalog's labels                                                                                                                                             |
 | Effort           | S                                                                                                                                                                                                                                                  |
 
-### A20. Action-panel and filter rows have no hover state
+### A21. Action-panel and filter rows have no hover state
 
 | Field            | Content                                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -332,8 +369,49 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 
 ## 4. What already works well
 
-_Pending._
+Keep these working; most have tests in `tests/ui.rs` already.
+
+- **The list's core path.** Typing debounces and runs one query; the first result is selected after a new query; ↑↓
+  move and keep the row in view; ↵ / ⌘↵ / ⇧⌘↵ follow `[screens.list]`; ⌘1–⌘9 run row n; → / ← toggle the split only
+  with the caret at the query's end. Tasks T1–T5 pass.
+- **The detail screen.** ↑↓ / ⌘↑↓ scroll the notes within their ends; ↵ / ⌘↵ follow `[screens.detail]`; ⌘n opens
+  link n; → and ← do nothing (D20); a tag click filters the list (but see A01).
+- **Esc is one level everywhere.** Panel search → submenu → root → closed; Theme… and Refresh More… return to More…;
+  report detail → its split or list → search list; refresh running → Stop; focus goes back to the query field or the
+  screen (`show_overlay(None)` → `focus_screen`).
+- **The report's own row actions** (spec 2026-10-27 D4): a report without rows ignores every row key
+  (`ignores_row_actions_on_a_report_without_rows`); Edit opens at line:column through the editor template, with
+  notices for a missing file and a failed editor.
+- **One source of truth for keys.** Footer keys, ⌘K rows and their caps all come from the catalog through
+  `keys_for`; overriding a key in config.toml moves the binding and the caps together.
+- **Themes.** Preview on move, restore on Esc and on the blur hide, keep and save on ↵; all eight seeded themes pass
+  `theme::legibility` (`audit_every_seeded_theme_is_legible`, which passes). `design:validate` reports failures only
+  for alternative palettes in `palettes.json`, not for the seeded themes.
+- **The size toggle keeps its centre** (the patched `gpui-pre-macos` `resize`), and the panel keeps its size until quit.
+- **Every `[messages]` key is used** somewhere in `src/`; none is dead.
 
 ## 5. Proposed order of fixes
 
-_Pending._
+Fix every Major (batches 1–3) and the MVP's keyboard promises hold. Batches 4–5 are the Minor rough edges; 6 is copy.
+
+1. **Keep the selection where the user can see it** (A01, A02, A09, A17). One rule: whenever a selection index
+   changes, it is set through one function that also scrolls to it. For the list, reset to row 0 after `set_filter`
+   and `set_connection`. For the panel, a `select_panel_row` that maps the row index to its child index (labels and
+   hairlines) and is called from `move_panel`, `show_overlay`, `set_panel_query`, the query's Change event, Toggle and
+   Theme…'s opening row. For the report pane, a tracked `ScrollHandle` reset on row or level change.
+2. **One navigation-key model for every list and pane** (A03, A04). ↑↓ a row, ⌘↑↓ first / last, Page Up/Down a page,
+   on the list, the filter, the action panel and its submenus, Theme… and the report; on the two detail screens (entry
+   and report row) the same keys scroll. Capture `MoveToStart` / `MoveToEnd` / `MovePageUp` / `MovePageDown` on the
+   query box and the panel's search; give the report's detail level its own key context and a scroll handle.
+3. **A key acts only where its screen is** (A05, A06, A07, A08, A12, A13). Each handler on `SearchView` checks the
+   screen and the overlay before acting, as `ladder` and `report_step` already do: `open_filter` only on the list;
+   `rebuild` through `run_action("refresh")`; `run_row`, `show_details`, `hide_details` not under an overlay and not
+   on refresh screens; `copy_path` / `open_source_file` on `Screen::Rebuild(_)` rather than the report phase; the
+   report-only keys bound in `REFRESH_CONTEXT` or given an entry meaning.
+4. **Overlay lifecycle** (A10, A11, A15). `show_overlay` is the one place an overlay changes: it cancels a theme
+   preview when leaving Theme…, and the action panel gets footer keys of its own. Move Theme… out of the
+   Refresh More… condition.
+5. **Report remedies and render hygiene** (A14, A16, A18). Edit on the sources-directory row opens Configure; derive
+   `compact` outside `render`; truncate long excerpt lines.
+6. **Copy and polish** (A19, A20, A21). Move the hard-coded notices and the back tooltip into `[messages]`; give the
+   empty-sources screen its own title; add hover to panel rows.
