@@ -1185,6 +1185,21 @@ fn audit_reopening_the_filter_starts_at_the_top(cx: &mut TestAppContext) {
     );
 }
 
+/// Every theme kb seeds passes kb's own legibility rules (`theme::legibility`), which ↵ on Theme… warns about.
+#[test]
+fn audit_every_seeded_theme_is_legible() {
+    let dir = tempfile::tempdir().unwrap();
+    kb_app::theme::folder::seed(dir.path()).unwrap();
+    let failures: Vec<String> = kb_app::theme::folder::list(dir.path())
+        .into_iter()
+        .filter_map(|entry| {
+            let palette = kb_app::theme::folder::load(dir.path(), &entry.id).unwrap().palette;
+            kb_app::theme::legibility::first_failure(&palette).map(|why| format!("{}: {why}", entry.id))
+        })
+        .collect();
+    assert_eq!(failures, [] as [String; 0]);
+}
+
 /// A changed filter selects its first result, as a changed query does
 /// (`selects_the_first_result_of_a_new_query`).
 #[gpui_kit::test]
