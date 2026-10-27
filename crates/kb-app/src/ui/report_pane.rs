@@ -332,7 +332,7 @@ pub fn report_pane(
             .children(pane.list.iter().map(|item| div().child(format!("• {item}"))))
     });
     let facts = facts_element(pane.facts, &d, c);
-    let mut el = v_flex()
+    v_flex()
         .id("report-pane")
         .size_full()
         .min_w_0()
@@ -345,11 +345,8 @@ pub fn report_pane(
         .children(excerpt)
         .children(command)
         .children(list)
-        .children(facts);
-    if let Some(scroll) = scroll {
-        el = el.track_scroll(scroll);
-    }
-    el
+        .children(facts)
+        .when_some(scroll, gpui_kit::StatefulInteractiveElement::track_scroll)
 }
 
 #[cfg(test)]

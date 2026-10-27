@@ -124,14 +124,14 @@ context, its name and what `run_action` does on it. Nothing else is needed, and 
 
 ## Error handling
 
-| Case                                                | Behaviour                                                                                                                  |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Esc on `List` with no overlay                       | As today: clears the query, then hides the panel; `pop` returns false                                                      |
-| Empty query when a place is pushed                  | The back name is the catalog's `Search`                                                                                    |
-| A long query                                        | Cut off with an ellipsis in the header; the full query is in the list it returns to                                        |
-| Panel hidden (Esc, focus loss) and reopened with ⌥K | The stack is kept; the panel reopens on the same place. Task 1 checks this matches today's behaviour for the detail screen |
-| A refresh started from `Detail`                     | `Refresh` is pushed on top of `Detail`; its back name is the entry's title, and Esc returns to that detail                 |
-| ⌘R on `Refresh` or `ReportDetail`                   | Reruns the same sources in place: `ReportDetail` is popped, the `Refresh` place gets the new run; nothing is pushed        |
+| Case                                                | Behaviour                                                                                                                                                   |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Esc on `List` with no overlay                       | As today: clears the query, then hides the panel; `pop` returns false                                                                                       |
+| Empty query when a place is pushed                  | The back name is the catalog's `Search`                                                                                                                     |
+| A long query                                        | Cut off with an ellipsis in the header; the full query is in the list it returns to                                                                         |
+| Panel hidden (Esc, focus loss) and reopened with ⌥K | The stack is kept; the panel reopens on the same place. Task 1 checks this matches today's behaviour for the detail screen                                  |
+| A refresh started from `Detail`                     | `Refresh` opens on the list (the stack is cut back to `List` first): the reindex may move or drop the entry a detail shows. Amended 2026-10-27 after review |
+| ⌘R on `Refresh` or `ReportDetail`                   | Reruns the same sources in place: `ReportDetail` is popped, the `Refresh` place gets the new run; nothing is pushed                                         |
 
 ## Testing
 

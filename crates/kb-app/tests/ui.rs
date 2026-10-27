@@ -587,8 +587,6 @@ fn names_search_when_back_goes_to_an_empty_query(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn names_refresh_on_a_report_row_and_returns_to_its_split(cx: &mut TestAppContext) {
-    use kb_app::navigator::Place;
-
     let (_home, window, view) = fresh(cx);
     press(cx, window, "cmd-r");
     cx.run_until_parked();
@@ -866,10 +864,7 @@ fn typing_and_fixing_query_does_not_rebuild_on_immediate_enter(cx: &mut TestAppC
 
 #[gpui_kit::test]
 fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
-    use kb_app::navigator::Place;
-
-    let home = tempfile::tempdir().unwrap();
-    let (window, view) = open(cx, sample_config(home.path()));
+    let (_home, window, view) = fresh(cx);
     press(cx, window, "cmd-r");
     cx.run_until_parked();
     let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
@@ -954,8 +949,7 @@ fn ignores_row_actions_on_a_report_without_rows(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn copies_a_failed_file_s_error_from_the_report(cx: &mut TestAppContext) {
-    let home = tempfile::tempdir().unwrap();
-    let (window, view) = open(cx, sample_config(home.path()));
+    let (_home, window, view) = fresh(cx);
     press(cx, window, "cmd-r");
     cx.run_until_parked();
     press(cx, window, "cmd-shift-e");
@@ -1224,6 +1218,25 @@ fn reveal_and_copy_location_do_nothing_on_the_list(cx: &mut TestAppContext) {
         .unwrap_or_default();
     assert_eq!(copied, "");
     assert_eq!(cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)), None);
+}
+
+/// A refresh from an entry's detail opens on the list: the reindex may move or drop that entry, so Esc never returns
+/// to a detail showing something else.
+#[gpui_kit::test]
+fn a_refresh_from_the_detail_returns_to_the_list(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "enter");
+    assert_eq!(cx.read(|cx| view.read(cx).place()), Place::Detail);
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    let back = cx.read(|cx| view.read(cx).header_parts()).back.map(|b| b.text);
+    assert_eq!(back.as_deref(), Some("kubectl"), "‹ names the search, not the entry");
+    press(cx, window, "escape");
+    assert_eq!(cx.read(|cx| view.read(cx).place()), Place::List);
+    assert!(
+        !cx.read(|cx| view.read(cx).is_rebuilding()),
+        "the refresh went with its place"
+    );
 }
 
 /// A13: → on a refresh screen leaves the list's split alone.

@@ -32,7 +32,7 @@ use crate::keys::{
     caret_at_end,
 };
 use crate::navigator::{BackName, Navigator, Overlay, Place};
-use crate::sync_view::{Move, Phase, SyncFinished, SyncJob, SyncView};
+use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pixels, pt};
@@ -63,6 +63,8 @@ pub struct SearchView {
     navigator: Navigator,
     /// The refresh while `Place::Refresh` is on the stack.
     sync: Option<Entity<SyncView>>,
+    /// Its `SyncFinished` subscription, dropped with it.
+    sync_subscription: Option<Subscription>,
     show_details: bool,
     window_size: WindowSize,
     /// The detail screen's notes, scrolled by the keyboard.
@@ -77,7 +79,8 @@ pub struct SearchView {
     theme_id: String,
     /// The palette in use when Theme… opened, restored unless a theme is kept.
     theme_preview: Option<crate::theme::scheme::Palette>,
-    subscriptions: Vec<Subscription>,
+    /// Held only to keep the list, query and panel subscriptions alive.
+    _subscriptions: Vec<Subscription>,
 }
 
 impl std::fmt::Debug for SearchView {
@@ -139,6 +142,7 @@ impl SearchView {
             panel_focus: cx.focus_handle(),
             navigator: Navigator::default(),
             sync: None,
+            sync_subscription: None,
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
             window_size: WindowSize::default(),
@@ -148,7 +152,7 @@ impl SearchView {
             themes: Vec::new(),
             theme_id,
             theme_preview: None,
-            subscriptions: vec![list_sub, input_sub, panel_sub],
+            _subscriptions: vec![list_sub, input_sub, panel_sub],
         }
     }
 
@@ -245,11 +249,24 @@ impl SearchView {
         cx.notify();
     }
 
-    /// Back one place, to the one underneath as it was left (D3). The refresh goes with its place.
+    /// Back one place, to the one underneath as it was left (D3).
     fn pop(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.navigator.pop();
+        self.settle(window, cx);
+    }
+
+    /// Back to the list, from anywhere.
+    fn pop_to_list(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.navigator.pop_to_list();
+        self.settle(window, cx);
+    }
+
+    /// After a pop: the refresh and its subscription go with their place, and the place on top takes the keyboard.
+    /// The one place that keeps `sync` in step with the stack.
+    fn settle(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if !self.navigator.contains(Place::Refresh) {
             self.sync = None;
+            self.sync_subscription = None;
         }
         self.focus_screen(window, cx);
         cx.notify();
@@ -275,8 +292,9 @@ impl SearchView {
         self.list.update(cx, |list, cx| list.set_query(text, window, cx));
     }
 
+    /// Opens the selected entry's detail: only from the list, and only with an entry selected.
     fn show_detail_screen(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.list.read(cx).delegate().selected_entry().is_none() {
+        if self.navigator.top() != Place::List || self.list.read(cx).delegate().selected_entry().is_none() {
             return;
         }
         self.push(Place::Detail, window, cx);
@@ -413,7 +431,7 @@ impl SearchView {
                         let (line, column) = row.line_and_column();
                         self.open_in_editor(std::path::Path::new(file), line, column, window, cx);
                     } else if row.configures() {
-                        self.open_preferences(&OpenPreferences, window, cx);
+                        self.configure(window, cx);
                     }
                     return;
                 }
@@ -475,8 +493,8 @@ impl SearchView {
             ("refresh", _) => self.refresh(Selection::All, window, cx),
             ("refresh-yaml", _) => self.refresh(Selection::Yaml, window, cx),
             ("refresh-skills", _) => self.refresh(Selection::Skills, window, cx),
-            ("configure", _) => self.open_preferences(&OpenPreferences, window, cx),
-            ("resize", _) => self.toggle_window_size(&ToggleWindowSize, window, cx),
+            ("configure", _) => self.configure(window, cx),
+            ("resize", _) => self.resize(window, cx),
             ("edit", _) => {
                 if let Some(path) = self.selected_source_file(cx) {
                     self.open_in_editor(std::path::Path::new(&path), None, None, window, cx);
@@ -602,7 +620,7 @@ impl SearchView {
             Place::List => self.show_details = open,
             Place::Refresh => {
                 if let Some(sync) = self.report(cx) {
-                    sync.update(cx, |s, cx| s.go(if open { Move::Pane } else { Move::NoPane }, cx));
+                    sync.update(cx, |s, cx| s.set_pane(open, cx));
                 }
             }
             Place::Detail | Place::ReportDetail => {}
@@ -624,8 +642,11 @@ impl SearchView {
         caret_at_end(input.cursor(), input.selected_range(), input.value().len())
     }
 
-    /// Scrolls the detail screen's notes by `delta` (negative: up), within their ends.
+    /// Scrolls the detail screen's notes by `delta` (negative: up), within their ends; not under an overlay (D4).
     fn scroll_notes(&mut self, delta: Pixels, cx: &mut Context<Self>) {
+        if !self.navigator.screen_has_keys() {
+            return;
+        }
         let offset = self.detail_scroll.offset();
         let max = self.detail_scroll.max_offset().y;
         self.detail_scroll
@@ -655,6 +676,11 @@ impl SearchView {
     }
 
     fn toggle_window_size(&mut self, _: &ToggleWindowSize, window: &mut Window, cx: &mut Context<Self>) {
+        self.key_action("resize", window, cx);
+    }
+
+    /// The size toggle (⌘⇧F): compact or expanded, keeping the centre.
+    fn resize(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.window_size = self.window_size.toggled();
         let display = window
             .display(cx)
@@ -696,6 +722,11 @@ impl SearchView {
     }
 
     fn open_preferences(&mut self, _: &OpenPreferences, window: &mut Window, cx: &mut Context<Self>) {
+        self.key_action("configure", window, cx);
+    }
+
+    /// Opens config.toml, writing its template first when there is none.
+    fn configure(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let file = self.config.preferences().to_path_buf();
         if !file.exists() {
             let template = crate::catalog::preferences_template(self.config.sources_dir());
@@ -738,17 +769,25 @@ impl SearchView {
                 });
             }
         });
-        self.subscriptions.push(subscription);
+        // The previous run's subscription goes with it.
+        self.sync_subscription = Some(subscription);
         self.sync = Some(sync);
-        // A rerun replaces the refresh in place: from its detail, back to the report first; nothing new is pushed.
-        if self.navigator.top() == Place::ReportDetail {
-            self.navigator.pop();
-        }
-        if self.navigator.top() == Place::Refresh {
-            self.focus_screen(window, cx);
-            cx.notify();
-        } else {
-            self.push(Place::Refresh, window, cx);
+        match self.navigator.top() {
+            // A rerun replaces the refresh in place; from a row's detail, back to the report first.
+            Place::Refresh => {
+                self.focus_screen(window, cx);
+                cx.notify();
+            }
+            Place::ReportDetail => {
+                self.navigator.pop();
+                self.focus_screen(window, cx);
+                cx.notify();
+            }
+            // A refresh always opens on the list: the index it rebuilds may move or drop the entry a detail shows.
+            Place::List | Place::Detail => {
+                self.navigator.pop_to_list();
+                self.push(Place::Refresh, window, cx);
+            }
         }
     }
 
@@ -829,7 +868,7 @@ impl SearchView {
     }
 
     fn open_detail(&mut self, _: &OpenDetail, window: &mut Window, cx: &mut Context<Self>) {
-        self.show_detail_screen(window, cx);
+        self.key_action("details", window, cx);
     }
 
     /// Hands the keyboard to the current screen: the query field in the list, the panel elsewhere.
@@ -912,10 +951,7 @@ impl SearchView {
             },
             cx,
         );
-        self.navigator.pop_to_list();
-        self.sync = None;
-        self.query_input.update(cx, |input, cx| input.focus(window, cx));
-        cx.notify();
+        self.pop_to_list(window, cx);
     }
 
     /// The copy notice, after the command card's own button copied (D17).

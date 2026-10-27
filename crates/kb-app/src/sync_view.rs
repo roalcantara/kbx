@@ -67,16 +67,6 @@ pub struct SyncFinished {
     pub message: String,
 }
 
-/// A move on the report.
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Move {
-    /// →.
-    Pane,
-    /// ←.
-    NoPane,
-}
-
 /// Owns one sync run.
 #[derive(Debug)]
 pub struct SyncView {
@@ -224,10 +214,10 @@ impl SyncView {
         cx.notify();
     }
 
-    /// → (`Move::Pane`) or ← (`Move::NoPane`) on the report; nothing without a selected row.
-    pub fn go(&mut self, m: Move, cx: &mut Context<Self>) {
+    /// → (`open`) or ← on the report: shows or hides the selected row's pane; nothing without a selected row.
+    pub fn set_pane(&mut self, open: bool, cx: &mut Context<Self>) {
         if self.selected_row(cx).is_some() {
-            self.pane = m == Move::Pane;
+            self.pane = open;
             cx.notify();
         }
     }
