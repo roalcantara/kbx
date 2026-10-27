@@ -1,7 +1,8 @@
 //! The `editor` setting (spec 2026-10-27 D6): a command template that opens a file at a line, e.g.
 //! `zed {file}:{line}` or `code -g {file}:{line}:{column}`. The template is split into words first
 //! (quotes group; no shell runs), then `{file}`, `{line}` and `{column}` are filled in, so a path with
-//! spaces stays one argument. Without a known line, `:{line}` and `:{column}` go with their colon.
+//! spaces stays one argument. Without a known line, `{line}` and `{column}` go with the punctuation before
+//! them (`:{line}`, `+{line}`).
 use std::path::Path;
 
 /// Why a template cannot be used.
@@ -43,23 +44,41 @@ pub fn command(
     line: Option<usize>,
     column: Option<usize>,
 ) -> Result<Vec<String>, EditorError> {
-    let expand_word = |word: String| {
-        let mut word = word;
-        if line.is_none() {
-            word = word.replace(":{line}", "").replace("{line}", "");
-        }
-        if line.is_none() || column.is_none() {
-            word = word.replace(":{column}", "").replace("{column}", "");
-        }
-        word.replace("{file}", file)
-            .replace("{line}", &line.map(|n| n.to_string()).unwrap_or_default())
-            .replace("{column}", &column.map(|n| n.to_string()).unwrap_or_default())
-    };
     Ok(words(template)?
-        .into_iter()
-        .map(expand_word)
+        .iter()
+        .map(|word| fill(word, file, line, line.and(column)))
         .filter(|w| !w.is_empty())
         .collect())
+}
+
+/// Fills one word's placeholders in a single pass, so a path that contains `{line}` stays as it is. A
+/// placeholder without a value goes with the punctuation before it: `:{line}`, `+{line}`, `@{line}`.
+fn fill(word: &str, file: &str, line: Option<usize>, column: Option<usize>) -> String {
+    let mut out = String::new();
+    let mut rest = word;
+    while let Some(start) = rest.find('{') {
+        out.push_str(&rest[..start]);
+        rest = &rest[start..];
+        let (placeholder, value) = [
+            ("{file}", Some(file.to_owned())),
+            ("{line}", line.map(|n| n.to_string())),
+            ("{column}", column.map(|n| n.to_string())),
+        ]
+        .into_iter()
+        .find(|(p, _)| rest.starts_with(p))
+        .unwrap_or(("{", Some("{".to_owned())));
+        match value {
+            Some(value) => out.push_str(&value),
+            None => {
+                if out.ends_with(|c: char| c.is_ascii_punctuation()) {
+                    out.pop();
+                }
+            }
+        }
+        rest = &rest[placeholder.len()..];
+    }
+    out.push_str(rest);
+    out
 }
 
 /// How a file was opened.
@@ -98,7 +117,11 @@ pub fn open(
     };
     let program = crate::command_path::find_command(&words[0], std::env::var_os("PATH").as_deref(), home);
     match std::process::Command::new(&program).args(&words[1..]).spawn() {
-        Ok(_) => Opened::Editor,
+        Ok(mut child) => {
+            // Waited on aside, so an editor CLI that exits at once leaves no zombie behind.
+            std::thread::spawn(move || child.wait());
+            Opened::Editor
+        }
         Err(error) => {
             cx.open_with_system(file);
             Opened::Fallback {
@@ -140,6 +163,28 @@ mod tests {
             command("subl --wait {file}", "/s/x.yml", Some(4), Some(1)).unwrap(),
             ["subl", "--wait", "/s/x.yml"],
             "a template without line opens the file"
+        );
+        assert_eq!(
+            command("vim +{line} {file}", "/s/x.yml", None, None).unwrap(),
+            ["vim", "/s/x.yml"],
+            "the prefix goes with the line"
+        );
+        assert_eq!(
+            command("subl {file}@{line}", "/s/x.yml", None, None).unwrap(),
+            ["subl", "/s/x.yml"]
+        );
+    }
+
+    #[test]
+    fn leaves_placeholders_inside_the_path_alone() {
+        assert_eq!(
+            command("zed {file}:{line}", "/s/notes-{line}.yml", Some(4), None).unwrap(),
+            ["zed", "/s/notes-{line}.yml:4"]
+        );
+        assert_eq!(
+            command("ed {other} {file}", "/x", None, None).unwrap(),
+            ["ed", "{other}", "/x"],
+            "an unknown brace stays"
         );
     }
 

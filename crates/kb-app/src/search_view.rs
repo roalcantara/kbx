@@ -352,7 +352,6 @@ impl SearchView {
         }
     }
 
-    /// Runs a catalog action by id on the selected entry.
     /// The refresh screen's view while it shows a report, else `None`.
     fn report(&self, cx: &App) -> Option<Entity<SyncView>> {
         match &self.screen {
@@ -373,6 +372,7 @@ impl SearchView {
         Some(self.report(cx)?.read(cx).level())
     }
 
+    /// Runs a catalog action by id on the selected entry, or on the report's selected row.
     fn run_action(&mut self, action: &str, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(sync) = self.report(cx) {
             let row = sync.read(cx).selected_row(cx).cloned();
@@ -382,7 +382,7 @@ impl SearchView {
                     if let Some(file) = row.file() {
                         let (line, column) = row.line_and_column();
                         self.open_in_editor(std::path::Path::new(file), line, column, window, cx);
-                    } else {
+                    } else if row.configures() {
                         self.open_preferences(&OpenPreferences, window, cx);
                     }
                     return;
@@ -406,12 +406,24 @@ impl SearchView {
                     return;
                 }
                 ("reveal", Some(row)) => {
-                    if let Some(file) = row.file() {
-                        cx.reveal_path(std::path::Path::new(file));
+                    if let Some(file) = row.file().map(std::path::Path::new) {
+                        if file.exists() {
+                            cx.reveal_path(file);
+                        } else {
+                            let notice = fill(
+                                &self.catalog.messages.open_missing,
+                                &[("file", &file.display().to_string())],
+                            );
+                            self.notify(notice, window, cx);
+                        }
                     }
                     return;
                 }
                 ("refresh", _) => return self.refresh(sync.read(cx).selection(), window, cx),
+                // A row action with no row selected does nothing (spec D4), rather than act on the list's entry.
+                ("details" | "edit" | "copy-location" | "copy-error" | "copy-path" | "reveal" | "open" | "copy", _) => {
+                    return;
+                }
                 _ => {}
             }
         }
@@ -640,9 +652,13 @@ impl SearchView {
             }
         };
         if let Some(notice) = notice {
-            self.last_notice = Some(notice.clone());
-            window.push_notification(notice, cx);
+            self.notify(notice, window, cx);
         }
+    }
+
+    fn notify(&mut self, notice: String, window: &mut Window, cx: &mut Context<Self>) {
+        self.last_notice = Some(notice.clone());
+        window.push_notification(notice, cx);
     }
 
     fn open_preferences(&mut self, _: &OpenPreferences, window: &mut Window, cx: &mut Context<Self>) {

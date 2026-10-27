@@ -139,7 +139,8 @@ fn finish_root(mut rows: Vec<(PanelRow, PanelCommand)>, catalog: &Catalog) -> Pa
 pub fn report_page(catalog: &Catalog, screen: Screen, row: Option<&crate::report_list::ReportRow>) -> Page {
     let allowed = |id: &str| match (id, row) {
         ("refresh" | "resize", _) | ("details", Some(_)) => true,
-        ("edit" | "reveal", Some(r)) => r.file().is_some(),
+        ("edit", Some(r)) => r.file().is_some() || r.configures(),
+        ("reveal", Some(r)) => r.file().is_some(),
         ("copy-location", Some(r)) => r.location().is_some(),
         ("copy-error", Some(r)) => r.error().is_some(),
         _ => false,

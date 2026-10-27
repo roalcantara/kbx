@@ -867,6 +867,45 @@ fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn ignores_row_actions_on_a_report_without_rows(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    sample_config(home.path());
+    let empty = home.path().join("empty-sources");
+    fs::create_dir_all(&empty).unwrap();
+    fs::write(
+        home.path().join(".config/kb/config.toml"),
+        format!("sources_path = \"{}\"\n", empty.display()),
+    )
+    .unwrap();
+    let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+    let (window, view) = open(cx, config);
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    type_text(cx, window, "Refresh YAML");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_eq!(cx.read(|cx| view.read(cx).report_row_path(cx)), None, "no rows");
+    for key in [
+        "enter",
+        "cmd-enter",
+        "cmd-o",
+        "alt-cmd-c",
+        "cmd-shift-l",
+        "cmd-shift-e",
+        "cmd-shift-r",
+    ] {
+        press(cx, window, key);
+        cx.run_until_parked();
+        assert!(
+            cx.read(|cx| view.read(cx).report_level(cx)).is_some(),
+            "{key} keeps the report"
+        );
+    }
+    assert!(!cx.read(|cx| view.read(cx).is_showing_detail()), "no entry's detail");
+}
+
+#[gpui_kit::test]
 fn copies_a_failed_file_s_error_from_the_report(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));

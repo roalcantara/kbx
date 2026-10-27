@@ -70,6 +70,15 @@ impl ReportRow {
         }
     }
 
+    /// Whether Edit opens config.toml instead of a file: a Skills run that failed or is not configured (spec D4).
+    #[must_use]
+    pub fn configures(&self) -> bool {
+        matches!(
+            self.subject,
+            Subject::Skills(SkillsOutcome::Failed { .. } | SkillsOutcome::NotConfigured)
+        )
+    }
+
     /// What Copy Location copies: `path:line:column` for a failed file, else the file.
     #[must_use]
     pub fn location(&self) -> Option<String> {
