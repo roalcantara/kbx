@@ -212,6 +212,12 @@ impl SearchView {
     pub fn panel_scroll_offset(&self) -> Pixels {
         self.panel_scroll.offset().y
     }
+
+    /// The panel rows' scroll handle (audit branch only: lets a test check a row is in view).
+    #[must_use]
+    pub fn panel_scroll_handle(&self) -> ScrollHandle {
+        self.panel_scroll.clone()
+    }
     /// Whether the rebuild screen is showing.
     #[must_use]
     pub fn is_rebuilding(&self) -> bool {

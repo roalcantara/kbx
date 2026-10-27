@@ -997,3 +997,190 @@ fn previews_a_theme_restores_it_on_escape_and_keeps_it_on_return(cx: &mut TestAp
     );
     kb_app::theme::set_active(kb_app::theme::folder::native());
 }
+
+// ---------------------------------------------------------------------------------------------
+// MVP UI/UX audit reproductions (branch chore/audit-mvp-reproductions, never merged). Each test
+// asserts what kb promises; it fails while the finding it names stands.
+// ---------------------------------------------------------------------------------------------
+
+/// The panel over the sample corpus, nothing typed. Keep the home alive.
+fn fresh(cx: &mut TestAppContext) -> (tempfile::TempDir, AnyWindowHandle, Entity<SearchView>) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    (home, window, view)
+}
+
+/// ⌘K, then the root search's first match for `label`, run with ↵.
+fn run_from_panel(cx: &mut TestAppContext, window: AnyWindowHandle, label: &'static str) {
+    for step in [None, Some(label)] {
+        match step {
+            None => press(cx, window, "cmd-k"),
+            Some(text) => type_text(cx, window, text),
+        }
+        cx.run_until_parked();
+    }
+    press(cx, window, "enter");
+    cx.run_until_parked();
+}
+
+/// K1: ⌘↓ and ⌘↑ jump to the list's last and first rows, as they do on the refresh report.
+#[gpui_kit::test]
+fn audit_k1_cmd_down_and_cmd_up_jump_to_the_list_s_ends(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    let all = titles(&view, cx);
+    press(cx, window, "cmd-down");
+    assert_eq!(selected_title(&view, cx).as_ref(), all.last(), "⌘↓: the last row");
+    press(cx, window, "cmd-up");
+    assert_eq!(selected_title(&view, cx).as_ref(), all.first(), "⌘↑: the first row");
+}
+
+/// K2: moving to the filter's last row keeps that row inside the panel's visible rows.
+#[gpui_kit::test]
+fn audit_k2_keeps_the_filter_s_selected_row_in_view(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    open_filter(cx, window);
+    let rows: usize = cx.read(|cx| view.read(cx).panel_labels(cx)).iter().map(Vec::len).sum();
+    for _ in 0..rows {
+        press(cx, window, "down");
+    }
+    act(cx, window, |_, _| {});
+    let handle = cx.read(|cx| view.read(cx).panel_scroll_handle());
+    let viewport = handle.bounds();
+    // The selected row is the last row, so it is the scroll container's last child.
+    let last = handle.bounds_for_item(handle.children_count() - 1).unwrap();
+    let visible_bottom = viewport.bottom();
+    assert!(
+        last.bottom() <= visible_bottom + px(0.5),
+        "the selected (last) row ends at {:?}, below the visible rows ending at {visible_bottom:?}",
+        last.bottom()
+    );
+}
+
+/// K3: on the report's detail screen ↓ scrolls the pane; it does not move to another row.
+#[gpui_kit::test]
+fn audit_k3_arrows_on_the_report_detail_keep_its_row(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    let before = cx.read(|cx| view.read(cx).report_row_path(cx));
+    press(cx, window, "down");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).report_row_path(cx)),
+        before,
+        "↓ on the detail must not swap the row under the reader"
+    );
+}
+
+/// ⌘R on a report reruns the report's own sources (spec 2026-10-27 D3), as its ⌘K Refresh row does.
+#[gpui_kit::test]
+fn audit_cmd_r_on_a_skills_report_refreshes_skills_again(cx: &mut TestAppContext) {
+    use kb_domain::selection::Selection;
+
+    let (_home, window, view) = fresh(cx);
+    run_from_panel(cx, window, "Refresh Skills");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).refresh_selection(cx)),
+        Some(Selection::Skills)
+    );
+    press(cx, window, "cmd-r");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).refresh_selection(cx)),
+        Some(Selection::Skills),
+        "⌘R reruns Skills, not every source"
+    );
+}
+
+/// ⌘P on the detail screen (no filter pill there) must not open an invisible filter that
+/// swallows ↵ and rewrites the footer.
+#[gpui_kit::test]
+fn audit_cmd_p_on_the_detail_screen_opens_no_hidden_filter(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "enter");
+    assert!(cx.read(|cx| view.read(cx).is_showing_detail()));
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    press(cx, window, "cmd-p");
+    cx.run_until_parked();
+    assert!(
+        !cx.read(|cx| view.read(cx).is_filter_open()),
+        "no filter on the detail screen"
+    );
+    assert_eq!(
+        cx.read(|cx| view.read(cx).footer_keys(cx)),
+        keys,
+        "the detail's keys stay"
+    );
+}
+
+/// ⌘1–⌘9 under the open action panel must not run a list row behind it.
+#[gpui_kit::test]
+fn audit_cmd_number_under_the_action_panel_runs_no_row(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    press(cx, window, "cmd-2");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)),
+        None,
+        "nothing copied"
+    );
+    assert!(cx.read(|cx| view.read(cx).is_actions_open()), "the panel stays open");
+}
+
+/// Closing Theme… with ⌘K (not Esc, not ↵) restores the theme in use (themes spec D7).
+#[gpui_kit::test]
+fn audit_closing_theme_with_cmd_k_restores_the_theme(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let config = sample_config(home.path());
+    kb_app::theme::folder::seed(&config.themes_dir()).unwrap();
+    let (window, _view) = open(cx, config);
+    let window_colour = || kb_app::theme::active_palette().role("window").hex();
+    let native = window_colour();
+    run_from_panel(cx, window, "Theme");
+    press(cx, window, "down");
+    cx.run_until_parked();
+    press(cx, window, "cmd-k"); // closes the panel without keeping the theme
+    cx.run_until_parked();
+    let after = window_colour();
+    kb_app::theme::set_active(kb_app::theme::folder::native());
+    assert_eq!(after, native, "the previewed theme was not kept, so it must not stay");
+}
+
+/// On a stopped refresh, ⌥⌘C (Copy Path) must not copy the hidden list entry's path.
+#[gpui_kit::test]
+fn audit_copy_path_on_a_stopped_refresh_copies_nothing(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    cx.write_to_clipboard(gpui_kit::ClipboardItem::new_string(String::new()));
+    press(cx, window, "cmd-r");
+    press(cx, window, "escape"); // Stop, before the sync runs
+    cx.run_until_parked();
+    assert!(cx.read(|cx| view.read(cx).is_rebuilding()), "the stopped screen");
+    press(cx, window, "alt-cmd-c");
+    let copied = cx
+        .read_from_clipboard()
+        .and_then(|item| item.text())
+        .unwrap_or_default();
+    assert_eq!(copied, "", "nothing to copy on the stopped screen");
+}
+
+/// Reopening the filter starts at its top; it does not keep the last scroll position.
+#[gpui_kit::test]
+fn audit_reopening_the_filter_starts_at_the_top(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    open_filter(cx, window);
+    for _ in 0..12 {
+        press(cx, window, "down");
+    }
+    cx.run_until_parked();
+    assert!(cx.read(|cx| view.read(cx).panel_scroll_offset()) < px(0.));
+    press(cx, window, "escape");
+    cx.run_until_parked();
+    open_filter(cx, window);
+    act(cx, window, |_, _| {});
+    assert_eq!(
+        cx.read(|cx| view.read(cx).panel_scroll_offset()),
+        px(0.),
+        "row 0 is selected, so the rows start at the top"
+    );
+}
