@@ -1,12 +1,21 @@
 //! The report's rows, sections, and selection.
 
+use std::rc::Rc;
+
+use gpui_kit::base::Selectable as _;
 use gpui_kit::component::IndexPath;
+use gpui_kit::component::list::{ListDelegate, ListState};
+use gpui_kit::{App, Context, IntoElement, ParentElement as _, SharedString, Styled as _, Window, div};
 use kb_domain::report::{FileIssue, FileReport};
 use kb_domain::skills::SkillsWarning;
 use kb_domain::sync::{SkillsOutcome, SyncReport, YamlOutcome};
 
-use crate::catalog::{Messages, fill};
-
+use crate::catalog::{Catalog, Messages, fill};
+use crate::ui::chip::pill;
+use crate::ui::design::{TextRoleExt as _, design, pt};
+use crate::ui::keycap::ChipState;
+use crate::ui::row::Row;
+use crate::ui::tile::{TileSize, tile};
 /// What a report row reports on.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Subject {
@@ -88,6 +97,148 @@ impl ReportRow {
             Subject::Skills(SkillsOutcome::Failed { reason, .. }) => Some(reason.clone()),
             Subject::Skills(_) | Subject::Warning(_) => None,
         }
+    }
+}
+
+/// One row in the report list.
+#[must_use]
+pub fn report_row(row: &ReportRow, id: &str, selected: bool, m: &Messages) -> Row {
+    let d = design();
+    let c = &d.colors;
+    let (icon, tint, chip, detail) = match row.kind {
+        ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
+        ReportKind::Skipped => (
+            "triangle-alert",
+            c.yellow,
+            row.entries.to_string(),
+            // A file with no entries at all has no skipped entries to name.
+            if row.detail.is_empty() {
+                m.report_empty_file.clone()
+            } else {
+                fill(&m.report_skipped_entries, &[("entries", &row.detail)])
+            },
+        ),
+        ReportKind::Indexed => (
+            "circle-check",
+            c.green,
+            row.entries.to_string(),
+            m.report_indexed.clone(),
+        ),
+        ReportKind::Warning => (
+            "triangle-alert",
+            c.yellow,
+            m.report_warning_chip.clone(),
+            row.detail.clone(),
+        ),
+        ReportKind::NotConfigured => (
+            "circle",
+            c.faint,
+            m.report_not_configured_chip.clone(),
+            row.detail.clone(),
+        ),
+    };
+    Row::new(SharedString::from(id.to_owned()), row.path.clone())
+        .lead(tile(icon, tint, TileSize::Row))
+        .mono(true)
+        .description(Some(detail))
+        .trailing(vec![pill(chip, ChipState::of(selected)).into_any_element()])
+        .selected(selected)
+}
+
+/// The report as a GPUI Kit list: one section per refreshed source, its label as the header.
+#[derive(Debug)]
+pub struct ReportList {
+    sections: Vec<ReportSection>,
+    catalog: Rc<Catalog>,
+    selected: Option<IndexPath>,
+}
+
+impl ReportList {
+    /// The list over `sections`, its first row selected (failed rows sort first).
+    #[must_use]
+    pub fn new(sections: Vec<ReportSection>, catalog: Rc<Catalog>) -> Self {
+        let counts: Vec<usize> = sections.iter().map(|s| s.rows.len()).collect();
+        let selected = counts
+            .iter()
+            .any(|&n| n > 0)
+            .then(|| step(IndexPath::default(), 0, &counts));
+        Self {
+            sections,
+            catalog,
+            selected,
+        }
+    }
+
+    /// Rows per section.
+    #[must_use]
+    pub fn counts(&self) -> Vec<usize> {
+        self.sections.iter().map(|s| s.rows.len()).collect()
+    }
+
+    /// The selected row.
+    #[must_use]
+    pub fn selected_row(&self) -> Option<&ReportRow> {
+        let ix = self.selected?;
+        self.sections.get(ix.section)?.rows.get(ix.row)
+    }
+
+    /// The selected index.
+    #[must_use]
+    pub fn selected(&self) -> Option<IndexPath> {
+        self.selected
+    }
+}
+
+impl ListDelegate for ReportList {
+    type Item = Row;
+
+    fn sections_count(&self, _: &App) -> usize {
+        self.sections.len().max(1)
+    }
+
+    fn items_count(&self, section: usize, _: &App) -> usize {
+        self.sections.get(section).map_or(0, |s| s.rows.len())
+    }
+
+    fn render_section_header(
+        &mut self,
+        section: usize,
+        _: &mut Window,
+        _: &mut Context<ListState<Self>>,
+    ) -> Option<impl IntoElement> {
+        let d = design();
+        let s = &d.spacing.empty;
+        Some(
+            div()
+                .px(pt(s.summary_pad_x))
+                .pt(pt(s.summary_pad_top))
+                .text_role(&d.typography.roles.section)
+                .text_color(d.colors.faint)
+                .child(self.sections.get(section)?.label.clone()),
+        )
+    }
+
+    fn render_item(&mut self, ix: IndexPath, _: &mut Window, _: &mut Context<ListState<Self>>) -> Option<Row> {
+        let row = self.sections.get(ix.section)?.rows.get(ix.row)?;
+        let selected = self.selected == Some(ix);
+        Some(report_row(
+            row,
+            &format!("report-{}-{}", ix.section, ix.row),
+            selected,
+            &self.catalog.messages,
+        ))
+    }
+
+    fn set_selected_index(&mut self, ix: Option<IndexPath>, _: &mut Window, cx: &mut Context<ListState<Self>>) {
+        self.selected = ix;
+        cx.notify();
+    }
+}
+
+impl ReportList {
+    /// Sets the selection to `ix`.
+    pub fn set_selected(&mut self, ix: Option<IndexPath>) {
+        self.selected = ix;
     }
 }
 
@@ -276,6 +427,26 @@ pub(crate) mod tests {
             errors: Vec::new(),
             files,
         }
+    }
+
+    #[test]
+    fn selects_the_first_row_and_counts_rows_per_section() {
+        let m = Catalog::default().messages;
+        let report = SyncReport {
+            yaml: Some(YamlOutcome::Indexed(yaml_summary(
+                vec![file("a.yml", 3, false, false), file("e.yml", 0, true, false)],
+                3,
+            ))),
+            skills: Some(SkillsOutcome::NotConfigured),
+            duration_ms: 0,
+        };
+        let list = ReportList::new(report_sections(&report, "/s", &m), Rc::new(Catalog::default()));
+        assert_eq!(list.counts(), [2, 1]);
+        assert_eq!(
+            list.selected_row().map(|r| r.path.as_str()),
+            Some("e.yml"),
+            "failed first, selected"
+        );
     }
 
     pub(crate) fn file(rel: &str, entries: usize, error: bool, skipped: bool) -> FileReport {

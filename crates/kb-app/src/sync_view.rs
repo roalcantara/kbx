@@ -9,23 +9,18 @@ use std::time::Duration;
 
 use futures::StreamExt as _;
 use futures::channel::mpsc;
-use gpui_kit::base::Selectable as _;
 use gpui_kit::component::v_flex;
 use gpui_kit::{
     AppContext as _, Context, EventEmitter, InteractiveElement as _, IntoElement, ParentElement as _, Render,
-    SharedString, StatefulInteractiveElement as _, Styled as _, Task, Window, div,
+    StatefulInteractiveElement as _, Styled as _, Task, Window, div,
 };
 use kb_domain::selection::Selection;
 use kb_domain::sync::{Progress, SyncError, SyncReport, SyncRequest, sync_sources};
 
 use crate::catalog::{Catalog, Messages, fill};
-use crate::report_list::{ReportKind, ReportRow, report_sections};
-use crate::ui::chip::pill;
+use crate::report_list::{ReportKind, ReportRow, report_row, report_sections};
 use crate::ui::design::{TextRoleExt as _, design, pt, tabular_digits};
 use crate::ui::empty_view::{EmptyView, Sentence, progress_bar};
-use crate::ui::keycap::ChipState;
-use crate::ui::row::Row;
-use crate::ui::tile::{TileSize, tile};
 
 /// What a refresh runs.
 #[derive(Debug, Clone)]
@@ -341,48 +336,8 @@ impl SyncView {
                     .child(section.label)
                     .into_any_element(),
             );
-            for row in section.rows {
-                let (icon, tint, chip, detail) = match row.kind {
-                    ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
-                    ReportKind::Skipped => (
-                        "triangle-alert",
-                        c.yellow,
-                        row.entries.to_string(),
-                        // A file with no entries at all has no skipped entries to name.
-                        if row.detail.is_empty() {
-                            m.report_empty_file.clone()
-                        } else {
-                            fill(&m.report_skipped_entries, &[("entries", &row.detail)])
-                        },
-                    ),
-                    ReportKind::Indexed => (
-                        "circle-check",
-                        c.green,
-                        row.entries.to_string(),
-                        m.report_indexed.clone(),
-                    ),
-                    ReportKind::Warning => (
-                        "triangle-alert",
-                        c.yellow,
-                        m.report_warning_chip.clone(),
-                        row.detail.clone(),
-                    ),
-                    ReportKind::NotConfigured => (
-                        "circle",
-                        c.faint,
-                        m.report_not_configured_chip.clone(),
-                        row.detail.clone(),
-                    ),
-                };
-                children.push(
-                    Row::new(SharedString::from(format!("report-{ix}")), row.path.clone())
-                        .lead(tile(icon, tint, TileSize::Row))
-                        .mono(true)
-                        .description(Some(detail))
-                        .trailing(vec![pill(chip, ChipState::of(ix == 0)).into_any_element()])
-                        .selected(ix == 0)
-                        .into_any_element(),
-                );
+            for row in &section.rows {
+                children.push(report_row(row, &format!("report-{ix}"), ix == 0, m).into_any_element());
                 ix += 1;
             }
         }
