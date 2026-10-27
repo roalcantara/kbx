@@ -391,6 +391,86 @@
   - **Created**: 2026-10-18 09:58
   - **Tags**: feat, skills
 
+- [ ] MCmx **-** Add scratchpad
+  - **Priority**: low
+  - **Created**: 2026-10-19 12:50
+  - **Tags**: feat
+
+- [ ] Bsk6 **-** Add gopass integration
+  - **Priority**: low
+  - **Created**: 2026-10-19 12:55
+  - **Tags**: feat
+
+- [ ] bGxf **-** Add Yabai integration
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:01
+  - **Tags**: feat
+
+- [ ] 4Gv5 **-** Frecency Sorting
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:03
+  - **Tags**: feat
+
+- [ ] xGDk **-** Search by title, subtitle, keywords (tags)
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:06
+  - **Tags**: feat
+
+- [ ] acIS **-** Allow to Install Raycast Extensions
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:07
+  - **Tags**: feat
+
+- [ ] Mfni **-** Execute commands on terminal
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:10
+  - **Tags**: feat
+
+- [ ] 5DNt **-** Allow to execute any CLI on the app. I.E.: brew
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:11
+  - **Tags**: feat
+
+- [ ] 4bSG **-** Allow to change app colors using existing theme conventions
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:15
+  - **Tags**: feat
+
+- [ ] XE33 **-** Contextual keyboard shortcuts
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:20
+  - **Tags**: feat
+
+- [ ] hYFR **-** Limitless quick note taking
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:27
+  - **Tags**: feat
+
+- [ ] 2DgD **-** Integrate bookmarks with browsers
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:28
+  - **Tags**: feat
+
+- [ ] Q8t6 **-** Dictionary integration directly on searchbar
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:29
+  - **Tags**: feat
+
+- [ ] XT5P **-** Translator integration directly on searchbar
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:29
+  - **Tags**: feat
+
+- [ ] L6po **-** Keyboard Icons/Unicode Search
+  - **Priority**: low
+  - **Created**: 2026-10-19 13:30
+  - **Tags**: feat
+
+- [ ] 87K9 **-** Refresh Skills
+  - **Priority**: high
+  - **Created**: 2026-10-27 02:41
+  - **Tags**: bug
+
 # Actors
 
 # Comments
