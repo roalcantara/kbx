@@ -100,7 +100,7 @@ pub fn sync(config: &Config, selection: Selection, out: &mut impl Write) -> Resu
             write_warnings(out, warnings);
             let _ = writeln!(out, "kb: skills: indexed {entries} entries");
         }
-        Some(SkillsOutcome::Failed { reason, warnings }) => {
+        Some(SkillsOutcome::Failed { reason, warnings, .. }) => {
             write_warnings(out, warnings);
             let _ = writeln!(
                 out,
@@ -125,9 +125,9 @@ pub fn sync(config: &Config, selection: Selection, out: &mut impl Write) -> Resu
     Ok(report)
 }
 
-fn write_warnings(out: &mut impl Write, warnings: &[String]) {
+fn write_warnings(out: &mut impl Write, warnings: &[kb_domain::skills::SkillsWarning]) {
     for warning in warnings {
-        let _ = writeln!(out, "kb: skills: warning: {warning}");
+        let _ = writeln!(out, "kb: skills: warning: {}", warning.message);
     }
 }
 

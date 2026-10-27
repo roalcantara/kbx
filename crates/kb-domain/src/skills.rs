@@ -68,23 +68,55 @@ pub fn parse_skills(stdout: &str) -> Result<Vec<SkillRecord>, String> {
     Ok(records)
 }
 
+/// Something the Skills source warns about: a line the command wrote to stderr, or a record whose
+/// `SKILL.md` could not be read (then `file` names it).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SkillsWarning {
+    /// What to tell the user.
+    pub message: String,
+    /// The `SKILL.md` it is about, absolute; `None` for a stderr line.
+    pub file: Option<String>,
+}
+
+impl SkillsWarning {
+    /// A line of the command's stderr.
+    #[must_use]
+    pub fn stderr(line: &str) -> Self {
+        Self {
+            message: line.to_owned(),
+            file: None,
+        }
+    }
+}
+
 /// The entry `record` becomes (spec, "Entry mapping"), and a warning when its `SKILL.md` cannot
 /// be read or its front matter is not YAML. An unreadable `SKILL.md` leaves the notes empty.
 #[must_use]
-pub fn skill_entry(record: &SkillRecord) -> (Entry, Option<String>) {
+pub fn skill_entry(record: &SkillRecord) -> (Entry, Option<SkillsWarning>) {
     let name = record.name.trim();
     let key = format!("/{name}");
     let skill_md = Path::new(record.path.trim()).join("SKILL.md");
     let rel_path = format!("{name}/SKILL.md");
+    let file_str = skill_md.to_string_lossy().into_owned();
     let (description, readable, warning) = match std::fs::read_to_string(&skill_md) {
         Ok(content) => match front_matter_description(&content) {
             Ok(description) => (description, true, None),
-            Err(error) => (None, true, Some(format!("{key}: SKILL.md front matter: {error}"))),
+            Err(error) => (
+                None,
+                true,
+                Some(SkillsWarning {
+                    message: format!("{key}: SKILL.md front matter: {error}"),
+                    file: Some(file_str),
+                }),
+            ),
         },
         Err(error) => (
             None,
             false,
-            Some(format!("{key}: cannot read {}: {error}", skill_md.display())),
+            Some(SkillsWarning {
+                message: format!("{key}: cannot read {}: {error}", skill_md.display()),
+                file: Some(file_str),
+            }),
         ),
     };
     let mut entry = Entry {
@@ -177,7 +209,13 @@ mod tests {
     fn indexes_a_record_whose_skill_md_is_missing_with_a_warning() {
         let dir = tempfile::tempdir().unwrap();
         let (entry, warning) = skill_entry(&record("gone", &dir.path().join("gone"), None));
-        assert!(warning.unwrap().starts_with("/gone: cannot read "));
+        let warning = warning.unwrap();
+        assert!(warning.message.starts_with("/gone: cannot read "), "{warning:?}");
+        assert_eq!(
+            warning.file.as_deref(),
+            Some(dir.path().join("gone/SKILL.md").to_string_lossy().as_ref()),
+            "the warning names the SKILL.md it is about"
+        );
         assert_eq!((entry.description, entry.notes), (None, None));
         assert_eq!(entry.links, [] as [EntryLink; 0]);
         assert!(!entry.notes_markdown.contains("Couldn’t read"));
@@ -190,7 +228,14 @@ mod tests {
         fs::create_dir(&skill).unwrap();
         fs::write(skill.join("SKILL.md"), "---\ndescription: [unclosed\n---\nBody\n").unwrap();
         let (entry, warning) = skill_entry(&record("bad", &skill, None));
-        assert!(warning.unwrap().starts_with("/bad: SKILL.md front matter: "));
+        assert!(
+            warning
+                .as_ref()
+                .unwrap()
+                .message
+                .starts_with("/bad: SKILL.md front matter: ")
+        );
+        assert!(warning.unwrap().file.unwrap().ends_with("bad/SKILL.md"));
         assert_eq!(entry.description, None);
         assert!(entry.notes_markdown.contains("Body"));
     }

@@ -202,12 +202,12 @@ pub fn report_sections(report: &SyncReport, sources_dir: &str, m: &Messages) -> 
             entries,
             detail,
         };
-        let (outcome, warnings): (ReportRow, &[String]) = match skills {
+        let (outcome, warnings): (ReportRow, &[kb_domain::skills::SkillsWarning]) = match skills {
             SkillsOutcome::NotConfigured => (row(ReportKind::NotConfigured, 0, m.report_not_configured.clone()), &[]),
             SkillsOutcome::Indexed { entries, warnings } => {
                 (row(ReportKind::Indexed, *entries, String::new()), warnings.as_slice())
             }
-            SkillsOutcome::Failed { reason, warnings } => (
+            SkillsOutcome::Failed { reason, warnings, .. } => (
                 row(
                     ReportKind::Failed,
                     0,
@@ -217,7 +217,7 @@ pub fn report_sections(report: &SyncReport, sources_dir: &str, m: &Messages) -> 
             ),
         };
         let mut rows = vec![outcome];
-        rows.extend(warnings.iter().map(|w| row(ReportKind::Warning, 0, w.clone())));
+        rows.extend(warnings.iter().map(|w| row(ReportKind::Warning, 0, w.message.clone())));
         sections.push(ReportSection {
             label: m.report_skills_section.clone(),
             rows,
@@ -591,7 +591,9 @@ mod tests {
             yaml: None,
             skills: Some(SkillsOutcome::Failed {
                 reason: "skills exited with exit status: 1".into(),
-                warnings: vec!["⚠ Skipped recon".into()],
+                command: "skills ls".into(),
+                exit_code: Some(1),
+                warnings: vec![kb_domain::skills::SkillsWarning::stderr("⚠ Skipped recon")],
             }),
             duration_ms: 0,
         };

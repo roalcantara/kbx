@@ -13,7 +13,7 @@ use crate::report::{FileReport, file_report};
 use crate::row::entry_to_row;
 use crate::selection::{Selection, SourceKind};
 use crate::skills::command::{CommandError, run_command};
-use crate::skills::{SKILLS_ARGS, parse_skills, skill_entry};
+use crate::skills::{SKILLS_ARGS, SkillsWarning, parse_skills, skill_entry};
 use crate::source::{SourceError, find_source_files, parse_source_file};
 
 /// The index schema.
@@ -124,14 +124,18 @@ pub enum SkillsOutcome {
         /// Entries indexed.
         entries: usize,
         /// The command's stderr lines, then records whose `SKILL.md` could not be read.
-        warnings: Vec<String>,
+        warnings: Vec<SkillsWarning>,
     },
     /// The command or its output failed; the previous Skills entries are unchanged.
     Failed {
         /// Why.
         reason: String,
+        /// The command line kb ran: the program, then [`SKILLS_ARGS`].
+        command: String,
+        /// Its exit code; `None` when it never ran or a signal stopped it.
+        exit_code: Option<i32>,
         /// The command's stderr lines.
-        warnings: Vec<String>,
+        warnings: Vec<SkillsWarning>,
     },
 }
 
@@ -217,32 +221,44 @@ pub fn sync_sources(
 /// The Skills source: runs the command and, when its output is a valid Skills set, replaces the
 /// Skills rows with its records' entries, in one transaction.
 fn index_skills(connection: &mut Connection, program: &Path, cancel: &AtomicBool) -> Result<SkillsOutcome, SyncError> {
+    let command = format!("{} {}", program.display(), SKILLS_ARGS.join(" "));
     let output = match run_command(program, &SKILLS_ARGS, cancel) {
         Ok(output) => output,
         Err(CommandError::Cancelled) => return Err(SyncError::Cancelled),
         Err(error) => {
             return Ok(SkillsOutcome::Failed {
                 reason: error.to_string(),
+                command,
+                exit_code: None,
                 warnings: Vec::new(),
             });
         }
     };
-    let mut warnings: Vec<String> = output
+    let mut warnings: Vec<SkillsWarning> = output
         .stderr
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty())
-        .map(str::to_owned)
+        .map(SkillsWarning::stderr)
         .collect();
     if !output.status.success() {
         return Ok(SkillsOutcome::Failed {
             reason: format!("{} exited with {}", program.display(), output.status),
+            command,
+            exit_code: output.status.code(),
             warnings,
         });
     }
     let records = match parse_skills(&output.stdout) {
         Ok(records) => records,
-        Err(reason) => return Ok(SkillsOutcome::Failed { reason, warnings }),
+        Err(reason) => {
+            return Ok(SkillsOutcome::Failed {
+                reason,
+                command,
+                exit_code: output.status.code(),
+                warnings,
+            });
+        }
     };
     let transaction = connection.transaction()?;
     clear_source(&transaction, SourceKind::Skills)?;
@@ -595,6 +611,7 @@ mod tests {
 
     use crate::selection::Selection;
 
+    use crate::skills::SkillsWarning;
     /// An executable that prints `stdout`, then `stderr` to stderr, and exits with `code`.
     fn fake_skills(dir: &Path, stdout: &str, stderr: &str, code: i32) -> PathBuf {
         let path = dir.join(format!("skills-{code}-{}", stdout.len()));
@@ -717,10 +734,45 @@ mod tests {
             report.skills,
             Some(SkillsOutcome::Indexed {
                 entries: 0,
-                warnings: vec!["⚠ Skipped x".into()]
+                warnings: vec![SkillsWarning::stderr("⚠ Skipped x")]
             })
         );
         assert!(!report.has_failure());
+    }
+
+    #[test]
+    fn keeps_the_command_and_its_exit_code_when_skills_fail() {
+        let root = sources(&[]);
+        let home = tempfile::tempdir().unwrap();
+        let db = home.path().join("kb.db");
+        let failing = fake_skills(home.path(), "not json", "careful\n", 0);
+        let report = run(Selection::Skills, root.path(), Some(&failing), &db, false);
+        let Some(SkillsOutcome::Failed {
+            command,
+            exit_code,
+            warnings,
+            ..
+        }) = report.skills
+        else {
+            panic!("expected a failed Skills outcome: {:?}", report.skills);
+        };
+        assert_eq!(
+            command,
+            format!("{} ls --global --agent universal --json", failing.display())
+        );
+        assert_eq!(
+            exit_code,
+            Some(0),
+            "the output was not JSON, the command still exited 0"
+        );
+        assert_eq!(warnings, [SkillsWarning::stderr("careful")]);
+
+        let missing = home.path().join("no-such-skills");
+        let report = run(Selection::Skills, root.path(), Some(&missing), &db, false);
+        assert!(
+            matches!(report.skills, Some(SkillsOutcome::Failed { exit_code: None, .. })),
+            "a command that never ran has no exit code"
+        );
     }
 
     #[test]
