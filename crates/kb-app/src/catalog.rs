@@ -232,6 +232,8 @@ pub struct Messages {
     pub theme_origin: String,
     pub theme_chosen: String,
     pub theme_weak: String,
+    pub open_missing: String,
+    pub editor_failed: String,
 }
 /// The catalog.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -486,6 +488,9 @@ pub fn preferences_template(sources_dir: &std::path::Path) -> String {
         "# kb preferences. Uncomment a line to change it; see crates/kb-app/assets/catalog.toml.\n\nsources_path = \"{}\"\n\n",
         sources_dir.display()
     );
+    text.push_str(
+        "# Opens files at a line; unset, they open with their default app.\n# editor = \"zed {file}:{line}\"\n\n",
+    );
     for line in CATALOG.lines() {
         if line.is_empty() {
             text.push('\n');
@@ -677,6 +682,7 @@ mod tests {
             ["sources_path"],
             "only the location is live"
         );
+        assert!(text.contains("\n# editor = \"zed {file}:{line}\"\n"), "{text}");
     }
 
     #[test]

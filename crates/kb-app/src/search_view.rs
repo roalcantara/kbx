@@ -21,7 +21,7 @@ mod header;
 mod panel;
 mod theme;
 
-use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen};
+use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen, fill};
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
@@ -533,9 +533,33 @@ impl SearchView {
         cx.notify();
     }
 
-    fn open_source_file(&mut self, _: &OpenSourceFile, _: &mut Window, cx: &mut Context<Self>) {
+    fn open_source_file(&mut self, _: &OpenSourceFile, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(path) = self.selected_source_file(cx) {
-            cx.open_with_system(std::path::Path::new(&path));
+            self.open_in_editor(std::path::Path::new(&path), None, None, window, cx);
+        }
+    }
+
+    /// Opens `file` in the editor at `line`:`column` (D6), saying so when it cannot.
+    pub(super) fn open_in_editor(
+        &mut self,
+        file: &std::path::Path,
+        line: Option<usize>,
+        column: Option<usize>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let m = &self.catalog.messages;
+        let file_text = file.display().to_string();
+        let notice = match crate::editor::open(self.config.editor(), file, line, column, self.config.home(), cx) {
+            crate::editor::Opened::Editor | crate::editor::Opened::DefaultApp => None,
+            crate::editor::Opened::Missing => Some(fill(&m.open_missing, &[("file", &file_text)])),
+            crate::editor::Opened::Fallback { program, error } => {
+                Some(fill(&m.editor_failed, &[("program", &program), ("error", &error)]))
+            }
+        };
+        if let Some(notice) = notice {
+            self.last_notice = Some(notice.clone());
+            window.push_notification(notice, cx);
         }
     }
 

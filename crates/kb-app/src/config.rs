@@ -7,8 +7,8 @@
 //! sources_path = "~/Work/knowledge"
 //! tag_images_path = "~/Pictures/kb-tags"
 //! skills_command = "skills"
+//! editor = "zed {file}:{line}"
 //! theme = "neon-dusk"
-//!
 //! [colors]
 //! mauve = "#FF00AA"
 //! ```
@@ -16,6 +16,8 @@
 //! `skills_command` names the Skills command (spec D7); unset, kb looks for `skills` (`crate::command_path`).
 //! `theme` names a file in `~/.config/kb/themes/` (`crate::theme`; kb-native when unset) and `[colors]` overrides
 //! single colour roles over it.
+//!
+//! `editor` opens files at a line (`crate::editor`); unset, files open with their default app.
 //!
 //! Without it the sources are `~/.config/kodexb/sources`, as in the Raycast extension. The index
 //! is the app's own file in its data directory; the Raycast index is never opened.
@@ -61,6 +63,7 @@ struct Preferences {
     tag_images_path: Option<String>,
     skills_command: Option<String>,
     theme: Option<String>,
+    editor: Option<String>,
 }
 
 /// The top-level tables of config.toml that override the catalog (`crate::catalog`).
@@ -75,6 +78,7 @@ pub struct Config {
     skills_command: Option<String>,
     theme: Option<String>,
     colors: toml::Table,
+    editor: Option<String>,
     database: PathBuf,
     preferences: PathBuf,
     overrides: toml::Table,
@@ -106,7 +110,7 @@ impl Config {
         let mut colors = toml::Table::new();
         for (key, value) in table {
             match key.as_str() {
-                "sources_path" | "tag_images_path" | "skills_command" | "theme" => {
+                "sources_path" | "tag_images_path" | "skills_command" | "theme" | "editor" => {
                     locations.insert(key, value);
                 }
                 "colors" => match value {
@@ -154,6 +158,17 @@ impl Config {
         home: &Path,
         data_dir: &Path,
     ) -> Self {
+        let mut notices = notices;
+        let editor = parsed.editor.filter(|template| match crate::editor::check(template) {
+            Ok(()) => true,
+            Err(error) => {
+                notices.push(format!(
+                    "Ignored `editor` in {}: {error}",
+                    home.join(PREFERENCES).display()
+                ));
+                false
+            }
+        });
         let sources_dir = parsed
             .sources_path
             .map_or_else(|| home.join(DEFAULT_SOURCES), |path| expand_home(&path, home));
@@ -165,6 +180,7 @@ impl Config {
             sources_dir,
             tag_images,
             skills_command: parsed.skills_command,
+            editor,
             theme: parsed.theme,
             colors,
             database: data_dir.join("kb-native").join("kb.db"),
@@ -259,6 +275,18 @@ impl Config {
     #[must_use]
     pub fn notices(&self) -> &[String] {
         &self.notices
+    }
+
+    /// The editor template config.toml names (`crate::editor`), if any and valid.
+    #[must_use]
+    pub fn editor(&self) -> Option<&str> {
+        self.editor.as_deref()
+    }
+
+    /// The home folder.
+    #[must_use]
+    pub fn home(&self) -> &Path {
+        &self.home
     }
 }
 
@@ -385,5 +413,27 @@ mod tests {
             Config::load(home.path(), Path::new("/data")),
             Err(ConfigError::Parse { .. })
         ));
+    }
+
+    #[test]
+    fn reads_the_editor_and_ignores_a_broken_one() {
+        let home = tempfile::tempdir().unwrap();
+        let file = home.path().join(".config/kb/config.toml");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "editor = \"zed {file}:{line}\"\n").unwrap();
+        let config = Config::load(home.path(), home.path()).unwrap();
+        assert_eq!(config.editor(), Some("zed {file}:{line}"));
+
+        fs::write(&file, "editor = \"zed '{file}\"\n").unwrap();
+        let config = Config::load(home.path(), home.path()).unwrap();
+        assert_eq!(config.editor(), None);
+        assert!(
+            config
+                .notices()
+                .iter()
+                .any(|n| n.contains("`editor`") && n.contains("a quote is never closed")),
+            "{:?}",
+            config.notices()
+        );
     }
 }
