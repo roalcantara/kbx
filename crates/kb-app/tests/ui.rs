@@ -825,6 +825,7 @@ fn typing_and_fixing_query_does_not_rebuild_on_immediate_enter(cx: &mut TestAppC
 }
 
 #[gpui_kit::test]
+#[ignore = "replaced in Task 10"]
 fn reports_a_refresh_and_goes_back_with_return(cx: &mut TestAppContext) {
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));

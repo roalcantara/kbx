@@ -68,6 +68,18 @@ label = "Notes"
 label = "Path"
 keys = "cmd-alt-c"
 
+[actions.copy-location]
+label = "Copy Location"
+keys = "cmd-shift-l"
+
+[actions.copy-error]
+label = "Copy Error"
+keys = "cmd-shift-e"
+
+[actions.reveal]
+label = "Reveal in Finder"
+keys = "cmd-shift-r"
+
 [actions.edit]
 label = "Edit"
 keys = "cmd-o"
@@ -118,7 +130,7 @@ label = "Open"
 [actions.copy-link]
 label = "Copy"
 
-# Screen keys (D8, D10, D15, D16): the ladder ↵ / ⌘↵ / ⇧⌘↵, and Esc while refreshing.
+# Screen keys (D8, D10, D15, D16): the ladder ↵ / ⌘↵ / ⇧⌘↵, and Esc while refreshing; the report and its detail.
 [screens.list]
 enter = "details"
 cmd-enter = "entry.primary"
@@ -146,8 +158,13 @@ cmd-enter = "copy-link"
 escape = "stop"
 
 [screens.report]
-enter = "back"
+enter = "details"
+cmd-enter = "edit"
+shift-cmd-enter = "copy-location"
 
+[screens.report-detail]
+enter = "edit"
+cmd-enter = "copy-location"
 [screens.stopped]
 enter = "retry"
 
@@ -206,6 +223,20 @@ report_source_failed = "{error} The previous entries are unchanged."
 report_not_configured = "Not configured: install skills, or set skills_command in Configure."
 report_warning_chip = "warning"
 report_not_configured_chip = "off"
+report_pane_location = "Location"
+report_pane_file = "File"
+report_pane_entries = "Entries"
+report_pane_index = "Index"
+report_pane_kept = "its previous entries are kept"
+report_pane_skills_kept = "the previous skills are kept"
+report_pane_exit = "Exit"
+report_pane_stderr = "Stderr"
+report_pane_nothing = "(nothing)"
+report_pane_line = "line {line}:{column}"
+report_pane_skipped = "{count} skipped: only a map of fields becomes an entry."
+report_pane_one_skipped = "1 entry was skipped: only a map of fields becomes an entry."
+report_pane_skipped_key = "{type} / {key} — not a map"
+report_pane_skipped_chip = "{entries} · {count} skipped"
 stopped_title = "Refresh stopped"
 stopped = "Sources not refreshed yet are unchanged."
 failed_title = "Couldn’t refresh the index"

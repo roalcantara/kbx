@@ -11,7 +11,7 @@ use serde::Deserialize;
 const CATALOG: &str = include_str!("../assets/catalog.toml");
 
 /// The actions kb knows how to run; a catalog names exactly these.
-pub const ACTION_IDS: [&str; 22] = [
+pub const ACTION_IDS: [&str; 25] = [
     "details",
     "open",
     "copy",
@@ -19,6 +19,9 @@ pub const ACTION_IDS: [&str; 22] = [
     "copy-description",
     "copy-notes",
     "copy-path",
+    "copy-location",
+    "copy-error",
+    "reveal",
     "edit",
     "refresh",
     "refresh-yaml",
@@ -115,6 +118,8 @@ pub enum Screen {
     Refreshing,
     /// A refresh finished: its report.
     Report,
+    /// A report row, full screen.
+    ReportDetail,
     /// A refresh was stopped.
     Stopped,
     /// A refresh failed.
@@ -147,6 +152,7 @@ pub struct Screens {
     pub links: ScreenKeys,
     pub refreshing: ScreenKeys,
     pub report: ScreenKeys,
+    pub report_detail: ScreenKeys,
     pub stopped: ScreenKeys,
     pub failed: ScreenKeys,
 }
@@ -219,6 +225,20 @@ pub struct Messages {
     pub report_not_configured: String,
     pub report_warning_chip: String,
     pub report_not_configured_chip: String,
+    pub report_pane_location: String,
+    pub report_pane_file: String,
+    pub report_pane_entries: String,
+    pub report_pane_index: String,
+    pub report_pane_kept: String,
+    pub report_pane_skills_kept: String,
+    pub report_pane_exit: String,
+    pub report_pane_stderr: String,
+    pub report_pane_nothing: String,
+    pub report_pane_line: String,
+    pub report_pane_skipped: String,
+    pub report_pane_one_skipped: String,
+    pub report_pane_skipped_key: String,
+    pub report_pane_skipped_chip: String,
     pub stopped_title: String,
     pub stopped: String,
     pub failed_title: String,
@@ -305,6 +325,7 @@ impl Catalog {
             Screen::Links => &s.links,
             Screen::Refreshing => &s.refreshing,
             Screen::Report => &s.report,
+            Screen::ReportDetail => &s.report_detail,
             Screen::Stopped => &s.stopped,
             Screen::Failed => &s.failed,
         }
@@ -418,6 +439,7 @@ impl Catalog {
             ("links", false, &self.screens.links),
             ("refreshing", false, &self.screens.refreshing),
             ("report", false, &self.screens.report),
+            ("report-detail", false, &self.screens.report_detail),
             ("stopped", false, &self.screens.stopped),
             ("failed", false, &self.screens.failed),
         ] {
@@ -701,5 +723,27 @@ mod tests {
         assert_eq!(catalog.label("refresh-skills"), "Refresh Skills");
         assert_eq!(catalog.panel.refresh_more, "Refresh More…");
         assert_eq!(catalog.panel.more_refresh, ["refresh-yaml", "refresh-skills"]);
+    }
+
+    #[test]
+    fn ships_the_report_s_keys_and_actions() {
+        let catalog = Catalog::default();
+        let keys = |screen| {
+            catalog
+                .keys_for(screen, None)
+                .into_iter()
+                .map(|k| format!("{} {}", k.label, k.caps))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(keys(Screen::Report), ["Details ↵", "Edit ⌘↵", "Copy Location ⇧⌘↵"]);
+        assert_eq!(keys(Screen::ReportDetail), ["Edit ↵", "Copy Location ⌘↵"]);
+        for (id, keys) in [
+            ("copy-location", "cmd-shift-l"),
+            ("copy-error", "cmd-shift-e"),
+            ("reveal", "cmd-shift-r"),
+        ] {
+            assert_eq!(catalog.actions[id].keys.as_deref(), Some(keys), "{id}");
+        }
+        assert_eq!(catalog.label("reveal"), "Reveal in Finder");
     }
 }
