@@ -29,30 +29,33 @@ pane of the place it belongs to, the search list or the report. This follows the
 moves there from `search_view.rs`.
 
 ```rust
-pub enum Place { List, Detail { back: String }, Refresh { back: String }, ReportDetail { back: String } }
-pub enum PlaceKind { List, Detail, Refresh, ReportDetail }   // `Place` without its data, for matching
-pub enum Owner { Overlay(Overlay), Place(PlaceKind) }
+pub enum Place { List, Detail, Refresh, ReportDetail }          // Copy; no data
+pub enum Overlay { None, Actions(Option<Submenu>), Filter }      // moved from search_view.rs
+pub struct BackName { pub text: String, pub mono: bool }
 
 impl Navigator {
-    pub fn top(&self) -> &Place;
-    pub fn push(&mut self, place: Place);
-    pub fn pop(&mut self) -> bool;              // never removes List; false when nothing was popped
+    pub fn top(&self) -> Place;
+    pub fn contains(&self, place: Place) -> bool;
+    pub fn push(&mut self, place: Place, back: BackName);   // back: the name of the place it was opened from
+    pub fn pop(&mut self) -> Option<Place>;                  // never removes List; None when nothing was popped
+    pub fn pop_to_list(&mut self);
     pub fn overlay(&self) -> Overlay;
     pub fn set_overlay(&mut self, overlay: Overlay);
-    pub fn owner(&self) -> Owner;
-    pub fn key_screen(&self, phase: Option<Phase>) -> KeyScreen;
+    pub fn screen_has_keys(&self) -> bool;                   // no overlay open
+    pub fn key_screen(&self, list: KeyScreen, phase: Option<Phase>) -> KeyScreen;
     pub fn key_context(&self) -> String;
-    pub fn back_name(&self) -> Option<&str>;     // None on List
+    pub fn back_name(&self) -> Option<&BackName>;            // None on List
 }
 ```
 
-- `Place` carries its back name, captured when the place is pushed: the query, or the catalog's `Search` when the
-  query is empty, for a place pushed on `List`; the catalog's `Refresh` for `ReportDetail`. Typing can never change
-  it afterwards.
+- Each place has a **name**: `List` is its query (mono), or the catalog's `back_search` when the query is empty;
+  `Detail` is the entry's title; `Refresh` is the catalog's `back_refresh`. Pushing a place stores the name of the
+  place it was opened from as its back name, captured once, so typing can never change it afterwards.
+  `SearchView::place_name` is the one function that names a place.
 - `SearchView` holds one `navigator` field in place of `screen` and `overlay`. While `Refresh` is on the stack it
-  also holds that place's `Entity<SyncView>`.
-- `SyncView` keeps the refresh's work, its phase, its report rows and the split flag. `ReportLevel::Detail` and
-  `from_split` go: the report's detail is a place now.
+  also holds that refresh's `Entity<SyncView>`, dropped when `Refresh` is popped.
+- `SyncView` keeps the refresh's work, its phase, its report rows and the split flag (`pane: bool`).
+  `ReportLevel` and `from_split` go: the report's detail is a place now, and popping it leaves the pane as it was.
 
 **D3. One back function.** `SearchView::back` is the only way back. Esc, a click on `‹`, and the report's back all
 call it, in this order:
@@ -65,9 +68,13 @@ call it, in this order:
 
 ← only closes a split.
 
-**D4. Keys act only for the owner.** Every action handler begins with one shared guard,
-`fn owns(&self, kind: PlaceKind) -> bool` or the overlay equivalent. Inline checks such as `self.report(cx).is_some()`
-and `matches!(self.screen, …)` are removed. What each owner handles:
+**D4. Keys act only for the owner.** Two rules, each in one place. First, while an overlay is open, no screen
+handler acts: each one begins with `if !self.navigator.screen_has_keys() { return; }`, except ⌘K, ⌘P (their
+toggles) and Esc. Second, every action, from a key, the footer or ⌘K, goes through `run_action`, which acts on the
+**top place**: an entry on `List` and `Detail`, the selected report row on `Refresh` and `ReportDetail`, and nothing
+when there is none. The key handlers for Edit, Copy Path, Copy Location, Copy Error, Reveal and Refresh are one
+`key_action(id)`. Inline checks such as `self.report(cx).is_some()` and `matches!(self.screen, …)` are removed.
+What each owner handles:
 
 | Owner          | Handles                                                                             | No longer reaches it                                                                                                       |
 | -------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -77,16 +84,19 @@ and `matches!(self.screen, …)` are removed. What each owner handles:
 | `Refresh`      | the report's rows, its split, the row's actions; ⌘R reruns the report's own sources | the list's split (A13), Edit and Copy Path on a running, stopped or failed refresh (A08), ⌘R refreshing every source (A06) |
 | `ReportDetail` | scrolling its pane (↑↓, ⌘↑↓), the row's actions                                     | moving the selection (A04)                                                                                                 |
 
-`Navigator::key_context()` builds the one key-context string that `render` sets. Every place contributes its context
-(`Search`, then `Detail`, `Refresh` or `ReportDetail`), and an open overlay adds `ActionPanel`. The report-only keys
-(⌘⇧L, ⌘⇧E, ⌘⇧R) are bound in the report's contexts only (A12).
+`Navigator::key_context()` builds the one key-context string that `render` sets, from shared parts so that
+places that behave alike share bindings: `List` is `Search`; `Detail` is `Search Detail`; `Refresh` is
+`Search Refresh Report`; `ReportDetail` is `Search Detail Report`. `Detail` carries the scrolling and ↵ / ⌘↵ bindings,
+so both detail screens scroll with the same keys and the same handlers. `Refresh` carries the row arrows. `Report`
+(a new `REPORT_CONTEXT`) carries the report-only keys, ⌘⇧L, ⌘⇧E and ⌘⇧R, which therefore do nothing on the list
+(A12). The action panel keeps its own `ActionPanel` context on its element, as today.
 
 **D5. One header for every place (option B).** `List` keeps its header: the magnifier, the query and the filter
 pill. Every other place shows the same header:
 
 - `‹` as a GPUI Kit `Button`, ghost, calling `back`;
-- then the back name, cut off with an ellipsis when long: a query in muted mono, and `Search` or `Refresh` in plain
-  faint text.
+- then the back name, cut off with an ellipsis when long: a query in muted mono, and an entry's title, `Search` or
+  `Refresh` in plain faint text.
 
 The pane keeps its own title, so the approved entry and report panes do not change. The footer does not change
 either.
@@ -98,18 +108,19 @@ to X".
 
 **D7. DRY by construction.** Each concept lives in one place:
 
-| Concept                 | Its one home                                           |
-| ----------------------- | ------------------------------------------------------ |
-| Which screen is current | `Navigator::top`                                       |
-| Who handles a key       | `Navigator::owner` and the `owns` guard                |
-| Which keys show         | `Navigator::key_screen`, then the catalog's `keys_for` |
-| Which bindings apply    | `Navigator::key_context`                               |
-| How back works          | `SearchView::back` and `Navigator::pop`                |
-| How back is drawn       | `ui::crumb`                                            |
-| What a place is called  | the `Place` value and the catalog's `[messages]`       |
+| Concept                 | Its one home                                                     |
+| ----------------------- | ---------------------------------------------------------------- |
+| Which screen is current | `Navigator::top`                                                 |
+| Who handles a key       | `Navigator::screen_has_keys`, then `run_action` on the top place |
+| How a place is named    | `SearchView::place_name`                                         |
+| Which keys show         | `Navigator::key_screen`, then the catalog's `keys_for`           |
+| Which bindings apply    | `Navigator::key_context`                                         |
+| How back works          | `SearchView::back` and `Navigator::pop`                          |
+| How back is drawn       | `ui::crumb`                                                      |
+| The words it uses       | the catalog's `[messages]` (`back_search`, `back_refresh`)       |
 
 A new screen is one new `Place` variant. The compiler then lists every `match` it must answer: its key screen, its
-context and its owner rows. Nothing else is needed, and nothing else is allowed.
+context, its name and what `run_action` does on it. Nothing else is needed, and nothing else is allowed.
 
 ## Error handling
 
@@ -119,7 +130,8 @@ context and its owner rows. Nothing else is needed, and nothing else is allowed.
 | Empty query when a place is pushed                  | The back name is the catalog's `Search`                                                                                    |
 | A long query                                        | Cut off with an ellipsis in the header; the full query is in the list it returns to                                        |
 | Panel hidden (Esc, focus loss) and reopened with ⌥K | The stack is kept; the panel reopens on the same place. Task 1 checks this matches today's behaviour for the detail screen |
-| A refresh started from `Detail`                     | `Refresh` is pushed on top of `Detail`; its back name is the entry's back name (the query)                                 |
+| A refresh started from `Detail`                     | `Refresh` is pushed on top of `Detail`; its back name is the entry's title, and Esc returns to that detail                 |
+| ⌘R on `Refresh` or `ReportDetail`                   | Reruns the same sources in place: `ReportDetail` is popped, the `Refresh` place gets the new run; nothing is pushed        |
 
 ## Testing
 
@@ -127,7 +139,7 @@ Tests first, beside the code (AGENTS.md).
 
 - `navigator.rs`, without a window:
   - push, pop and `pop` on `List`;
-  - `owner` with and without an overlay;
+  - `screen_has_keys` with and without an overlay;
   - `key_screen` for each place and refresh phase;
   - `key_context` for each place, with and without an overlay;
   - back names, including an empty query.
