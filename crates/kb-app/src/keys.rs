@@ -126,9 +126,9 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
                 "refresh" => KeyBinding::new(keys, Rebuild, context),
                 "configure" => KeyBinding::new(keys, OpenPreferences, context),
                 "copy-path" => KeyBinding::new(keys, CopyPath, context),
-                "copy-location" => KeyBinding::new(keys, CopyLocation, context),
-                "copy-error" => KeyBinding::new(keys, CopyError, context),
-                "reveal" => KeyBinding::new(keys, RevealFile, context),
+                "copy-location" => KeyBinding::new(keys, CopyLocation, Some(REPORT_CONTEXT)),
+                "copy-error" => KeyBinding::new(keys, CopyError, Some(REPORT_CONTEXT)),
+                "reveal" => KeyBinding::new(keys, RevealFile, Some(REPORT_CONTEXT)),
                 _ => return None,
             })
         })

@@ -85,8 +85,8 @@ impl SearchView {
         let names_entry = self.footer_names_entry(selected);
         let report_row = self
             .report(cx)
-            .filter(|s| s.read(cx).level() != crate::sync_view::ReportLevel::List)
-            .and_then(|s| s.read(cx).selected_row(cx).cloned());
+            .filter(|sync| sync.read(cx).has_pane() || self.navigator.top() == Place::ReportDetail)
+            .and_then(|sync| sync.read(cx).selected_row(cx).cloned());
         let left: AnyElement = if let Some(row) = report_row {
             let colors = &design().colors;
             let (icon, tint) = crate::report_list::kind_tile(row.kind, colors);

@@ -32,12 +32,13 @@ use crate::keys::{
     caret_at_end,
 };
 use crate::navigator::{BackName, Navigator, Overlay, Place};
-use crate::sync_view::{Move, Phase, ReportLevel, SyncFinished, SyncJob, SyncView};
+use crate::sync_view::{Move, Phase, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pixels, pt};
 use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
+use crate::ui::report_pane::report_pane;
 use crate::window_size::{WindowSize, compact};
 
 fn notes_line_step() -> Pixels {
@@ -339,17 +340,7 @@ impl SearchView {
             }
         };
         let phase = self.sync.as_ref().map(|sync| sync.read(cx).phase());
-        let screen = self.navigator.key_screen(list, phase);
-        // Until Task 3: the report's detail is a level of `SyncView`, not yet a place.
-        if screen == KeyScreen::Report
-            && self
-                .sync
-                .as_ref()
-                .is_some_and(|s| matches!(s.read(cx).level(), ReportLevel::Detail { .. }))
-        {
-            return KeyScreen::ReportDetail;
-        }
-        screen
+        self.navigator.key_screen(list, phase)
     }
 
     /// The current screen's keys, resolved for the selected entry.
@@ -390,10 +381,16 @@ impl SearchView {
         self.report(cx)?.read(cx).selected_row(cx).map(|r| r.path.clone())
     }
 
-    /// The report's level, for tests.
+    /// The current place, for tests.
     #[must_use]
-    pub fn report_level(&self, cx: &App) -> Option<ReportLevel> {
-        Some(self.report(cx)?.read(cx).level())
+    pub fn place(&self) -> Place {
+        self.navigator.top()
+    }
+
+    /// Whether the report shows its pane beside the rows, for tests.
+    #[must_use]
+    pub fn report_pane_open(&self, cx: &App) -> bool {
+        self.sync.as_ref().is_some_and(|sync| sync.read(cx).has_pane())
     }
 
     /// Runs a catalog action by id on the selected entry, or on the report's selected row.
@@ -401,7 +398,7 @@ impl SearchView {
         if let Some(sync) = self.report(cx) {
             let row = sync.read(cx).selected_row(cx).cloned();
             match (action, row) {
-                ("details", Some(_)) => return sync.update(cx, |s, cx| s.go(Move::Detail, cx)),
+                ("details", Some(_)) => return self.push(Place::ReportDetail, window, cx),
                 ("edit", Some(row)) => {
                     if let Some(file) = row.file() {
                         let (line, column) = row.line_and_column();
@@ -764,16 +761,12 @@ impl SearchView {
             return self.show_overlay(next, window, cx);
         }
         // 2. A running refresh: Esc stops it.
-        if let Some(sync) = self.sync.clone().filter(|_| self.navigator.top() == Place::Refresh) {
-            if sync.read(cx).is_running() {
-                sync.read(cx).cancel();
-                cx.notify();
-                return;
-            }
-            // Until Task 3: the report's detail is a level of `SyncView`.
-            if sync.read(cx).phase() == Phase::Report && sync.update(cx, SyncView::back) {
-                return;
-            }
+        if let Some(sync) = self.sync.clone().filter(|_| self.navigator.top() == Place::Refresh)
+            && sync.read(cx).is_running()
+        {
+            sync.read(cx).cancel();
+            cx.notify();
+            return;
         }
         // 3. The list: clear the query, then hide the panel.
         if self.navigator.top() == Place::List {
@@ -924,10 +917,16 @@ impl SearchView {
                 .into_any_element()
         };
         match self.navigator.top() {
-            Place::Refresh | Place::ReportDetail => self
+            Place::Refresh => self
                 .sync
                 .clone()
                 .map_or_else(|| div().into_any_element(), IntoElement::into_any_element),
+            Place::ReportDetail => match self.report(cx).and_then(|sync| sync.read(cx).selected_row(cx).cloned()) {
+                Some(row) => {
+                    report_pane(&row, &self.catalog.messages, true, Some(&self.detail_scroll)).into_any_element()
+                }
+                None => div().into_any_element(),
+            },
             Place::Detail => selected.map_or_else(
                 || div().into_any_element(),
                 |entry| {

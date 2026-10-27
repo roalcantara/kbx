@@ -18,9 +18,9 @@ use kb_app::catalog::Catalog;
 use kb_app::config::Config;
 use kb_app::entry_list::DEBOUNCE;
 use kb_app::keys::key_bindings;
+use kb_app::navigator::Place;
 use kb_app::search_view::SearchView;
 use kb_app::window_size::WindowSize;
-
 /// A config whose sources are the sample corpus and whose index is already built.
 fn sample_config(home: &Path) -> Config {
     let sample = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -825,7 +825,7 @@ fn typing_and_fixing_query_does_not_rebuild_on_immediate_enter(cx: &mut TestAppC
 
 #[gpui_kit::test]
 fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
-    use kb_app::sync_view::ReportLevel;
+    use kb_app::navigator::Place;
 
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
@@ -843,12 +843,12 @@ fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
     assert_eq!(row(cx).as_deref(), Some("errors/list-type.yml"));
     press(cx, window, "up");
     press(cx, window, "right");
-    assert_eq!(cx.read(|cx| view.read(cx).report_level(cx)), Some(ReportLevel::Split));
-    press(cx, window, "enter");
-    assert_eq!(
-        cx.read(|cx| view.read(cx).report_level(cx)),
-        Some(ReportLevel::Detail { from_split: true })
+    assert!(
+        cx.read(|cx| view.read(cx).report_pane_open(cx)),
+        "→ opens the report's pane"
     );
+    press(cx, window, "enter");
+    assert_eq!(cx.read(|cx| view.read(cx).place()), Place::ReportDetail);
     assert_eq!(
         cx.read(|cx| view.read(cx).footer_keys(cx)),
         ["Edit ↵", "Copy Location ⌘↵", "Actions ⌘K"]
@@ -858,12 +858,17 @@ fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
     assert!(copied.ends_with("/errors/broken.yml:4:1"), "{copied}");
     press(cx, window, "escape");
     assert_eq!(
-        cx.read(|cx| view.read(cx).report_level(cx)),
-        Some(ReportLevel::Split),
-        "Esc: back to the split"
+        cx.read(|cx| view.read(cx).place()),
+        Place::Refresh,
+        "Esc: back to the report"
     );
+    assert!(cx.read(|cx| view.read(cx).report_pane_open(cx)), "its pane as it was");
     press(cx, window, "escape");
-    assert!(!cx.read(|cx| view.read(cx).is_rebuilding()), "Esc: back to the list");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).place()),
+        Place::List,
+        "Esc: back to the list"
+    );
 }
 
 #[gpui_kit::test]
@@ -897,8 +902,9 @@ fn ignores_row_actions_on_a_report_without_rows(cx: &mut TestAppContext) {
     ] {
         press(cx, window, key);
         cx.run_until_parked();
-        assert!(
-            cx.read(|cx| view.read(cx).report_level(cx)).is_some(),
+        assert_eq!(
+            cx.read(|cx| view.read(cx).place()),
+            Place::Refresh,
             "{key} keeps the report"
         );
     }

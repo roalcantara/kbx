@@ -237,7 +237,13 @@ fn facts_element(
 
 /// The pane of `row`, padded for the split or the detail screen (`detail`), as `entry_view` pads.
 #[must_use]
-pub fn report_pane(row: &ReportRow, m: &Messages, detail: bool) -> impl gpui_kit::IntoElement {
+#[expect(clippy::too_many_lines, reason = "composes the six sections of a report row's pane")]
+pub fn report_pane(
+    row: &ReportRow,
+    m: &Messages,
+    detail: bool,
+    scroll: Option<&gpui_kit::ScrollHandle>,
+) -> impl gpui_kit::IntoElement {
     use gpui_kit::component::{h_flex, v_flex};
     use gpui_kit::prelude::FluentBuilder as _;
     use gpui_kit::{
@@ -326,7 +332,7 @@ pub fn report_pane(row: &ReportRow, m: &Messages, detail: bool) -> impl gpui_kit
             .children(pane.list.iter().map(|item| div().child(format!("• {item}"))))
     });
     let facts = facts_element(pane.facts, &d, c);
-    v_flex()
+    let mut el = v_flex()
         .id("report-pane")
         .size_full()
         .min_w_0()
@@ -339,7 +345,11 @@ pub fn report_pane(row: &ReportRow, m: &Messages, detail: bool) -> impl gpui_kit
         .children(excerpt)
         .children(command)
         .children(list)
-        .children(facts)
+        .children(facts);
+    if let Some(scroll) = scroll {
+        el = el.track_scroll(scroll);
+    }
+    el
 }
 
 #[cfg(test)]
