@@ -21,6 +21,7 @@ mod http;
 pub mod keys;
 mod panel;
 mod presentation;
+pub mod report_list;
 pub mod search_view;
 mod sync_view;
 mod tag_images;

@@ -15,11 +15,11 @@ use gpui_kit::{
     AppContext as _, Context, EventEmitter, InteractiveElement as _, IntoElement, ParentElement as _, Render,
     SharedString, StatefulInteractiveElement as _, Styled as _, Task, Window, div,
 };
-use kb_domain::report::{FileIssue, FileReport};
 use kb_domain::selection::Selection;
-use kb_domain::sync::{Progress, SkillsOutcome, SyncError, SyncReport, SyncRequest, YamlOutcome, sync_sources};
+use kb_domain::sync::{Progress, SyncError, SyncReport, SyncRequest, sync_sources};
 
 use crate::catalog::{Catalog, Messages, fill};
+use crate::report_list::{ReportKind, ReportRow, report_sections};
 use crate::ui::chip::pill;
 use crate::ui::design::{TextRoleExt as _, design, pt, tabular_digits};
 use crate::ui::empty_view::{EmptyView, Sentence, progress_bar};
@@ -102,128 +102,6 @@ pub enum Phase {
     Stopped,
     /// Failed; the previous index is unchanged.
     Failed,
-}
-
-/// What a report row says about its file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ReportKind {
-    /// The file failed to parse.
-    Failed,
-    /// Some of its entries were skipped.
-    Skipped,
-    /// Indexed in full.
-    Indexed,
-    /// Something the Skills command or a Skill's `SKILL.md` warned about.
-    Warning,
-    /// The Skills command is not configured.
-    NotConfigured,
-}
-
-/// One report row.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ReportRow {
-    /// The file, relative to the sources directory.
-    pub path: String,
-    /// What happened.
-    pub kind: ReportKind,
-    /// How many entries it indexed.
-    pub entries: usize,
-    /// For a failed file, its error; for a skipped one, the skipped entries.
-    pub detail: String,
-}
-
-/// Every file, failed first, then those with skipped entries, then the indexed ones (R5).
-#[must_use]
-pub fn report_rows(files: &[FileReport]) -> Vec<ReportRow> {
-    let mut rows: Vec<ReportRow> = files
-        .iter()
-        .map(|file| {
-            let (kind, detail) = if let Some(error) = &file.error {
-                (
-                    ReportKind::Failed,
-                    error.message.lines().next().unwrap_or_default().to_owned(),
-                )
-            } else if !file.issues.is_empty() {
-                (ReportKind::Skipped, issues_line(file))
-            } else {
-                (ReportKind::Indexed, String::new())
-            };
-            ReportRow {
-                path: file.rel_path.clone(),
-                kind,
-                entries: file.entries,
-                detail,
-            }
-        })
-        .collect();
-    rows.sort_by_key(|row| match row.kind {
-        ReportKind::Failed => 0,
-        ReportKind::Skipped => 1,
-        ReportKind::Indexed => 2,
-        ReportKind::Warning => 3,
-        ReportKind::NotConfigured => 4,
-    });
-    rows
-}
-
-/// One source's rows in the report, under its label.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ReportSection {
-    /// `YAML` or `Skills`.
-    pub label: String,
-    /// Its rows.
-    pub rows: Vec<ReportRow>,
-}
-
-/// The report's sections, one per refreshed source (spec, "Refresh report and progress"):
-/// YAML's files, or one failed row naming `sources_dir`; Skills' outcome row, then its warnings.
-#[must_use]
-pub fn report_sections(report: &SyncReport, sources_dir: &str, m: &Messages) -> Vec<ReportSection> {
-    let mut sections = Vec::new();
-    if let Some(yaml) = &report.yaml {
-        let rows = match yaml {
-            YamlOutcome::Indexed(summary) => report_rows(&summary.files),
-            YamlOutcome::Failed(reason) => vec![ReportRow {
-                path: sources_dir.to_owned(),
-                kind: ReportKind::Failed,
-                entries: 0,
-                detail: fill(&m.report_source_failed, &[("error", reason)]),
-            }],
-        };
-        sections.push(ReportSection {
-            label: m.report_yaml_section.clone(),
-            rows,
-        });
-    }
-    if let Some(skills) = &report.skills {
-        let row = |kind, entries, detail: String| ReportRow {
-            path: kb_domain::skills::SKILLS_TYPE.to_owned(),
-            kind,
-            entries,
-            detail,
-        };
-        let (outcome, warnings): (ReportRow, &[kb_domain::skills::SkillsWarning]) = match skills {
-            SkillsOutcome::NotConfigured => (row(ReportKind::NotConfigured, 0, m.report_not_configured.clone()), &[]),
-            SkillsOutcome::Indexed { entries, warnings } => {
-                (row(ReportKind::Indexed, *entries, String::new()), warnings.as_slice())
-            }
-            SkillsOutcome::Failed { reason, warnings, .. } => (
-                row(
-                    ReportKind::Failed,
-                    0,
-                    fill(&m.report_source_failed, &[("error", reason)]),
-                ),
-                warnings.as_slice(),
-            ),
-        };
-        let mut rows = vec![outcome];
-        rows.extend(warnings.iter().map(|w| row(ReportKind::Warning, 0, w.message.clone())));
-        sections.push(ReportSection {
-            label: m.report_skills_section.clone(),
-            rows,
-        });
-    }
-    sections
 }
 
 impl SyncView {
@@ -328,18 +206,6 @@ impl SyncView {
     pub fn cancel(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }
-}
-
-fn issues_line(file: &FileReport) -> String {
-    let skipped: Vec<String> = file
-        .issues
-        .iter()
-        .filter_map(|issue| match issue {
-            FileIssue::SkippedEntry { entry_type, key } => Some(format!("{entry_type}/{key}")),
-            FileIssue::Empty => None,
-        })
-        .collect();
-    skipped.join(", ")
 }
 
 /// Summarizes a sync from the catalog's message template: entries from every source, then the
@@ -551,18 +417,8 @@ mod tests {
         );
     }
 
-    use kb_domain::sync::SyncSummary;
-
-    fn yaml_summary(files: Vec<FileReport>, total: usize) -> SyncSummary {
-        SyncSummary {
-            total_indexed: total,
-            files_scanned: files.len(),
-            files_failed: files.iter().filter(|f| f.error.is_some()).count(),
-            duration_ms: 0,
-            errors: Vec::new(),
-            files,
-        }
-    }
+    use crate::report_list::tests::{file, yaml_summary};
+    use kb_domain::sync::{SkillsOutcome, YamlOutcome};
 
     #[test]
     fn summarizes_every_source() {
@@ -581,118 +437,6 @@ mod tests {
         assert_eq!(
             summary_line(&report, &catalog.messages),
             "4,671 entries in 0.8 s · 1 failed"
-        );
-    }
-
-    #[test]
-    fn reports_skills_in_a_section_of_their_own() {
-        let m = Catalog::default().messages;
-        let report = SyncReport {
-            yaml: None,
-            skills: Some(SkillsOutcome::Failed {
-                reason: "skills exited with exit status: 1".into(),
-                command: "skills ls".into(),
-                exit_code: Some(1),
-                warnings: vec![kb_domain::skills::SkillsWarning::stderr("⚠ Skipped recon")],
-            }),
-            duration_ms: 0,
-        };
-        let sections = report_sections(&report, "/s", &m);
-        assert_eq!(sections.len(), 1);
-        assert_eq!(sections[0].label, "Skills");
-        let kinds: Vec<ReportKind> = sections[0].rows.iter().map(|r| r.kind).collect();
-        assert_eq!(kinds, [ReportKind::Failed, ReportKind::Warning]);
-        assert_eq!(
-            sections[0].rows[0].detail,
-            "skills exited with exit status: 1 The previous entries are unchanged."
-        );
-        assert_eq!(sections[0].rows[1].detail, "⚠ Skipped recon");
-        assert_eq!(summary_line(&report, &m), "0 entries in 0.0 s · 1 failed");
-    }
-
-    #[test]
-    fn reports_yaml_files_then_skills_not_configured() {
-        let m = Catalog::default().messages;
-        let report = SyncReport {
-            yaml: Some(YamlOutcome::Indexed(yaml_summary(
-                vec![file("a.yml", 3, false, false)],
-                3,
-            ))),
-            skills: Some(SkillsOutcome::NotConfigured),
-            duration_ms: 0,
-        };
-        let sections = report_sections(&report, "/s", &m);
-        let labels: Vec<&str> = sections.iter().map(|s| s.label.as_str()).collect();
-        assert_eq!(labels, ["YAML", "Skills"]);
-        assert_eq!(sections[0].rows[0].path, "a.yml");
-        assert_eq!(sections[1].rows[0].kind, ReportKind::NotConfigured);
-    }
-
-    #[test]
-    fn reports_an_unreadable_sources_directory_as_a_failed_yaml_row() {
-        let m = Catalog::default().messages;
-        let report = SyncReport {
-            yaml: Some(YamlOutcome::Failed("cannot read the sources directory: gone".into())),
-            skills: None,
-            duration_ms: 0,
-        };
-        let row = &report_sections(&report, "/s", &m)[0].rows[0];
-        assert_eq!((row.path.as_str(), row.kind), ("/s", ReportKind::Failed));
-    }
-
-    use indexmap::IndexMap;
-    use kb_domain::report::{FileIssue, FileReport};
-    use kb_domain::source::SourceError;
-
-    fn file(rel: &str, entries: usize, error: bool, skipped: bool) -> FileReport {
-        FileReport {
-            rel_path: rel.into(),
-            file_path: format!("/s/{rel}"),
-            entries,
-            types: IndexMap::new(),
-            error: error.then(|| SourceError {
-                file_path: format!("/s/{rel}"),
-                message: "Line 4: a flow sequence must be closed".into(),
-                line: Some(4),
-                column: Some(1),
-            }),
-            excerpt: None,
-            issues: if skipped {
-                vec![FileIssue::SkippedEntry {
-                    entry_type: "bookmarks".into(),
-                    key: "not-a-map".into(),
-                }]
-            } else {
-                Vec::new()
-            },
-        }
-    }
-
-    #[test]
-    fn leaves_the_detail_empty_for_a_file_with_no_entries() {
-        let empty = FileReport {
-            issues: vec![FileIssue::Empty],
-            ..file("empty.yml", 0, false, false)
-        };
-        let row = &report_rows(&[empty])[0];
-        assert_eq!((row.kind, row.detail.as_str()), (ReportKind::Skipped, ""));
-    }
-
-    #[test]
-    fn lists_every_file_failed_first_then_skipped_then_indexed() {
-        let files = vec![
-            file("b.yml", 9, false, true),
-            file("a.yml", 12, false, false),
-            file("errors/x.yml", 0, true, false),
-        ];
-        let order: Vec<(String, ReportKind)> = report_rows(&files).into_iter().map(|r| (r.path, r.kind)).collect();
-        assert_eq!(
-            order,
-            [
-                ("errors/x.yml".into(), ReportKind::Failed),
-                ("b.yml".into(), ReportKind::Skipped),
-                ("a.yml".into(), ReportKind::Indexed)
-            ]
         );
     }
 }
