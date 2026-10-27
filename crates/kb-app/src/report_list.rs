@@ -100,16 +100,26 @@ impl ReportRow {
     }
 }
 
+/// The icon and tint for `kind`.
+#[must_use]
+pub fn kind_tile(kind: ReportKind, c: &crate::ui::design::Colors) -> (&'static str, gpui_kit::Hsla) {
+    match kind {
+        ReportKind::Failed => ("circle-x", c.red),
+        ReportKind::Skipped | ReportKind::Warning => ("triangle-alert", c.yellow),
+        ReportKind::Indexed => ("circle-check", c.green),
+        ReportKind::NotConfigured => ("circle", c.faint),
+    }
+}
+
 /// One row in the report list.
 #[must_use]
 pub fn report_row(row: &ReportRow, id: &str, selected: bool, m: &Messages) -> Row {
     let d = design();
     let c = &d.colors;
-    let (icon, tint, chip, detail) = match row.kind {
-        ReportKind::Failed => ("circle-x", c.red, m.report_failed_chip.clone(), row.detail.clone()),
+    let (icon, tint) = kind_tile(row.kind, c);
+    let (chip, detail) = match row.kind {
+        ReportKind::Failed => (m.report_failed_chip.clone(), row.detail.clone()),
         ReportKind::Skipped => (
-            "triangle-alert",
-            c.yellow,
             row.entries.to_string(),
             // A file with no entries at all has no skipped entries to name.
             if row.detail.is_empty() {
@@ -118,24 +128,9 @@ pub fn report_row(row: &ReportRow, id: &str, selected: bool, m: &Messages) -> Ro
                 fill(&m.report_skipped_entries, &[("entries", &row.detail)])
             },
         ),
-        ReportKind::Indexed => (
-            "circle-check",
-            c.green,
-            row.entries.to_string(),
-            m.report_indexed.clone(),
-        ),
-        ReportKind::Warning => (
-            "triangle-alert",
-            c.yellow,
-            m.report_warning_chip.clone(),
-            row.detail.clone(),
-        ),
-        ReportKind::NotConfigured => (
-            "circle",
-            c.faint,
-            m.report_not_configured_chip.clone(),
-            row.detail.clone(),
-        ),
+        ReportKind::Indexed => (row.entries.to_string(), m.report_indexed.clone()),
+        ReportKind::Warning => (m.report_warning_chip.clone(), row.detail.clone()),
+        ReportKind::NotConfigured => (m.report_not_configured_chip.clone(), row.detail.clone()),
     };
     Row::new(SharedString::from(id.to_owned()), row.path.clone())
         .lead(tile(icon, tint, TileSize::Row))

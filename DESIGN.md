@@ -75,6 +75,7 @@ components:
   quote: { bar: 3 }
   links: { row: 28, url_chars: 32, title_share: 0.5 }
   notice: { width: 340, icon: 20, check: 13, ring_fill: 0.2, ring_border: 0.4 }
+  pane: { fact_label: 72, tint_alpha: 0.12 }
   border: { hairline: 1 }
 ---
 

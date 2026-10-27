@@ -10,5 +10,6 @@ pub mod footer;
 pub mod header;
 pub mod keycap;
 pub mod notice;
+pub mod report_pane;
 pub mod row;
 pub mod tile;

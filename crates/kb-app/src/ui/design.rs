@@ -101,18 +101,12 @@ pub fn hex(text: &str) -> Option<Hsla> {
 pub struct Colors {
     pub window: Hsla,
     pub mantle: Hsla,
-    #[expect(
-        dead_code,
-        reason = "read through the theme's palette (theme::legibility, theme::gpui), not by kb's views"
-    )]
+
     pub crust: Hsla,
     pub selected: Hsla,
     pub hover: Hsla,
     pub badge: Hsla,
-    #[expect(
-        dead_code,
-        reason = "read through the theme's palette (theme::legibility, theme::gpui), not by kb's views"
-    )]
+
     pub code: Hsla,
     pub edge: Hsla,
     pub ring: Hsla,
@@ -349,6 +343,8 @@ points!(/// The notice's sizes.
     NoticeSize { width, icon, check, ring_fill, ring_border });
 points!(/// Borders.
     BorderSize { hairline });
+points!(/// The pane's sizes.
+    PaneSize { fact_label, tint_alpha });
 
 /// Component sizes.
 #[derive(Debug, Clone, Deserialize)]
@@ -371,6 +367,7 @@ pub struct Components {
     pub notice: NoticeSize,
     pub border: BorderSize,
     pub detail: DetailSize,
+    pub pane: PaneSize,
 }
 
 /// Every design token.
