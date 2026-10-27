@@ -428,6 +428,7 @@ Fix every Major (batches 1–3) and the MVP's keyboard promises hold. Batches 4�
    report-only keys bound in `REFRESH_CONTEXT` or given an entry meaning. Owner decision (2026-10-27): done as part of
    one navigation model with A22 (a stack of places that owns the header, the footer, back and which keys act), not
    handler by handler; batches 1–2 go first.
+   **Done** (plan 2026-10-27-navigation-model): A04, A05, A06, A07, A08, A12, A13 and A22.
 4. **Overlay lifecycle** (A10, A11, A15). `show_overlay` is the one place an overlay changes: it cancels a theme
    preview when leaving Theme…, and the action panel gets footer keys of its own. Move Theme… out of the
    Refresh More… condition.

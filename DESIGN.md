@@ -171,8 +171,8 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
 - **Tile** (`tile.rs`; 01-list): the tinted type tile, or a bookmark's favicon with the tile as its fallback.
 - **Row** (`row.rs`; 01-list): 56 tall, 4 apart, 6 pt corners; tile, title over description, tags, link pill, then a
   fixed key slot (`↵` selected, `⌘ 1`…`⌘ 9` the first nine rows, empty after); the selected row on `selected` with a 2.5 pt mauve bar and its glow.
-- **Header** (`header.rs`; 01-list, 07-filter): 56 tall, a hairline under it; the magnifier on the list, the back
-  chevron elsewhere; the query at 15; the filter pill (sliders, the filter's name, `⌘ P`),
+- **Header** (`header.rs`; 01-list, 07-filter): 56 tall, a hairline under it; the magnifier on the list, `‹` and where
+  back goes elsewhere (Navigation); the query at 15; the filter pill (sliders, the filter's name, `⌘ P`),
   never narrower than `pill_min_width`.
 - **Footer** (`footer.rs`; 01-list, 04-entry-template): 40 tall, a hairline over it; left the status line on the
   list (`● Ready • N results`) or, with a pane or the detail screen, the entry's tile, file and `⌥⌘C`; right the
@@ -186,6 +186,10 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   red-bar quote, skipped entries and warnings in a yellow one; the lines around an error on mantle, the failing line
   with a red bar and tint; skipped keys as a list; facts as label and value (`Location`, `File`, `Entries`, `Exit`,
   `Stderr`, `Index`). The split and the detail screen draw it, as the entry view.
+- **Navigation** (`navigator.rs`, `ui/crumb.rs`; 20-navigation): screens are places on one stack, the list at the
+  bottom; ⌘K and the filter float over the top place and own the keys while open. Every place but the list shows `‹` and
+  where back goes (the query in mono, an entry's title, `Search`, `Refresh`) in the header, drawn by the same crumb as
+  ⌘K's submenus. Esc and `‹` go back one place, to it as it was left. A new screen is a new place.
 - **Entry view** (`entry_view.rs`; 04-entry-template, 05-detail-links): Header (icon, title, tags), Hero by type,
   Quote (the description, red bar), Body (the notes, then the Links list); the same component in the split (34 %
   list) and on the detail screen.
