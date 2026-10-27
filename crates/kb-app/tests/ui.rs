@@ -1184,3 +1184,18 @@ fn audit_reopening_the_filter_starts_at_the_top(cx: &mut TestAppContext) {
         "row 0 is selected, so the rows start at the top"
     );
 }
+
+/// A changed filter selects its first result, as a changed query does
+/// (`selects_the_first_result_of_a_new_query`).
+#[gpui_kit::test]
+fn audit_a_new_filter_selects_its_first_result(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    for _ in 0..7 {
+        press(cx, window, "down");
+    }
+    open_filter(cx, window);
+    confirm_filter(cx, window, "docker", "cmd-enter");
+    let first = titles(&view, cx).first().cloned();
+    assert!(first.is_some(), "the docker tag matches entries");
+    assert_eq!(selected_title(&view, cx), first, "the first result is selected");
+}
