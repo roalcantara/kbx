@@ -1,5 +1,5 @@
 //! A report row's pane (spec 2026-10-27 D5; `docs/guides/design/12-report-pane.html`): its header,
-#![expect(dead_code, reason = "wired into SyncView::render in Task 9")]
+
 //! the error or warning as a quote, the lines around an error, the skipped keys, and its facts.
 //! The split and the detail screen draw the same pane.
 

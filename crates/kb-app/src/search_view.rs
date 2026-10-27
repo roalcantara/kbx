@@ -595,7 +595,7 @@ impl SearchView {
             database: self.config.database().to_path_buf(),
         };
         let catalog = self.catalog.clone();
-        let sync = cx.new(|cx| SyncView::start(job, catalog, cx));
+        let sync = cx.new(|cx| SyncView::start(job, catalog, window, cx));
         let subscription = cx.subscribe_in(&sync, window, |this, _, finished: &SyncFinished, window, cx| {
             window.push_notification(finished.message.clone(), cx);
             if finished.changed {
