@@ -1170,6 +1170,36 @@ fn audit_copy_path_on_a_stopped_refresh_copies_nothing(cx: &mut TestAppContext) 
     assert_eq!(copied, "", "nothing to copy on the stopped screen");
 }
 
+/// A12: the report-only keys do nothing on the list.
+#[gpui_kit::test]
+fn reveal_and_copy_location_do_nothing_on_the_list(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    cx.write_to_clipboard(gpui_kit::ClipboardItem::new_string(String::new()));
+    press(cx, window, "cmd-shift-l");
+    press(cx, window, "cmd-shift-e");
+    let copied = cx
+        .read_from_clipboard()
+        .and_then(|item| item.text())
+        .unwrap_or_default();
+    assert_eq!(copied, "");
+    assert_eq!(cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)), None);
+}
+
+/// A13: → on a refresh screen leaves the list's split alone.
+#[gpui_kit::test]
+fn right_on_a_refresh_screen_leaves_the_list_s_split_alone(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-r");
+    press(cx, window, "escape"); // Stop
+    cx.run_until_parked();
+    press(cx, window, "right");
+    press(cx, window, "escape"); // back to the list
+    assert!(
+        !cx.read(|cx| view.read(cx).is_showing_details()),
+        "the list's split did not open"
+    );
+}
+
 /// Reopening the filter starts at its top; it does not keep the last scroll position.
 #[gpui_kit::test]
 fn audit_reopening_the_filter_starts_at_the_top(cx: &mut TestAppContext) {
@@ -1180,6 +1210,7 @@ fn audit_reopening_the_filter_starts_at_the_top(cx: &mut TestAppContext) {
     }
     cx.run_until_parked();
     assert!(cx.read(|cx| view.read(cx).panel_scroll_offset()) < px(0.));
+
     press(cx, window, "escape");
     cx.run_until_parked();
     open_filter(cx, window);

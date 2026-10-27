@@ -393,10 +393,19 @@ impl SearchView {
         self.sync.as_ref().is_some_and(|sync| sync.read(cx).has_pane())
     }
 
-    /// Runs a catalog action by id on the selected entry, or on the report's selected row.
+    /// A key bound to catalog action `id`: it acts on the top place through `run_action`, and not at all while an
+    /// overlay owns the keys (D4). The one entry point for every keyed command.
+    fn key_action(&mut self, id: &str, window: &mut Window, cx: &mut Context<Self>) {
+        if self.navigator.screen_has_keys() {
+            self.run_action(id, window, cx);
+        }
+    }
+
+    /// Runs catalog action `id` on the top place (D4): the selected entry on the list and its detail, the selected
+    /// report row on a refresh and its detail. A row action with nothing to act on does nothing.
     fn run_action(&mut self, action: &str, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(sync) = self.report(cx) {
-            let row = sync.read(cx).selected_row(cx).cloned();
+        if matches!(self.navigator.top(), Place::Refresh | Place::ReportDetail) {
+            let row = self.report(cx).and_then(|sync| sync.read(cx).selected_row(cx).cloned());
             match (action, row) {
                 ("details", Some(_)) => return self.push(Place::ReportDetail, window, cx),
                 ("edit", Some(row)) => {
@@ -440,8 +449,13 @@ impl SearchView {
                     }
                     return;
                 }
-                ("refresh", _) => return self.refresh(sync.read(cx).selection(), window, cx),
-                // A row action with no row selected does nothing (spec D4), rather than act on the list's entry.
+                ("refresh" | "retry", _) => {
+                    let selection = self
+                        .sync
+                        .as_ref()
+                        .map_or(Selection::All, |sync| sync.read(cx).selection());
+                    return self.refresh(selection, window, cx);
+                }
                 ("details" | "edit" | "copy-location" | "copy-error" | "copy-path" | "reveal" | "open" | "copy", _) => {
                     return;
                 }
@@ -458,27 +472,27 @@ impl SearchView {
             ("details", _) => self.show_detail_screen(window, cx),
             ("open", Some(url)) => cx.open_url(&url),
             ("copy", Some(text)) => self.copy(text, window, cx),
-            ("refresh", _) => self.rebuild(&Rebuild, window, cx),
+            ("refresh", _) => self.refresh(Selection::All, window, cx),
             ("refresh-yaml", _) => self.refresh(Selection::Yaml, window, cx),
             ("refresh-skills", _) => self.refresh(Selection::Skills, window, cx),
             ("configure", _) => self.open_preferences(&OpenPreferences, window, cx),
             ("resize", _) => self.toggle_window_size(&ToggleWindowSize, window, cx),
-            ("edit", _) => self.open_source_file(&OpenSourceFile, window, cx),
-            ("copy-path", _) => self.copy_path(&CopyPath, window, cx),
+            ("edit", _) => {
+                if let Some(path) = self.selected_source_file(cx) {
+                    self.open_in_editor(std::path::Path::new(&path), None, None, window, cx);
+                }
+            }
+            ("copy-path", _) => {
+                if let Some(path) = self.selected_source_file(cx) {
+                    self.copy(path, window, cx);
+                }
+            }
             ("stop", _) => {
                 if let Some(sync) = &self.sync {
                     sync.read(cx).cancel();
                 }
             }
             ("back", _) => self.back(&Back, window, cx),
-            ("retry", _) => {
-                // A finished or failed refresh lets `refresh` start a new one, of the same sources.
-                let selection = self
-                    .sync
-                    .as_ref()
-                    .map_or(Selection::All, |sync| sync.read(cx).selection());
-                self.refresh(selection, window, cx);
-            }
             _ => {}
         }
     }
@@ -511,10 +525,16 @@ impl SearchView {
     }
 
     fn run_primary(&mut self, _: &RunPrimary, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.navigator.screen_has_keys() {
+            return;
+        }
         self.run_entry(false, window, cx);
     }
 
     fn run_secondary(&mut self, _: &RunSecondary, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.navigator.screen_has_keys() {
+            return;
+        }
         self.run_entry(true, window, cx);
     }
 
@@ -532,39 +552,36 @@ impl SearchView {
 
     /// ⌘n: on the detail screen opens link n − 1 (D20); on the list selects row n − 1 and runs its primary action (R7).
     fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
-        if self.navigator.top() == Place::Detail {
-            let url = self
-                .list
-                .read(cx)
-                .delegate()
-                .selected_entry()
-                .and_then(|entry| entry.links.get(n - 1))
-                .map(|link| link.url.clone());
-            if let Some(url) = url {
-                cx.open_url(&url);
+        if !self.navigator.screen_has_keys() {
+            return; // A07: ⌘n under the action panel or the filter
+        }
+        match self.navigator.top() {
+            Place::Detail => {
+                let url = self
+                    .list
+                    .read(cx)
+                    .delegate()
+                    .selected_entry()
+                    .and_then(|entry| entry.links.get(n - 1))
+                    .map(|link| link.url.clone());
+                if let Some(url) = url {
+                    cx.open_url(&url);
+                }
             }
-            return;
+            Place::List => {
+                if self.list.read(cx).delegate().entries().len() >= n {
+                    self.list.update(cx, |list, cx| {
+                        list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx);
+                    });
+                    self.run_entry(false, window, cx);
+                }
+            }
+            Place::Refresh | Place::ReportDetail => {}
         }
-        if self.navigator.top() != Place::List {
-            return;
-        }
-        let exists = self.list.read(cx).delegate().entries().len() >= n;
-        if !exists {
-            return;
-        }
-        self.list.update(cx, |list, cx| {
-            list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx);
-        });
-        self.run_entry(false, window, cx);
     }
 
     fn copy_path(&mut self, _: &CopyPath, window: &mut Window, cx: &mut Context<Self>) {
-        if self.report(cx).is_some() {
-            return self.run_action("copy-path", window, cx);
-        }
-        if let Some(path) = self.selected_source_file(cx) {
-            self.copy(path, window, cx);
-        }
+        self.key_action("copy-path", window, cx);
     }
 
     /// The selected entry's source file, absolute, for the copy and open commands.
@@ -576,26 +593,29 @@ impl SearchView {
             .map(|e| e.source_file.clone())
     }
 
-    fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
-        if let Some(sync) = self.report(cx) {
-            sync.update(cx, |s, cx| s.go(Move::Pane, cx));
+    /// → (`open`) or ← on the place that has a pane: the list's split, or the report's (A13).
+    fn set_pane(&mut self, open: bool, cx: &mut Context<Self>) {
+        if !self.navigator.screen_has_keys() {
             return;
         }
-        if self.navigator.top() != Place::Detail {
-            self.show_details = true;
+        match self.navigator.top() {
+            Place::List => self.show_details = open,
+            Place::Refresh => {
+                if let Some(sync) = self.report(cx) {
+                    sync.update(cx, |s, cx| s.go(if open { Move::Pane } else { Move::NoPane }, cx));
+                }
+            }
+            Place::Detail | Place::ReportDetail => {}
         }
         cx.notify();
     }
 
+    fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
+        self.set_pane(true, cx);
+    }
+
     fn hide_details(&mut self, _: &HideDetails, _: &mut Window, cx: &mut Context<Self>) {
-        if let Some(sync) = self.report(cx) {
-            sync.update(cx, |s, cx| s.go(Move::NoPane, cx));
-            return;
-        }
-        if self.navigator.top() != Place::Detail {
-            self.show_details = false;
-        }
-        cx.notify();
+        self.set_pane(false, cx);
     }
 
     /// Whether → and ← should act on the split pane: the caret is at the query's end.
@@ -644,12 +664,7 @@ impl SearchView {
     }
 
     fn open_source_file(&mut self, _: &OpenSourceFile, window: &mut Window, cx: &mut Context<Self>) {
-        if self.report(cx).is_some() {
-            return self.run_action("edit", window, cx);
-        }
-        if let Some(path) = self.selected_source_file(cx) {
-            self.open_in_editor(std::path::Path::new(&path), None, None, window, cx);
-        }
+        self.key_action("edit", window, cx);
     }
 
     /// Opens `file` in the editor at `line`:`column` (D6), saying so when it cannot.
@@ -697,7 +712,7 @@ impl SearchView {
     }
 
     fn rebuild(&mut self, _: &Rebuild, window: &mut Window, cx: &mut Context<Self>) {
-        self.refresh(Selection::All, window, cx);
+        self.key_action("refresh", window, cx);
     }
 
     /// Refreshes `selection`'s sources on the refresh screen, unless a refresh is running.
@@ -785,15 +800,15 @@ impl SearchView {
     }
 
     fn copy_location(&mut self, _: &CopyLocation, window: &mut Window, cx: &mut Context<Self>) {
-        self.run_action("copy-location", window, cx);
+        self.key_action("copy-location", window, cx);
     }
 
     fn copy_error(&mut self, _: &CopyError, window: &mut Window, cx: &mut Context<Self>) {
-        self.run_action("copy-error", window, cx);
+        self.key_action("copy-error", window, cx);
     }
 
     fn reveal_file(&mut self, _: &RevealFile, window: &mut Window, cx: &mut Context<Self>) {
-        self.run_action("reveal", window, cx);
+        self.key_action("reveal", window, cx);
     }
 
     fn report_step(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
@@ -829,8 +844,10 @@ impl SearchView {
     fn open_filter(&mut self, _: &OpenFilter, window: &mut Window, cx: &mut Context<Self>) {
         let next = if self.is_filter_open() {
             Overlay::None
-        } else {
+        } else if self.navigator.top() == Place::List {
             Overlay::Filter
+        } else {
+            return;
         };
         self.show_overlay(next, window, cx);
     }
