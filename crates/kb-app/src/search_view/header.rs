@@ -12,12 +12,14 @@ use crate::keys::{Back, HideDetails, ShowDetails};
 use crate::ui::header::{filter_pill, header, lead_icon, query_box};
 use crate::ui::keycap::caps;
 
-use crate::navigator::Place;
-/// What the header shows on the current screen.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::navigator::{BackName, Place};
+use crate::ui::crumb::{CrumbSize, crumb};
+
+/// What the header shows on the current place.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeaderParts {
-    /// The back chevron: every screen but the list, which shows the magnifier.
-    pub back: bool,
+    /// Where ‹ goes: every place but the list, which shows the magnifier.
+    pub back: Option<BackName>,
     /// The query field: the list only.
     pub query: bool,
     /// The filter pill: the list only.
@@ -39,7 +41,7 @@ impl SearchView {
     pub fn header_parts(&self) -> HeaderParts {
         let list = self.navigator.top() == Place::List;
         HeaderParts {
-            back: !list,
+            back: self.navigator.back_name().cloned(),
             query: list,
             filter: list,
         }
@@ -48,13 +50,14 @@ impl SearchView {
     pub(super) fn render_header(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let parts = self.header_parts();
         let row = header();
-        if parts.back {
+        if let Some(back) = parts.back {
             return row.child(
                 Button::new("back-button")
                     .custom(plain_button(cx))
                     // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
                     .px_0()
-                    .child(lead_icon("chevron-left"))
+                    .min_w_0()
+                    .child(crumb(back.text, back.mono, CrumbSize::Header))
                     .accessibility_label("Back")
                     .tooltip("Back (Esc)")
                     .on_click(cx.listener(|this, _, window, cx| this.back(&Back, window, cx))),

@@ -563,13 +563,54 @@ fn toggles_the_window_size_with_cmd_shift_f(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn shows_the_magnifier_on_the_list_and_only_the_chevron_on_the_detail_screen(cx: &mut TestAppContext) {
+fn shows_the_query_on_the_list_and_where_back_goes_on_a_pushed_screen(cx: &mut TestAppContext) {
     let (_home, window, view) = open_with_query(cx, "kubectl");
     let parts = cx.read(|cx| view.read(cx).header_parts());
-    assert_eq!((parts.back, parts.query, parts.filter), (false, true, true));
+    assert_eq!((parts.back, parts.query, parts.filter), (None, true, true));
     press(cx, window, "enter");
     let parts = cx.read(|cx| view.read(cx).header_parts());
-    assert_eq!((parts.back, parts.query, parts.filter), (true, false, false));
+    assert_eq!((parts.query, parts.filter), (false, false));
+    assert_eq!(
+        parts.back.map(|b| (b.text, b.mono)),
+        Some(("kubectl".to_owned(), true)),
+        "‹ names the search it returns to"
+    );
+}
+
+#[gpui_kit::test]
+fn names_search_when_back_goes_to_an_empty_query(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "enter");
+    let back = cx.read(|cx| view.read(cx).header_parts()).back.map(|b| b.text);
+    assert_eq!(back.as_deref(), Some("Search"));
+}
+
+#[gpui_kit::test]
+fn names_refresh_on_a_report_row_and_returns_to_its_split(cx: &mut TestAppContext) {
+    use kb_app::navigator::Place;
+
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    press(cx, window, "right");
+    press(cx, window, "enter");
+    let back = cx.read(|cx| view.read(cx).header_parts()).back.map(|b| b.text);
+    assert_eq!(back.as_deref(), Some("Refresh"));
+    click(cx, window, "back-button");
+    assert_eq!(cx.read(|cx| view.read(cx).place()), Place::Refresh, "‹ behaves as Esc");
+    assert!(cx.read(|cx| view.read(cx).report_pane_open(cx)));
+}
+
+#[gpui_kit::test]
+fn returns_from_the_detail_to_the_same_row_and_split(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "kubectl");
+    press(cx, window, "right");
+    press(cx, window, "down");
+    let row = cx.read(|cx| view.read(cx).list().read(cx).selected_index());
+    press(cx, window, "enter");
+    press(cx, window, "escape");
+    assert_eq!(cx.read(|cx| view.read(cx).list().read(cx).selected_index()), row);
+    assert!(cx.read(|cx| view.read(cx).is_showing_details()), "the split as it was");
 }
 
 #[gpui_kit::test]

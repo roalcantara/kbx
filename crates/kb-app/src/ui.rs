@@ -3,6 +3,7 @@
 pub mod action_panel;
 pub mod chip;
 pub mod command_card;
+pub mod crumb;
 pub mod design;
 pub mod empty_view;
 pub mod entry_view;

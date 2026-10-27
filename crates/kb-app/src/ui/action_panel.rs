@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use crate::tag_images::TagImage;
 use crate::ui::chip::icon_chip;
+use crate::ui::crumb::{CrumbSize, crumb};
 use crate::ui::design::{TextRoleExt as _, design, pt};
 use crate::ui::keycap::{ChipState, keycap};
 use crate::ui::tile::{TileSize, tile};
@@ -142,24 +143,16 @@ pub fn panel(
     v_flex()
         .w(pt(width))
         .overflow_hidden()
-        .when_some(page.crumb.clone(), |panel, crumb| {
+        .when_some(page.crumb.clone(), |panel, name| {
             panel.child(
-                h_flex()
+                div()
                     .h(pt(k.crumb))
+                    .flex()
                     .items_center()
-                    .gap(pt(s.crumb_gap))
                     .px(pt(s.crumb_pad_x))
-                    .text_role(&d.typography.roles.label)
-                    .text_color(c.faint)
                     .border_b(pt(d.components.border.hairline))
                     .border_color(c.edge)
-                    .child(
-                        svg()
-                            .path("icons/chevron-left.svg")
-                            .size(pt(k.crumb_icon))
-                            .text_color(c.faint),
-                    )
-                    .child(crumb),
+                    .child(crumb(name, false, CrumbSize::Panel)),
             )
         })
         .child(list)
