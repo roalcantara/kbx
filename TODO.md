@@ -466,7 +466,7 @@
   - **Created**: 2026-10-19 13:30
   - **Tags**: feat
 
-- [ ] 87K9 **-** Refresh Skills
+- [x] 87K9 **-** Refresh Skills
   - **Priority**: high
   - **Created**: 2026-10-27 02:41
   - **Tags**: bug
