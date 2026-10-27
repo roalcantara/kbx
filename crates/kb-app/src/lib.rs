@@ -19,6 +19,7 @@ mod filter;
 mod fixture;
 mod http;
 pub mod keys;
+pub mod navigator;
 mod panel;
 mod presentation;
 pub mod report_list;

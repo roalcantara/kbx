@@ -20,6 +20,9 @@ pub const DETAIL_CONTEXT: &str = "Detail";
 /// Added to [`CONTEXT`] while a refresh screen shows.
 pub const REFRESH_CONTEXT: &str = "Refresh";
 
+/// Added to [`CONTEXT`] on the report and its detail: the report-only keys (Copy Location, Copy Error, Reveal).
+pub const REPORT_CONTEXT: &str = "Report";
+
 /// The action panel's own key context: it holds the keyboard on the submenus (More…, Links…),
 /// which have no search field, so ↵, Esc and the arrows still reach the panel there.
 pub const PANEL_CONTEXT: &str = "ActionPanel";
