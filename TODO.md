@@ -471,7 +471,8 @@
   - **Created**: 2026-10-27 02:41
   - **Tags**: bug
 
-- [ ] 2YnZ **-** Improve Refresh Results
+- [x] 2YnZ **-** Improve Refresh Results
+  - **Comments**: uMHg
   - **Priority**: high
   - **Created**: 2026-10-27 03:06
   - **Tags**: enhancement
@@ -681,4 +682,7 @@
 
 - 57h9 **-** 2026-10-18: Implemented per docs/superpowers/plans/2026-10-18-skills-entry-and-scoped-refresh.md
   - **Task**: Rkpg
+
+- uMHg **-** 2026-10-27: spec 2026-10-27-refresh-report-inspection; plan of the same name
+  - **Task**: 2YnZ
 

@@ -182,6 +182,10 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus.
 - **Empty view** (`empty_view.rs`; 03-empty, 11-14-refresh): one 56 pt icon, a 15 pt title, a sentence; the query in
   mauve mono.
+- **Report pane** (`report_pane.rs`; 12-report-pane): the row's tile, path in mono and status chip; the error as the
+  red-bar quote, skipped entries and warnings in a yellow one; the lines around an error on mantle, the failing line
+  with a red bar and tint; skipped keys as a list; facts as label and value (`Location`, `File`, `Entries`, `Exit`,
+  `Stderr`, `Index`). The split and the detail screen draw it, as the entry view.
 - **Entry view** (`entry_view.rs`; 04-entry-template, 05-detail-links): Header (icon, title, tags), Hero by type,
   Quote (the description, red bar), Body (the notes, then the Links list); the same component in the split (34 %
   list) and on the detail screen.

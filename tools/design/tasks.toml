@@ -375,7 +375,16 @@ const screens = (size: string) => {
   type('ingress'); sleep(500); key(36); shot(`${size}-06-detail-cheat`); reset()
   key(35, 'cmd'); sleep(400); shot(`${size}-07-filter`); reset()
   type('docker'); sleep(500); key(36, 'cmd'); shot(`${size}-17-notice`); reset()
-  key(15, 'cmd'); sleep(2500); shot(`${size}-12-report`); reset()
+  key(15, 'cmd')
+  sleep(2500)
+  shot(`${size}-12-report`)
+  key(124)
+  sleep(400)
+  shot(`${size}-12-report-split`)
+  key(36)
+  sleep(400)
+  shot(`${size}-12-report-detail`)
+  reset()
 }
 
 const indexed = home('shots-home', true)
