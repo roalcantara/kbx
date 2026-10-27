@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kb · 11–14 Refresh</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
+<style>
+  /* Page chrome (not the design) */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 32px; }
+  .page { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 900px; }
+  .stage { display: grid; grid-template-columns: 900px 1fr; gap: 28px; align-items: start; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { font: 500 13px Inter; color: #a5adcb; background: #24273a; border: 1px solid #363a4f; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  .tabs button.on { color: #11121a; background: #c6a0f6; border-color: #c6a0f6; }
+  .tabs label { margin-left: auto; font-size: 13px; color: #a5adcb; display: flex; align-items: center; gap: 6px; }
+  .frame { position: relative; width: 900px; height: 560px; display: flex; align-items: center; justify-content: center; background: radial-gradient(#2a2d40, #14151f); border-radius: 12px; }
+  .frame img { width: 900px; height: auto; display: block; border-radius: 12px; }
+  .view { display: none; } .view.on { display: flex; }
+  .legend { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 19px; }
+  .legend h2 { font-size: 15px; font-weight: 600; margin: 6px 0 2px; }
+  .note { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; }
+  .note b { color: #cad3f5; font-weight: 600; }
+  .note p { color: #a5adcb; }
+  .num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 11px Inter; color: #11121a; }
+  .num.keep { background: #a6da95; } .num.adjust { background: #eed49f; } .num.ask { background: #f5a97f; }
+  .key { display: flex; gap: 14px; font-size: 12px; color: #a5adcb; }
+  .key span { display: flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .questions h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .questions .q { margin-bottom: 18px; }
+  .questions .q p { color: #a5adcb; font-size: 13px; margin-bottom: 8px; }
+  .questions .opts { display: flex; gap: 10px; }
+  .questions .opt { flex: 1; background: #1b1d2b; border: 1px solid #2c2f44; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; line-height: 18px; color: #a5adcb; }
+  .questions .opt b { color: #cad3f5; display: block; margin-bottom: 2px; }
+  .questions .opt.selected { border-color: #c6a0f6; box-shadow: 0 0 0 1px #c6a0f6; }
+  .marker { position: absolute; z-index: 50; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 10px Inter; color: #11121a; box-shadow: 0 0 0 2px #11121a; pointer-events: none; }
+  .hide-markers .marker { display: none; }
+
+  /* ===== The proposal: kb's 01 List, in your design's values (Catppuccin Macchiato) ===== */
+  .kb { --window: #24273a; --selected: #363a4f; --hover: #2f334a; --badge: #2e3248; --toast: #181926; --mantle: #1e2030;
+        --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
+        --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95; --peach: #f5a97f; --pink: #f5bde6; --yellow: #eed49f; --red: #ed8796;
+        --edge: rgba(110, 115, 141, 0.10);
+        position: relative; width: 860px; height: 520px; display: flex; flex-direction: column; overflow: hidden;
+        background: var(--window); border-radius: 14px; font-family: Inter, sans-serif; color: var(--text);
+        box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(202,211,245,.08); -webkit-font-smoothing: antialiased; }
+  .kb svg { stroke-width: 2; flex: none; }
+  .kb .mono { font-family: 'JetBrains Mono', monospace; }
+  .kb .hd { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--edge); }
+  .kb .hd .glass { width: 20px; height: 20px; color: var(--faint); }
+  .kb .hd .q { flex: 1; font-size: 15px; display: flex; align-items: center; }
+  .kb .hd .caret { width: 1.5px; height: 16px; background: var(--mauve); margin-left: 2px; }
+  .kb .fp { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; }
+  .kb .fp svg { width: 15px; height: 15px; color: var(--faint); }
+
+  .kb .ls { flex: 1; min-height: 0; padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+  .kb .r { position: relative; height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 6px; }
+  .kb .r.sel { background: var(--selected); }
+  .kb .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); box-shadow: 0 0 8px rgba(198,160,246,.6); }
+  .kb .tile { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .kb .tile svg { width: 16px; height: 16px; }
+  .kb .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .kb .tt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .ds { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kb .tr { flex: none; display: flex; align-items: center; gap: 12px; }
+  .kb .tags { display: flex; align-items: center; gap: 6px; }
+  .kb .ti { width: 20px; height: 20px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; }
+  .kb .r.sel .ti, .kb .r.sel .tp, .kb .r.sel .lc { background: var(--mantle); } .kb .r.sel .tp, .kb .r.sel .lc { color: var(--muted); }
+  .kb .ti svg { width: 14px; height: 14px; }
+  .kb .tp { height: 20px; display: inline-flex; align-items: center; line-height: 16px; padding: 0 8px; border-radius: 4px; background: var(--badge); color: var(--muted); font-size: 11px; font-weight: 600; }
+  .kb .lc { height: 20px; display: flex; align-items: center; gap: 4px; padding: 0 6px; line-height: 16px; border-radius: 4px; background: var(--badge); color: var(--faint); font: 400 11px 'JetBrains Mono', monospace; }
+  .kb .lc svg { width: 12px; height: 12px; }
+  .kb kbd, .kb .mini { height: 20px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--mantle); color: var(--muted); font: 400 11px/16px 'JetBrains Mono', monospace; margin: 0; box-shadow: none; }
+
+  .kb .ft { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--edge); font-size: 11px; color: var(--faint); }
+  .kb .ft .l, .kb .ft .rt, .kb .ft .it { display: flex; align-items: center; gap: 8px; }
+  .kb .ft .rt { gap: 20px; } .kb .ft .it { gap: 6px; color: var(--muted); }
+  .kb .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(166,218,149,.7); }
+  .kb .toast { position: absolute; right: 16px; bottom: 48px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--toast); box-shadow: 0 12px 32px rgba(0,0,0,.65), 0 0 0 1px rgba(198,160,246,.3); font-size: 13px; font-weight: 500; }
+  .kb .toast .ok { width: 20px; height: 20px; border-radius: 50%; background: rgba(166,218,149,.2); border: 1px solid rgba(166,218,149,.4); color: var(--green); display: flex; align-items: center; justify-content: center; }
+  .kb .toast .ok svg { width: 13px; height: 13px; }
+  .kb .toast .hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 400; } .kb .toast .hint kbd { background: var(--badge); }
+  .kb .toast .x { color: var(--faint); } .kb .toast .x svg { width: 15px; height: 15px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <h1>01 · List — your design, made into kb <span style="font-size:13px;color:#a6da95;font-weight:500">v5: the fill decides the text: on mantle (live) every chip and keycap reads muted</span></h1>
+    <p class="lead">Left: switch between <b>your design</b> (the Stitch screen) and <b>the proposal</b> (the same screen built from your design's
+    own values, with realistic data in kb's shapes). Everything is kept as you drew it unless a note on the right says otherwise.
+    The circled numbers point at each spot that needed a decision.</p>
+  </div>
+
+  <div class="stage">
+    <div>
+      <div class="tabs">
+        <button data-show="mine" onclick="show('mine', this)">Your design</button>
+        <button class="on" data-show="prop" onclick="show('prop', this)">Proposal</button>
+        <label><input type="checkbox" checked onchange="document.body.classList.toggle('hide-markers', !this.checked)"> numbers</label>
+      </div>
+      <div class="frame">
+        <div class="view" id="mine"><img src="requested-01.png" alt="Your design"></div>
+        <div class="view on" id="prop">
+          <div class="kb">
+            <div class="hd">
+              <i class="glass" data-lucide="search"></i>
+              <div class="q">/k8s<span class="caret"></span></div>
+              <div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div>
+            </div>
+            <div class="ls">
+              <div class="r sel">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods with zero downtime restart strategy</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#k8s"><i data-lucide="network"></i></span><span class="tp">#devops</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>2</span><kbd>↵</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/docker-prune-all</span><span class="ds">Remove unused containers, dangling networks, dangling images, and volumes</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#docker"><i data-lucide="box"></i></span><span class="tp">#cleanup</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>1</span><kbd>⌘2</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span>
+                <span class="tx"><span class="tt mono">/git-undo-commit</span><span class="ds">Undo last git commit while preserving staged changes in index</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#git"><i data-lucide="git-commit-horizontal"></i></span><span class="tp">#vcs</span></span><kbd>⌘3</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span>
+                <span class="tx"><span class="tt">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span><span class="ds">Cert-manager annotations, cluster issuer configs, and TLS secrets matrix</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--blue)" title="#k8s"><i data-lucide="network"></i></span><span class="tp">#networking</span><span class="tp">#yaml</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>4</span><kbd>⌘4</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span>
+                <span class="tx"><span class="tt">Rust Memory Safety &amp; Lifetimes Reference</span><span class="ds">Borrow checker rules, Rc&lt;RefCell&gt; patterns, and unsafe block guidelines</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#rust"><i data-lucide="cog"></i></span><span class="tp">#systems</span></span><kbd>⌘5</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span>
+                <span class="tx"><span class="tt">Tokio Tutorial — Async in Depth</span><span class="ds">tokio.rs · How futures, wakers and the executor fit together</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--peach)" title="#rust"><i data-lucide="cog"></i></span><span class="tp">#async</span></span><span class="lc"><i data-lucide="arrow-up-right"></i>3</span><kbd>⌘6</kbd></span>
+              </div>
+              <div class="r">
+                <span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span>
+                <span class="tx"><span class="tt">AWS EKS VPC CNI Subnet Exhaustion Playbook</span><span class="ds">Remediation steps for secondary CIDR assignment and prefix delegation flags</span></span>
+                <span class="tr"><span class="tags"><span class="ti" style="color:var(--yellow)" title="#aws"><i data-lucide="cloud"></i></span><span class="tp">#eks</span></span><kbd>⌘7</kbd></span>
+              </div>
+            </div>
+            <div class="toast">
+              <span class="ok"><i data-lucide="check"></i></span>
+              <span>Copied command to clipboard</span>
+              <span class="hint"><kbd>⌘V</kbd> to paste</span>
+              <span class="x"><i data-lucide="x"></i></span>
+            </div>
+            <div class="ft">
+              <div class="l"><span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>12 results</span></div>
+              <div class="rt"><span class="it">Show Details<kbd>↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div>
+            </div>
+            <!-- markers -->
+            <span class="marker" style="left:30px;top:6px;background:#eed49f">1</span>
+            <span class="marker" style="left:640px;top:6px;background:#a6da95">2</span>
+            <span class="marker" style="left:96px;top:66px;background:#a6da95">3</span>
+            <span class="marker" style="left:300px;top:70px;background:#eed49f">4</span>
+            <span class="marker" style="left:610px;top:70px;background:#eed49f">5</span>
+            <span class="marker" style="left:790px;top:118px;background:#f5a97f">6</span>
+            <span class="marker" style="left:30px;top:250px;background:#eed49f">7</span>
+            <span class="marker" style="left:30px;top:370px;background:#eed49f">8</span>
+            <span class="marker" style="left:560px;top:420px;background:#eed49f">9</span>
+            <span class="marker" style="left:30px;top:470px;background:#a6da95">10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="key"><span><i style="background:#a6da95"></i>kept as you drew it</span><span><i style="background:#eed49f"></i>adjusted, and why</span><span><i style="background:#f5a97f"></i>your call</span></div>
+      <h2>What the proposal keeps</h2>
+      <div class="note"><span class="num keep">✓</span><p><b>Everything visual</b>: Catppuccin Macchiato colours, 14 pt window corners, hairlines under the header and above the footer, 56 pt rows 4 pt apart with 6 pt corners, the mauve bar with its glow, tinted icon tiles, neutral grey tag pills, icon chips for tags, the ↗ link chip, small type (13 / 12 / 11), Inter + JetBrains Mono, monospace keycaps, the filter pill with ⌘P, the toast.</p></div>
+      <div class="note"><span class="num keep">2</span><p><b>Filter pill</b> as drawn: sliders icon, label, ⌘P. kb's current funnel and chevron go.</p></div>
+      <div class="note"><span class="num keep">3</span><p><b>Command titles in monospace</b>: only entries of type <i>commands</i>; everything else in Inter, as drawn.</p></div>
+      <div class="note"><span class="num keep">10</span><p><b>Status line</b> as drawn: the true result count comes from the index.</p></div>
+
+      <h2>What had to be adjusted</h2>
+      <div class="note"><span class="num adjust">1</span><p><b>Magnifier on the list, back chevron elsewhere.</b> Your list shows a search icon; kb needs a back button on the detail and rebuild screens, so it appears only there.</p></div>
+      <div class="note"><span class="num adjust">4</span><p><b>The <span class="mono">deploy/api</span> chip is gone.</b> kb entries have no field it could come from (title, description, tags, links, type only).</p></div>
+      <div class="note"><span class="num adjust">5</span><p><b>Tag icons come from your tag-images folder</b> (<span class="mono">~/.config/kb/images/&lt;tag&gt;.svg</span>), tinted in the tag's colour. A tag without an image is a grey pill. The icons here are stand-ins for your real logos.</p></div>
+      <div class="note"><span class="num adjust">7</span><p><b>Type colours follow your design</b>: commands green, cheat sheets mauve with a book, bookmarks blue with a bookmark, notes peach. kb today has cheats blue and bookmarks purple; this swaps them.</p></div>
+      <div class="note"><span class="num adjust">8</span><p><b>Your icons are Google's Material set; kb draws Lucide</b> (the set its UI toolkit ships). Each was swapped for its nearest twin, so shapes differ slightly.</p></div>
+      <div class="note"><span class="num adjust">9</span><p><b>Toast hint says ⌘V</b>, not ⌥V: paste on macOS is ⌘V.</p></div>
+      <div class="note"><span class="num ask">6</span><p><b>⌘2…⌘7 on each row</b> need a new feature: ⌘&lt;n&gt; runs row n's main action. Small to build, but new behaviour. Your call below.</p></div>
+    </div>
+  </div>
+
+  <div class="questions">
+    <h2>Your call</h2>
+    <div class="q">
+      <p><b>6 · Quick picks:</b> keep the ⌘1–⌘9 hints on rows (and build the shortcut)?</p>
+      <div class="opts options">
+        <div class="opt option" data-choice="quickpick-yes" onclick="toggleSelect(this)"><b>Yes, build it</b>⌘1…⌘9 run the first nine rows' main action, as drawn.</div>
+        <div class="opt option" data-choice="quickpick-no" onclick="toggleSelect(this)"><b>No, drop the hints</b>Rows end with their link chip; only the selected row shows ↵.</div>
+      </div>
+    </div>
+    <div class="q">
+      <p><b>Overall:</b> does this feel like the design you brought?</p>
+      <div class="opts options">
+        <div class="opt option" data-choice="overall-yes" onclick="toggleSelect(this)"><b>Yes</b>Apply the same approach to the other screens.</div>
+        <div class="opt option" data-choice="overall-tweak" onclick="toggleSelect(this)"><b>Almost</b>I'll say what to change in the terminal.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function show(id, btn) {
+    for (const v of document.querySelectorAll('.view')) v.classList.toggle('on', v.id === id)
+    for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b === btn)
+  }
+  lucide.createIcons()
+</script>
+
+<style>
+.kb .ev { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 0 40px; }
+.kb .ev .big { width: 56px; height: 56px; color: var(--faint); margin-bottom: 8px; } .kb .ev .big svg { width: 56px; height: 56px; stroke-width: 1.75; }
+.kb .ev .t { font-size: 15px; font-weight: 500; } .kb .ev .d { font-size: 13px; color: var(--muted); max-width: 460px; }
+.kb .bar { width: 260px; height: 4px; border-radius: 9999px; background: var(--selected); overflow: hidden; margin-top: 10px; } .kb .bar i { display: block; height: 100%; width: 57%; background: var(--blue); }
+.kb .dot.busy { background: var(--yellow); box-shadow: 0 0 6px rgba(238,212,159,.7); }
+.kb .sum { padding: 10px 16px 4px; font-size: 12px; color: var(--muted); }
+.states { display: flex; flex-direction: column; gap: 28px; } .states h2 { font-size: 16px; font-weight: 600; }
+</style>
+<script>
+(() => {
+  const original = document.querySelector('.kb')
+  const tile = (icon, bg, fg) => `<span class="tile" style="background:${bg};color:${fg}"><i data-lucide="${icon}"></i></span>`
+  const ev = (icon, color, title, text, extra = '') => `<div class="ev"><span class="big" style="color:${color}"><i data-lucide="${icon}"></i></span><div class="t">${title}</div><div class="d">${text}</div>${extra}</div>`
+  const keys = ks => ks.map(([l, k]) => `<span class="it">${l}<kbd>${k}</kbd></span>`).join('')
+  const make = (body, status, footKeys, listMode) => {
+    const kb = original.cloneNode(true)
+    kb.querySelectorAll('.marker, .toast').forEach(n => n.remove())
+    kb.querySelector('.hd').innerHTML = '<i class="glass" data-lucide="chevron-left"></i>'
+    const ls = kb.querySelector('.ls')
+    if (listMode) { ls.innerHTML = body } else { ls.outerHTML = body }
+    kb.querySelector('.ft .l').innerHTML = status
+    kb.querySelector('.ft .rt').innerHTML = keys(footKeys) + keys([['Actions', '⌘K']])
+    return kb
+  }
+  const ready = n => `<span class="dot"></span><span style="color:var(--muted)">Ready</span><span>•</span><span>${n} results</span>`
+  const row = (icon, bg, fg, path, msg, chip, sel) => `<div class="r${sel ? ' sel' : ''}">${tile(icon, bg, fg)}<span class="tx"><span class="tt mono">${path}</span><span class="ds">${msg}</span></span><span class="tr">${chip}</span></div>`
+  const OK = ['circle-check', 'rgba(166,218,149,.15)', 'var(--green)'], WARN = ['triangle-alert', 'rgba(238,212,159,.15)', 'var(--yellow)'], BAD = ['circle-x', 'rgba(237,135,150,.15)', 'var(--red)']
+  const report = `<div class="sum">42 entries from 8 files in 0.3 s · 2 failed · 1 with skipped entries</div>` +
+    row(...BAD, 'errors/broken.yml', 'Line 4: a flow sequence must be indented and closed with ]', '<span class="tp">failed</span>', true) +
+    row(...BAD, 'errors/list-type.yml', 'Type block "commands" is a list; it must be a map of keys to entries', '<span class="tp">failed</span>') +
+    row(...WARN, 'bookmarks/rust.yml', 'Skipped: bookmarks/not-a-map (not a map)', '<span class="tp">9 · 1 skipped</span>') +
+    row(...OK, 'commands/k8s.yml', 'Indexed', '<span class="tp">12</span>') +
+    row(...OK, 'cheats/kubernetes.yml', 'Indexed', '<span class="tp">8</span>')
+  const states = [
+    ['11 · Refreshing (⌘R)', make(ev('refresh-cw', 'var(--faint)', 'Refreshing the index…', '4 of 7 files · commands/k8s.yml', '<div class="bar"><i></i></div>'), '<span class="dot busy"></span><span style="color:var(--muted)">Refreshing…</span>', [['Stop', 'esc']])],
+    ['12 · Report (when it finishes): one row per file worth a look, failed first; ↵ goes back to the list', make(report, ready(42), [['Back', '↵']], true)],
+    ['13 · Stopped (esc while refreshing)', make(ev('circle-stop', 'var(--yellow)', 'Refresh stopped', 'The previous index is unchanged.'), ready(42), [['Retry', '↵']])],
+    ['14 · Failed', make(ev('circle-alert', 'var(--red)', 'Couldn’t refresh the index', 'The sources folder ~/.config/kodexb/sources does not exist. Check it in Configure.'), ready(42), [['Retry', '↵'], ['Configure', '⌘↵']])],
+  ]
+  const box = document.createElement('div'); box.className = 'states'
+  for (const [t, kb] of states) { box.insertAdjacentHTML('beforeend', `<h2>${t}</h2>`); box.append(kb) }
+  document.querySelector('.stage').replaceWith(box)
+  document.querySelectorAll('.questions').forEach(n => n.remove())
+  document.querySelector('h1').textContent = '11–14 · Refresh — built on 01-list v5 unchanged'
+  document.querySelector('.lead').innerHTML = 'Every panel is <b>01-list v5 byte-for-byte</b> (header, rows, chips, footer) plus a script. Nothing new is designed: running, stopped and failed use <b>03’s empty view</b> (large icon, title, sentence); the report uses <b>01’s rows</b>, one per file (tile: ✓ indexed, ⚠ skipped entries, ✕ failed). The header keeps only the back chevron, as on the detail screen. Keys follow the screen rule: running <b>Stop esc</b>; report <b>Back ↵</b>; stopped <b>Retry ↵</b>; failed <b>Retry ↵ · Configure ⌘↵</b>.'
+  lucide.createIcons()
+})()
+</script>
+
+<!-- ===== appended for 2YnZ: everything above is 11-14-refresh.html byte-for-byte ===== -->
+<style>
+/* Split: 04-entry-template's rules, copied as they are */
+.kb .body { flex: 1; min-height: 0; display: flex; }
+.kb .sl { width: 34%; flex: none; border-right: 1px solid var(--edge); padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.kb .pane { flex: 1; min-width: 0; padding: 18px 24px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.kb .ph { display: flex; align-items: flex-start; gap: 10px; min-height: 24px; } .kb .ph .ico { flex: none; display: flex; align-items: center; height: 24px; }
+.kb .ph .title { flex: 1; font: 600 14px/24px 'JetBrains Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb .quote { border-left: 3px solid var(--red); padding: 2px 0 2px 12px; font-size: 14px; line-height: 21px; color: var(--text); font-style: italic; }
+.kb .ft .file { font-family: 'JetBrains Mono', monospace; color: var(--muted); } .kb .ft .tile { width: 20px; height: 20px; } .kb .ft .tile svg { width: 13px; height: 13px; }
+.kb .ph .tile { width: 24px; height: 24px; } .kb .ph .tile svg { width: 15px; height: 15px; }
+/* NEW (approved shape from step A): excerpt, facts */
+.kb .xc { background: var(--mantle); border-radius: 10px; padding: 10px 0; font: 12px/20px 'JetBrains Mono', monospace; color: var(--muted); }
+.kb .xc div { padding: 0 14px; white-space: pre; } .kb .xc .n { color: var(--faint); display: inline-block; width: 22px; }
+.kb .xc .bad { background: rgba(237,135,150,.12); color: var(--text); box-shadow: inset 2px 0 0 var(--red); }
+.kb .facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; font-size: 12px; color: var(--muted); }
+.kb .facts .k { color: var(--faint); } .kb .facts .v { display: flex; flex-wrap: wrap; gap: 6px; } .kb .facts .m { font-family: 'JetBrains Mono', monospace; }
+/* NEW in this step: a yellow quote, a plain list */
+.kb .quote.warn { border-left-color: var(--yellow); }
+.kb .lst { font: 12px/20px 'JetBrains Mono', monospace; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.kb .lst span::before { content: '•'; color: var(--faint); margin-right: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, max-content); gap: 26px 18px; } .grid2 .z { zoom: 0.62; }
+.grid2 .cap { font-size: 13px; color: #a5adcb; margin-bottom: 8px; max-width: 700px; line-height: 1.5; } .grid2 .cap b { color: #cad3f5; }
+</style>
+<script>
+(() => {
+  const base = document.querySelector('.states .kb')
+  const tile = (icon, bg, fg) => `<span class="tile" style="background:${bg};color:${fg}"><i data-lucide="${icon}"></i></span>`
+  const OK = ['circle-check', 'rgba(166,218,149,.15)', 'var(--green)'], WARN = ['triangle-alert', 'rgba(238,212,159,.15)', 'var(--yellow)'], BAD = ['circle-x', 'rgba(237,135,150,.15)', 'var(--red)'], OFF = ['circle', 'rgba(110,115,141,.15)', 'var(--faint)']
+  const keys = ks => ks.map(([l, k]) => `<span class="it">${l}<kbd>${k}</kbd></span>`).join('')
+  const row = (t, path, msg, chip, sel) => `<div class="r${sel ? ' sel' : ''}">${tile(...t)}<span class="tx"><span class="tt mono">${path}</span><span class="ds">${msg}</span></span><span class="tr"><span class="tp">${chip}</span></span></div>`
+  const sec = l => `<div class="sum" style="padding:8px 14px 2px;color:var(--faint)">${l}</div>`
+  const R = [
+    [BAD, 'errors/broken.yml', 'Line 4: a flow sequence…', 'failed'],
+    [WARN, 'bookmarks/rust.yml', 'Skipped: not-a-map', '9'],
+    [OK, 'commands/k8s.yml', 'Indexed', '12'],
+    'Skills',
+    [BAD, 'skills', 'the output is not Skills JSON…', 'failed'],
+    [WARN, 'skills', 'grill-me: SKILL.md has no description', 'warning'],
+  ]
+  const rows = sel => { let i = -1; return sec('YAML') + R.map(r => typeof r === 'string' ? sec(r) : (i++, row(r[0], r[1], r[2], r[3], i === sel))).join('') }
+  const head = (t, path, chip, color) => `<div class="ph"><span class="ico">${tile(...t)}</span><span class="title">${path}</span><span class="tp" style="color:${color}">${chip}</span></div>`
+  const facts = fs => `<div class="facts">${fs.map(([k, v]) => `<span class="k">${k}</span><span class="v">${v}</span>`).join('')}</div>`
+  const pill = t => `<span class="tp">${t}</span>`
+  const full = p => `<span class="m">~/.config/kodexb/sources/${p}</span>`
+  const panes = [
+    ['<b>Failed file</b> (from step A): the error, the lines around it, where it is.',
+      0, BAD, 'errors/broken.yml',
+      head(BAD, 'errors/broken.yml', 'failed', 'var(--red)') +
+      `<div class="quote">A flow sequence must be closed with <b>]</b> before the next key.</div>
+       <div class="xc"><div><span class="n">2</span>commands:</div><div><span class="n">3</span>  k8s-pods:</div><div class="bad"><span class="n">4</span>    tags: [k8s, pods</div><div><span class="n">5</span>    cmd: kubectl get pods -A</div><div><span class="n">6</span>  k8s-logs:</div></div>` +
+      facts([['Location', pill('line 4:11')], ['File', full('errors/broken.yml')], ['Index', 'its previous entries are kept']])],
+    ['<b>Skipped entries</b>: what indexed, then each skipped key and why (no excerpt: the engine records no line for a skipped entry).',
+      1, WARN, 'bookmarks/rust.yml',
+      head(WARN, 'bookmarks/rust.yml', '9 · 1 skipped', 'var(--yellow)') +
+      `<div class="quote warn">1 entry was skipped: only a map of fields becomes an entry.</div>
+       <div class="lst"><span>bookmarks / not-a-map — a string, not a map</span></div>` +
+      facts([['Entries', pill('bookmarks 9')], ['File', full('bookmarks/rust.yml')]])],
+    ['<b>Indexed file</b>: nothing went wrong, so just the facts — entries by type and where the file is.',
+      2, OK, 'commands/k8s.yml',
+      head(OK, 'commands/k8s.yml', '12', 'var(--muted)') +
+      facts([['Entries', pill('commands 8') + pill('cheats 3') + pill('tasks 1')], ['File', full('commands/k8s.yml')]])],
+    ['<b>Skills, failed</b>: the reason, the command kb ran, and what it said on stderr.',
+      3, BAD, 'skills',
+      head(BAD, 'skills', 'failed', 'var(--red)') +
+      `<div class="quote">The output is not Skills JSON: EOF while parsing an object at line 2925 column 21.</div>
+       <div class="xc"><div>/opt/homebrew/bin/skills ls --global --agent universal --json</div></div>` +
+      facts([['Exit', pill('0')], ['Stderr', '<span class="m">(nothing)</span>'], ['Index', 'the previous skills are kept']])],
+    ['<b>Skills warning</b>: the full warning (rows cut it short) and the SKILL.md it is about.',
+      4, WARN, 'skills',
+      head(WARN, 'skills', 'warning', 'var(--yellow)') +
+      `<div class="quote warn">grill-me: SKILL.md has no description; kb shows its name only.</div>` +
+      facts([['File', '<span class="m">~/.agents/skills/grill-me/SKILL.md</span>']])],
+  ]
+  const panel = (sel, t, path, body) => {
+    const kb = base.cloneNode(true)
+    kb.querySelector('.hd').innerHTML = '<i class="glass" data-lucide="chevron-left"></i>'
+    kb.querySelector('.ev').outerHTML = `<div class="body"><div class="sl">${rows(sel)}</div><div class="pane">${body}</div></div>`
+    kb.querySelector('.ft').outerHTML = `<div class="ft"><div class="l">${tile(...t)}<span class="file">${path}</span><kbd>⌥⌘C</kbd></div><div class="rt">${keys([['Details', '↵'], ['Open', '⌘↵'], ['Actions', '⌘K']])}</div></div>`
+    return kb
+  }
+  const box = document.createElement('div'); box.className = 'grid2'
+  for (const [cap, sel, t, path, body] of panes) {
+    const c = document.createElement('div'); c.innerHTML = `<div class="cap">${cap}</div>`
+    const z = document.createElement('div'); z.className = 'z'; z.append(panel(sel, t, path, body)); c.append(z); box.append(c)
+  }
+  document.querySelector('.states').replaceWith(box)
+  document.querySelector('h1').textContent = '2YnZ · Refresh report (A, like the list): what the pane shows for each row'
+  document.querySelector('.lead').innerHTML = 'All panels: <b>11–14-refresh byte-for-byte</b> + <b>04’s split</b>. Each kind of row gets the pane below. <b>New in this step</b>: the <b>yellow quote</b> (the red-bar quote in yellow, for skipped entries and warnings), a plain <b>list</b> of skipped keys, and the facts as two columns. The footer shows the selected file and ⌥⌘C (Copy Path), as on the list. <b>Ok as is, or what would you add or drop?</b>'
+  lucide.createIcons()
+})()
+</script>
+</body>
+</html>
