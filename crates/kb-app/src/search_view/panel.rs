@@ -14,13 +14,14 @@ use gpui_kit::{
 };
 use kb_domain::search::tags_for_types;
 
-use super::{Overlay, Screen, SearchView};
+use super::SearchView;
 use crate::actions::{
     Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, report_page, report_search_page,
     root_page, search_page, theme_page,
 };
 use crate::catalog::Screen as CatalogScreen;
 use crate::keys::Back;
+use crate::navigator::{Overlay, Place};
 use crate::ui::action_panel::{OnRow, matches, panel};
 use crate::ui::design::{design, pt};
 
@@ -31,13 +32,13 @@ impl SearchView {
     /// Whether the action panel is open.
     #[must_use]
     pub fn is_actions_open(&self) -> bool {
-        matches!(self.overlay, Overlay::Actions(_))
+        matches!(self.navigator.overlay(), Overlay::Actions(_))
     }
 
     /// Whether the filter is open.
     #[must_use]
     pub fn is_filter_open(&self) -> bool {
-        self.overlay == Overlay::Filter
+        self.navigator.overlay() == Overlay::Filter
     }
 
     /// The open page's visible labels by section, for tests.
@@ -77,15 +78,15 @@ impl SearchView {
     /// The open overlay's page.
     pub(super) fn current_page(&self, cx: &App) -> Page {
         let list = self.list.read(cx).delegate();
-        let entry = match self.screen {
-            Screen::Rebuild(_) => None,
-            _ => list.selected_entry(),
+        let entry = match self.navigator.top() {
+            Place::Refresh | Place::ReportDetail => None,
+            Place::List | Place::Detail => list.selected_entry(),
         };
         let screen = self.key_screen(cx);
         let query_empty = self.panel_query.read(cx).value().is_empty();
         if let Some(sync) = self.report(cx) {
             let row = sync.read(cx).selected_row(cx);
-            return match self.overlay {
+            return match self.navigator.overlay() {
                 Overlay::Actions(None) if query_empty => report_page(&self.catalog, screen, row),
                 Overlay::Actions(None) => report_search_page(&self.catalog, screen, row, &self.themes),
                 Overlay::Actions(Some(Submenu::More)) => more_page(&self.catalog, None),
@@ -94,7 +95,7 @@ impl SearchView {
                 _ => Page::default(),
             };
         }
-        match self.overlay {
+        match self.navigator.overlay() {
             Overlay::None => Page::default(),
             Overlay::Actions(None) if query_empty => root_page(&self.catalog, screen, entry),
             Overlay::Actions(None) => search_page(&self.catalog, screen, entry, &self.themes),
@@ -118,7 +119,7 @@ impl SearchView {
     /// Shows `overlay` with an empty search and hands it the keyboard; `Overlay::None` hands the
     /// keyboard back to the screen.
     pub(super) fn show_overlay(&mut self, overlay: Overlay, window: &mut Window, cx: &mut Context<Self>) {
-        self.overlay = overlay;
+        self.navigator.set_overlay(overlay);
         self.panel_selected = 0;
         if matches!(overlay, Overlay::Actions(_)) {
             self.reload_themes();
@@ -312,7 +313,7 @@ impl SearchView {
         // own deferred focus, so it must track where the keys belong: the search field on a page
         // that has one (the root, the filter), the panel itself on a submenu, which has none.
         // Tracking the panel everywhere left the root's search field without the keyboard.
-        let focus = if matches!(self.overlay, Overlay::Actions(Some(_))) {
+        let focus = if matches!(self.navigator.overlay(), Overlay::Actions(Some(_))) {
             self.panel_focus.clone()
         } else {
             self.panel_query.read(cx).focus_handle(cx)

@@ -25,12 +25,13 @@ use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen, fill};
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
-    Back, CONTEXT, CopyError, CopyLocation, CopyPath, DETAIL_CONTEXT, FirstRow, HideDetails, LastRow, NextRow,
-    OpenActions, OpenDetail, OpenFilter, OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, PreviousRow,
-    Quit, REFRESH_CONTEXT, Rebuild, RevealFile, RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6,
-    RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter, ScrollNotesDown,
-    ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
+    Back, CopyError, CopyLocation, CopyPath, FirstRow, HideDetails, LastRow, NextRow, OpenActions, OpenDetail,
+    OpenFilter, OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, PreviousRow, Quit, Rebuild, RevealFile,
+    RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary,
+    ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize,
+    caret_at_end,
 };
+use crate::navigator::{BackName, Navigator, Overlay, Place};
 use crate::sync_view::{Move, Phase, ReportLevel, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
@@ -39,30 +40,8 @@ use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
 use crate::window_size::{WindowSize, compact};
 
-/// What fills the panel.
-#[derive(Debug)]
-enum Screen {
-    /// The list, with the split pane when shown.
-    Search,
-    /// One entry's notes, full width.
-    Detail,
-    /// A rebuild and its report.
-    Rebuild(Entity<SyncView>),
-}
-
 fn notes_line_step() -> Pixels {
     pixels(design().components.detail.scroll_step)
-}
-
-/// What is open over the screen: one overlay at a time.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Overlay {
-    /// Nothing.
-    None,
-    /// The action panel: the root, or a submenu.
-    Actions(Option<crate::actions::Submenu>),
-    /// The filter.
-    Filter,
 }
 
 /// The panel's root view.
@@ -79,15 +58,16 @@ pub struct SearchView {
     focus: FocusHandle,
     /// Focus for the panel itself, so its keys reach it on the submenus (no search field).
     panel_focus: FocusHandle,
-    screen: Screen,
+    /// Where the user is: the places and the overlay (navigation spec D2).
+    navigator: Navigator,
+    /// The refresh while `Place::Refresh` is on the stack.
+    sync: Option<Entity<SyncView>>,
     show_details: bool,
     window_size: WindowSize,
     /// The detail screen's notes, scrolled by the keyboard.
     detail_scroll: ScrollHandle,
     /// The action panel's rows, scrolled as the selection moves.
     panel_scroll: ScrollHandle,
-    /// The overlay open over the screen, if any.
-    overlay: Overlay,
     /// The last notice the view showed (D17).
     last_notice: Option<String>,
     /// The theme files, as Theme… lists them (read when the action panel opens).
@@ -102,7 +82,7 @@ pub struct SearchView {
 impl std::fmt::Debug for SearchView {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SearchView")
-            .field("screen", &self.screen)
+            .field("navigator", &self.navigator)
             .field("show_details", &self.show_details)
             .finish_non_exhaustive()
     }
@@ -156,13 +136,13 @@ impl SearchView {
             panel_selected: 0,
             focus: cx.focus_handle(),
             panel_focus: cx.focus_handle(),
-            screen: Screen::Search,
+            navigator: Navigator::default(),
+            sync: None,
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
             window_size: WindowSize::default(),
             detail_scroll: ScrollHandle::new(),
             panel_scroll: ScrollHandle::new(),
-            overlay: Overlay::None,
             last_notice: None,
             themes: Vec::new(),
             theme_id,
@@ -186,7 +166,7 @@ impl SearchView {
     /// Whether the detail screen is showing.
     #[must_use]
     pub fn is_showing_detail(&self) -> bool {
-        matches!(self.screen, Screen::Detail)
+        self.navigator.top() == Place::Detail
     }
 
     /// Whether the list shows the split pane with the selected entry's notes.
@@ -221,7 +201,57 @@ impl SearchView {
     /// Whether the rebuild screen is showing.
     #[must_use]
     pub fn is_rebuilding(&self) -> bool {
-        matches!(self.screen, Screen::Rebuild(_))
+        self.navigator.contains(Place::Refresh)
+    }
+
+    /// The name `place` shows when a place opened from it says where back goes (D2, D5): the list is its query, or
+    /// "Search" without one; an entry is its title; a refresh is "Refresh". The one function that names a place.
+    fn place_name(&self, place: Place, cx: &App) -> BackName {
+        let m = &self.catalog.messages;
+        let plain = |text: &str| BackName {
+            text: text.to_owned(),
+            mono: false,
+        };
+        match place {
+            Place::List => {
+                let query = self.query_input.read(cx).value().to_string();
+                if query.is_empty() {
+                    plain(&m.back_search)
+                } else {
+                    BackName {
+                        text: query,
+                        mono: true,
+                    }
+                }
+            }
+            Place::Detail => self
+                .list
+                .read(cx)
+                .delegate()
+                .selected_entry()
+                .map_or_else(|| plain(&m.back_search), |entry| plain(&entry.title)),
+            Place::Refresh | Place::ReportDetail => plain(&m.back_refresh),
+        }
+    }
+
+    /// Opens `place` on top of the current one: it remembers where it came from, starts scrolled to the top, and
+    /// takes the keyboard.
+    fn push(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
+        let back = self.place_name(self.navigator.top(), cx);
+        self.navigator.push(place, back);
+        self.detail_scroll.set_offset(gpui_kit::Point::default());
+        self.focus_screen(window, cx);
+        cx.notify();
+    }
+
+    /// Back one place, to the one underneath as it was left (D3). The refresh goes with its place.
+    fn pop(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.navigator.pop();
+        if !self.navigator.contains(Place::Refresh) {
+            self.sync = None;
+        }
+        self.focus_screen(window, cx);
+        cx.notify();
     }
 
     /// Moves the list selection by `delta` rows, clamped to the results, and scrolls to it.
@@ -248,10 +278,7 @@ impl SearchView {
         if self.list.read(cx).delegate().selected_entry().is_none() {
             return;
         }
-        self.screen = Screen::Detail;
-        self.detail_scroll.set_offset(gpui_kit::Point::default());
-        self.focus.focus(window, cx);
-        cx.notify();
+        self.push(Place::Detail, window, cx);
     }
 
     fn on_query_input_event(
@@ -301,37 +328,28 @@ impl SearchView {
 
     /// The screen whose keys apply now (8g adds the empty and refresh screens).
     fn key_screen(&self, cx: &App) -> KeyScreen {
-        // An open filter or Links… page has keys of its own (catalog `screens.filter`, `.links`).
-        match self.overlay {
-            Overlay::Filter => return KeyScreen::Filter,
-            Overlay::Actions(Some(crate::actions::Submenu::Links)) => return KeyScreen::Links,
-            _ => {}
-        }
-        match &self.screen {
-            Screen::Detail => KeyScreen::Detail,
-            Screen::Rebuild(sync) => match sync.read(cx).phase() {
-                Phase::Running => KeyScreen::Refreshing,
-                Phase::Report => {
-                    if matches!(sync.read(cx).level(), ReportLevel::Detail { .. }) {
-                        KeyScreen::ReportDetail
-                    } else {
-                        KeyScreen::Report
-                    }
-                }
-                Phase::Stopped => KeyScreen::Stopped,
-                Phase::Failed => KeyScreen::Failed,
-            },
-            Screen::Search => {
-                let list = self.list.read(cx).delegate();
-                if !list.has_index() {
-                    KeyScreen::NoIndex
-                } else if list.entries().is_empty() && self.query_input.read(cx).value() == list.query() {
-                    KeyScreen::Empty
-                } else {
-                    KeyScreen::List
-                }
+        let list = {
+            let list = self.list.read(cx).delegate();
+            if !list.has_index() {
+                KeyScreen::NoIndex
+            } else if list.entries().is_empty() && self.query_input.read(cx).value() == list.query() {
+                KeyScreen::Empty
+            } else {
+                KeyScreen::List
             }
+        };
+        let phase = self.sync.as_ref().map(|sync| sync.read(cx).phase());
+        let screen = self.navigator.key_screen(list, phase);
+        // Until Task 3: the report's detail is a level of `SyncView`, not yet a place.
+        if screen == KeyScreen::Report
+            && self
+                .sync
+                .as_ref()
+                .is_some_and(|s| matches!(s.read(cx).level(), ReportLevel::Detail { .. }))
+        {
+            return KeyScreen::ReportDetail;
         }
+        screen
     }
 
     /// The current screen's keys, resolved for the selected entry.
@@ -345,7 +363,7 @@ impl SearchView {
     fn ladder(&mut self, keys: &str, window: &mut Window, cx: &mut Context<Self>) {
         // While the panel is open it owns ↵ (its own `Confirm` action), so the screen ladder must
         // not also run and switch the screen under it.
-        if self.overlay != Overlay::None {
+        if !self.navigator.screen_has_keys() {
             return;
         }
         let action = self
@@ -360,10 +378,10 @@ impl SearchView {
 
     /// The refresh screen's view while it shows a report, else `None`.
     fn report(&self, cx: &App) -> Option<Entity<SyncView>> {
-        match &self.screen {
-            Screen::Rebuild(sync) if sync.read(cx).phase() == Phase::Report => Some(sync.clone()),
-            _ => None,
-        }
+        self.sync
+            .clone()
+            .filter(|_| matches!(self.navigator.top(), Place::Refresh | Place::ReportDetail))
+            .filter(|sync| sync.read(cx).phase() == Phase::Report)
     }
 
     /// The selected report row's path, for tests.
@@ -451,17 +469,17 @@ impl SearchView {
             ("edit", _) => self.open_source_file(&OpenSourceFile, window, cx),
             ("copy-path", _) => self.copy_path(&CopyPath, window, cx),
             ("stop", _) => {
-                if let Screen::Rebuild(sync) = &self.screen {
+                if let Some(sync) = &self.sync {
                     sync.read(cx).cancel();
                 }
             }
             ("back", _) => self.back(&Back, window, cx),
             ("retry", _) => {
                 // A finished or failed refresh lets `refresh` start a new one, of the same sources.
-                let selection = match &self.screen {
-                    Screen::Rebuild(sync) => sync.read(cx).selection(),
-                    _ => Selection::All,
-                };
+                let selection = self
+                    .sync
+                    .as_ref()
+                    .map_or(Selection::All, |sync| sync.read(cx).selection());
                 self.refresh(selection, window, cx);
             }
             _ => {}
@@ -517,7 +535,7 @@ impl SearchView {
 
     /// ⌘n: on the detail screen opens link n − 1 (D20); on the list selects row n − 1 and runs its primary action (R7).
     fn run_row(&mut self, n: usize, window: &mut Window, cx: &mut Context<Self>) {
-        if matches!(self.screen, Screen::Detail) {
+        if self.navigator.top() == Place::Detail {
             let url = self
                 .list
                 .read(cx)
@@ -530,7 +548,7 @@ impl SearchView {
             }
             return;
         }
-        if !matches!(self.screen, Screen::Search) {
+        if self.navigator.top() != Place::List {
             return;
         }
         let exists = self.list.read(cx).delegate().entries().len() >= n;
@@ -566,9 +584,8 @@ impl SearchView {
             sync.update(cx, |s, cx| s.go(Move::Pane, cx));
             return;
         }
-        match self.screen {
-            Screen::Detail => {}
-            _ => self.show_details = true,
+        if self.navigator.top() != Place::Detail {
+            self.show_details = true;
         }
         cx.notify();
     }
@@ -578,9 +595,8 @@ impl SearchView {
             sync.update(cx, |s, cx| s.go(Move::NoPane, cx));
             return;
         }
-        match self.screen {
-            Screen::Detail => {}
-            _ => self.show_details = false,
+        if self.navigator.top() != Place::Detail {
+            self.show_details = false;
         }
         cx.notify();
     }
@@ -689,7 +705,7 @@ impl SearchView {
 
     /// Refreshes `selection`'s sources on the refresh screen, unless a refresh is running.
     fn refresh(&mut self, selection: Selection, window: &mut Window, cx: &mut Context<Self>) {
-        if matches!(&self.screen, Screen::Rebuild(sync) if sync.read(cx).is_running()) {
+        if self.sync.as_ref().is_some_and(|sync| sync.read(cx).is_running()) {
             return;
         }
         let job = SyncJob {
@@ -711,29 +727,34 @@ impl SearchView {
             }
         });
         self.subscriptions.push(subscription);
-        self.screen = Screen::Rebuild(sync);
-        self.focus.focus(window, cx);
-        cx.notify();
+        self.sync = Some(sync);
+        // A rerun replaces the refresh in place: from its detail, back to the report first; nothing new is pushed.
+        if self.navigator.top() == Place::ReportDetail {
+            self.navigator.pop();
+        }
+        if self.navigator.top() == Place::Refresh {
+            self.focus_screen(window, cx);
+            cx.notify();
+        } else {
+            self.push(Place::Refresh, window, cx);
+        }
     }
 
     /// The sources of the refresh on screen, for tests.
     #[must_use]
     pub fn refresh_selection(&self, cx: &App) -> Option<Selection> {
-        match &self.screen {
-            Screen::Rebuild(sync) => Some(sync.read(cx).selection()),
-            _ => None,
-        }
+        self.sync.as_ref().map(|sync| sync.read(cx).selection())
     }
 
     fn back(&mut self, _: &Back, window: &mut Window, cx: &mut Context<Self>) {
-        // Esc clears the panel's search, then leaves a submenu, then closes the panel (Raycast).
-        if self.overlay != Overlay::None {
+        // 1. An overlay: clear its search, then leave the submenu, then close it (Raycast).
+        if !self.navigator.screen_has_keys() {
             if !self.panel_query.read(cx).value().is_empty() {
                 return self.set_panel_query("", window, cx);
             }
             // Leaving Theme… without ↵ restores the theme it opened on.
             self.cancel_theme_preview(cx);
-            let next = match self.overlay {
+            let next = match self.navigator.overlay() {
                 Overlay::Actions(Some(crate::actions::Submenu::Refresh | crate::actions::Submenu::Theme)) => {
                     Overlay::Actions(Some(crate::actions::Submenu::More))
                 }
@@ -742,43 +763,32 @@ impl SearchView {
             };
             return self.show_overlay(next, window, cx);
         }
-        let rebuild = match &self.screen {
-            Screen::Rebuild(sync) => Some(sync.clone()),
-            _ => None,
-        };
-        if let Some(sync) = rebuild {
+        // 2. A running refresh: Esc stops it.
+        if let Some(sync) = self.sync.clone().filter(|_| self.navigator.top() == Place::Refresh) {
             if sync.read(cx).is_running() {
                 sync.read(cx).cancel();
                 cx.notify();
                 return;
             }
+            // Until Task 3: the report's detail is a level of `SyncView`.
             if sync.read(cx).phase() == Phase::Report && sync.update(cx, SyncView::back) {
                 return;
             }
-            self.screen = Screen::Search;
-            self.query_input.update(cx, |input, cx| input.focus(window, cx));
+        }
+        // 3. The list: clear the query, then hide the panel.
+        if self.navigator.top() == Place::List {
+            if self.query_input.read(cx).value().is_empty() {
+                self.cancel_theme_preview(cx);
+                cx.hide();
+            } else {
+                self.query_input.update(cx, |input, cx| input.set_value("", window, cx));
+                self.search("", window, cx);
+            }
             cx.notify();
             return;
         }
-        match &self.screen {
-            Screen::Search => {
-                if self.query_input.read(cx).value().is_empty() {
-                    self.cancel_theme_preview(cx);
-                    cx.hide();
-                } else {
-                    self.query_input.update(cx, |input, cx| {
-                        input.set_value("", window, cx);
-                    });
-                    self.search("", window, cx);
-                }
-            }
-            Screen::Detail => {
-                self.screen = Screen::Search;
-                self.query_input.update(cx, |input, cx| input.focus(window, cx));
-            }
-            Screen::Rebuild(_) => {}
-        }
-        cx.notify();
+        // 4. Anything else: back one place.
+        self.pop(window, cx);
     }
 
     fn copy_location(&mut self, _: &CopyLocation, window: &mut Window, cx: &mut Context<Self>) {
@@ -794,7 +804,7 @@ impl SearchView {
     }
 
     fn report_step(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
-        if self.overlay == Overlay::None
+        if self.navigator.screen_has_keys()
             && let Some(sync) = self.report(cx)
         {
             sync.update(cx, |s, cx| s.move_selection(delta, window, cx));
@@ -816,9 +826,10 @@ impl SearchView {
 
     /// Hands the keyboard to the current screen: the query field in the list, the panel elsewhere.
     fn focus_screen(&self, window: &mut Window, cx: &mut Context<Self>) {
-        match self.screen {
-            Screen::Search => self.query_input.update(cx, |input, cx| input.focus(window, cx)),
-            _ => self.focus.focus(window, cx),
+        if self.navigator.top() == Place::List {
+            self.query_input.update(cx, |input, cx| input.focus(window, cx));
+        } else {
+            self.focus.focus(window, cx);
         }
     }
 
@@ -891,7 +902,8 @@ impl SearchView {
             },
             cx,
         );
-        self.screen = Screen::Search;
+        self.navigator.pop_to_list();
+        self.sync = None;
         self.query_input.update(cx, |input, cx| input.focus(window, cx));
         cx.notify();
     }
@@ -911,9 +923,12 @@ impl SearchView {
                 .py(pt(tokens.spacing.list.pad - tokens.spacing.list.gap / 2.))
                 .into_any_element()
         };
-        match &self.screen {
-            Screen::Rebuild(sync) => sync.clone().into_any_element(),
-            Screen::Detail => selected.map_or_else(
+        match self.navigator.top() {
+            Place::Refresh | Place::ReportDetail => self
+                .sync
+                .clone()
+                .map_or_else(|| div().into_any_element(), IntoElement::into_any_element),
+            Place::Detail => selected.map_or_else(
                 || div().into_any_element(),
                 |entry| {
                     self.entry_view(entry, Layout::Detail, window, cx)
@@ -921,7 +936,7 @@ impl SearchView {
                         .into_any_element()
                 },
             ),
-            Screen::Search => match selected.filter(|_| self.show_details) {
+            Place::List => match selected.filter(|_| self.show_details) {
                 Some(entry) => h_flex()
                     .size_full()
                     .child(
@@ -952,17 +967,11 @@ impl Render for SearchView {
         let tokens = design();
         let selected = self.list.read(cx).delegate().selected_entry().cloned();
         // Rows show their titles alone while the split pane is open beside them.
-        let compact = matches!(self.screen, Screen::Search) && self.show_details && selected.is_some();
+        let compact = self.navigator.top() == Place::List && self.show_details && selected.is_some();
         if self.list.read(cx).delegate().is_compact() != compact {
             self.list.update(cx, |list, _| list.delegate_mut().set_compact(compact));
         }
-        let context = if self.is_showing_detail() {
-            format!("{CONTEXT} {DETAIL_CONTEXT}")
-        } else if self.is_rebuilding() {
-            format!("{CONTEXT} {REFRESH_CONTEXT}")
-        } else {
-            CONTEXT.to_owned()
-        };
+        let context = self.navigator.key_context();
         v_flex()
             .track_focus(&self.focus)
             .key_context(context.as_str())

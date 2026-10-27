@@ -5,9 +5,10 @@ use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::{AnyElement, App, Context, IntoElement, ParentElement as _, SharedString, Styled as _, Window};
 use kb_domain::entry::Entry;
 
+use super::SearchView;
 use super::header::plain_button;
-use super::{Screen, SearchView};
 use crate::catalog::{KeyItem, fill};
+use crate::navigator::Place;
 use crate::ui::design::design;
 use crate::ui::footer::{Dot, entry_status, footer, key_item, status};
 use crate::ui::keycap::caps;
@@ -16,7 +17,7 @@ use crate::ui::tile::{TileSize, tile};
 impl SearchView {
     /// Whether the footer names the entry rather than the index: a pane or the detail screen.
     fn footer_names_entry(&self, selected: Option<&Entry>) -> bool {
-        selected.is_some() && (self.is_showing_detail() || (matches!(self.screen, Screen::Search) && self.show_details))
+        selected.is_some() && (self.is_showing_detail() || (self.navigator.top() == Place::List && self.show_details))
     }
 
     /// The status line's text, for tests: "Ready • 8 results".
@@ -28,7 +29,7 @@ impl SearchView {
 
     fn status_parts(&self, cx: &App) -> (String, Option<String>) {
         let messages = &self.catalog.messages;
-        if let Screen::Rebuild(sync) = &self.screen
+        if let Some(sync) = &self.sync
             && sync.read(cx).is_running()
         {
             return (messages.refreshing_status.clone(), None);
@@ -114,7 +115,7 @@ impl SearchView {
             .into_any_element()
         } else {
             let (word, count) = self.status_parts(cx);
-            let dot = if matches!(&self.screen, Screen::Rebuild(sync) if sync.read(cx).is_running()) {
+            let dot = if self.sync.as_ref().is_some_and(|sync| sync.read(cx).is_running()) {
                 Dot::Busy
             } else if self.list.read(cx).delegate().has_index() {
                 Dot::Ready

@@ -12,6 +12,7 @@ use crate::keys::{Back, HideDetails, ShowDetails};
 use crate::ui::header::{filter_pill, header, lead_icon, query_box};
 use crate::ui::keycap::caps;
 
+use crate::navigator::Place;
 /// What the header shows on the current screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HeaderParts {
@@ -36,7 +37,7 @@ impl SearchView {
     /// What the header shows on the current screen.
     #[must_use]
     pub fn header_parts(&self) -> HeaderParts {
-        let list = !self.is_showing_detail() && !self.is_rebuilding();
+        let list = self.navigator.top() == Place::List;
         HeaderParts {
             back: !list,
             query: list,

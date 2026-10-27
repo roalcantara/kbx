@@ -254,6 +254,10 @@ pub struct Messages {
     pub theme_weak: String,
     pub open_missing: String,
     pub editor_failed: String,
+    /// The list's name after ‹ when it has no query.
+    pub back_search: String,
+    /// A refresh's name after ‹.
+    pub back_refresh: String,
 }
 /// The catalog.
 #[derive(Debug, Clone, PartialEq, Deserialize)]

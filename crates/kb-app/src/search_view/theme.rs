@@ -55,7 +55,7 @@ impl SearchView {
 
     /// Previews the theme under the selection, while Theme… is open; a broken theme is skipped.
     pub(super) fn preview_selected_theme(&mut self, cx: &mut Context<Self>) {
-        if self.overlay != Overlay::Actions(Some(Submenu::Theme)) {
+        if self.navigator.overlay() != Overlay::Actions(Some(Submenu::Theme)) {
             return;
         }
         let page = self.current_page(cx);

@@ -252,3 +252,7 @@ theme_chosen = "Theme: {name}"
 theme_weak = "{name}: {failure}"
 open_missing = "Couldn’t open {file}: not found."
 editor_failed = "Couldn’t run {program}: {error}. Opened it with its default app."
+
+# What ‹ says it returns to (navigation spec D5): the list without a query, and a refresh.
+back_search = "Search"
+back_refresh = "Refresh"
