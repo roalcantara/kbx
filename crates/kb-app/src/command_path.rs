@@ -24,6 +24,16 @@ pub fn skills_command(setting: Option<&str>, path_var: Option<&OsStr>, home: &Pa
     }
 }
 
+/// The program `name` names: a path as is (`~/` expanded); a bare name where `PATH` or the install
+/// folders have it, else the name itself (spawning it then fails and says why).
+#[must_use]
+pub fn find_command(name: &str, path_var: Option<&OsStr>, home: &Path) -> PathBuf {
+    if name.contains('/') {
+        return expand_home(name, home);
+    }
+    find_executable(name, &search_dirs(path_var, home)).unwrap_or_else(|| PathBuf::from(name))
+}
+
 /// `PATH`'s folders, then [`INSTALL_DIRS`].
 fn search_dirs(path_var: Option<&OsStr>, home: &Path) -> Vec<PathBuf> {
     path_var
@@ -89,6 +99,21 @@ mod tests {
         assert_eq!(
             skills_command(Some("kb-test-no-such-command"), None, home),
             Some(PathBuf::from("kb-test-no-such-command"))
+        );
+    }
+
+    #[test]
+    fn finds_a_command_by_name_or_keeps_what_it_was_given() {
+        let home = tempfile::tempdir().unwrap();
+        let my_editor = executable(&home.path().join(".local/bin"), "my-editor");
+        assert_eq!(find_command("my-editor", None, home.path()), my_editor);
+        assert_eq!(
+            find_command("~/bin/code", None, home.path()),
+            home.path().join("bin/code")
+        );
+        assert_eq!(
+            find_command("kb-test-no-such", None, home.path()),
+            PathBuf::from("kb-test-no-such")
         );
     }
 }
