@@ -23,7 +23,8 @@ same reason.
 
 ## 1. Verdict
 
-kb is close: 21 findings, **0 Blockers, 6 Majors, 12 Minors (2 of them Suspected) and 3 Polish**; finding an entry,
+kb is close: 22 findings, **0 Blockers, 6 Majors, 13 Minors (2 of them Suspected) and 3 Polish** (A22 added by the
+owner's review); finding an entry,
 using it and refreshing all work, and the six Majors are all small (effort S). Most findings come from two causes: a
 **selection index changed without scrolling to it or resetting it** (A01, A02, A09, A17), and **handlers on
 `SearchView` that act whatever the screen or overlay**, so a key bound in the `Search` context reaches a screen or a
@@ -214,7 +215,7 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Suggested fix    | Give the action panel its own footer keys (for example the root's _Run ↵_ or the selected row's label), as `screens.filter` and `screens.links` do, and decide whether ⌘K inside a submenu closes or goes to the root                                                                                                                               |
 | Effort           | S                                                                                                                                                                                                                                                                                                                                                   |
 
-### A11. Leaving Theme… with ⌘K, ⌘P or a click outside keeps the previewed theme on screen without saving it
+### A11. Leaving Theme… with ⌘K, ⌘P or a click outside keeps the previewed theme on screen without saving it¬
 
 | Field            | Content                                                                                                                                                                                                                                                                             |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -364,8 +365,25 @@ Audited at `main` f5ace5c. `file:line` cites `main`; tests are in `crates/kb-app
 | Expected         | Design Guides, "Interaction states": hover gives subtle pointer feedback; the list's rows do (`ui/row.rs:140`) |
 | Actual           | Panel rows are clickable (`on_click`) but draw only rest and selected                                          |
 | Evidence         | `ui/action_panel.rs` `row()` (no `.hover`)                                                                     |
-| Suggested fix    | Add `.hover(                                                                                                   | s | s.bg(c.hover))``to non-selected rows, as``row.rs` does |
+| Suggested fix    | Add `.hover(\|s\| s.bg(c.hover))` to non-selected rows, as `row.rs` does                                       |
 | Effort           | S                                                                                                              |
+
+### A22. A pushed screen does not say where the user is, or where back goes
+
+Added 2026-10-27 by the owner's review of the split and detail screens; outside this audit's brief (no screenshots, no
+Raycast), so the run could not see it.
+
+| Field            | Content                                                                                                                                                                                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Severity         | Minor                                                                                                                                                                                                                                                                                             |
+| Status           | Confirmed (owner's screenshots, code read)                                                                                                                                                                                                                                                        |
+| Screen and state | Detail (every entry type), the report's detail; the report itself                                                                                                                                                                                                                                 |
+| Steps            | ⌥K, type `oma`, →, then ↵                                                                                                                                                                                                                                                                         |
+| Expected         | ui-ux-pro-max `nav-state-active` (the current location is shown) and `back-behavior` (back is predictable); the action panel's own submenus already name their place with a crumb (`‹ More`). A pushed screen names itself next to `‹`, and the footer's left side names where it was opened from |
+| Actual           | The header holds a bare `‹`; the footer shows the same source file on the split and the detail, so nothing ties the detail to the row it came from or says what back returns to                                                                                                                   |
+| Evidence         | `search_view/header.rs` (magnifier on the list, chevron alone elsewhere); `ui/header.rs` `lead_icon`; "where am I" is split across `Screen`, `SyncView`'s `ReportLevel`, `Overlay` and `KeyScreen` (`search_view.rs` `key_screen`)                                                                |
+| Suggested fix    | One navigation model: a stack of places, each giving its title, origin and key screen; one header and one footer draw the top place (`‹` + title, origin bottom left); Esc, `‹` and ← pop one place. Brainstorm the header's shape with the owner first                                           |
+| Effort           | L                                                                                                                                                                                                                                                                                                 |
 
 ## 4. What already works well
 
@@ -407,7 +425,9 @@ Fix every Major (batches 1–3) and the MVP's keyboard promises hold. Batches 4�
    screen and the overlay before acting, as `ladder` and `report_step` already do: `open_filter` only on the list;
    `rebuild` through `run_action("refresh")`; `run_row`, `show_details`, `hide_details` not under an overlay and not
    on refresh screens; `copy_path` / `open_source_file` on `Screen::Rebuild(_)` rather than the report phase; the
-   report-only keys bound in `REFRESH_CONTEXT` or given an entry meaning.
+   report-only keys bound in `REFRESH_CONTEXT` or given an entry meaning. Owner decision (2026-10-27): done as part of
+   one navigation model with A22 (a stack of places that owns the header, the footer, back and which keys act), not
+   handler by handler; batches 1–2 go first.
 4. **Overlay lifecycle** (A10, A11, A15). `show_overlay` is the one place an overlay changes: it cancels a theme
    preview when leaving Theme…, and the action panel gets footer keys of its own. Move Theme… out of the
    Refresh More… condition.
