@@ -82,7 +82,20 @@ impl SearchView {
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let names_entry = self.footer_names_entry(selected);
-        let left: AnyElement = if let Some(entry) = selected.filter(|_| names_entry) {
+        let report_row = self
+            .report(cx)
+            .filter(|s| s.read(cx).level() != crate::sync_view::ReportLevel::List)
+            .and_then(|s| s.read(cx).selected_row(cx).cloned());
+        let left: AnyElement = if let Some(row) = report_row {
+            let colors = &design().colors;
+            let (icon, tint) = crate::report_list::kind_tile(row.kind, colors);
+            let copy_caps = self.catalog.actions["copy-path"]
+                .keys
+                .as_deref()
+                .map(caps)
+                .unwrap_or_default();
+            entry_status(tile(icon, tint, TileSize::Small), row.path.clone(), copy_caps).into_any_element()
+        } else if let Some(entry) = selected.filter(|_| names_entry) {
             let colors = &design().colors;
             let kind = self.catalog.entry_type(&entry.entry_type);
             let (icon, tint) = kind.map_or(("file-text", colors.faint), |kind| {

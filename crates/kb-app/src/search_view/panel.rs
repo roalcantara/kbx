@@ -16,7 +16,8 @@ use kb_domain::search::tags_for_types;
 
 use super::{Overlay, Screen, SearchView};
 use crate::actions::{
-    Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, root_page, search_page, theme_page,
+    Page, PanelCommand, Submenu, filter_page, links_page, more_page, refresh_page, report_page, report_search_page,
+    root_page, search_page, theme_page,
 };
 use crate::catalog::Screen as CatalogScreen;
 use crate::keys::Back;
@@ -82,6 +83,17 @@ impl SearchView {
         };
         let screen = self.key_screen(cx);
         let query_empty = self.panel_query.read(cx).value().is_empty();
+        if let Some(sync) = self.report(cx) {
+            let row = sync.read(cx).selected_row(cx);
+            return match self.overlay {
+                Overlay::Actions(None) if query_empty => report_page(&self.catalog, screen, row),
+                Overlay::Actions(None) => report_search_page(&self.catalog, screen, row, &self.themes),
+                Overlay::Actions(Some(Submenu::More)) => more_page(&self.catalog, None),
+                Overlay::Actions(Some(Submenu::Refresh)) => refresh_page(&self.catalog),
+                Overlay::Actions(Some(Submenu::Theme)) => theme_page(&self.catalog, &self.themes),
+                _ => Page::default(),
+            };
+        }
         match self.overlay {
             Overlay::None => Page::default(),
             Overlay::Actions(None) if query_empty => root_page(&self.catalog, screen, entry),

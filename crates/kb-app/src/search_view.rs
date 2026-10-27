@@ -25,12 +25,13 @@ use crate::catalog::{Catalog, KeyItem, Screen as KeyScreen, fill};
 use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
-    Back, CONTEXT, CopyPath, DETAIL_CONTEXT, HideDetails, OpenActions, OpenDetail, OpenFilter, OpenPreferences,
-    OpenSourceFile, PageNotesDown, PageNotesUp, Quit, REFRESH_CONTEXT, Rebuild, RunPrimary, RunRow1, RunRow2, RunRow3,
-    RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter,
-    ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
+    Back, CONTEXT, CopyError, CopyLocation, CopyPath, DETAIL_CONTEXT, FirstRow, HideDetails, LastRow, NextRow,
+    OpenActions, OpenDetail, OpenFilter, OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, PreviousRow,
+    Quit, REFRESH_CONTEXT, Rebuild, RevealFile, RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6,
+    RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter, ScrollNotesDown,
+    ScrollNotesUp, ShowDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
+use crate::sync_view::{Move, Phase, ReportLevel, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
 use crate::ui::design::{design, pixels, pt};
@@ -304,7 +305,13 @@ impl SearchView {
             Screen::Detail => KeyScreen::Detail,
             Screen::Rebuild(sync) => match sync.read(cx).phase() {
                 Phase::Running => KeyScreen::Refreshing,
-                Phase::Report => KeyScreen::Report,
+                Phase::Report => {
+                    if matches!(sync.read(cx).level(), ReportLevel::Detail { .. }) {
+                        KeyScreen::ReportDetail
+                    } else {
+                        KeyScreen::Report
+                    }
+                }
                 Phase::Stopped => KeyScreen::Stopped,
                 Phase::Failed => KeyScreen::Failed,
             },
@@ -346,7 +353,68 @@ impl SearchView {
     }
 
     /// Runs a catalog action by id on the selected entry.
+    /// The refresh screen's view while it shows a report, else `None`.
+    fn report(&self, cx: &App) -> Option<Entity<SyncView>> {
+        match &self.screen {
+            Screen::Rebuild(sync) if sync.read(cx).phase() == Phase::Report => Some(sync.clone()),
+            _ => None,
+        }
+    }
+
+    /// The selected report row's path, for tests.
+    #[must_use]
+    pub fn report_row_path(&self, cx: &App) -> Option<String> {
+        self.report(cx)?.read(cx).selected_row(cx).map(|r| r.path.clone())
+    }
+
+    /// The report's level, for tests.
+    #[must_use]
+    pub fn report_level(&self, cx: &App) -> Option<ReportLevel> {
+        Some(self.report(cx)?.read(cx).level())
+    }
+
     fn run_action(&mut self, action: &str, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(sync) = self.report(cx) {
+            let row = sync.read(cx).selected_row(cx).cloned();
+            match (action, row) {
+                ("details", Some(_)) => return sync.update(cx, |s, cx| s.go(Move::Detail, cx)),
+                ("edit", Some(row)) => {
+                    if let Some(file) = row.file() {
+                        let (line, column) = row.line_and_column();
+                        self.open_in_editor(std::path::Path::new(file), line, column, window, cx);
+                    } else {
+                        self.open_preferences(&OpenPreferences, window, cx);
+                    }
+                    return;
+                }
+                ("copy-location", Some(row)) => {
+                    if let Some(text) = row.location() {
+                        self.copy(text, window, cx);
+                    }
+                    return;
+                }
+                ("copy-error", Some(row)) => {
+                    if let Some(text) = row.error() {
+                        self.copy(text, window, cx);
+                    }
+                    return;
+                }
+                ("copy-path", Some(row)) => {
+                    if let Some(file) = row.file() {
+                        self.copy(file.to_owned(), window, cx);
+                    }
+                    return;
+                }
+                ("reveal", Some(row)) => {
+                    if let Some(file) = row.file() {
+                        cx.reveal_path(std::path::Path::new(file));
+                    }
+                    return;
+                }
+                ("refresh", _) => return self.refresh(sync.read(cx).selection(), window, cx),
+                _ => {}
+            }
+        }
         let content = self
             .list
             .read(cx)
@@ -458,6 +526,9 @@ impl SearchView {
     }
 
     fn copy_path(&mut self, _: &CopyPath, window: &mut Window, cx: &mut Context<Self>) {
+        if self.report(cx).is_some() {
+            return self.run_action("copy-path", window, cx);
+        }
         if let Some(path) = self.selected_source_file(cx) {
             self.copy(path, window, cx);
         }
@@ -473,6 +544,10 @@ impl SearchView {
     }
 
     fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(sync) = self.report(cx) {
+            sync.update(cx, |s, cx| s.go(Move::Pane, cx));
+            return;
+        }
         match self.screen {
             Screen::Detail => {}
             _ => self.show_details = true,
@@ -481,6 +556,10 @@ impl SearchView {
     }
 
     fn hide_details(&mut self, _: &HideDetails, _: &mut Window, cx: &mut Context<Self>) {
+        if let Some(sync) = self.report(cx) {
+            sync.update(cx, |s, cx| s.go(Move::NoPane, cx));
+            return;
+        }
         match self.screen {
             Screen::Detail => {}
             _ => self.show_details = false,
@@ -534,6 +613,9 @@ impl SearchView {
     }
 
     fn open_source_file(&mut self, _: &OpenSourceFile, window: &mut Window, cx: &mut Context<Self>) {
+        if self.report(cx).is_some() {
+            return self.run_action("edit", window, cx);
+        }
         if let Some(path) = self.selected_source_file(cx) {
             self.open_in_editor(std::path::Path::new(&path), None, None, window, cx);
         }
@@ -638,8 +720,25 @@ impl SearchView {
             };
             return self.show_overlay(next, window, cx);
         }
+        let rebuild = match &self.screen {
+            Screen::Rebuild(sync) => Some(sync.clone()),
+            _ => None,
+        };
+        if let Some(sync) = rebuild {
+            if sync.read(cx).is_running() {
+                sync.read(cx).cancel();
+                cx.notify();
+                return;
+            }
+            if sync.read(cx).phase() == Phase::Report && sync.update(cx, SyncView::back) {
+                return;
+            }
+            self.screen = Screen::Search;
+            self.query_input.update(cx, |input, cx| input.focus(window, cx));
+            cx.notify();
+            return;
+        }
         match &self.screen {
-            Screen::Rebuild(sync) if sync.read(cx).is_running() => sync.read(cx).cancel(),
             Screen::Search => {
                 if self.query_input.read(cx).value().is_empty() {
                     self.cancel_theme_preview(cx);
@@ -651,12 +750,33 @@ impl SearchView {
                     self.search("", window, cx);
                 }
             }
-            Screen::Detail | Screen::Rebuild(_) => {
+            Screen::Detail => {
                 self.screen = Screen::Search;
                 self.query_input.update(cx, |input, cx| input.focus(window, cx));
             }
+            Screen::Rebuild(_) => {}
         }
         cx.notify();
+    }
+
+    fn copy_location(&mut self, _: &CopyLocation, window: &mut Window, cx: &mut Context<Self>) {
+        self.run_action("copy-location", window, cx);
+    }
+
+    fn copy_error(&mut self, _: &CopyError, window: &mut Window, cx: &mut Context<Self>) {
+        self.run_action("copy-error", window, cx);
+    }
+
+    fn reveal_file(&mut self, _: &RevealFile, window: &mut Window, cx: &mut Context<Self>) {
+        self.run_action("reveal", window, cx);
+    }
+
+    fn report_step(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.overlay == Overlay::None
+            && let Some(sync) = self.report(cx)
+        {
+            sync.update(cx, |s, cx| s.move_selection(delta, window, cx));
+        }
     }
 
     fn open_actions(&mut self, _: &OpenActions, window: &mut Window, cx: &mut Context<Self>) {
@@ -853,6 +973,13 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::rebuild))
             .on_action(cx.listener(Self::open_preferences))
             .on_action(cx.listener(Self::back))
+            .on_action(cx.listener(Self::copy_location))
+            .on_action(cx.listener(Self::copy_error))
+            .on_action(cx.listener(Self::reveal_file))
+            .on_action(cx.listener(|this, _: &NextRow, w, cx| this.report_step(1, w, cx)))
+            .on_action(cx.listener(|this, _: &PreviousRow, w, cx| this.report_step(-1, w, cx)))
+            .on_action(cx.listener(|this, _: &LastRow, w, cx| this.report_step(isize::MAX, w, cx)))
+            .on_action(cx.listener(|this, _: &FirstRow, w, cx| this.report_step(isize::MIN, w, cx)))
             .on_action(|_: &Quit, _, cx| cx.quit())
             .size_full()
             .rounded(pt(tokens.rounded.window))

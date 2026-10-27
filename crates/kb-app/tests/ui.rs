@@ -256,7 +256,6 @@ fn rebuild_screen_maps_to_refreshing_and_panel_omits_details_without_entry(cx: &
 
     // 2. ⌘K over a rebuild must not offer Details
     press(cx, window, "cmd-k");
-    cx.run_until_parked();
     let panel_labels = cx.read(|cx| view.read(cx).panel_labels(cx));
     assert!(
         !panel_labels.iter().flatten().any(|l| l == "Details"),
@@ -825,24 +824,67 @@ fn typing_and_fixing_query_does_not_rebuild_on_immediate_enter(cx: &mut TestAppC
 }
 
 #[gpui_kit::test]
-#[ignore = "replaced in Task 10"]
-fn reports_a_refresh_and_goes_back_with_return(cx: &mut TestAppContext) {
+fn navigates_the_report_like_the_list(cx: &mut TestAppContext) {
+    use kb_app::sync_view::ReportLevel;
+
     let home = tempfile::tempdir().unwrap();
     let (window, view) = open(cx, sample_config(home.path()));
     press(cx, window, "cmd-r");
     cx.run_until_parked();
     let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(keys, ["Details ↵", "Edit ⌘↵", "Actions ⌘K"], "the report's keys");
+    let row = |cx: &mut TestAppContext| cx.read(|cx| view.read(cx).report_row_path(cx));
     assert_eq!(
-        keys,
-        ["Back ↵", "Actions ⌘K"],
-        "the report's keys once the sync finished"
+        row(cx).as_deref(),
+        Some("errors/broken.yml"),
+        "a failed file is selected first"
     );
-    assert!(cx.read(|cx| view.read(cx).header_parts()).back);
+    press(cx, window, "down");
+    assert_eq!(row(cx).as_deref(), Some("errors/list-type.yml"));
+    press(cx, window, "up");
+    press(cx, window, "right");
+    assert_eq!(cx.read(|cx| view.read(cx).report_level(cx)), Some(ReportLevel::Split));
     press(cx, window, "enter");
-    assert!(
-        !cx.read(|cx| view.read(cx).is_rebuilding()),
-        "Back ↵ returns to the list"
+    assert_eq!(
+        cx.read(|cx| view.read(cx).report_level(cx)),
+        Some(ReportLevel::Detail { from_split: true })
     );
+    assert_eq!(
+        cx.read(|cx| view.read(cx).footer_keys(cx)),
+        ["Edit ↵", "Copy Location ⌘↵", "Actions ⌘K"]
+    );
+    press(cx, window, "cmd-enter");
+    let copied = cx.read_from_clipboard().and_then(|item| item.text()).unwrap();
+    assert!(copied.ends_with("/errors/broken.yml:4:1"), "{copied}");
+    press(cx, window, "escape");
+    assert_eq!(
+        cx.read(|cx| view.read(cx).report_level(cx)),
+        Some(ReportLevel::Split),
+        "Esc: back to the split"
+    );
+    press(cx, window, "escape");
+    assert!(!cx.read(|cx| view.read(cx).is_rebuilding()), "Esc: back to the list");
+}
+
+#[gpui_kit::test]
+fn copies_a_failed_file_s_error_from_the_report(cx: &mut TestAppContext) {
+    let home = tempfile::tempdir().unwrap();
+    let (window, view) = open(cx, sample_config(home.path()));
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    press(cx, window, "cmd-shift-e");
+    let copied = cx.read_from_clipboard().and_then(|item| item.text()).unwrap();
+    assert!(
+        !copied.is_empty() && !copied.contains("/errors/"),
+        "the bare message: {copied}"
+    );
+    assert_eq!(
+        cx.read(|cx| view.read(cx).last_notice().map(str::to_owned)).as_deref(),
+        Some("Copied to clipboard")
+    );
+    press(cx, window, "cmd-k");
+    let labels = cx.read(|cx| view.read(cx).panel_labels(cx));
+    assert!(labels[0].contains(&"Reveal in Finder".to_owned()), "{labels:?}");
 }
 
 #[gpui_kit::test]

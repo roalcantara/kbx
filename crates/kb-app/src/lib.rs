@@ -23,7 +23,7 @@ mod panel;
 mod presentation;
 pub mod report_list;
 pub mod search_view;
-mod sync_view;
+pub mod sync_view;
 mod tag_images;
 pub mod theme;
 mod trace;

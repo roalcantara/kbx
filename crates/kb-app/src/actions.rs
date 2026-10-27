@@ -115,6 +115,10 @@ pub fn root_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> Pa
             PanelCommand::Open(Submenu::Links),
         ));
     }
+    finish_root(rows, catalog)
+}
+
+fn finish_root(mut rows: Vec<(PanelRow, PanelCommand)>, catalog: &Catalog) -> Page {
     rows.push((
         PanelRow {
             label: catalog.panel.more.clone(),
@@ -127,6 +131,32 @@ pub fn root_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>) -> Pa
     page.page.searchable = true;
     page.section(None, rows);
     page
+}
+
+/// The root on the report (spec 2026-10-27 D3): the screen's keys, then what the row allows of Edit,
+/// Copy Location, Copy Error and Reveal in Finder, then Refresh, the catalog's root rows and More….
+#[must_use]
+pub fn report_page(catalog: &Catalog, screen: Screen, row: Option<&crate::report_list::ReportRow>) -> Page {
+    let allowed = |id: &str| match (id, row) {
+        ("refresh" | "resize", _) | ("details", Some(_)) => true,
+        ("edit" | "reveal", Some(r)) => r.file().is_some(),
+        ("copy-location", Some(r)) => r.location().is_some(),
+        ("copy-error", Some(r)) => r.error().is_some(),
+        _ => false,
+    };
+    let mut ids: Vec<String> = catalog.keys_for(screen, None).into_iter().map(|k| k.action).collect();
+    for id in ["edit", "copy-location", "copy-error", "reveal", "refresh"] {
+        if !ids.iter().any(|i| i == id) {
+            ids.push(id.to_owned());
+        }
+    }
+    let mut rows: Vec<(PanelRow, PanelCommand)> = ids
+        .iter()
+        .filter(|id| allowed(id))
+        .map(|id| action_row(catalog, id))
+        .collect();
+    rows.extend(catalog.panel.root.iter().map(|id| action_row(catalog, id)));
+    finish_root(rows, catalog)
 }
 
 /// More…: COPY (what the entry has) │ ADMINISTRATION.
@@ -279,29 +309,44 @@ pub fn refresh_page(catalog: &Catalog) -> Page {
 /// The root's search page: the root's rows (Links… and More… included), then More…'s, Refresh
 /// More…'s, Theme…'s and Links…'s rows, marked with their submenu (`more_origin`, `refresh_origin`,
 /// `theme_origin`, `links_origin`).
-#[must_use]
+fn append_marked(page: &mut Page, sub: Page, origin: &str) {
+    for (section, commands) in sub.page.sections.into_iter().zip(sub.commands) {
+        let rows = section
+            .rows
+            .into_iter()
+            .map(|row| PanelRow {
+                origin: Some(origin.to_owned()),
+                ..row
+            })
+            .zip(commands)
+            .collect();
+        page.section(section.label, rows);
+    }
+}
+
 pub fn search_page(catalog: &Catalog, screen: Screen, entry: Option<&Entry>, themes: &[ThemeRow]) -> Page {
     let mut page = root_page(catalog, screen, entry);
-    let mut marked = |sub: Page, origin: &str| {
-        for (section, commands) in sub.page.sections.into_iter().zip(sub.commands) {
-            let rows = section
-                .rows
-                .into_iter()
-                .map(|row| PanelRow {
-                    origin: Some(origin.to_owned()),
-                    ..row
-                })
-                .zip(commands)
-                .collect();
-            page.section(section.label, rows);
-        }
-    };
-    marked(more_page(catalog, entry), &catalog.messages.more_origin);
-    marked(refresh_page(catalog), &catalog.messages.refresh_origin);
-    marked(theme_page(catalog, themes), &catalog.messages.theme_origin);
+    append_marked(&mut page, more_page(catalog, entry), &catalog.messages.more_origin);
+    append_marked(&mut page, refresh_page(catalog), &catalog.messages.refresh_origin);
+    append_marked(&mut page, theme_page(catalog, themes), &catalog.messages.theme_origin);
     if let Some(entry) = entry.filter(|e| !e.links.is_empty()) {
-        marked(links_page(catalog, entry), &catalog.messages.links_origin);
+        append_marked(&mut page, links_page(catalog, entry), &catalog.messages.links_origin);
     }
+    page
+}
+
+/// Search page for report rows: `report_page` as root, with More…, Refresh More… and Theme….
+#[must_use]
+pub fn report_search_page(
+    catalog: &Catalog,
+    screen: Screen,
+    row: Option<&crate::report_list::ReportRow>,
+    themes: &[ThemeRow],
+) -> Page {
+    let mut page = report_page(catalog, screen, row);
+    append_marked(&mut page, more_page(catalog, None), &catalog.messages.more_origin);
+    append_marked(&mut page, refresh_page(catalog), &catalog.messages.refresh_origin);
+    append_marked(&mut page, theme_page(catalog, themes), &catalog.messages.theme_origin);
     page
 }
 
@@ -565,6 +610,68 @@ mod tests {
         assert_eq!(
             (only.types.len(), only.tags.as_slice()),
             (0, ["git".to_owned()].as_slice())
+        );
+    }
+
+    fn failed_row() -> crate::report_list::ReportRow {
+        use indexmap::IndexMap;
+        use kb_domain::report::FileReport;
+        use kb_domain::source::SourceError;
+        crate::report_list::ReportRow {
+            path: "errors/x.yml".into(),
+            kind: crate::report_list::ReportKind::Failed,
+            entries: 0,
+            detail: "error".into(),
+            subject: crate::report_list::Subject::File(FileReport {
+                rel_path: "errors/x.yml".into(),
+                file_path: "/s/errors/x.yml".into(),
+                entries: 0,
+                types: IndexMap::new(),
+                error: Some(SourceError {
+                    file_path: "/s/errors/x.yml".into(),
+                    message: "failed".into(),
+                    line: Some(4),
+                    column: Some(1),
+                }),
+                excerpt: None,
+                issues: Vec::new(),
+            }),
+        }
+    }
+
+    #[test]
+    fn offers_a_report_row_s_actions() {
+        let catalog = Catalog::default();
+        let labels = |row: Option<&crate::report_list::ReportRow>| {
+            report_page(&catalog, Screen::Report, row).page.sections[0]
+                .rows
+                .iter()
+                .map(|r| r.label.clone())
+                .collect::<Vec<_>>()
+        };
+        let failed = failed_row();
+        assert_eq!(
+            labels(Some(&failed)),
+            [
+                "Details",
+                "Edit",
+                "Copy Location",
+                "Copy Error",
+                "Reveal in Finder",
+                "Refresh",
+                "Resize",
+                "More…"
+            ]
+        );
+        let mut indexed = failed.clone();
+        if let crate::report_list::Subject::File(f) = &mut indexed.subject {
+            f.error = None;
+        }
+        assert!(!labels(Some(&indexed)).contains(&"Copy Error".to_owned()));
+        assert_eq!(
+            labels(None),
+            ["Refresh", "Resize", "More…"],
+            "no row: only what needs none"
         );
     }
 }

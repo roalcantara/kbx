@@ -63,11 +63,12 @@ pub enum SyncStatus {
 pub struct SyncFinished {
     /// Whether the index may have changed: it finished, or it stopped after committing a source.
     pub changed: bool,
+    /// The notification message.
     pub message: String,
 }
 
 /// Where the report stands (spec 2026-10-27 D1).
-#[cfg_attr(not(test), expect(dead_code, reason = "wired into SearchView in Task 10"))]
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReportLevel {
     /// The rows alone.
@@ -82,7 +83,7 @@ pub enum ReportLevel {
 }
 
 /// A move on the report.
-#[cfg_attr(not(test), expect(dead_code, reason = "wired into SearchView in Task 10"))]
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Move {
     /// →.
@@ -240,23 +241,19 @@ impl SyncView {
             _run: run,
         }
     }
-
     /// The report's level.
-    #[expect(dead_code, reason = "wired into SearchView in Task 10")]
     #[must_use]
     pub fn level(&self) -> ReportLevel {
         self.level
     }
 
     /// The selected report row.
-    #[expect(dead_code, reason = "wired into SearchView in Task 10")]
     #[must_use]
     pub fn selected_row<'a>(&self, cx: &'a App) -> Option<&'a ReportRow> {
         self.report.as_ref()?.read(cx).delegate().selected_row()
     }
 
     /// Moves the selection `delta` rows (`isize::MAX` / `MIN`: last / first) and scrolls to it.
-    #[expect(dead_code, reason = "wired into SearchView in Task 10")]
     pub fn move_selection(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
         let Some(list) = &self.report else { return };
         list.update(cx, |list, cx| {
@@ -269,7 +266,6 @@ impl SyncView {
     }
 
     /// →, ← or ↵ on the report; nothing without a selected row.
-    #[expect(dead_code, reason = "wired into SearchView in Task 10")]
     pub fn go(&mut self, m: Move, cx: &mut Context<Self>) {
         if self.selected_row(cx).is_some() {
             self.level = self.level.forward(m);
@@ -278,7 +274,6 @@ impl SyncView {
     }
 
     /// Esc: one level back; `false` when the report itself should close.
-    #[expect(dead_code, reason = "wired into SearchView in Task 10")]
     pub fn back(&mut self, cx: &mut Context<Self>) -> bool {
         match self.level.back() {
             Some(level) => {

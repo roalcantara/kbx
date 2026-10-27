@@ -88,6 +88,20 @@ actions!(
         RunRow8,
         /// Row or link 9.
         RunRow9,
+        /// Copy the selected report row's location.
+        CopyLocation,
+        /// Copy the selected report row's error.
+        CopyError,
+        /// Show the selected report row's file in Finder.
+        RevealFile,
+        /// The next report row.
+        NextRow,
+        /// The previous report row.
+        PreviousRow,
+        /// The last report row.
+        LastRow,
+        /// The first report row.
+        FirstRow,
     ]
 );
 
@@ -109,11 +123,19 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
                 "refresh" => KeyBinding::new(keys, Rebuild, context),
                 "configure" => KeyBinding::new(keys, OpenPreferences, context),
                 "copy-path" => KeyBinding::new(keys, CopyPath, context),
+                "copy-location" => KeyBinding::new(keys, CopyLocation, context),
+                "copy-error" => KeyBinding::new(keys, CopyError, context),
+                "reveal" => KeyBinding::new(keys, RevealFile, context),
                 _ => return None,
             })
         })
         .collect();
     bindings.extend([
+        // The report has no text field: the arrows move its selection, ⌘ to its ends (spec 2026-10-27 D1).
+        KeyBinding::new("down", NextRow, Some(REFRESH_CONTEXT)),
+        KeyBinding::new("up", PreviousRow, Some(REFRESH_CONTEXT)),
+        KeyBinding::new("cmd-down", LastRow, Some(REFRESH_CONTEXT)),
+        KeyBinding::new("cmd-up", FirstRow, Some(REFRESH_CONTEXT)),
         // The list's ↵ and ⌘↵ come from the query field (it reports Enter, then propagates it), so
         // the ladder is bound here only where no text field has the keyboard: the detail screen.
         KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
@@ -172,8 +194,7 @@ mod tests {
     #[test]
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
-        // down, up, cmd-down, cmd-up, cmd-1…cmd-9, and the panel's enter, secondary-enter, shift-cmd-enter, escape, up, down.
-        assert_eq!(bindings.len(), 35);
+        assert_eq!(bindings.len(), 42);
     }
 
     #[test]
