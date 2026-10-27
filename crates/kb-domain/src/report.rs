@@ -82,6 +82,18 @@ pub fn file_report(file_path: &str, rel_path: &str, parsed: &ParsedSourceFile) -
     }
 }
 
+impl FileReport {
+    /// Where to look: `path:line:column` for an error with a line, else the absolute path.
+    #[must_use]
+    pub fn location(&self) -> String {
+        match self.error.as_ref().and_then(|e| Some((e.line?, e.column))) {
+            Some((line, Some(column))) => format!("{}:{line}:{column}", self.file_path),
+            Some((line, None)) => format!("{}:{line}", self.file_path),
+            None => self.file_path.clone(),
+        }
+    }
+}
+
 /// The lines around `line`, numbered, the line itself marked with `>`.
 #[must_use]
 pub fn excerpt(file_path: &str, line: usize, radius: usize) -> String {
@@ -105,6 +117,7 @@ pub fn excerpt(file_path: &str, line: usize, radius: usize) -> String {
 mod tests {
     use super::*;
     use crate::source::SkippedEntry;
+    use crate::source::SourceError;
 
     #[test]
     fn numbers_and_marks_the_lines_around_an_error() {
@@ -142,6 +155,36 @@ mod tests {
         assert_eq!(
             file_report("/f", "f", &ParsedSourceFile::default()).issues,
             [FileIssue::Empty]
+        );
+    }
+
+    #[test]
+    fn locates_a_failed_file_at_its_line_and_column() {
+        let failed = |line, column| ParsedSourceFile {
+            error: Some(SourceError {
+                file_path: "/s/x.yml".into(),
+                message: "bad".into(),
+                line,
+                column,
+            }),
+            ..ParsedSourceFile::default()
+        };
+        assert_eq!(
+            file_report("/s/x.yml", "x.yml", &failed(Some(4), Some(11))).location(),
+            "/s/x.yml:4:11"
+        );
+        assert_eq!(
+            file_report("/s/x.yml", "x.yml", &failed(Some(4), None)).location(),
+            "/s/x.yml:4"
+        );
+        assert_eq!(
+            file_report("/s/x.yml", "x.yml", &failed(None, None)).location(),
+            "/s/x.yml"
+        );
+        assert_eq!(
+            file_report("/s/y.yml", "y.yml", &ParsedSourceFile::default()).location(),
+            "/s/y.yml",
+            "a file without an error is just its path"
         );
     }
 }
