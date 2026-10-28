@@ -30,8 +30,8 @@ once and used by every surface it applies to.
   **child index**, not its row index.
   - `ui/action_panel.rs` gives that index through `child_index(page, visible, row)`, which counts the section labels
     and hairlines above the row. It walks the same loop that draws them, so the two cannot drift (A02).
-- **The report's split pane:** it tracks a scroll handle on `SyncView`, reset whenever the selected row changes, so
-  each row's pane starts at its top (A17). The report's detail already uses `detail_scroll`, which is reset on push.
+- **The panes:** every pane and detail scrolls through the one `detail_scroll` handle (D3), reset whenever the
+  selection changes, so each row's pane starts at its top (A17).
 
 **D2. One navigation-key model for every list (A03).**
 
@@ -41,24 +41,44 @@ once and used by every surface it applies to.
 | ⌘↑ / ⌘↓             | first / last row                                  | top / bottom                                     |
 | Page Up / Page Down | one visible page                                  | one page                                         |
 
-- The row actions `PreviousRow`, `NextRow`, `FirstRow` and `LastRow` gain `PageUp` and `PageDown`. Each surface's
-  handler maps the six onto its select function or onto the shared scroll functions, so each key means one thing.
-- On the list, the query field binds ⌘↑ / ⌘↓ to `MoveToStart` / `MoveToEnd`. `search_view/header.rs` captures them,
-  and GPUI Kit input's page actions if it has them, as it already captures ↑ / ↓. The same capture is applied to ⌘K's
-  search field. On a submenu, which has no field, `ActionPanel` binds the keys directly.
+- **One function routes every navigation key.** Six actions, `PreviousRow`, `NextRow`, `FirstRow`, `LastRow`,
+  `PageUp` and `PageDown`, are bound once in `Search` (up, down, cmd-up, cmd-down, pageup, pagedown). They replace
+  `ScrollNotes*`, `PageNotes*` and the report's `Refresh`-only bindings. Each calls `SearchView::nav(Nav::…)`, which
+  sends the key to its owner:
+  - an open overlay: `select_panel_row`;
+  - the list: `select_entry`;
+  - the report: its rows;
+  - a scrolling target (an entry's or a row's detail, or a split pane with the keys, D3): the shared scroll
+    functions.
+
+  `Nav` is a plain enum in `navigator.rs`.
+- **The text fields capture the same keys.** The query field and ⌘K's search field bind ↑↓, ⌘↑↓ (`MoveToStart` /
+  `MoveToEnd`) and Page Up/Down (`MovePageUp` / `MovePageDown`) to their caret. `search_view/header.rs` and the
+  panel's search capture all six and call `nav`, as ↑↓ are captured today.
+- **A page** is the number of whole rows that fit the visible rows: the panel's `max_height / row` for the panel; the
+  window's height less the header and footer, divided by `row.height`, for the list and the report. One
+  `page_rows` computes it.
 - The detail screens' ⌘↑ / ⌘↓ change from paging to top / bottom, as macOS text views do. Page Up / Down page.
 - Home and End stay with the search field's caret.
 
 **D3. The keyboard into the split's pane (new; approved page `21-pane-focus.html`, option A, thin bar).**
 
-- On a split (the list's or the report's), **⇥** moves the keys into the pane. The pane shows a **1 pt mauve bar** on
-  its left edge, with no glow, and the list's selected row keeps its fill while its bar goes faint (`c.faint`). ↑↓,
-  ⌘↑↓ and Page Up / Down then scroll the pane through D2's scroll functions.
+- On a split (the list's or the report's), **⇥** moves the keys into the pane. The query field binds ⇥ / ⇧⇥ to
+  indenting (`IndentInline` / `OutdentInline`), so it captures them as it does the arrows, and `Search` binds them
+  for the report, which has no field.
+- The pane shows a **1 pt mauve bar** on its left edge, with no glow. The list's selected row keeps its fill, and its
+  bar goes faint (`c.faint`).
+- ↑↓, ⌘↑↓ and Page Up / Down then scroll the pane through `nav`'s scrolling target. ↵ and ⌘↵ still act on the
+  selected entry or row, so the footer keeps the list's or the report's keys. The bar shows where the keys go.
 - **⇥, ⇧⇥ or Esc** return the keys to the list. Esc goes back one level: pane → list → (clear the query) → hide.
-- The footer shows a new catalog `[screens.pane]`: _Scroll ↑↓ · List ⇥ · Actions ⌘K_.
-- This is a focus state of the split, not a place: `SearchView::pane_has_keys`. It is cleared when the selection
-  changes, when the split closes, and whenever a place is pushed or popped (`push`, `settle`). `Navigator::key_context`
-  adds `Detail` while the pane has the keys, so the scroll bindings are the detail screens' own.
+- **The pane's focus belongs to the navigator**, which already owns where the keys go:
+  - `Navigator::pane_has_keys` / `set_pane_has_keys`;
+  - it is cleared by `push`, `pop` and `pop_to_list`, and by `SearchView` when the selection changes or the split
+    closes;
+  - while it is set, `key_context` is the detail screens' (`Search Detail`, `Search Detail Report`).
+- Every pane and detail scrolls through the one `detail_scroll` handle: the entry split, the entry detail, the report
+  split and the report detail. Only one of them shows at a time. The handle is reset whenever the selection changes
+  (A17).
 
 **D4. `show_overlay` is the only place an overlay changes.** Besides resetting the search and the focus, as today, it:
 
@@ -67,7 +87,9 @@ once and used by every surface it applies to.
   chosen theme;
 - resets the panel's selection and scroll through `select_panel_row(0)` (D1).
 
-**D5. The action panel's own footer keys (A10).** A new catalog `[screens.actions]` holds _Run ↵ · Back esc · Close ⌘K_.
+**D5. The action panel's own footer keys (A10).** A new catalog `[screens.actions]` (`enter = "run"`,
+`escape = "back"`) gives _Run ↵ · Back esc_. While an overlay is open, the footer's trailing item reads _Close ⌘K_
+(the new `close` action's label) instead of _Actions ⌘K_. New actions `run` and `close` carry those labels.
 `Navigator::key_screen` returns it for `Overlay::Actions` on the root and on every submenu except Links…, which keeps
 `[screens.links]`. ⌘K always closes the whole panel, from the root or from a submenu.
 
@@ -85,9 +107,12 @@ as the catalog's `[panel]` comment describes.
 
 **D8. Words and polish.**
 
-- **A19:** the hard-coded notices move to `[messages]`, with `{file}` / `{error}` placeholders. They are: config.toml
-  could not be created, the theme could not be saved, ⌥K could not be registered, the themes could not be seeded,
-  and the config notices. The back button's label and tooltip come from the catalog's `back` action.
+- **A19:** the hard-coded notices move to `[messages]`, with `{file}` / `{error}` / `{key}` placeholders. They are:
+  config.toml could not be created, the theme could not be saved, ⌥K could not be registered, the themes could not
+  be seeded, and the three config notices.
+  - The notices raised before the catalog loads (the config notices and the themes seed) use the shipped catalog's
+    words (`Catalog::default()`): config.toml cannot be trusted to word its own errors.
+  - The back button's label is the catalog's `back` label, and its tooltip is that label with Esc's keycap.
 - **A20:** the empty-sources screen gets its own title, `no_entries_title = "No entries yet"`. Its sentence is built
   from the catalog's type labels (`no_entries = "Your sources have no {types}."`), so an overridden `[types]` stays
   right.
@@ -150,7 +175,7 @@ holds the long or screen-taking procedures:
 
 - `DESIGN.md` §4: D2's key model under **Navigation**; the focused pane (D3, citing `21-pane-focus.html`); panel rows'
   hover.
-- `CONTEXT.md`: _Screen keys_ mentions `[screens.actions]` and `[screens.pane]`.
+- `CONTEXT.md`: _Screen keys_ mentions `[screens.actions]`.
 - The audit: each finding marked fixed as its batch lands.
 
 ## Scope
