@@ -89,13 +89,14 @@ impl SearchView {
             window.push_notification(fill(&m.theme_weak, &[("name", &label), ("failure", &failure)]), cx);
         }
         if let Err(error) = self.config.save_theme(id) {
-            window.push_notification(
-                format!(
-                    "Couldn’t save the theme in {}: {error}",
-                    self.config.preferences().display()
-                ),
-                cx,
+            let notice = fill(
+                &m.theme_save_failed,
+                &[
+                    ("file", &self.config.preferences().display().to_string()),
+                    ("error", &error.to_string()),
+                ],
             );
+            window.push_notification(notice, cx);
         }
     }
 

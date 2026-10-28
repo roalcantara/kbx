@@ -73,7 +73,7 @@ pub fn open(config: Config, mut notices: Vec<String>, cx: &mut App) -> Result<()
     cx.set_activation_policy(ActivationPolicy::Accessory);
 
     let (window, view) = gpui_kit::open_window(window_options(cx), cx, |window, cx| {
-        cx.new(|cx| SearchView::new(config, catalog, window, cx))
+        cx.new(|cx| SearchView::new(config, catalog.clone(), window, cx))
     })
     .map_err(|error| PanelError(error.to_string()))?;
     let hide_on_blur = hide_on_blur(&view, window, cx);
@@ -82,7 +82,8 @@ pub fn open(config: Config, mut notices: Vec<String>, cx: &mut App) -> Result<()
     let manager = match register_hotkey() {
         Ok(manager) => Some(manager),
         Err(error) => {
-            notices.push(format!("Couldn’t register ⌥K: {error}. Another app may be using it."));
+            let notice = crate::catalog::fill(&catalog.messages.hotkey_failed, &[("error", &error.to_string())]);
+            notices.push(notice);
             None
         }
     };

@@ -274,6 +274,7 @@ fn row(row: &PanelRow, ix: usize, selected: bool, on_row: &OnRow) -> impl gpui_k
         .text_role(&d.typography.roles.label)
         .text_color(if row.muted { c.muted } else { c.text })
         .when(selected, |r| r.bg(c.selected))
+        .when(!selected, |el| el.hover(|style| style.bg(c.hover)))
         .on_click(move |_, window, cx| on_row(ix, window, cx))
         .children(lead)
         .child(div().flex_1().min_w_0().truncate().child(row.label.clone()))

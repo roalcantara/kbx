@@ -845,7 +845,11 @@ impl SearchView {
                 .map_or(Ok(()), fs::create_dir_all)
                 .and_then(|()| fs::write(&file, template));
             if let Err(error) = written {
-                window.push_notification(format!("Couldn’t create {}: {error}", file.display()), cx);
+                let notice = fill(
+                    &self.catalog.messages.config_create_failed,
+                    &[("file", &file.display().to_string()), ("error", &error.to_string())],
+                );
+                window.push_notification(notice, cx);
                 return;
             }
         }

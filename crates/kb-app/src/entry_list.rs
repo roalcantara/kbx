@@ -14,7 +14,7 @@ use kb_domain::entry::Entry;
 use kb_domain::row::row_to_entry;
 use kb_domain::search::{FilterState, PAGE_SIZE, SearchQuery, count, entry_types, search};
 
-use crate::catalog::{Catalog, Hero, Messages};
+use crate::catalog::{Catalog, Hero, Messages, fill};
 use crate::presentation::{favicon_url, row_label, row_tags, tag_hue};
 use crate::tag_images::TagImages;
 use crate::trace;
@@ -177,6 +177,19 @@ impl EntryList {
     #[must_use]
     pub fn row_of(&self, id: &str) -> Option<usize> {
         self.entries.iter().position(|entry| entry.id == id)
+    }
+
+    /// The catalog's type labels, lowercased, as a sentence's list: "bookmarks, cheat sheets, commands, tasks or skills".
+    #[must_use]
+    pub fn type_list(&self) -> String {
+        let labels: Vec<String> = self.catalog.types.values().map(|t| t.label.to_lowercase()).collect();
+        match labels.split_last() {
+            Some((last, rest)) if !rest.is_empty() => {
+                format!("{} {} {last}", rest.join(", "), self.catalog.messages.list_or)
+            }
+            Some((last, _)) => last.clone(),
+            None => String::new(),
+        }
     }
 
     /// Whether the last confirmation was the secondary one (⌘↩), which runs the primary action.
@@ -365,8 +378,8 @@ impl ListDelegate for EntryList {
             EmptyView::new(
                 "search",
                 d.colors.faint,
-                m.no_match_title.clone(),
-                Sentence::of(&m.no_entries, ""),
+                m.no_entries_title.clone(),
+                Sentence::of(&fill(&m.no_entries, &[("types", &self.type_list())]), ""),
             )
         } else {
             let template = no_match_template(m, &self.query, self.filter != FilterState::default());
@@ -463,5 +476,11 @@ mod tests {
         let list = list_with_entries(&["a#commands#x", "b#commands#y"]);
         assert_eq!(list.row_of("b#commands#y"), Some(1));
         assert_eq!(list.row_of("gone"), None);
+    }
+
+    #[test]
+    fn lists_default_entry_types_in_a_sentence() {
+        let list = EntryList::new(None);
+        assert_eq!(list.type_list(), "bookmarks, cheat sheets, commands, skills or tasks");
     }
 }

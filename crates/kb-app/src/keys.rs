@@ -215,4 +215,25 @@ mod tests {
         assert!(!caret_at_end(3, 3..3, 7));
         assert!(!caret_at_end(7, 2..7, 7));
     }
+
+    #[test]
+    fn binds_the_report_only_actions_in_the_report_alone() {
+        let catalog = Catalog::default();
+        for (id, action) in [
+            ("copy-location", "CopyLocation"),
+            ("copy-error", "CopyError"),
+            ("reveal", "RevealFile"),
+        ] {
+            let keys = catalog.actions[id].keys.clone().unwrap();
+            let binding = key_bindings(&catalog)
+                .into_iter()
+                .find(|b| b.action().name().ends_with(action))
+                .unwrap_or_else(|| panic!("{id} is bound"));
+            assert_eq!(
+                binding.predicate().map(|p| p.to_string()).as_deref(),
+                Some(REPORT_CONTEXT),
+                "{id} ({keys}) acts only on the report"
+            );
+        }
+    }
 }

@@ -99,8 +99,8 @@ impl SearchView {
                     .px_0()
                     .min_w_0()
                     .child(crumb(back.text, back.mono, CrumbSize::Header))
-                    .accessibility_label("Back")
-                    .tooltip("Back (Esc)")
+                    .accessibility_label(self.catalog.label("back").to_owned())
+                    .tooltip(format!("{} ({})", self.catalog.label("back"), caps("escape")))
                     .on_click(cx.listener(|this, _, window, cx| this.back(&Back, window, cx))),
             );
         }

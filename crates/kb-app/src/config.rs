@@ -113,17 +113,31 @@ impl Config {
                 "sources_path" | "tag_images_path" | "skills_command" | "theme" | "editor" => {
                     locations.insert(key, value);
                 }
-                "colors" => match value {
-                    toml::Value::Table(table) => colors = table,
-                    _ => notices.push(format!("Ignored `colors` in {}: not a table", preferences.display())),
-                },
+                "colors" => {
+                    if let toml::Value::Table(table) = value {
+                        colors = table;
+                    } else {
+                        // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                        let m = &crate::catalog::Catalog::default().messages;
+                        let notice = crate::catalog::fill(
+                            &m.config_colors_ignored,
+                            &[("file", &preferences.display().to_string())],
+                        );
+                        notices.push(notice);
+                    }
+                }
                 k if CATALOG_TABLES.contains(&k) => {
                     overrides.insert(key, value);
                 }
-                _ => notices.push(format!(
-                    "Ignored the unknown setting `{key}` in {}",
-                    preferences.display()
-                )),
+                _ => {
+                    // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                    let m = &crate::catalog::Catalog::default().messages;
+                    let notice = crate::catalog::fill(
+                        &m.config_unknown_ignored,
+                        &[("key", key.as_str()), ("file", &preferences.display().to_string())],
+                    );
+                    notices.push(notice);
+                }
             }
         }
         let parsed: Preferences = toml::Value::Table(locations)
@@ -162,10 +176,16 @@ impl Config {
         let editor = parsed.editor.filter(|template| match crate::editor::check(template) {
             Ok(()) => true,
             Err(error) => {
-                notices.push(format!(
-                    "Ignored `editor` in {}: {error}",
-                    home.join(PREFERENCES).display()
-                ));
+                // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                let m = &crate::catalog::Catalog::default().messages;
+                let notice = crate::catalog::fill(
+                    &m.config_editor_ignored,
+                    &[
+                        ("file", &home.join(PREFERENCES).display().to_string()),
+                        ("error", &error.to_string()),
+                    ],
+                );
+                notices.push(notice);
                 false
             }
         });

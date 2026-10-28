@@ -211,7 +211,9 @@ pub struct Messages {
     pub no_match: String,
     pub no_match_filtered: String,
     pub no_entries_filtered: String,
+    pub no_entries_title: String,
     pub no_entries: String,
+    pub list_or: String,
     pub no_index_title: String,
     pub no_index: String,
     pub refreshing_title: String,
@@ -263,6 +265,13 @@ pub struct Messages {
     pub back_search: String,
     /// A refresh's name after ‹.
     pub back_refresh: String,
+    pub config_create_failed: String,
+    pub theme_save_failed: String,
+    pub hotkey_failed: String,
+    pub themes_seed_failed: String,
+    pub config_colors_ignored: String,
+    pub config_unknown_ignored: String,
+    pub config_editor_ignored: String,
 }
 /// The catalog.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
