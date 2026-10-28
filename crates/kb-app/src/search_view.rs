@@ -272,19 +272,28 @@ impl SearchView {
         cx.notify();
     }
 
-    /// Moves the list selection by `delta` rows, clamped to the results, and scrolls to it.
-    fn move_selection(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
+    /// Selects row `row` of the list (clamped; nothing with no results) and scrolls to it (D1). The list's one way to
+    /// select: every move, filter change and refresh comes through here.
+    fn select_entry(&mut self, row: usize, window: &mut Window, cx: &mut Context<Self>) {
         self.list.update(cx, |list, cx| {
             let count = list.delegate().entries().len();
-            if count == 0 {
-                return;
+            let ix = (count > 0).then(|| IndexPath::new(row.min(count - 1)));
+            list.set_selected_index(ix, window, cx);
+            if ix.is_some() {
+                list.scroll_to_selected_item(window, cx);
             }
-            let current = list.selected_index().map_or(0, |ix| ix.row);
-            let row = current.saturating_add_signed(delta).min(count - 1);
-            list.set_selected_index(Some(IndexPath::new(row)), window, cx);
-            list.scroll_to_selected_item(window, cx);
         });
         cx.notify();
+    }
+
+    /// The list's selected row, if any.
+    fn selected_row(&self, cx: &App) -> Option<usize> {
+        self.list.read(cx).selected_index().map(|ix| ix.row)
+    }
+
+    fn move_selection(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
+        let row = self.selected_row(cx).unwrap_or(0).saturating_add_signed(delta);
+        self.select_entry(row, window, cx);
     }
 
     /// Searches for `text`: the list debounces it and selects the first result.
@@ -762,11 +771,16 @@ impl SearchView {
         let subscription = cx.subscribe_in(&sync, window, |this, _, finished: &SyncFinished, window, cx| {
             window.push_notification(finished.message.clone(), cx);
             if finished.changed {
+                let kept = this.list.read(cx).delegate().selected_entry().map(|e| e.id.clone());
                 let connection = open_readonly(this.config.database()).ok();
                 this.list.update(cx, |list, cx| {
                     list.delegate_mut().set_connection(connection);
                     cx.notify();
                 });
+                let row = kept
+                    .and_then(|id| this.list.read(cx).delegate().row_of(&id))
+                    .unwrap_or(0);
+                this.select_entry(row, window, cx);
             }
         });
         // The previous run's subscription goes with it.
@@ -891,12 +905,12 @@ impl SearchView {
         self.show_overlay(next, window, cx);
     }
 
-    fn apply_filter(&mut self, filter: FilterState, cx: &mut Context<Self>) {
+    fn apply_filter(&mut self, filter: FilterState, window: &mut Window, cx: &mut Context<Self>) {
         self.list.update(cx, |list, cx| {
             list.delegate_mut().set_filter(filter);
             cx.notify();
         });
-        cx.notify();
+        self.select_entry(0, window, cx);
     }
 }
 impl SearchView {
@@ -949,6 +963,7 @@ impl SearchView {
                 types: Vec::new(),
                 tags: vec![tag.to_owned()],
             },
+            window,
             cx,
         );
         self.pop_to_list(window, cx);

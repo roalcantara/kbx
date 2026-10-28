@@ -236,7 +236,7 @@ impl SearchView {
                     .find(|k| k.keys == if secondary { "cmd-enter" } else { "enter" })
                     .map(|k| k.action);
                 if filter_action.as_deref() == Some("only") {
-                    self.apply_filter(only, cx);
+                    self.apply_filter(only, window, cx);
                     self.show_overlay(Overlay::None, window, cx);
                 } else {
                     // The toggle can add or drop the Clear All section, so the row is found again
@@ -245,7 +245,7 @@ impl SearchView {
                         let section = &page.page.sections[s];
                         (section.label.clone(), section.rows[r].label.clone())
                     });
-                    self.apply_filter(toggle, cx);
+                    self.apply_filter(toggle, window, cx);
                     self.set_panel_query("", window, cx);
                     let page = self.current_page(cx);
                     self.panel_selected = matches(&page.page, "")

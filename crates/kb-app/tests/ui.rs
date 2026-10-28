@@ -1305,3 +1305,16 @@ fn audit_a_new_filter_selects_its_first_result(cx: &mut TestAppContext) {
     assert!(first.is_some(), "the docker tag matches entries");
     assert_eq!(selected_title(&view, cx), first, "the first result is selected");
 }
+
+/// A01: a refresh keeps the selected entry when it is still listed.
+#[gpui_kit::test]
+fn a_refresh_keeps_the_selected_entry(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "down");
+    press(cx, window, "down");
+    let before = selected_title(&view, cx);
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    press(cx, window, "escape"); // back to the list
+    assert_eq!(selected_title(&view, cx), before, "the same entry, not the same index");
+}

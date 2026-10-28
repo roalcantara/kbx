@@ -166,6 +166,12 @@ impl EntryList {
         self.selected.and_then(|ix| self.entries.get(ix.row))
     }
 
+    /// The row of the entry with `id`, if the results list it.
+    #[must_use]
+    pub fn row_of(&self, id: &str) -> Option<usize> {
+        self.entries.iter().position(|entry| entry.id == id)
+    }
+
     /// Whether the last confirmation was the secondary one (⌘↩), which runs the primary action.
     #[must_use]
     pub fn is_secondary_confirm(&self) -> bool {
@@ -418,5 +424,36 @@ mod tests {
                 }
             }
         }
+    }
+
+    fn list_with_entries(ids: &[&str]) -> EntryList {
+        let mut list = EntryList::new(None);
+        list.entries = ids
+            .iter()
+            .map(|id| kb_domain::entry::Entry {
+                id: (*id).to_owned(),
+                title: String::new(),
+                description: None,
+                entry_type: "commands".into(),
+                tags: Vec::new(),
+                notes: None,
+                notes_markdown: String::new(),
+                links: Vec::new(),
+                source_file: String::new(),
+                source_rel_path: String::new(),
+                primary_content: String::new(),
+                task_status: None,
+                task_priority: None,
+                raw_yaml: String::new(),
+            })
+            .collect();
+        list
+    }
+
+    #[test]
+    fn finds_an_entry_s_row_by_id() {
+        let list = list_with_entries(&["a#commands#x", "b#commands#y"]);
+        assert_eq!(list.row_of("b#commands#y"), Some(1));
+        assert_eq!(list.row_of("gone"), None);
     }
 }
