@@ -31,6 +31,23 @@ pub enum Overlay {
     Filter,
 }
 
+/// A navigation key, the same on every surface (close-out D2).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nav {
+    /// ↑: a row up, or a line up.
+    Up,
+    /// ↓.
+    Down,
+    /// ⌘↑: the first row, or the top.
+    First,
+    /// ⌘↓: the last row, or the bottom.
+    Last,
+    /// Page Up.
+    PageUp,
+    /// Page Down.
+    PageDown,
+}
+
 /// The name a pushed place shows after `‹`: the place it was opened from (D5).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BackName {
@@ -147,6 +164,12 @@ impl Navigator {
     #[must_use]
     pub fn back_name(&self) -> Option<&BackName> {
         self.stack.last()?.1.as_ref()
+    }
+
+    /// Whether the split pane has the keyboard (close-out D3). Task 4 replaces this.
+    #[must_use]
+    pub fn pane_has_keys(&self) -> bool {
+        false
     }
 }
 

@@ -202,12 +202,28 @@ impl SyncView {
         self.report.as_ref()?.read(cx).delegate().selected_row()
     }
 
-    /// Moves the selection `delta` rows (`isize::MAX` / `MIN`: last / first) and scrolls to it.
-    pub fn move_selection(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
+    /// The report's rows under `key` (close-out D2), `page` rows to a page; scrolls to the new row.
+    pub fn step_selection(
+        &mut self,
+        key: crate::navigator::Nav,
+        page: usize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        use crate::navigator::Nav;
         let Some(list) = &self.report else { return };
         list.update(cx, |list, cx| {
             let Some(from) = list.delegate().selected() else { return };
-            let to = step(from, delta, &list.delegate().counts());
+            let counts = list.delegate().counts();
+            let delta = match key {
+                Nav::Up => -1,
+                Nav::Down => 1,
+                Nav::First => isize::MIN,
+                Nav::Last => isize::MAX,
+                Nav::PageUp => -isize::try_from(page).unwrap_or(1),
+                Nav::PageDown => isize::try_from(page).unwrap_or(1),
+            };
+            let to = step(from, delta, &counts);
             list.set_selected_index(Some(to), window, cx);
             list.scroll_to_selected_item(window, cx);
         });

@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use gpui_kit::base::actions::Confirm;
 use gpui_kit::component::button::Button;
-use gpui_kit::component::input::{Input, InputEvent, InputState, MoveDown, MoveUp};
+use gpui_kit::component::input::{Input, InputEvent, InputState};
 use gpui_kit::component::popover::Popover;
 use gpui_kit::{
     Anchor, AnyElement, App, Context, Entity, Focusable as _, InteractiveElement as _, IntoElement as _,
@@ -39,6 +39,12 @@ impl SearchView {
     #[must_use]
     pub fn is_filter_open(&self) -> bool {
         self.navigator.overlay() == Overlay::Filter
+    }
+
+    /// The panel's selected visible row, for tests.
+    #[must_use]
+    pub fn panel_selected(&self) -> usize {
+        self.panel_selected
     }
 
     /// The open page's visible labels by section, for tests.
@@ -182,10 +188,6 @@ impl SearchView {
         if let InputEvent::Change = event {
             self.select_panel_row(0, cx);
         }
-    }
-
-    fn move_panel(&mut self, delta: isize, cx: &mut Context<Self>) {
-        self.select_panel_row(self.panel_selected.saturating_add_signed(delta), cx);
     }
 
     /// Runs visible row `ix`: ↵ (`secondary` false) or ⌘↵.
@@ -360,15 +362,7 @@ impl SearchView {
         let on_row: OnRow = Rc::new(move |ix, window, cx| {
             let _ = view.update(cx, |this, cx| this.confirm(ix, false, window, cx));
         });
-        let search = div()
-            .capture_action(cx.listener(|this, _: &MoveUp, _, cx| {
-                this.move_panel(-1, cx);
-                cx.stop_propagation(); // or the panel's own ↑ would move it again
-            }))
-            .capture_action(cx.listener(|this, _: &MoveDown, _, cx| {
-                this.move_panel(1, cx);
-                cx.stop_propagation();
-            }))
+        let search = Self::nav_captures(div(), cx)
             .child(Input::new(&self.panel_query).appearance(false).p_0())
             .into_any_element();
         panel(&page.page, &visible, self.panel_selected, &self.panel_scroll, Some(search), width, &on_row)
@@ -389,10 +383,7 @@ impl SearchView {
                 this.back(event, window, cx);
                 cx.stop_propagation();
             }))
-            // On a searchable page the search field's capture handles ↑↓ and stops them; these move
-            // the selection when the panel itself has the keyboard (a submenu).
-            .on_action(cx.listener(|this, _: &MoveUp, _, cx| this.move_panel(-1, cx)))
-            .on_action(cx.listener(|this, _: &MoveDown, _, cx| this.move_panel(1, cx)))
+
             .into_any_element()
     }
 }

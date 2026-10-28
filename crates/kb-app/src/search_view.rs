@@ -26,15 +26,15 @@ use crate::config::Config;
 use crate::entry_list::EntryList;
 use crate::keys::{
     Back, CopyError, CopyLocation, CopyPath, FirstRow, HideDetails, LastRow, NextRow, OpenActions, OpenDetail,
-    OpenFilter, OpenPreferences, OpenSourceFile, PageNotesDown, PageNotesUp, PreviousRow, Quit, Rebuild, RevealFile,
-    RunPrimary, RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary,
-    ScreenCmdEnter, ScreenEnter, ScreenShiftCmdEnter, ScrollNotesDown, ScrollNotesUp, ShowDetails, ToggleWindowSize,
-    caret_at_end,
+    OpenFilter, OpenPreferences, OpenSourceFile, PageDown, PageUp, PreviousRow, Quit, Rebuild, RevealFile, RunPrimary,
+    RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter,
+    ScreenEnter, ScreenShiftCmdEnter, ShowDetails, ToggleWindowSize, caret_at_end,
 };
-use crate::navigator::{BackName, Navigator, Overlay, Place};
+use crate::navigator::{BackName, Nav, Navigator, Overlay, Place};
 use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
+use crate::ui::action_panel::matches;
 use crate::ui::design::{design, pixels, pt};
 use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
@@ -289,11 +289,6 @@ impl SearchView {
     /// The list's selected row, if any.
     fn selected_row(&self, cx: &App) -> Option<usize> {
         self.list.read(cx).selected_index().map(|ix| ix.row)
-    }
-
-    fn move_selection(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
-        let row = self.selected_row(cx).unwrap_or(0).saturating_add_signed(delta);
-        self.select_entry(row, window, cx);
     }
 
     /// Searches for `text`: the list debounces it and selects the first result.
@@ -651,37 +646,82 @@ impl SearchView {
         caret_at_end(input.cursor(), input.selected_range(), input.value().len())
     }
 
-    /// Scrolls the detail screen's notes by `delta` (negative: up), within their ends; not under an overlay (D4).
-    fn scroll_notes(&mut self, delta: Pixels, cx: &mut Context<Self>) {
-        if !self.navigator.screen_has_keys() {
-            return;
+    /// Whole rows that fit `visible` points of rows `row` points tall; at least one (close-out D2).
+    fn page_rows(visible: f32, row: f32) -> usize {
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "a few dozen rows"
+        )]
+        let rows = (visible / row).floor() as usize;
+        rows.max(1)
+    }
+
+    /// The step `key` makes over `count` rows from `current`, `page` rows to a page.
+    fn step(key: Nav, current: usize, count: usize, page: usize) -> usize {
+        let last = count.saturating_sub(1);
+        match key {
+            Nav::Up => current.saturating_sub(1),
+            Nav::Down => (current + 1).min(last),
+            Nav::First => 0,
+            Nav::Last => last,
+            Nav::PageUp => current.saturating_sub(page),
+            Nav::PageDown => (current + page).min(last),
         }
-        let offset = self.detail_scroll.offset();
+    }
+
+    /// Every navigation key, on every surface (close-out D2): the open overlay's rows, a scrolling detail or pane,
+    /// the report's rows, or the list. The one place a navigation key is routed.
+    fn nav(&mut self, key: Nav, window: &mut Window, cx: &mut Context<Self>) {
+        let d = design();
+        if !self.navigator.screen_has_keys() {
+            let page = Self::page_rows(d.components.panel.max_height, d.components.panel.row);
+            let count = matches(&self.current_page(cx).page, &self.panel_query.read(cx).value()).len();
+            return self.select_panel_row(Self::step(key, self.panel_selected, count, page), cx);
+        }
+        let scrolls =
+            matches!(self.navigator.top(), Place::Detail | Place::ReportDetail) || self.navigator.pane_has_keys();
+        if scrolls {
+            return self.scroll(key, cx);
+        }
+        let rows_height =
+            f32::from(window.viewport_size().height) - d.components.header.height - d.components.footer.height;
+        let page = Self::page_rows(rows_height, d.components.row.height);
+        match self.navigator.top() {
+            Place::Refresh => {
+                if let Some(sync) = self.report(cx) {
+                    sync.update(cx, |s, cx| s.step_selection(key, page, window, cx));
+                    self.detail_scroll.set_offset(gpui_kit::Point::default());
+                }
+            }
+            Place::List => {
+                let count = self.list.read(cx).delegate().entries().len();
+                let row = Self::step(key, self.selected_row(cx).unwrap_or(0), count, page);
+                self.select_entry(row, window, cx);
+            }
+            Place::Detail | Place::ReportDetail => {}
+        }
+    }
+
+    /// A scrolling detail or pane: ↑↓ a line, ⌘↑↓ its ends, Page Up/Down a page.
+    fn scroll(&mut self, key: Nav, cx: &mut Context<Self>) {
         let max = self.detail_scroll.max_offset().y;
-        self.detail_scroll
-            .set_offset(point(offset.x, next_offset(offset.y, delta, max)));
+        let offset = self.detail_scroll.offset();
+        let y = match key {
+            Nav::Up => next_offset(offset.y, -notes_line_step(), max),
+            Nav::Down => next_offset(offset.y, notes_line_step(), max),
+            Nav::First => pixels(0.),
+            Nav::Last => -max,
+            Nav::PageUp => next_offset(offset.y, -self.notes_page(), max),
+            Nav::PageDown => next_offset(offset.y, self.notes_page(), max),
+        };
+        self.detail_scroll.set_offset(point(offset.x, y));
         cx.notify();
     }
 
     /// A page: the visible height, less a few lines kept for context.
     fn notes_page(&self) -> Pixels {
         (self.detail_scroll.bounds().size.height - notes_line_step()).max(notes_line_step())
-    }
-
-    fn scroll_notes_down(&mut self, _: &ScrollNotesDown, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(notes_line_step(), cx);
-    }
-
-    fn scroll_notes_up(&mut self, _: &ScrollNotesUp, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(-notes_line_step(), cx);
-    }
-
-    fn page_notes_down(&mut self, _: &PageNotesDown, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(self.notes_page(), cx);
-    }
-
-    fn page_notes_up(&mut self, _: &PageNotesUp, _: &mut Window, cx: &mut Context<Self>) {
-        self.scroll_notes(-self.notes_page(), cx);
     }
 
     fn toggle_window_size(&mut self, _: &ToggleWindowSize, window: &mut Window, cx: &mut Context<Self>) {
@@ -862,14 +902,6 @@ impl SearchView {
 
     fn reveal_file(&mut self, _: &RevealFile, window: &mut Window, cx: &mut Context<Self>) {
         self.key_action("reveal", window, cx);
-    }
-
-    fn report_step(&mut self, delta: isize, window: &mut Window, cx: &mut Context<Self>) {
-        if self.navigator.screen_has_keys()
-            && let Some(sync) = self.report(cx)
-        {
-            sync.update(cx, |s, cx| s.move_selection(delta, window, cx));
-        }
     }
 
     fn open_actions(&mut self, _: &OpenActions, window: &mut Window, cx: &mut Context<Self>) {
@@ -1062,10 +1094,6 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::toggle_window_size))
-            .on_action(cx.listener(Self::scroll_notes_down))
-            .on_action(cx.listener(Self::scroll_notes_up))
-            .on_action(cx.listener(Self::page_notes_down))
-            .on_action(cx.listener(Self::page_notes_up))
             .on_action(cx.listener(Self::open_detail))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))
@@ -1074,10 +1102,12 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::copy_location))
             .on_action(cx.listener(Self::copy_error))
             .on_action(cx.listener(Self::reveal_file))
-            .on_action(cx.listener(|this, _: &NextRow, w, cx| this.report_step(1, w, cx)))
-            .on_action(cx.listener(|this, _: &PreviousRow, w, cx| this.report_step(-1, w, cx)))
-            .on_action(cx.listener(|this, _: &LastRow, w, cx| this.report_step(isize::MAX, w, cx)))
-            .on_action(cx.listener(|this, _: &FirstRow, w, cx| this.report_step(isize::MIN, w, cx)))
+            .on_action(cx.listener(|this, _: &PreviousRow, w, cx| this.nav(Nav::Up, w, cx)))
+            .on_action(cx.listener(|this, _: &NextRow, w, cx| this.nav(Nav::Down, w, cx)))
+            .on_action(cx.listener(|this, _: &FirstRow, w, cx| this.nav(Nav::First, w, cx)))
+            .on_action(cx.listener(|this, _: &LastRow, w, cx| this.nav(Nav::Last, w, cx)))
+            .on_action(cx.listener(|this, _: &PageUp, w, cx| this.nav(Nav::PageUp, w, cx)))
+            .on_action(cx.listener(|this, _: &PageDown, w, cx| this.nav(Nav::PageDown, w, cx)))
             .on_action(|_: &Quit, _, cx| cx.quit())
             .size_full()
             .rounded(pt(tokens.rounded.window))

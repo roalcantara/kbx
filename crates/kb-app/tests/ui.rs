@@ -1318,3 +1318,46 @@ fn a_refresh_keeps_the_selected_entry(cx: &mut TestAppContext) {
     press(cx, window, "escape"); // back to the list
     assert_eq!(selected_title(&view, cx), before, "the same entry, not the same index");
 }
+
+/// Close-out D2: ⌘↑↓ and Page Up/Down on the filter.
+#[gpui_kit::test]
+fn cmd_arrows_reach_the_filter_s_ends(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    open_filter(cx, window);
+    let rows: usize = cx.read(|cx| view.read(cx).panel_labels(cx)).iter().map(Vec::len).sum();
+    press(cx, window, "cmd-down");
+    assert_eq!(cx.read(|cx| view.read(cx).panel_selected()), rows - 1);
+    press(cx, window, "cmd-up");
+    assert_eq!(cx.read(|cx| view.read(cx).panel_selected()), 0);
+    press(cx, window, "pagedown");
+    assert!(
+        cx.read(|cx| view.read(cx).panel_selected()) > 1,
+        "a page is more than one row"
+    );
+}
+
+/// Close-out D2: ⌘↑↓ on a submenu, which has no search field.
+#[gpui_kit::test]
+fn cmd_arrows_reach_a_submenu_s_ends(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    run_from_panel(cx, window, "More");
+    press(cx, window, "cmd-down");
+    let last = cx
+        .read(|cx| view.read(cx).panel_labels(cx))
+        .iter()
+        .map(Vec::len)
+        .sum::<usize>()
+        - 1;
+    assert_eq!(cx.read(|cx| view.read(cx).panel_selected()), last);
+}
+
+/// Close-out D2: ⌘↓ on the report selects its last row.
+#[gpui_kit::test]
+fn cmd_down_reaches_the_report_s_last_row(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-r");
+    cx.run_until_parked();
+    let first = cx.read(|cx| view.read(cx).report_row_path(cx));
+    press(cx, window, "cmd-down");
+    assert_ne!(cx.read(|cx| view.read(cx).report_row_path(cx)), first);
+}

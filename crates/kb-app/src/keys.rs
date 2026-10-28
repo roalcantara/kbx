@@ -6,7 +6,7 @@
 use std::ops::Range;
 
 use gpui_kit::base::actions::Confirm;
-use gpui_kit::component::input::{MoveDown, MoveUp};
+
 use gpui_kit::{KeyBinding, actions};
 
 use crate::catalog::Catalog;
@@ -62,14 +62,6 @@ actions!(
         HideDetails,
         /// Switch the window between its compact and expanded sizes.
         ToggleWindowSize,
-        /// Scroll the detail screen's notes down a few lines.
-        ScrollNotesDown,
-        /// Scroll the detail screen's notes up a few lines.
-        ScrollNotesUp,
-        /// Scroll the detail screen's notes down a page.
-        PageNotesDown,
-        /// Scroll the detail screen's notes up a page.
-        PageNotesUp,
         /// Open the selected entry's detail screen (Return in the list, which the query field
         /// reports; no binding of its own).
         OpenDetail,
@@ -97,6 +89,10 @@ actions!(
         CopyError,
         /// Show the selected report row's file in Finder.
         RevealFile,
+        /// Page up through a list or a detail pane.
+        PageUp,
+        /// Page down through a list or a detail pane.
+        PageDown,
         /// The next report row.
         NextRow,
         /// The previous report row.
@@ -134,11 +130,6 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         })
         .collect();
     bindings.extend([
-        // The report has no text field: the arrows move its selection, ⌘ to its ends (spec 2026-10-27 D1).
-        KeyBinding::new("down", NextRow, Some(REFRESH_CONTEXT)),
-        KeyBinding::new("up", PreviousRow, Some(REFRESH_CONTEXT)),
-        KeyBinding::new("cmd-down", LastRow, Some(REFRESH_CONTEXT)),
-        KeyBinding::new("cmd-up", FirstRow, Some(REFRESH_CONTEXT)),
         // The list's ↵ and ⌘↵ come from the query field (it reports Enter, then propagates it), so
         // the ladder is bound here only where no text field has the keyboard: the detail screen.
         KeyBinding::new("enter", ScreenEnter, Some(DETAIL_CONTEXT)),
@@ -154,11 +145,14 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         // acts only with the caret at the query's end (`caret_at_end`).
         KeyBinding::new("right", ShowDetails, context),
         KeyBinding::new("left", HideDetails, context),
-        // The detail screen has no text field: the arrows scroll its notes, ⌘ a page at a time.
-        KeyBinding::new("down", ScrollNotesDown, Some(DETAIL_CONTEXT)),
-        KeyBinding::new("up", ScrollNotesUp, Some(DETAIL_CONTEXT)),
-        KeyBinding::new("cmd-down", PageNotesDown, Some(DETAIL_CONTEXT)),
-        KeyBinding::new("cmd-up", PageNotesUp, Some(DETAIL_CONTEXT)),
+        // One navigation-key model (close-out D2): the same six keys on every surface; `SearchView::nav` sends each
+        // to its owner. The text fields capture them first (`search_view/header.rs`, `panel.rs`).
+        KeyBinding::new("up", PreviousRow, context),
+        KeyBinding::new("down", NextRow, context),
+        KeyBinding::new("cmd-up", FirstRow, context),
+        KeyBinding::new("cmd-down", LastRow, context),
+        KeyBinding::new("pageup", PageUp, context),
+        KeyBinding::new("pagedown", PageDown, context),
         // ⌘1–⌘9: row n's primary action in the list; link n on the detail screen (R7).
         KeyBinding::new("cmd-1", RunRow1, context),
         KeyBinding::new("cmd-2", RunRow2, context),
@@ -175,8 +169,6 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         KeyBinding::new("secondary-enter", Confirm { secondary: true }, Some(PANEL_CONTEXT)),
         KeyBinding::new("shift-cmd-enter", ScreenShiftCmdEnter, Some(PANEL_CONTEXT)),
         KeyBinding::new("escape", Back, Some(PANEL_CONTEXT)),
-        KeyBinding::new("up", MoveUp, Some(PANEL_CONTEXT)),
-        KeyBinding::new("down", MoveDown, Some(PANEL_CONTEXT)),
     ]);
     bindings
 }
@@ -197,7 +189,7 @@ mod tests {
     #[test]
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
-        assert_eq!(bindings.len(), 42);
+        assert_eq!(bindings.len(), 38);
     }
 
     #[test]
