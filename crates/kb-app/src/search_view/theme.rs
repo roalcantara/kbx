@@ -39,10 +39,10 @@ impl SearchView {
             .collect();
     }
 
-    /// Opening Theme…: remembers the theme in use, to restore it, and selects its row.
-    pub(super) fn begin_theme_preview(&mut self) {
+    /// Opening Theme…: remembers the theme in use, to restore it; the row of that theme, to select.
+    pub(super) fn begin_theme_preview(&mut self) -> usize {
         self.theme_preview = Some(crate::theme::active_palette());
-        self.panel_selected = self.themes.iter().position(|t| t.current).unwrap_or(0);
+        self.themes.iter().position(|t| t.current).unwrap_or(0)
     }
 
     /// `id`'s palette with config.toml's `[colors]` on top, or why it cannot be used.

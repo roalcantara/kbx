@@ -1090,10 +1090,10 @@ fn audit_k2_keeps_the_filter_s_selected_row_in_view(cx: &mut TestAppContext) {
     // The selected row is the last row, so it is the scroll container's last child.
     let last = handle.bounds_for_item(handle.children_count() - 1).unwrap();
     let visible_bottom = viewport.bottom();
+    let scrolled_bottom = last.bottom() + handle.offset().y;
     assert!(
-        last.bottom() <= visible_bottom + px(0.5),
-        "the selected (last) row ends at {:?}, below the visible rows ending at {visible_bottom:?}",
-        last.bottom()
+        scrolled_bottom <= visible_bottom + px(0.5),
+        "the selected (last) row ends at {scrolled_bottom:?}, below the visible rows ending at {visible_bottom:?}"
     );
 }
 

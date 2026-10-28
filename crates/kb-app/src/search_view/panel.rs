@@ -115,18 +115,37 @@ impl SearchView {
             }
         }
     }
+    /// Selects visible row `ix` of the open page and scrolls it into view (close-out D1). Row 0 scrolls to the very
+    /// top, so its section label shows too. The one writer of `panel_selected`.
+    pub(super) fn select_panel_row(&mut self, ix: usize, cx: &mut Context<Self>) {
+        let page = self.current_page(cx);
+        let visible = matches(&page.page, &self.panel_query.read(cx).value());
+        self.panel_selected = ix.min(visible.len().saturating_sub(1));
+        if self.panel_selected == 0 {
+            self.panel_scroll.set_offset(gpui_kit::Point::default());
+        } else {
+            self.panel_scroll.scroll_to_item(crate::ui::action_panel::child_index(
+                &page.page,
+                &visible,
+                self.panel_selected,
+            ));
+        }
+        self.preview_selected_theme(cx);
+        cx.notify();
+    }
 
     /// Shows `overlay` with an empty search and hands it the keyboard; `Overlay::None` hands the
     /// keyboard back to the screen.
     pub(super) fn show_overlay(&mut self, overlay: Overlay, window: &mut Window, cx: &mut Context<Self>) {
         self.navigator.set_overlay(overlay);
-        self.panel_selected = 0;
         if matches!(overlay, Overlay::Actions(_)) {
             self.reload_themes();
         }
-        if overlay == Overlay::Actions(Some(Submenu::Theme)) {
-            self.begin_theme_preview();
-        }
+        let first = if overlay == Overlay::Actions(Some(Submenu::Theme)) {
+            self.begin_theme_preview()
+        } else {
+            0
+        };
         self.panel_query.update(cx, |input, cx| input.set_value("", window, cx));
         match overlay {
             Overlay::None => self.focus_screen(window, cx),
@@ -142,14 +161,13 @@ impl SearchView {
                 });
             }
         }
-        cx.notify();
+        self.select_panel_row(first, cx);
     }
 
     pub(super) fn set_panel_query(&mut self, text: &str, window: &mut Window, cx: &mut Context<Self>) {
         self.panel_query
             .update(cx, |input, cx| input.set_value(text, window, cx));
-        self.panel_selected = 0;
-        cx.notify();
+        self.select_panel_row(0, cx);
     }
 
     pub(super) fn on_panel_query_event(
@@ -162,19 +180,12 @@ impl SearchView {
         // ↵ and ⌘↵ are handled as the panel's `Confirm` action (see `render_panel`), so they work
         // on the submenus too, where there is no search field to emit this event.
         if let InputEvent::Change = event {
-            self.panel_selected = 0;
-            cx.notify();
+            self.select_panel_row(0, cx);
         }
     }
 
     fn move_panel(&mut self, delta: isize, cx: &mut Context<Self>) {
-        let count = matches(&self.current_page(cx).page, &self.panel_query.read(cx).value()).len();
-        if count > 0 {
-            self.panel_selected = self.panel_selected.saturating_add_signed(delta).min(count - 1);
-            self.panel_scroll.scroll_to_item(self.panel_selected);
-            self.preview_selected_theme(cx);
-            cx.notify();
-        }
+        self.select_panel_row(self.panel_selected.saturating_add_signed(delta), cx);
     }
 
     /// Runs visible row `ix`: ↵ (`secondary` false) or ⌘↵.
@@ -248,13 +259,14 @@ impl SearchView {
                     self.apply_filter(toggle, window, cx);
                     self.set_panel_query("", window, cx);
                     let page = self.current_page(cx);
-                    self.panel_selected = matches(&page.page, "")
+                    let ix = matches(&page.page, "")
                         .into_iter()
                         .position(|(s, r)| {
                             let section = &page.page.sections[s];
                             picked.as_ref() == Some(&(section.label.clone(), section.rows[r].label.clone()))
                         })
                         .unwrap_or(0);
+                    self.select_panel_row(ix, cx);
                 }
             }
         }

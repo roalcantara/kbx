@@ -97,6 +97,46 @@ pub fn matches(page: &PanelPage, query: &str) -> Vec<(usize, usize)> {
 /// What runs when a row is clicked: its index among the visible rows.
 pub type OnRow = Rc<dyn Fn(usize, &mut Window, &mut App)>;
 
+/// One child of the panel's scroll container, in order.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PanelChild {
+    /// The rule between two sections.
+    Hairline,
+    /// A section's label.
+    Label(usize),
+    /// Visible row `ix`, of section `section`, row `row`.
+    Row { ix: usize, section: usize, row: usize },
+}
+
+/// The scroll container's children for `visible`: the one walk `panel()` draws and `child_index` counts, so the two
+/// cannot drift (close-out D1).
+fn children(page: &PanelPage, visible: &[(usize, usize)]) -> Vec<PanelChild> {
+    let mut out = Vec::new();
+    let mut shown_section = None;
+    for (ix, &(section, row)) in visible.iter().enumerate() {
+        if shown_section != Some(section) {
+            if shown_section.is_some() {
+                out.push(PanelChild::Hairline);
+            }
+            if page.sections[section].label.is_some() {
+                out.push(PanelChild::Label(section));
+            }
+            shown_section = Some(section);
+        }
+        out.push(PanelChild::Row { ix, section, row });
+    }
+    out
+}
+
+/// The scroll container's child index of visible row `ix`, for `ScrollHandle::scroll_to_item`.
+#[must_use]
+pub fn child_index(page: &PanelPage, visible: &[(usize, usize)], ix: usize) -> usize {
+    children(page, visible)
+        .iter()
+        .position(|child| matches!(child, PanelChild::Row { ix: i, .. } if *i == ix))
+        .unwrap_or(0)
+}
+
 /// The panel: `page`'s `visible` rows (from [`matches`]) with `selected` highlighted, `search` (the
 /// search field) at the bottom when the page is searchable, `width` points wide.
 #[must_use]
@@ -118,27 +158,24 @@ pub fn panel(
         .p(pt(s.pad))
         .max_h(pt(k.max_height))
         .overflow_y_scroll();
-    let mut shown_section = None;
-    for (ix, &(section_ix, row_ix)) in visible.iter().enumerate() {
-        let section = &page.sections[section_ix];
-        if shown_section != Some(section_ix) {
-            if shown_section.is_some() {
-                list = list.child(hairline().mx(pt(s.rule_margin)).my(pt(s.rule_margin)));
-            }
-            if let Some(label) = &section.label {
-                list = list.child(
-                    div()
-                        .pt(pt(s.section_pad_top))
-                        .px(pt(s.section_pad_x))
-                        .pb(pt(s.section_pad_bottom))
-                        .text_role(&d.typography.roles.section)
-                        .text_color(c.faint)
-                        .child(label.to_uppercase()),
-                );
-            }
-            shown_section = Some(section_ix);
-        }
-        list = list.child(row(&section.rows[row_ix], ix, ix == selected, on_row));
+    for child in children(page, visible) {
+        list = match child {
+            PanelChild::Hairline => list.child(hairline().mx(pt(s.rule_margin)).my(pt(s.rule_margin))),
+            PanelChild::Label(section) => list.child(
+                div()
+                    .pt(pt(s.section_pad_top))
+                    .px(pt(s.section_pad_x))
+                    .pb(pt(s.section_pad_bottom))
+                    .text_role(&d.typography.roles.section)
+                    .text_color(c.faint)
+                    .child(page.sections[section].label.clone().unwrap_or_default().to_uppercase()),
+            ),
+            PanelChild::Row {
+                ix,
+                section,
+                row: row_ix,
+            } => list.child(row(&page.sections[section].rows[row_ix], ix, ix == selected, on_row)),
+        };
     }
     v_flex()
         .w(pt(width))
@@ -296,5 +333,28 @@ mod tests {
         assert_eq!(matches(&page, "pa"), [(1, 0)]);
         assert_eq!(matches(&page, "MORE"), [(1, 0)]);
         assert_eq!(matches(&page, "zz"), [] as [(usize, usize); 0]);
+    }
+
+    #[test]
+    fn counts_the_labels_and_hairlines_above_a_row() {
+        let page = PanelPage {
+            sections: vec![
+                PanelSection {
+                    label: Some("Types".into()),
+                    rows: vec![PanelRow::default(); 2],
+                },
+                PanelSection {
+                    label: Some("Tags".into()),
+                    rows: vec![PanelRow::default(); 2],
+                },
+            ],
+            ..Default::default()
+        };
+        let visible = [(0, 0), (0, 1), (1, 0), (1, 1)];
+        // Types label, row 0, row 1, hairline, Tags label, row 2, row 3
+        assert_eq!(child_index(&page, &visible, 0), 1);
+        assert_eq!(child_index(&page, &visible, 1), 2);
+        assert_eq!(child_index(&page, &visible, 2), 5);
+        assert_eq!(child_index(&page, &visible, 3), 6);
     }
 }
