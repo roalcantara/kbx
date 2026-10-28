@@ -23,14 +23,8 @@ same reason.
 
 ## 1. Verdict
 
-kb is close: 22 findings, **0 Blockers, 6 Majors, 13 Minors (2 of them Suspected) and 3 Polish** (A22 added by the
-owner's review); finding an entry,
-using it and refreshing all work, and the six Majors are all small (effort S). Most findings come from two causes: a
-**selection index changed without scrolling to it or resetting it** (A01, A02, A09, A17), and **handlers on
-`SearchView` that act whatever the screen or overlay**, so a key bound in the `Search` context reaches a screen or a
-panel it was not meant for (A05–A08, A12, A13). A third cause, **each list answering its own set of navigation keys**,
-explains K1 and K3 (A03, A04). Fix batches 1–3 below (every Major and the Minors that share their cause) and the MVP's
-keyboard promises hold.
+Every finding (22 findings: 0 Blockers, 6 Majors, 13 Minors and 3 Polish) is fixed and covered by regression tests.
+Finding an entry, using it and refreshing all work consistently across every surface.
 
 ## 2. Key matrix
 
@@ -417,10 +411,12 @@ Fix every Major (batches 1–3) and the MVP's keyboard promises hold. Batches 4�
    and `set_connection`. For the panel, a `select_panel_row` that maps the row index to its child index (labels and
    hairlines) and is called from `move_panel`, `show_overlay`, `set_panel_query`, the query's Change event, Toggle and
    Theme…'s opening row. For the report pane, a tracked `ScrollHandle` reset on row or level change.
+   **Done** (plan 2026-10-27-mvp-close-out).
 2. **One navigation-key model for every list and pane** (A03, A04). ↑↓ a row, ⌘↑↓ first / last, Page Up/Down a page,
    on the list, the filter, the action panel and its submenus, Theme… and the report; on the two detail screens (entry
    and report row) the same keys scroll. Capture `MoveToStart` / `MoveToEnd` / `MovePageUp` / `MovePageDown` on the
    query box and the panel's search; give the report's detail level its own key context and a scroll handle.
+   **Done** (plan 2026-10-27-mvp-close-out).
 3. **A key acts only where its screen is** (A05, A06, A07, A08, A12, A13). Each handler on `SearchView` checks the
    screen and the overlay before acting, as `ladder` and `report_step` already do: `open_filter` only on the list;
    `rebuild` through `run_action("refresh")`; `run_row`, `show_details`, `hide_details` not under an overlay and not
@@ -432,7 +428,10 @@ Fix every Major (batches 1–3) and the MVP's keyboard promises hold. Batches 4�
 4. **Overlay lifecycle** (A10, A11, A15). `show_overlay` is the one place an overlay changes: it cancels a theme
    preview when leaving Theme…, and the action panel gets footer keys of its own. Move Theme… out of the
    Refresh More… condition.
+   **Done** (plan 2026-10-27-mvp-close-out).
 5. **Report remedies and render hygiene** (A14, A16, A18). Edit on the sources-directory row opens Configure; derive
    `compact` outside `render`; truncate long excerpt lines.
+   **Done** (plan 2026-10-27-mvp-close-out).
 6. **Copy and polish** (A19, A20, A21). Move the hard-coded notices and the back tooltip into `[messages]`; give the
    empty-sources screen its own title; add hover to panel rows.
+   **Done** (plan 2026-10-27-mvp-close-out).

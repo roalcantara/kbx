@@ -179,7 +179,8 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   screen's ↵ and ⌘↵ keys and _Actions ⌘K_ (never ⇧⌘↵, which the action panel lists), 16 apart, each label 8 from its
   keys; counts in tabular digits.
 - **Action panel** (`action_panel.rs`; 02-actions, 07-filter): mantle, 14 pt corners, 220 wide (the filter 230),
-  28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus.
+  28 pt rows, search at the bottom, sections by a hairline, a `‹` header on submenus; rows take the hover fill;
+  the footer shows _Run ↵ · Back esc · Close ⌘K_ while it is open.
 - **Empty view** (`empty_view.rs`; 03-empty, 11-14-refresh): one 56 pt icon, a 15 pt title, a sentence; the query in
   mauve mono.
 - **Report pane** (`report_pane.rs`; 12-report-pane): the row's tile, path in mono and status chip; the error as the
@@ -187,9 +188,12 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   with a red bar and tint; skipped keys as a list; facts as label and value (`Location`, `File`, `Entries`, `Exit`,
   `Stderr`, `Index`). The split and the detail screen draw it, as the entry view.
 - **Navigation** (`navigator.rs`, `ui/crumb.rs`; 20-navigation): screens are places on one stack, the list at the
-  bottom; ⌘K and the filter float over the top place and own the keys while open. Every place but the list shows `‹` and
-  where back goes (the query in mono, an entry's title, `Search`, `Refresh`) in the header, drawn by the same crumb as
-  ⌘K's submenus. Esc and `‹` go back one place, to it as it was left. A new screen is a new place.
+  bottom; ⌘K and the filter float over the top place and own the keys while open. Every list answers the same keys —
+  ↑↓ a row, ⌘↑↓ the first and last, Page Up/Down a page — and the detail screens scroll with them. On a split, ⇥ moves
+  the keys into the pane, which shows a 1 pt mauve bar on its left edge while the list's selection bar goes faint
+  (21-pane-focus); ⇥, ⇧⇥ or Esc give them back. Every place but the list shows `‹` and where back goes (the query in
+  mono, an entry's title, `Search`, `Refresh`) in the header, drawn by the same crumb as ⌘K's submenus. Esc and `‹` go
+  back one place, to it as it was left. A new screen is a new place.
 - **Entry view** (`entry_view.rs`; 04-entry-template, 05-detail-links): Header (icon, title, tags), Hero by type,
   Quote (the description, red bar), Body (the notes, then the Links list); the same component in the split (34 %
   list) and on the detail screen.
