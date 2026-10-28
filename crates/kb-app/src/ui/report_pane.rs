@@ -306,6 +306,7 @@ pub fn report_pane(
                 .iter()
                 .map(|line| {
                     h_flex()
+                        .min_w_0()
                         .px(pt(d.spacing.card.pad_x))
                         .gap(pt(d.spacing.card.pad_x))
                         .when(line.marked, |l| {
@@ -315,7 +316,7 @@ pub fn report_pane(
                                 .text_color(c.text)
                         })
                         .child(div().text_color(c.faint).child(line.number.to_string()))
-                        .child(div().whitespace_nowrap().child(line.text.clone()))
+                        .child(div().flex_1().min_w_0().truncate().child(line.text.clone()))
                         .into_any_element()
                 })
                 .collect(),

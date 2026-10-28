@@ -70,12 +70,12 @@ impl ReportRow {
         }
     }
 
-    /// Whether Edit opens config.toml instead of a file: a Skills run that failed or is not configured (spec D4).
+    /// Whether Edit opens config.toml instead of a file: an unreadable sources directory, or a Skills run that failed or is not configured (spec D4, A14).
     #[must_use]
     pub fn configures(&self) -> bool {
         matches!(
             self.subject,
-            Subject::Skills(SkillsOutcome::Failed { .. } | SkillsOutcome::NotConfigured)
+            Subject::SourcesDir(_) | Subject::Skills(SkillsOutcome::Failed { .. } | SkillsOutcome::NotConfigured)
         )
     }
 
@@ -507,7 +507,7 @@ pub(crate) mod tests {
         assert_eq!(kinds, [ReportKind::Failed, ReportKind::Warning]);
         assert_eq!(
             sections[0].rows[0].detail,
-            "skills exited with exit status: 1 The previous entries are unchanged."
+            "skills exited with exit status: 1 The previous entries are unchanged. Check it in Configure."
         );
         assert_eq!(sections[0].rows[1].detail, "⚠ Skipped recon");
     }
@@ -637,5 +637,17 @@ pub(crate) mod tests {
             ]
         );
         assert_eq!(rows[0].line_and_column(), (Some(4), Some(1)));
+    }
+
+    #[test]
+    fn opens_configure_from_an_unreadable_sources_directory() {
+        let row = ReportRow {
+            path: "/s".into(),
+            kind: ReportKind::Failed,
+            entries: 0,
+            detail: "No such directory.".into(),
+            subject: Subject::SourcesDir("/s".into()),
+        };
+        assert!(row.configures(), "A14: Edit opens config.toml");
     }
 }
