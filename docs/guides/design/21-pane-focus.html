@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>kb · bookmark template</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #11121a; color: #cad3f5; font-family: Inter, sans-serif; padding: 28px; }
+.page { max-width: 1290px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-size: 22px; font-weight: 600; } h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.lead { color: #a5adcb; font-size: 14px; line-height: 21px; max-width: 1100px; } .lead b { color: #cad3f5; }
+.row { display: flex; gap: 16px; } .cell { display: flex; flex-direction: column; gap: 6px; } .cap { font-size: 12px; color: #a5adcb; }
+.z { zoom: 0.73; }
+.kb { --window:#24273a; --selected:#363a4f; --badge:#2e3248; --mantle:#1e2030; --text:#cad3f5; --muted:#a5adcb; --faint:#6e738d;
+  --mauve:#c6a0f6; --blue:#8aadf4; --green:#a6da95; --peach:#f5a97f; --pink:#f5bde6; --yellow:#eed49f; --red:#ed8796; --edge: rgba(110,115,141,.10);
+  width: 860px; height: 520px; display: flex; flex-direction: column; overflow: hidden; background: var(--window); border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(202,211,245,.08); color: var(--text); -webkit-font-smoothing: antialiased; }
+.kb svg { stroke-width: 2; flex: none; } .mono { font-family: 'JetBrains Mono', monospace; }
+.hd { height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--edge); }
+.hd .glass, .hd .back { width: 20px; height: 20px; color: var(--faint); } .hd .q { flex: 1; font-size: 15px; display: flex; align-items: center; }
+.hd .caret { width: 1.5px; height: 16px; background: var(--mauve); margin-left: 2px; }
+.fp { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 6px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; }
+.fp svg { width: 15px; height: 15px; color: var(--faint); }
+kbd { height: 20px; min-width: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--mantle); color: var(--muted); font: 400 11px/16px 'JetBrains Mono', monospace; }
+.body { flex: 1; min-height: 0; display: flex; }
+.sl { width: 34%; flex: none; border-right: 1px solid var(--edge); padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.r { position: relative; height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 6px; }
+.r.sel { background: var(--selected); } .r.sel::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 9999px; background: var(--mauve); box-shadow: 0 0 8px rgba(198,160,246,.6); }
+.tile { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; } .tile svg { width: 16px; height: 16px; }
+.favicon { width: 16px; height: 16px; border-radius: 3px; flex: none; margin: 0 4px; }
+.tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pane { flex: 1; min-width: 0; padding: 18px 24px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.ph { display: flex; align-items: flex-start; gap: 10px; min-height: 24px; } .ph .ico { flex: none; display: flex; align-items: center; height: 24px; } .ph .title { flex: 1; font-size: 15px; line-height: 24px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } .detailv .ph .title { -webkit-line-clamp: unset; display: block; } .ph .tags { height: 24px; }
+.ph .title.url { font: 500 13px 'JetBrains Mono', monospace; color: var(--blue); } .ph .spacer { flex: 1; }
+.tags { display: flex; gap: 6px; align-items: center; }
+.ti { width: 20px; height: 20px; border-radius: 4px; background: var(--badge); display: flex; align-items: center; justify-content: center; } .ti svg { width: 14px; height: 14px; }
+.tp { height: 20px; display: inline-flex; align-items: center; padding: 0 8px; border-radius: 4px; background: var(--badge); color: var(--muted); font-size: 11px; font-weight: 600; }
+.card { background: var(--mantle); border: 1px solid var(--selected); border-radius: 10px; padding: 12px 14px; font: 400 13px/22px 'JetBrains Mono', monospace; white-space: pre-wrap; word-break: break-word; }
+.c-x { color: var(--blue); font-weight: 500; } .c-o { color: var(--peach); } .c-q { color: var(--yellow); } .c-v { color: var(--pink); } .c-op { color: var(--faint); }
+.hero-img { border-radius: 12px; overflow: hidden; flex: none; } .hero-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.summary { font-size: 13px; line-height: 19px; color: var(--muted); }
+.notes { display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 20px; }
+.notes h4 { font-size: 13px; font-weight: 600; } .notes li { margin-left: 18px; color: var(--muted); } .notes li b { color: var(--text); font-weight: 500; }
+.notes code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--mantle); padding: 1px 5px; border-radius: 4px; color: var(--green); }
+.md-code { background: #191b29; border-radius: 8px; padding: 10px 12px; font: 400 12px/18px 'JetBrains Mono', monospace; white-space: pre; color: var(--text); }
+.md-code .k { color: var(--mauve); } .md-code .s { color: var(--green); }
+.ft { height: 40px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 24px; border-top: 1px solid var(--edge); font-size: 11px; color: var(--faint); }
+.ft .l, .ft .rt, .ft .it { display: flex; align-items: center; gap: 8px; } .ft .rt { gap: 16px; } .ft .it { gap: 6px; color: var(--muted); }
+.ft .file { font-family: 'JetBrains Mono', monospace; color: var(--muted); } .ft .tile { width: 20px; height: 20px; } .ft .tile svg { width: 13px; height: 13px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(166,218,149,.7); }
+
+.quote { border-left: 3px solid var(--red); padding: 2px 0 2px 12px; font-size: 14px; line-height: 21px; color: var(--text); font-style: italic; }
+.linkhero { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--mantle); border: 1px solid var(--selected); font: 500 13px 'JetBrains Mono', monospace; color: var(--blue); }
+.linkhero svg { width: 14px; height: 14px; } .linkhero .host { color: var(--text); }
+.ph .title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+</style></head><body><div class="page">
+<div><h1>Bookmarks, with and without a hero (template v3)</h1><p class="lead">The same four slots for every entry: <b>1 Header</b> [the row's icon] the title, one line, tags right ·
+<b>2 Hero</b> per type · <b>3 Quote</b> the full description with the red bar · <b>4 Body</b> the notes. For a bookmark the hero is its thumbnail when it has one
+(YouTube today; other sites once og:image lands), otherwise <b>its URL as a link line</b>, so the URL is always on screen.</p></div>
+<section><h2>With a hero: a YouTube bookmark</h2><p class="lead" style="margin-bottom:10px">Header [YouTube favicon] title · hero the thumbnail (capped in the split) · quote · notes.</p><div class="row"><div class="cell"><span class="cap">Split (→ on the list)</span><div class="z"><div class="kb"><div class="hd"><i class="glass" data-lucide="search"></i><div class="q">/k8s<span class="caret"></span></div><div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div></div><div class="body"><div class="sl"><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods</span></span><kbd>⌘1</kbd></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/docker-prune-all</span><span class="ds">Remove unused containers</span></span><kbd>⌘2</kbd></div><div class="r sel"><img class="favicon" src="https://icons.duckduckgo.com/ip3/www.youtube.com.ico"><span class="tx"><span class="tt">Async Rust in Depth</span><span class="ds">youtube.com · conference talk</span></span><kbd>↵</kbd></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span><span class="ds">Cert-manager annotations</span></span><kbd>⌘4</kbd></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Rust Memory Safety &amp; Lifetimes</span><span class="ds">Borrow checker rules</span></span><kbd>⌘5</kbd></div><div class="r"><span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span><span class="tx"><span class="tt">AWS EKS VPC CNI Subnet Playbook</span><span class="ds">Secondary CIDR remediation</span></span><kbd>⌘6</kbd></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/git-undo-commit</span><span class="ds">Undo last git commit</span></span><kbd>⌘7</kbd></div></div><div class="pane"><div class="ph"><span class="ico"><img class="favicon" style="margin:0 4px" src="https://icons.duckduckgo.com/ip3/www.youtube.com.ico"></span><span class="title">Async Rust in Depth</span><span class="tags"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="tp">#async</span></span></div><div class="hero-img" style="height:150px"><img src="https://img.youtube.com/vi/aqz-KE-bpKQ/maxresdefault.jpg"></div><div class="quote">A conference talk on how futures, wakers and the executor fit together.</div><div class="notes"><ul><li>Pinning, wakers and the executor, with diagrams.</li><li>Pairs with the Tokio tutorial's <b>Async in depth</b> chapter.</li></ul></div></div></div><div class="ft"><div class="l"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="file">bookmarks/rust.yml</span><kbd>⌥⌘C</kbd></div><div class="rt"><span class="it">Details<kbd>↵</kbd></span><span class="it">Open<kbd>⌘↵</kbd></span><span class="it">Copy<kbd>⇧⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div><div class="cell"><span class="cap">Detail (↵ on the list)</span><div class="z"><div class="kb detailv"><div class="hd"><i class="back" data-lucide="chevron-left"></i></div><div class="body"><div class="pane" style="padding:22px 32px"><div class="ph"><span class="ico"><img class="favicon" style="margin:0 4px" src="https://icons.duckduckgo.com/ip3/www.youtube.com.ico"></span><span class="title">Async Rust in Depth</span><span class="tags"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="tp">#async</span></span></div><div class="hero-img" style="height:250px"><img src="https://img.youtube.com/vi/aqz-KE-bpKQ/maxresdefault.jpg"></div><div class="quote">A conference talk on how futures, wakers and the executor fit together.</div><div class="notes"><ul><li>Pinning, wakers and the executor, with diagrams.</li><li>Pairs with the Tokio tutorial's <b>Async in depth</b> chapter.</li></ul></div></div></div><div class="ft"><div class="l"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="file">bookmarks/rust.yml</span><kbd>⌥⌘C</kbd></div><div class="rt"><span class="it">Open<kbd>↵</kbd></span><span class="it">Copy<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div></div></section>
+<section><h2>Without a hero: any other site</h2><p class="lead" style="margin-bottom:10px">Header [site favicon] title · hero the URL as a link line (↗, host in text colour, path in link colour) · quote · notes.</p><div class="row"><div class="cell"><span class="cap">Split (→ on the list)</span><div class="z"><div class="kb"><div class="hd"><i class="glass" data-lucide="search"></i><div class="q">/k8s<span class="caret"></span></div><div class="fp"><i data-lucide="sliders-horizontal"></i>All Entries<kbd>⌘P</kbd></div></div><div class="body"><div class="sl"><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/k8s-rollout-restart</span><span class="ds">Gracefully roll out new pods</span></span><kbd>⌘1</kbd></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/docker-prune-all</span><span class="ds">Remove unused containers</span></span><kbd>⌘2</kbd></div><div class="r sel"><img class="favicon" src="https://icons.duckduckgo.com/ip3/tokio.rs.ico"><span class="tx"><span class="tt">Tokio Tutorial — Async in Depth</span><span class="ds">tokio.rs · tutorial</span></span><kbd>↵</kbd></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Kubernetes Ingress &amp; TLS Spec Cheatsheet</span><span class="ds">Cert-manager annotations</span></span><kbd>⌘4</kbd></div><div class="r"><span class="tile" style="background:rgba(198,160,246,.15);color:var(--mauve)"><i data-lucide="book-open"></i></span><span class="tx"><span class="tt">Rust Memory Safety &amp; Lifetimes</span><span class="ds">Borrow checker rules</span></span><kbd>⌘5</kbd></div><div class="r"><span class="tile" style="background:rgba(245,169,127,.15);color:var(--peach)"><i data-lucide="sticky-note"></i></span><span class="tx"><span class="tt">AWS EKS VPC CNI Subnet Playbook</span><span class="ds">Secondary CIDR remediation</span></span><kbd>⌘6</kbd></div><div class="r"><span class="tile" style="background:rgba(166,218,149,.15);color:var(--green)"><i data-lucide="square-terminal"></i></span><span class="tx"><span class="tt mono">/git-undo-commit</span><span class="ds">Undo last git commit</span></span><kbd>⌘7</kbd></div></div><div class="pane"><div class="ph"><span class="ico"><img class="favicon" style="margin:0 4px" src="https://icons.duckduckgo.com/ip3/tokio.rs.ico"></span><span class="title">Tokio Tutorial — Async in Depth</span><span class="tags"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="tp">#async</span></span></div><div class="linkhero"><i data-lucide="arrow-up-right"></i><span><span class="host">tokio.rs</span>/tokio/tutorial/async</span></div><div class="quote">The Tokio guide to what really happens when you <code style="font-style:normal;font-family:JetBrains Mono;font-size:12px">.await</code>: futures, wakers and executors, step by step.</div><div class="notes"><ul><li>Read after the <b>Spawning</b> chapter.</li><li>Its mini-executor example is the clearest explanation of <code>Waker</code> I know.</li></ul></div></div></div><div class="ft"><div class="l"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="file">bookmarks/rust.yml</span><kbd>⌥⌘C</kbd></div><div class="rt"><span class="it">Details<kbd>↵</kbd></span><span class="it">Open<kbd>⌘↵</kbd></span><span class="it">Copy<kbd>⇧⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div><div class="cell"><span class="cap">Detail (↵ on the list)</span><div class="z"><div class="kb detailv"><div class="hd"><i class="back" data-lucide="chevron-left"></i></div><div class="body"><div class="pane" style="padding:22px 32px"><div class="ph"><span class="ico"><img class="favicon" style="margin:0 4px" src="https://icons.duckduckgo.com/ip3/tokio.rs.ico"></span><span class="title">Tokio Tutorial — Async in Depth</span><span class="tags"><span class="ti" style="color:var(--peach)"><i data-lucide="cog"></i></span><span class="tp">#async</span></span></div><div class="linkhero"><i data-lucide="arrow-up-right"></i><span><span class="host">tokio.rs</span>/tokio/tutorial/async</span></div><div class="quote">The Tokio guide to what really happens when you <code style="font-style:normal;font-family:JetBrains Mono;font-size:12px">.await</code>: futures, wakers and executors, step by step.</div><div class="notes"><ul><li>Read after the <b>Spawning</b> chapter.</li><li>Its mini-executor example is the clearest explanation of <code>Waker</code> I know.</li></ul></div></div></div><div class="ft"><div class="l"><span class="tile" style="background:rgba(138,173,244,.15);color:var(--blue)"><i data-lucide="bookmark"></i></span><span class="file">bookmarks/rust.yml</span><kbd>⌥⌘C</kbd></div><div class="rt"><span class="it">Open<kbd>↵</kbd></span><span class="it">Copy<kbd>⌘↵</kbd></span><span class="it">Actions<kbd>⌘K</kbd></span></div></div></div></div></div></div></section>
+</div><script>lucide.createIcons()</script>
+
+<!-- ===== appended for the pane focus: everything above is 04-entry-template.html byte-for-byte ===== -->
+<style>
+/* NEW: the list's selection while the pane has the keyboard: the row stays, its accent bar goes faint */
+.kb.pf .r.sel::before { background: var(--faint); box-shadow: none; }
+/* NEW: three ways to mark the pane that has the keyboard */
+.kb.fa .pane { box-shadow: inset 1px 0 0 var(--mauve); }
+.kb.fb .pane .ph { background: var(--selected); margin: -6px -10px 0; padding: 6px 10px; border-radius: 8px; }
+.kb.fc .pane { box-shadow: inset 0 0 0 1px var(--mauve); border-radius: 10px; margin: 4px; }
+.optgrid { display: flex; flex-direction: column; gap: 40px; }
+.optgrid .cap { font-size: 13px; color: #a5adcb; margin: 4px 0 10px; max-width: 980px; line-height: 1.5; }
+.optgrid .pair { display: flex; gap: 16px; flex-wrap: wrap; } .optgrid .z { zoom: 0.62; }
+.optgrid h2 .letter { display: inline-block; background: #c6a0f6; color: #181926; border-radius: 6px; padding: 0 8px; margin-right: 8px; }
+</style>
+<script>
+(() => {
+  const split = document.querySelectorAll('section')[1].querySelector('.kb')   // "Without a hero": the split, as approved
+  const keys = ks => ks.map(([l, k]) => `<span class="it">${l}<kbd>${k}</kbd></span>`).join('')
+  const focused = cls => {
+    const kb = split.cloneNode(true)
+    kb.classList.add('pf', cls)
+    kb.querySelector('.ft .rt').innerHTML = keys([['Scroll', '↑↓'], ['List', '⇥'], ['Actions', '⌘K']])
+    return kb
+  }
+  const cell = (cap, kb) => { const c = document.createElement('div'); c.innerHTML = `<div class="cap">${cap}</div>`; const z = document.createElement('div'); z.className = 'z'; z.append(kb); c.append(z); return c }
+  const opts = [
+    ['a', 'Thin accent bar on the pane’s edge (chosen)', 'A thin 1 pt mauve bar, now on the pane’s left edge, and the row’s bar goes faint. One mark that means “the keys go here” on both sides.', 'fa'],
+    ['b', 'Tinted pane header', 'The pane’s header row takes the selected-row fill, as if the pane were the selected row. Quieter, but the fill already means “selected row” in the list.', 'fb'],
+    ['c', '1 pt ring around the pane', 'A thin mauve ring, like a focused text field. The most explicit, and the first ring in the app.', 'fc'],
+  ]
+  const box = document.createElement('div'); box.className = 'optgrid options'
+  for (const [l, t, d, cls] of opts) {
+    const o = document.createElement('div'); o.className = 'option'; o.dataset.choice = l; o.setAttribute('onclick', 'toggleSelect(this)')
+    o.innerHTML = `<h2><span class="letter">${l.toUpperCase()}</span>${t}</h2><div class="cap">${d}</div>`
+    const p = document.createElement('div'); p.className = 'pair'
+    p.append(cell('Split, list has the keys (as approved)', split.cloneNode(true)), cell('⇥: the pane has the keys', focused(cls)))
+    o.append(p); box.append(o)
+  }
+  const sections = document.querySelectorAll('section')
+  sections[0].replaceWith(box); sections[1].remove()
+  document.querySelector('h1').textContent = 'Keyboard into the split’s pane: how the pane shows it has the keys'
+  document.querySelector('.lead').innerHTML = 'Each panel is <b>04-entry-template byte-for-byte</b> (its “without a hero” split). <b>New</b> only: ⇥ moves the keyboard into the pane; ↑↓ / ⌘↑↓ / Page Up·Down scroll it; ⇥, ⇧⇥ or Esc return to the list. In every option the list’s row stays selected with a faint bar, and the footer names the pane’s keys. Pick the pane’s mark.'
+  lucide.createIcons()
+})()
+</script>
+</body>
+</html>
