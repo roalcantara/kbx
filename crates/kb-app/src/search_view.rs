@@ -361,20 +361,28 @@ impl SearchView {
         }
     }
 
+    fn list_screen(&self, cx: &App) -> (KeyScreen, Option<Phase>) {
+        let list = self.list.read(cx).delegate();
+        let screen = if !list.has_index() {
+            KeyScreen::NoIndex
+        } else if list.entries().is_empty() && self.query_input.read(cx).value() == list.query() {
+            KeyScreen::Empty
+        } else {
+            KeyScreen::List
+        };
+        (screen, self.sync.as_ref().map(|sync| sync.read(cx).phase()))
+    }
+
     /// The screen whose keys apply now (8g adds the empty and refresh screens).
     fn key_screen(&self, cx: &App) -> KeyScreen {
-        let list = {
-            let list = self.list.read(cx).delegate();
-            if !list.has_index() {
-                KeyScreen::NoIndex
-            } else if list.entries().is_empty() && self.query_input.read(cx).value() == list.query() {
-                KeyScreen::Empty
-            } else {
-                KeyScreen::List
-            }
-        };
-        let phase = self.sync.as_ref().map(|sync| sync.read(cx).phase());
+        let (list, phase) = self.list_screen(cx);
         self.navigator.key_screen(list, phase)
+    }
+
+    /// The screen for the current place alone, for the action panel's root page.
+    fn place_key_screen(&self, cx: &App) -> KeyScreen {
+        let (list, phase) = self.list_screen(cx);
+        self.navigator.screen_for_place(list, phase)
     }
 
     /// The current screen's keys, resolved for the selected entry.
@@ -910,8 +918,6 @@ impl SearchView {
             if !self.panel_query.read(cx).value().is_empty() {
                 return self.set_panel_query("", window, cx);
             }
-            // Leaving Theme… without ↵ restores the theme it opened on.
-            self.cancel_theme_preview(cx);
             let next = match self.navigator.overlay() {
                 Overlay::Actions(Some(crate::actions::Submenu::Refresh | crate::actions::Submenu::Theme)) => {
                     Overlay::Actions(Some(crate::actions::Submenu::More))

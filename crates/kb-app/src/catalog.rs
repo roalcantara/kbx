@@ -11,7 +11,7 @@ use serde::Deserialize;
 const CATALOG: &str = include_str!("../assets/catalog.toml");
 
 /// The actions kb knows how to run; a catalog names exactly these.
-pub const ACTION_IDS: [&str; 25] = [
+pub const ACTION_IDS: [&str; 27] = [
     "details",
     "open",
     "copy",
@@ -37,6 +37,8 @@ pub const ACTION_IDS: [&str; 25] = [
     "clear-filters",
     "open-link",
     "copy-link",
+    "run",
+    "close",
 ];
 
 /// What an entry type's primary or secondary action may be.
@@ -112,6 +114,8 @@ pub enum Screen {
     NoIndex,
     /// The filter is open.
     Filter,
+    /// ⌘K is open (the root or a submenu other than Links…).
+    Actions,
     /// The Links… submenu is open.
     Links,
     /// A refresh is running.
@@ -149,6 +153,7 @@ pub struct Screens {
     pub empty: ScreenKeys,
     pub no_index: ScreenKeys,
     pub filter: ScreenKeys,
+    pub actions: ScreenKeys,
     pub links: ScreenKeys,
     pub refreshing: ScreenKeys,
     pub report: ScreenKeys,
@@ -326,6 +331,7 @@ impl Catalog {
             Screen::Empty => &s.empty,
             Screen::NoIndex => &s.no_index,
             Screen::Filter => &s.filter,
+            Screen::Actions => &s.actions,
             Screen::Links => &s.links,
             Screen::Refreshing => &s.refreshing,
             Screen::Report => &s.report,

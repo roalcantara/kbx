@@ -323,7 +323,7 @@ fn clears_the_search_then_leaves_more_then_closes_with_escape(cx: &mut TestAppCo
         cx.read(|cx| view.read(cx).panel_labels(cx)),
         [
             vec!["Notes", "Path"],
-            vec!["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
+            vec!["Edit", "Refresh", "Refresh More…", "Configure", "Theme…"]
         ],
         "the cheat sheet has no description"
     );
@@ -357,7 +357,7 @@ fn opens_refresh_more_and_returns_to_more_with_escape(cx: &mut TestAppContext) {
     cx.run_until_parked();
     assert_eq!(
         cx.read(|cx| view.read(cx).panel_labels(cx))[1],
-        ["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
+        ["Edit", "Refresh", "Refresh More…", "Configure", "Theme…"]
     );
 }
 
@@ -1389,4 +1389,31 @@ fn tab_without_a_split_does_nothing(cx: &mut TestAppContext) {
     let (_home, window, view) = fresh(cx);
     press(cx, window, "tab");
     assert!(!cx.read(|cx| view.read(cx).pane_has_keys()));
+}
+
+/// A10: under ⌘K, the footer shows the panel's own keys, and ⌘K closes it.
+#[gpui_kit::test]
+fn shows_the_panel_s_keys_in_the_footer(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).footer_keys(cx)),
+        ["Run ↵", "Back esc", "Close ⌘K"]
+    );
+    type_text(cx, window, "More");
+    cx.run_until_parked();
+    press(cx, window, "enter");
+    cx.run_until_parked();
+    assert_eq!(
+        cx.read(|cx| view.read(cx).footer_keys(cx)),
+        ["Run ↵", "Back esc", "Close ⌘K"],
+        "a submenu too"
+    );
+    press(cx, window, "cmd-k");
+    cx.run_until_parked();
+    assert!(
+        !cx.read(|cx| view.read(cx).is_actions_open()),
+        "⌘K closes the panel from a submenu"
+    );
 }

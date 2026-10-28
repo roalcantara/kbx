@@ -197,16 +197,16 @@ pub fn more_page(catalog: &Catalog, entry: Option<&Entry>) -> Page {
                 },
                 PanelCommand::Open(Submenu::Refresh),
             ));
-            admin.push((
-                PanelRow {
-                    label: catalog.panel.theme.clone(),
-                    submenu: true,
-                    ..PanelRow::default()
-                },
-                PanelCommand::Open(Submenu::Theme),
-            ));
         }
     }
+    admin.push((
+        PanelRow {
+            label: catalog.panel.theme.clone(),
+            submenu: true,
+            ..PanelRow::default()
+        },
+        PanelCommand::Open(Submenu::Theme),
+    ));
     page.section(Some(catalog.panel.admin_section.clone()), admin);
     page
 }
@@ -497,14 +497,14 @@ mod tests {
             labels(&page),
             [
                 vec!["Description", "Notes", "Path"],
-                vec!["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]
+                vec!["Edit", "Refresh", "Refresh More…", "Configure", "Theme…"]
             ]
         );
         assert_eq!(page.command(0, 1), Some(&PanelCommand::Copy("N".into())));
         assert_eq!(page.command(1, 2), Some(&PanelCommand::Open(Submenu::Refresh)));
         assert_eq!(
             labels(&more_page(&catalog, None)),
-            [["Edit", "Refresh", "Refresh More…", "Theme…", "Configure"]]
+            [["Edit", "Refresh", "Refresh More…", "Configure", "Theme…"]]
         );
     }
 
@@ -547,6 +547,19 @@ mod tests {
             .find(|r| r.label == "Archwave")
             .unwrap();
         assert_eq!(row.origin.as_deref(), Some("Theme"));
+    }
+
+    #[test]
+    fn offers_theme_without_refresh_more() {
+        let (mut catalog, _) = Catalog::load(&toml::Table::new());
+        catalog.panel.more_refresh.clear();
+        let labels: Vec<String> = more_page(&catalog, None)
+            .page
+            .sections
+            .iter()
+            .flat_map(|s| s.rows.iter().map(|r| r.label.clone()))
+            .collect();
+        assert!(labels.contains(&catalog.panel.theme), "{labels:?}");
     }
 
     #[test]

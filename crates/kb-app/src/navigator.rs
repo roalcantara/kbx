@@ -135,10 +135,16 @@ impl Navigator {
     #[must_use]
     pub fn key_screen(&self, list: KeyScreen, phase: Option<Phase>) -> KeyScreen {
         match self.overlay {
-            Overlay::Filter => return KeyScreen::Filter,
-            Overlay::Actions(Some(Submenu::Links)) => return KeyScreen::Links,
-            _ => {}
+            Overlay::Filter => KeyScreen::Filter,
+            Overlay::Actions(Some(Submenu::Links)) => KeyScreen::Links,
+            Overlay::Actions(_) => KeyScreen::Actions,
+            Overlay::None => self.screen_for_place(list, phase),
         }
+    }
+
+    /// The screen for the current place alone, ignoring any open overlay.
+    #[must_use]
+    pub fn screen_for_place(&self, list: KeyScreen, phase: Option<Phase>) -> KeyScreen {
         match self.top() {
             Place::List => list,
             Place::Detail => KeyScreen::Detail,
@@ -269,6 +275,10 @@ mod tests {
         assert_eq!(nav.key_screen(KeyScreen::List, None), KeyScreen::Filter);
         nav.set_overlay(Overlay::Actions(Some(Submenu::Links)));
         assert_eq!(nav.key_screen(KeyScreen::List, None), KeyScreen::Links);
+        nav.set_overlay(Overlay::Actions(None));
+        assert_eq!(nav.key_screen(KeyScreen::List, None), KeyScreen::Actions);
+        nav.set_overlay(Overlay::Actions(Some(Submenu::More)));
+        assert_eq!(nav.key_screen(KeyScreen::List, None), KeyScreen::Actions);
     }
 
     #[test]

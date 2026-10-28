@@ -64,7 +64,7 @@ impl SearchView {
             .into_iter()
             .map(|item| format!("{} {}", item.label, item.caps))
             .collect();
-        keys.push(format!("{} {}", self.catalog.label("actions"), self.actions_caps()));
+        keys.push(format!("{} {}", self.actions_label(), self.actions_caps()));
         keys
     }
 
@@ -74,6 +74,15 @@ impl SearchView {
             .as_deref()
             .map(caps)
             .unwrap_or_default()
+    }
+
+    /// The trailing ⌘K item's label: Actions, or Close while an overlay is open (close-out D5).
+    fn actions_label(&self) -> &str {
+        if self.navigator.screen_has_keys() {
+            self.catalog.label("actions")
+        } else {
+            self.catalog.label("close")
+        }
     }
 
     pub(super) fn render_footer(
@@ -152,7 +161,7 @@ impl SearchView {
                     // No button padding: the contents sit on the window's content edge (spec 2026-10-19 spacing D2).
                     .px_0()
                     // The popover opens on its trigger's click; a handler here would close it again.
-                    .child(key_item(self.catalog.label("actions").to_owned(), self.actions_caps())),
+                    .child(key_item(self.actions_label().to_owned(), self.actions_caps())),
                 cx,
             )
             .into_any_element(),

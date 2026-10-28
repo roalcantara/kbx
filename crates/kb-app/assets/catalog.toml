@@ -130,6 +130,12 @@ label = "Open"
 [actions.copy-link]
 label = "Copy"
 
+[actions.run]
+label = "Run"
+
+[actions.close]
+label = "Close"
+
 # Screen keys (D8, D10, D15, D16): the ladder ↵ / ⌘↵ / ⇧⌘↵, and Esc while refreshing; the report and its detail.
 [screens.list]
 enter = "details"
@@ -154,6 +160,11 @@ cmd-enter = "only"
 enter = "open-link"
 cmd-enter = "copy-link"
 
+# While ⌘K is open (close-out D5): ↵ runs the selected row; ⌘K, shown as Close, shuts the panel.
+[screens.actions]
+enter = "run"
+escape = "back"
+
 [screens.refreshing]
 escape = "stop"
 
@@ -174,7 +185,7 @@ cmd-enter = "configure"
 
 # The action panel (D9): after the screen's keys, the root lists `root`, then Links… (with links) and
 # More…; More… lists `more_copy` under `copy_section`, then `more_admin` under `admin_section`, with
-# `refresh_more` after Refresh opening `more_refresh`, then `theme` opening the themes (~/.config/kb/themes).
+# `refresh_more` after Refresh opening `more_refresh`, then `theme` opening the themes (~/.config/kb/themes) at the end.
 [panel]
 links = "Links…"
 more = "More…"

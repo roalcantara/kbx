@@ -88,7 +88,7 @@ impl SearchView {
             Place::Refresh | Place::ReportDetail => None,
             Place::List | Place::Detail => list.selected_entry(),
         };
-        let screen = self.key_screen(cx);
+        let screen = self.place_key_screen(cx);
         let query_empty = self.panel_query.read(cx).value().is_empty();
         if let Some(sync) = self.report(cx) {
             let row = sync.read(cx).selected_row(cx);
@@ -143,6 +143,10 @@ impl SearchView {
     /// Shows `overlay` with an empty search and hands it the keyboard; `Overlay::None` hands the
     /// keyboard back to the screen.
     pub(super) fn show_overlay(&mut self, overlay: Overlay, window: &mut Window, cx: &mut Context<Self>) {
+        // Leaving Theme… any way but ↵ restores the theme in use (close-out D4); `keep_theme` clears the preview first.
+        if overlay != Overlay::Actions(Some(Submenu::Theme)) {
+            self.cancel_theme_preview(cx);
+        }
         self.navigator.set_overlay(overlay);
         if matches!(overlay, Overlay::Actions(_)) {
             self.reload_themes();
