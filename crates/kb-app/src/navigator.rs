@@ -63,6 +63,7 @@ pub struct Navigator {
     /// Never empty: `List` at the bottom, with no back name.
     stack: Vec<(Place, Option<BackName>)>,
     overlay: Overlay,
+    pane: bool,
 }
 
 impl Default for Navigator {
@@ -70,6 +71,7 @@ impl Default for Navigator {
         Self {
             stack: vec![(Place::List, None)],
             overlay: Overlay::None,
+            pane: false,
         }
     }
 }
@@ -89,6 +91,7 @@ impl Navigator {
 
     /// Opens `place` on top, remembering where it was opened from. `List` is never pushed.
     pub fn push(&mut self, place: Place, back: BackName) {
+        self.pane = false;
         if place != Place::List {
             self.stack.push((place, Some(back)));
         }
@@ -96,6 +99,7 @@ impl Navigator {
 
     /// Back one place; `None` on the list, which is never popped.
     pub fn pop(&mut self) -> Option<Place> {
+        self.pane = false;
         if self.stack.len() > 1 {
             self.stack.pop().map(|(place, _)| place)
         } else {
@@ -105,6 +109,7 @@ impl Navigator {
 
     /// Back to the list, from anywhere.
     pub fn pop_to_list(&mut self) {
+        self.pane = false;
         self.stack.truncate(1);
     }
 
@@ -151,6 +156,13 @@ impl Navigator {
     /// detail screens scroll with `Detail`'s keys; the report and its detail take the report-only keys.
     #[must_use]
     pub fn key_context(&self) -> String {
+        // A pane with the keys scrolls as the detail screens do, with their bindings.
+        if self.pane {
+            return match self.top() {
+                Place::Refresh => [CONTEXT, DETAIL_CONTEXT, REPORT_CONTEXT].join(" "),
+                _ => [CONTEXT, DETAIL_CONTEXT].join(" "),
+            };
+        }
         let parts: &[&str] = match self.top() {
             Place::List => &[CONTEXT],
             Place::Detail => &[CONTEXT, DETAIL_CONTEXT],
@@ -166,10 +178,15 @@ impl Navigator {
         self.stack.last()?.1.as_ref()
     }
 
-    /// Whether the split pane has the keyboard (close-out D3). Task 4 replaces this.
+    /// Whether the keys are in the split's pane (close-out D3).
     #[must_use]
     pub fn pane_has_keys(&self) -> bool {
-        false
+        self.pane
+    }
+
+    /// Moves the keys into the split's pane, or back to its list.
+    pub fn set_pane_has_keys(&mut self, pane: bool) {
+        self.pane = pane;
     }
 }
 
@@ -269,5 +286,21 @@ mod tests {
             "Search Detail Report",
             "the report's detail scrolls as an entry's does"
         );
+    }
+
+    #[test]
+    fn gives_the_pane_the_keys_until_the_place_changes() {
+        let mut nav = Navigator::default();
+        nav.set_pane_has_keys(true);
+        assert!(nav.pane_has_keys());
+        assert_eq!(nav.key_context(), "Search Detail", "the pane scrolls as a detail does");
+        nav.push(Place::Detail, name("/k8s"));
+        assert!(!nav.pane_has_keys(), "a push takes the keys back");
+        nav.pop();
+        nav.push(Place::Refresh, name("Search"));
+        nav.set_pane_has_keys(true);
+        assert_eq!(nav.key_context(), "Search Detail Report");
+        nav.pop();
+        assert!(!nav.pane_has_keys(), "so does a pop");
     }
 }

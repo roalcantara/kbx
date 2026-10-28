@@ -23,6 +23,7 @@ pub struct Row {
     description: Option<SharedString>,
     trailing: Vec<AnyElement>,
     selected: bool,
+    idle: bool,
 }
 
 impl std::fmt::Debug for Row {
@@ -50,6 +51,7 @@ impl Row {
             description: None,
             trailing: Vec::new(),
             selected: false,
+            idle: false,
         }
     }
 
@@ -86,6 +88,13 @@ impl Row {
     #[must_use]
     pub fn trailing(mut self, trailing: Vec<AnyElement>) -> Self {
         self.trailing = trailing;
+        self
+    }
+
+    /// Whether the selection is idle (the pane has the keys): faint bar, no glow.
+    #[must_use]
+    pub fn idle(mut self, idle: bool) -> Self {
+        self.idle = idle;
         self
     }
 }
@@ -133,8 +142,8 @@ impl RenderOnce for Row {
                                     .bottom(pt(size.bar_inset))
                                     .w(pt(size.bar_width))
                                     .rounded_full()
-                                    .bg(colors.mauve)
-                                    .shadow(glow(colors.mauve, size.glow, size.glow_alpha)),
+                                    .bg(if self.idle { colors.faint } else { colors.mauve })
+                                    .when(!self.idle, |bar| bar.shadow(glow(colors.mauve, size.glow, size.glow_alpha))),
                             )
                         } else {
                             row.hover(|style| style.bg(colors.hover))

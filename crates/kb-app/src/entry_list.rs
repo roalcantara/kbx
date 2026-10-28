@@ -46,6 +46,7 @@ pub struct EntryList {
     secondary_confirm: bool,
     tag_images: TagImages,
     compact: bool,
+    idle: bool,
     catalog: Rc<Catalog>,
 }
 
@@ -66,6 +67,7 @@ impl EntryList {
             secondary_confirm: false,
             tag_images: TagImages::default(),
             compact: false,
+            idle: false,
             catalog: Rc::new(Catalog::default()),
         };
         list.refresh();
@@ -109,6 +111,11 @@ impl EntryList {
     /// Shows titles alone (`true`, beside the split pane) or with descriptions, tags and links.
     pub fn set_compact(&mut self, compact: bool) {
         self.compact = compact;
+    }
+
+    /// Whether the selection is idle: faint bar, no glow.
+    pub fn set_idle(&mut self, idle: bool) {
+        self.idle = idle;
     }
 
     /// Whether an index is open.
@@ -295,6 +302,7 @@ impl EntryList {
             .lead(lead)
             .mono(mono)
             .description(entry.description.clone())
+            .idle(selected && self.idle)
             .trailing(trailing)
     }
 

@@ -1361,3 +1361,32 @@ fn cmd_down_reaches_the_report_s_last_row(cx: &mut TestAppContext) {
     press(cx, window, "cmd-down");
     assert_ne!(cx.read(|cx| view.read(cx).report_row_path(cx)), first);
 }
+
+/// Close-out D3: ⇥ moves the keys into the split's pane; Esc goes back one level at a time.
+#[gpui_kit::test]
+fn tab_moves_the_keys_into_the_pane_and_esc_brings_them_back(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "right");
+    let row = selected_title(&view, cx);
+    press(cx, window, "tab");
+    assert!(cx.read(|cx| view.read(cx).pane_has_keys()));
+    press(cx, window, "down");
+    assert_eq!(selected_title(&view, cx), row, "↓ scrolls the pane, not the list");
+    press(cx, window, "tab");
+    assert!(
+        !cx.read(|cx| view.read(cx).pane_has_keys()),
+        "⇥ again: back to the list"
+    );
+    press(cx, window, "tab");
+    press(cx, window, "escape");
+    assert!(!cx.read(|cx| view.read(cx).pane_has_keys()), "Esc: back to the list");
+    assert!(cx.read(|cx| view.read(cx).is_showing_details()), "the split stays open");
+}
+
+/// Close-out D3: ⇥ with the split closed does nothing.
+#[gpui_kit::test]
+fn tab_without_a_split_does_nothing(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "tab");
+    assert!(!cx.read(|cx| view.read(cx).pane_has_keys()));
+}

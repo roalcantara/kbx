@@ -3,6 +3,7 @@
 
 use std::sync::{Arc, LazyLock, PoisonError, RwLock};
 
+use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{BoxShadow, FontFeatures, FontWeight, Hsla, Pixels, Rems, Styled, point, px, rems};
 use serde::Deserialize;
 
@@ -472,6 +473,16 @@ pub trait TextRoleExt: Styled + Sized {
 }
 
 impl<T: Styled> TextRoleExt for T {}
+
+/// Close-out D3: the pane has the keys — a 1 pt mauve bar on its left edge, no glow (21-pane-focus, A).
+#[must_use]
+pub fn focus_bar<T: Styled + FluentBuilder>(el: T, focused: bool) -> T {
+    let d = design();
+    el.when(focused, |el| {
+        el.border_l(pt(d.components.border.hairline))
+            .border_color(d.colors.mauve)
+    })
+}
 
 #[cfg(test)]
 mod tests {

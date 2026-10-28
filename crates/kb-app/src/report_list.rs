@@ -155,6 +155,7 @@ pub struct ReportList {
     sections: Vec<ReportSection>,
     catalog: Rc<Catalog>,
     selected: Option<IndexPath>,
+    idle: bool,
 }
 
 impl ReportList {
@@ -170,6 +171,7 @@ impl ReportList {
             sections,
             catalog,
             selected,
+            idle: false,
         }
     }
 
@@ -190,6 +192,11 @@ impl ReportList {
     #[must_use]
     pub fn selected(&self) -> Option<IndexPath> {
         self.selected
+    }
+
+    /// Whether the selection is idle: faint bar, no glow.
+    pub fn set_idle(&mut self, idle: bool) {
+        self.idle = idle;
     }
 }
 
@@ -225,12 +232,15 @@ impl ListDelegate for ReportList {
     fn render_item(&mut self, ix: IndexPath, _: &mut Window, _: &mut Context<ListState<Self>>) -> Option<Row> {
         let row = self.sections.get(ix.section)?.rows.get(ix.row)?;
         let selected = self.selected == Some(ix);
-        Some(report_row(
-            row,
-            &format!("report-{}-{}", ix.section, ix.row),
-            selected,
-            &self.catalog.messages,
-        ))
+        Some(
+            report_row(
+                row,
+                &format!("report-{}-{}", ix.section, ix.row),
+                selected,
+                &self.catalog.messages,
+            )
+            .idle(selected && self.idle),
+        )
     }
 
     fn set_selected_index(&mut self, ix: Option<IndexPath>, _: &mut Window, cx: &mut Context<ListState<Self>>) {

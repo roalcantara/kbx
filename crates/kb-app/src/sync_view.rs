@@ -76,6 +76,8 @@ pub struct SyncView {
     job: SyncJob,
     report: Option<Entity<ListState<ReportList>>>,
     pane: bool,
+    scroll: gpui_kit::ScrollHandle,
+    focused: bool,
     _run: Task<()>,
 }
 
@@ -106,7 +108,13 @@ pub enum Phase {
 
 impl SyncView {
     /// Starts refreshing `job`'s sources.
-    pub fn start(job: SyncJob, catalog: Rc<Catalog>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn start(
+        job: SyncJob,
+        catalog: Rc<Catalog>,
+        scroll: gpui_kit::ScrollHandle,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let cancel = Arc::new(AtomicBool::new(false));
         let flag = cancel.clone();
         let run_job = job.clone();
@@ -186,6 +194,8 @@ impl SyncView {
             job,
             report: None,
             pane: false,
+            scroll,
+            focused: false,
             _run: run,
         }
     }
@@ -236,6 +246,23 @@ impl SyncView {
             self.pane = open;
             cx.notify();
         }
+    }
+
+    /// Sets the focused state of the split pane and notifies.
+    pub fn set_focused(&mut self, focused: bool) {
+        self.focused = focused;
+    }
+
+    /// Sets both the report list's idle flag and the pane's focused flag.
+    pub fn set_idle_and_focus(&mut self, idle: bool, cx: &mut Context<Self>) {
+        self.focused = idle;
+        if let Some(report) = &self.report {
+            report.update(cx, |list, cx| {
+                list.delegate_mut().set_idle(idle);
+                cx.notify();
+            });
+        }
+        cx.notify();
     }
 
     /// The sources this refresh runs: Retry runs them again.
@@ -400,25 +427,24 @@ impl SyncView {
         };
         let selected = list.read(cx).delegate().selected_row().cloned();
         match selected.filter(|_| self.pane) {
-            Some(row) => h_flex()
-                .size_full()
-                .child(
-                    div()
-                        .h_full()
-                        .w(relative(d.components.split.list))
-                        .flex_none()
-                        .border_r(pt(d.components.border.hairline))
-                        .border_color(c.edge)
-                        .child(rows()),
-                )
-                .child(
-                    div()
-                        .h_full()
-                        .flex_1()
-                        .min_w_0()
-                        .child(report_pane(&row, m, false, None)),
-                )
-                .into_any_element(),
+            Some(row) => {
+                h_flex()
+                    .size_full()
+                    .child(
+                        div()
+                            .h_full()
+                            .w(relative(d.components.split.list))
+                            .flex_none()
+                            .border_r(pt(d.components.border.hairline))
+                            .border_color(c.edge)
+                            .child(rows()),
+                    )
+                    .child(
+                        crate::ui::design::focus_bar(div().h_full().flex_1().min_w_0(), self.focused)
+                            .child(report_pane(&row, m, false, Some(&self.scroll))),
+                    )
+                    .into_any_element()
+            }
             None => v_flex()
                 .size_full()
                 .child(summary)

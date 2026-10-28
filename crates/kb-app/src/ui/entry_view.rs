@@ -108,6 +108,7 @@ pub struct EntryView {
     layout: Layout,
     columns: usize,
     scroll: Option<ScrollHandle>,
+    focused: bool,
     on_tag: OnTag,
     on_link: OnLink,
     on_copied: OnCopied,
@@ -134,6 +135,7 @@ impl EntryView {
             layout,
             columns,
             scroll: None,
+            focused: false,
             on_tag,
             on_link,
             on_copied,
@@ -144,6 +146,13 @@ impl EntryView {
     #[must_use]
     pub fn track_scroll(mut self, handle: ScrollHandle) -> Self {
         self.scroll = Some(handle);
+        self
+    }
+
+    /// Whether the pane currently has the keys (close-out D3).
+    #[must_use]
+    pub fn focused(mut self, focused: bool) -> Self {
+        self.focused = focused;
         self
     }
 }
@@ -428,20 +437,23 @@ impl RenderOnce for EntryView {
 
         // The window's content edge in both layouts (spec 2026-10-19 spacing D2).
         let (pad_x, pad_y) = (d.content_inset(), if detail { p.detail_pad_y } else { p.split_pad_y });
-        v_flex()
-            .id(id("scroll"))
-            .size_full()
-            .min_w_0()
-            .overflow_y_scroll()
-            .when_some(self.scroll, |view, handle| view.track_scroll(&handle))
-            .px(pt(pad_x))
-            .py(pt(pad_y))
-            .gap(pt(p.gap))
-            .child(header)
-            .children(hero)
-            .children(quote)
-            .children(body)
-            .children(links)
+        crate::ui::design::focus_bar(
+            v_flex()
+                .id(id("scroll"))
+                .size_full()
+                .min_w_0()
+                .overflow_y_scroll()
+                .when_some(self.scroll, |view, handle| view.track_scroll(&handle))
+                .px(pt(pad_x))
+                .py(pt(pad_y))
+                .gap(pt(p.gap))
+                .child(header)
+                .children(hero)
+                .children(quote)
+                .children(body)
+                .children(links),
+            self.focused,
+        )
     }
 }
 

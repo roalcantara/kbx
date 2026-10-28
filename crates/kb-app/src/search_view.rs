@@ -28,7 +28,7 @@ use crate::keys::{
     Back, CopyError, CopyLocation, CopyPath, FirstRow, HideDetails, LastRow, NextRow, OpenActions, OpenDetail,
     OpenFilter, OpenPreferences, OpenSourceFile, PageDown, PageUp, PreviousRow, Quit, Rebuild, RevealFile, RunPrimary,
     RunRow1, RunRow2, RunRow3, RunRow4, RunRow5, RunRow6, RunRow7, RunRow8, RunRow9, RunSecondary, ScreenCmdEnter,
-    ScreenEnter, ScreenShiftCmdEnter, ShowDetails, ToggleWindowSize, caret_at_end,
+    ScreenEnter, ScreenShiftCmdEnter, ShowDetails, TogglePane, ToggleWindowSize, caret_at_end,
 };
 use crate::navigator::{BackName, Nav, Navigator, Overlay, Place};
 use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
@@ -203,6 +203,13 @@ impl SearchView {
     pub fn panel_scroll_handle(&self) -> ScrollHandle {
         self.panel_scroll.clone()
     }
+
+    /// Whether the split pane currently has the keyboard (close-out D3).
+    #[must_use]
+    pub fn pane_has_keys(&self) -> bool {
+        self.navigator.pane_has_keys()
+    }
+
     /// Whether the rebuild screen is showing.
     #[must_use]
     pub fn is_rebuilding(&self) -> bool {
@@ -245,6 +252,7 @@ impl SearchView {
         let back = self.place_name(self.navigator.top(), cx);
         self.navigator.push(place, back);
         self.detail_scroll.set_offset(gpui_kit::Point::default());
+        self.apply_list_state(cx);
         self.focus_screen(window, cx);
         cx.notify();
     }
@@ -268,6 +276,7 @@ impl SearchView {
             self.sync = None;
             self.sync_subscription = None;
         }
+        self.apply_list_state(cx);
         self.focus_screen(window, cx);
         cx.notify();
     }
@@ -275,6 +284,8 @@ impl SearchView {
     /// Selects row `row` of the list (clamped; nothing with no results) and scrolls to it (D1). The list's one way to
     /// select: every move, filter change and refresh comes through here.
     fn select_entry(&mut self, row: usize, window: &mut Window, cx: &mut Context<Self>) {
+        self.navigator.set_pane_has_keys(false);
+        self.detail_scroll.set_offset(gpui_kit::Point::default());
         self.list.update(cx, |list, cx| {
             let count = list.delegate().entries().len();
             let ix = (count > 0).then(|| IndexPath::new(row.min(count - 1)));
@@ -283,6 +294,7 @@ impl SearchView {
                 list.scroll_to_selected_item(window, cx);
             }
         });
+        self.apply_list_state(cx);
         cx.notify();
     }
 
@@ -620,6 +632,10 @@ impl SearchView {
         if !self.navigator.screen_has_keys() {
             return;
         }
+        if !open {
+            self.navigator.set_pane_has_keys(false);
+            self.detail_scroll.set_offset(gpui_kit::Point::default());
+        }
         match self.navigator.top() {
             Place::List => self.show_details = open,
             Place::Refresh => {
@@ -629,7 +645,44 @@ impl SearchView {
             }
             Place::Detail | Place::ReportDetail => {}
         }
+        self.apply_list_state(cx);
         cx.notify();
+    }
+
+    /// ⇥ / ⇧⇥ on a split: the keys to its pane, or back to its list (close-out D3). Nothing without a split.
+    fn toggle_pane(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.navigator.screen_has_keys() {
+            return;
+        }
+        let split = match self.navigator.top() {
+            Place::List => self.show_details && self.list.read(cx).delegate().selected_entry().is_some(),
+            Place::Refresh => self.report(cx).is_some_and(|sync| sync.read(cx).has_pane()),
+            Place::Detail | Place::ReportDetail => false,
+        };
+        if !split {
+            return;
+        }
+        let pane = !self.navigator.pane_has_keys();
+        self.navigator.set_pane_has_keys(pane);
+        self.apply_list_state(cx);
+        self.focus_screen(window, cx);
+        cx.notify();
+    }
+
+    /// The list's display state, derived from the place and the split: compact rows beside an open pane, and a faint
+    /// selection while the pane has the keys. Called where they change (close-out D7, A16), never from `render`.
+    fn apply_list_state(&mut self, cx: &mut Context<Self>) {
+        let on_list = self.navigator.top() == Place::List;
+        let compact = on_list && self.show_details && self.list.read(cx).delegate().selected_entry().is_some();
+        let idle = self.navigator.pane_has_keys();
+        self.list.update(cx, |list, cx| {
+            list.delegate_mut().set_compact(compact);
+            list.delegate_mut().set_idle(idle && on_list);
+            cx.notify();
+        });
+        if let Some(sync) = self.sync.clone() {
+            sync.update(cx, |s, cx| s.set_idle_and_focus(idle, cx));
+        }
     }
 
     fn show_details(&mut self, _: &ShowDetails, _: &mut Window, cx: &mut Context<Self>) {
@@ -807,7 +860,7 @@ impl SearchView {
             database: self.config.database().to_path_buf(),
         };
         let catalog = self.catalog.clone();
-        let sync = cx.new(|cx| SyncView::start(job, catalog, window, cx));
+        let sync = cx.new(|cx| SyncView::start(job, catalog, self.detail_scroll.clone(), window, cx));
         let subscription = cx.subscribe_in(&sync, window, |this, _, finished: &SyncFinished, window, cx| {
             window.push_notification(finished.message.clone(), cx);
             if finished.changed {
@@ -868,6 +921,14 @@ impl SearchView {
             };
             return self.show_overlay(next, window, cx);
         }
+        // The pane: Esc gives the keys back to its list (close-out D3).
+        if self.navigator.pane_has_keys() {
+            self.navigator.set_pane_has_keys(false);
+            self.apply_list_state(cx);
+            self.focus_screen(window, cx);
+            cx.notify();
+            return;
+        }
         // 2. A running refresh: Esc stops it.
         if let Some(sync) = self.sync.clone().filter(|_| self.navigator.top() == Place::Refresh)
             && sync.read(cx).is_running()
@@ -919,7 +980,7 @@ impl SearchView {
 
     /// Hands the keyboard to the current screen: the query field in the list, the panel elsewhere.
     fn focus_screen(&self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.navigator.top() == Place::List {
+        if self.navigator.top() == Place::List && !self.navigator.pane_has_keys() {
             self.query_input.update(cx, |input, cx| input.focus(window, cx));
         } else {
             self.focus.focus(window, cx);
@@ -1048,11 +1109,11 @@ impl SearchView {
                             .child(list_panel()),
                     )
                     .child(
-                        div()
-                            .h_full()
-                            .flex_1()
-                            .min_w_0()
-                            .child(self.entry_view(entry, Layout::Split, window, cx)),
+                        div().h_full().flex_1().min_w_0().child(
+                            self.entry_view(entry, Layout::Split, window, cx)
+                                .track_scroll(self.detail_scroll.clone())
+                                .focused(self.navigator.pane_has_keys()),
+                        ),
                     )
                     .into_any_element(),
                 None => list_panel(),
@@ -1065,11 +1126,6 @@ impl Render for SearchView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let tokens = design();
         let selected = self.list.read(cx).delegate().selected_entry().cloned();
-        // Rows show their titles alone while the split pane is open beside them.
-        let compact = self.navigator.top() == Place::List && self.show_details && selected.is_some();
-        if self.list.read(cx).delegate().is_compact() != compact {
-            self.list.update(cx, |list, _| list.delegate_mut().set_compact(compact));
-        }
         let context = self.navigator.key_context();
         v_flex()
             .track_focus(&self.focus)
@@ -1094,6 +1150,7 @@ impl Render for SearchView {
             .on_action(cx.listener(Self::show_details))
             .on_action(cx.listener(Self::hide_details))
             .on_action(cx.listener(Self::toggle_window_size))
+            .on_action(cx.listener(|this, _: &TogglePane, w, cx| this.toggle_pane(w, cx)))
             .on_action(cx.listener(Self::open_detail))
             .on_action(cx.listener(Self::open_source_file))
             .on_action(cx.listener(Self::rebuild))

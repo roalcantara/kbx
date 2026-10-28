@@ -101,6 +101,8 @@ actions!(
         LastRow,
         /// The first report row.
         FirstRow,
+        /// Move the keys between a split's list and its pane.
+        TogglePane,
     ]
 );
 
@@ -154,6 +156,9 @@ pub fn key_bindings(catalog: &Catalog) -> Vec<KeyBinding> {
         KeyBinding::new("pageup", PageUp, context),
         KeyBinding::new("pagedown", PageDown, context),
         // ⌘1–⌘9: row n's primary action in the list; link n on the detail screen (R7).
+        // ⇥ / ⇧⇥: the keys between a split's list and its pane (close-out D3); the query field captures them first.
+        KeyBinding::new("tab", TogglePane, context),
+        KeyBinding::new("shift-tab", TogglePane, context),
         KeyBinding::new("cmd-1", RunRow1, context),
         KeyBinding::new("cmd-2", RunRow2, context),
         KeyBinding::new("cmd-3", RunRow3, context),
@@ -189,7 +194,7 @@ mod tests {
     #[test]
     fn binds_the_catalog_keys_and_the_fixed_ones() {
         let bindings = key_bindings(&Catalog::default());
-        assert_eq!(bindings.len(), 38);
+        assert_eq!(bindings.len(), 40);
     }
 
     #[test]

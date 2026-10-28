@@ -4,7 +4,8 @@
 use crate::navigator::Nav;
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::input::{
-    Input, MoveDown, MoveLeft, MovePageDown, MovePageUp, MoveRight, MoveToEnd, MoveToStart, MoveUp,
+    IndentInline, Input, MoveDown, MoveLeft, MovePageDown, MovePageUp, MoveRight, MoveToEnd, MoveToStart, MoveUp,
+    OutdentInline,
 };
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{App, Context, InteractiveElement as _, IntoElement, ParentElement as _, Styled as _};
@@ -64,6 +65,14 @@ impl SearchView {
         }))
         .capture_action(cx.listener(|this, _: &MovePageDown, w, cx| {
             this.nav(Nav::PageDown, w, cx);
+            cx.stop_propagation();
+        }))
+        .capture_action(cx.listener(|this, _: &IndentInline, w, cx| {
+            this.toggle_pane(w, cx);
+            cx.stop_propagation();
+        }))
+        .capture_action(cx.listener(|this, _: &OutdentInline, w, cx| {
+            this.toggle_pane(w, cx);
             cx.stop_propagation();
         }))
     }
