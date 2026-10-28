@@ -118,7 +118,7 @@ impl Config {
                         colors = table;
                     } else {
                         // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
-                        let m = &crate::catalog::Catalog::default().messages;
+                        let m = crate::catalog::shipped_messages();
                         let notice = crate::catalog::fill(
                             &m.config_colors_ignored,
                             &[("file", &preferences.display().to_string())],
@@ -131,7 +131,7 @@ impl Config {
                 }
                 _ => {
                     // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
-                    let m = &crate::catalog::Catalog::default().messages;
+                    let m = crate::catalog::shipped_messages();
                     let notice = crate::catalog::fill(
                         &m.config_unknown_ignored,
                         &[("key", key.as_str()), ("file", &preferences.display().to_string())],
@@ -177,7 +177,7 @@ impl Config {
             Ok(()) => true,
             Err(error) => {
                 // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
-                let m = &crate::catalog::Catalog::default().messages;
+                let m = crate::catalog::shipped_messages();
                 let notice = crate::catalog::fill(
                     &m.config_editor_ignored,
                     &[

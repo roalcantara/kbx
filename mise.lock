@@ -145,11 +145,13 @@ specifiers = ["1.39.0"]
 checksum = "sha256:0a623ed38907b9cb633d07593b4d19a4ba741a6a50d226eb243bd16f2f5ba81b"
 url = "https://github.com/jdx/fnox/releases/download/v1.39.0/fnox-x86_64-unknown-linux-gnu.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/fnox/.github/workflows/release.yml"
+repository_ids = { repository = "1078762196" }
 
 [tools.fnox."platforms.macos-arm64"]
 checksum = "sha256:5604196e7a0aafb949251be1ae088bf0bb524edbfb45748d1be0cbc46e98b8f5"
 url = "https://github.com/jdx/fnox/releases/download/v1.39.0/fnox-aarch64-apple-darwin.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/fnox/.github/workflows/release.yml"
+repository_ids = { repository = "1078762196" }
 
 [[tools."github:zzet/gortex"]]
 version = "0.64.8"
@@ -175,11 +177,13 @@ specifiers = ["2.6.0"]
 checksum = "sha256:dfc2e1140a114c28f42fa6d1b958fac7008de3b96b19bbf74d693c0f86bcff60"
 url = "https://github.com/jdx/hk/releases/download/v2.6.0/hk-x86_64-unknown-linux-gnu.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
+repository_ids = { repository = "922514152" }
 
 [tools.hk."platforms.macos-arm64"]
 checksum = "sha256:40a336e793397d5940b284aae674477d430b24dc86167be92e080120d80e42f2"
 url = "https://github.com/jdx/hk/releases/download/v2.6.0/hk-aarch64-apple-darwin.tar.gz"
 signer = "sigstore-oidc:https://github.com/jdx/hk/.github/workflows/release.yml"
+repository_ids = { repository = "922514152" }
 
 [[tools.jactionlint]]
 version = "2.1.0"
@@ -285,11 +289,13 @@ uv = { path = ".mise/locks/pipx-code-review-graph/2.3.9", digest = "sha256:677a7
 version = "2.18.3"
 backend = "pipx:commit-check"
 specifiers = ["2.18.3"]
+uv = { path = ".mise/locks/pipx-commit-check/2.18.3", digest = "sha256:4d12893b26316c8c0d1c192cffe6be28343a73eedd4b5f9ab78984262ab37822" }
 
 [[tools."pipx:graphifyy"]]
 version = "0.9.88"
 backend = "pipx:graphifyy"
 specifiers = ["0.9.88"]
+uv = { path = ".mise/locks/pipx-graphifyy/0.9.88", digest = "sha256:5fab351161e7904d661a27cb8771918e03ddf2ab0f406f986d13684f350131b9" }
 
 [[tools.pkl]]
 version = "0.32.1"
@@ -324,10 +330,7 @@ provenance = "github-attestations"
 [[tools.rust]]
 version = "1.99.0"
 backend = "core:rust"
-specifiers = [
-    "1.99.0",
-    "latest",
-]
+specifiers = ["1.99.0"]
 
 [tools.rust.options]
 components = "clippy,llvm-tools,rustfmt"
@@ -369,10 +372,12 @@ backend = "aqua:tamasfe/taplo"
 specifiers = ["0.10.0"]
 
 [tools.taplo."platforms.linux-x64"]
+checksum = "sha256:8fe196b894ccf9072f98d4e1013a180306e17d244830b03986ee5e8eabeb6156"
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-linux-x86_64.gz"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257322600"
 
 [tools.taplo."platforms.macos-arm64"]
+checksum = "sha256:713734314c3e71894b9e77513c5349835eefbd52908445a0d73b0c7dc469347d"
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-darwin-aarch64.gz"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323110"
 

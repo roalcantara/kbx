@@ -300,6 +300,14 @@ pub enum CatalogError {
     Invalid(String),
 }
 
+/// The shipped catalog's words, parsed once: for the notices raised before config.toml's overrides are read
+/// (close-out D8). config.toml cannot be trusted to word its own errors.
+#[must_use]
+pub fn shipped_messages() -> &'static Messages {
+    static SHIPPED: std::sync::OnceLock<Messages> = std::sync::OnceLock::new();
+    SHIPPED.get_or_init(|| Catalog::default().messages)
+}
+
 impl Default for Catalog {
     /// The catalog as shipped; a unit test proves it valid.
     #[expect(clippy::expect_used, reason = "the compiled-in catalog is checked by a unit test")]

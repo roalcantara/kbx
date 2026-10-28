@@ -1090,6 +1090,11 @@ fn audit_k2_keeps_the_filter_s_selected_row_in_view(cx: &mut TestAppContext) {
     // The selected row is the last row, so it is the scroll container's last child.
     let last = handle.bounds_for_item(handle.children_count() - 1).unwrap();
     let visible_bottom = viewport.bottom();
+    // Bounds are laid out before the scroll offset applies, so the row's drawn bottom adds the offset.
+    assert!(
+        handle.offset().y < px(0.),
+        "the filter overflows, so reaching its last row scrolls it"
+    );
     let scrolled_bottom = last.bottom() + handle.offset().y;
     assert!(
         scrolled_bottom <= visible_bottom + px(0.5),
@@ -1381,6 +1386,44 @@ fn tab_moves_the_keys_into_the_pane_and_esc_brings_them_back(cx: &mut TestAppCon
     press(cx, window, "escape");
     assert!(!cx.read(|cx| view.read(cx).pane_has_keys()), "Esc: back to the list");
     assert!(cx.read(|cx| view.read(cx).is_showing_details()), "the split stays open");
+}
+
+/// Close-out D3: ⌘n selects another entry, so the keys leave the pane with the old one.
+#[gpui_kit::test]
+fn cmd_number_takes_the_keys_back_from_the_pane(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    press(cx, window, "right");
+    press(cx, window, "tab");
+    assert!(cx.read(|cx| view.read(cx).pane_has_keys()));
+    press(cx, window, "cmd-2");
+    assert!(
+        !cx.read(|cx| view.read(cx).pane_has_keys()),
+        "a new selection gives the keys back to the list"
+    );
+}
+
+/// Close-out D5: on the filter, ⌘K opens the action panel, so the footer says Actions, not Close.
+#[gpui_kit::test]
+fn names_actions_not_close_on_the_filter(cx: &mut TestAppContext) {
+    let (_home, window, view) = fresh(cx);
+    open_filter(cx, window);
+    let keys = cx.read(|cx| view.read(cx).footer_keys(cx));
+    assert_eq!(keys.last().map(String::as_str), Some("Actions ⌘K"), "{keys:?}");
+}
+
+/// A16: the rows go compact once a search selects an entry beside an open split, with no stale flag.
+#[gpui_kit::test]
+fn goes_compact_when_a_search_fills_an_open_split(cx: &mut TestAppContext) {
+    let (_home, window, view) = open_with_query(cx, "zzqxj");
+    press(cx, window, "right");
+    let compact = |cx: &mut TestAppContext| cx.read(|cx| view.read(cx).list().read(cx).delegate().is_compact());
+    assert!(!compact(cx), "nothing selected, so no pane");
+    for _ in 0..5 {
+        press(cx, window, "backspace");
+    }
+    type_text(cx, window, "kubectl");
+    settle(cx);
+    assert!(compact(cx), "an entry is selected beside the open split");
 }
 
 /// Close-out D3: ⇥ with the split closed does nothing.

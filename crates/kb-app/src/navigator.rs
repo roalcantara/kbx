@@ -165,7 +165,7 @@ impl Navigator {
         // A pane with the keys scrolls as the detail screens do, with their bindings.
         if self.pane {
             return match self.top() {
-                Place::Refresh => [CONTEXT, DETAIL_CONTEXT, REPORT_CONTEXT].join(" "),
+                Place::Refresh => [CONTEXT, REFRESH_CONTEXT, DETAIL_CONTEXT, REPORT_CONTEXT].join(" "),
                 _ => [CONTEXT, DETAIL_CONTEXT].join(" "),
             };
         }
@@ -309,7 +309,11 @@ mod tests {
         nav.pop();
         nav.push(Place::Refresh, name("Search"));
         nav.set_pane_has_keys(true);
-        assert_eq!(nav.key_context(), "Search Detail Report");
+        assert_eq!(
+            nav.key_context(),
+            "Search Refresh Detail Report",
+            "the report keeps its own bindings"
+        );
         nav.pop();
         assert!(!nav.pane_has_keys(), "so does a pop");
     }

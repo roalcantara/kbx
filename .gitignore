@@ -38,3 +38,4 @@
 /tools/reports/
 
 /.mise/locks/
+*/**/.mise/locks

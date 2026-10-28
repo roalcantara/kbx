@@ -87,7 +87,7 @@ pub fn run(config: Config, notices: Vec<String>, trace: bool) {
             let dir = config.themes_dir();
             if let Err(error) = theme::folder::seed(&dir) {
                 // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
-                let m = &crate::catalog::Catalog::default().messages;
+                let m = crate::catalog::shipped_messages();
                 let notice = crate::catalog::fill(
                     &m.themes_seed_failed,
                     &[("dir", &dir.display().to_string()), ("error", &error.to_string())],

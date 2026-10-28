@@ -45,7 +45,8 @@ pub struct EntryList {
     selected: Option<IndexPath>,
     secondary_confirm: bool,
     tag_images: TagImages,
-    compact: bool,
+    /// Whether the split is open beside the list.
+    split: bool,
     idle: bool,
     catalog: Rc<Catalog>,
 }
@@ -66,7 +67,7 @@ impl EntryList {
             selected: None,
             secondary_confirm: false,
             tag_images: TagImages::default(),
-            compact: false,
+            split: false,
             idle: false,
             catalog: Rc::new(Catalog::default()),
         };
@@ -102,15 +103,16 @@ impl EntryList {
         self.count
     }
 
-    /// Whether rows show their titles alone, as beside the split pane.
+    /// Whether rows show their titles alone: beside the split pane, which shows only with an entry selected. Derived
+    /// at render from the selection, so a search that changes it never leaves the flag stale (A16).
     #[must_use]
     pub fn is_compact(&self) -> bool {
-        self.compact
+        self.split && self.selected_entry().is_some()
     }
 
-    /// Shows titles alone (`true`, beside the split pane) or with descriptions, tags and links.
-    pub fn set_compact(&mut self, compact: bool) {
-        self.compact = compact;
+    /// Whether the split is open (`SearchView::apply_list_state`).
+    pub fn set_split(&mut self, split: bool) {
+        self.split = split;
     }
 
     /// Whether the selection is idle: faint bar, no glow.
@@ -277,7 +279,7 @@ impl EntryList {
         };
         let state = ChipState::of(selected);
         let mut trailing: Vec<AnyElement> = Vec::new();
-        if !self.compact {
+        if !self.is_compact() {
             #[expect(
                 clippy::cast_possible_truncation,
                 clippy::cast_sign_loss,
@@ -349,6 +351,10 @@ impl ListDelegate for EntryList {
                 delegate.query = query;
                 delegate.limit = PAGE_SIZE;
                 delegate.refresh();
+                // A new query selects its first result (D1). The list selects row 0 when a search starts, but only
+                // over the old results: coming from none, the debounced results would arrive with nothing selected.
+                let first = (!list.delegate().entries.is_empty()).then(IndexPath::default);
+                list.set_selected_index(first, window, cx);
                 trace::searched(window, cx);
                 cx.notify();
             });

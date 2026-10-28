@@ -248,11 +248,6 @@ impl SyncView {
         }
     }
 
-    /// Sets the focused state of the split pane and notifies.
-    pub fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-    }
-
     /// Sets both the report list's idle flag and the pane's focused flag.
     pub fn set_idle_and_focus(&mut self, idle: bool, cx: &mut Context<Self>) {
         self.focused = idle;

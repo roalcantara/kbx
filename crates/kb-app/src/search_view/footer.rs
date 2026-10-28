@@ -76,12 +76,13 @@ impl SearchView {
             .unwrap_or_default()
     }
 
-    /// The trailing ⌘K item's label: Actions, or Close while an overlay is open (close-out D5).
+    /// The trailing ⌘K item's label: Close while the action panel is open, which ⌘K closes; Actions elsewhere,
+    /// the filter included, where ⌘K opens the action panel (close-out D5).
     fn actions_label(&self) -> &str {
-        if self.navigator.screen_has_keys() {
-            self.catalog.label("actions")
-        } else {
+        if self.is_actions_open() {
             self.catalog.label("close")
+        } else {
+            self.catalog.label("actions")
         }
     }
 

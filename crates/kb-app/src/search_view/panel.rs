@@ -124,9 +124,14 @@ impl SearchView {
     /// Selects visible row `ix` of the open page and scrolls it into view (close-out D1). Row 0 scrolls to the very
     /// top, so its section label shows too. The one writer of `panel_selected`.
     pub(super) fn select_panel_row(&mut self, ix: usize, cx: &mut Context<Self>) {
+        self.select_panel_row_by(|_, _| ix, cx);
+    }
+
+    /// As `select_panel_row`, with the row chosen from the current one and the row count, over one build of the page.
+    pub(super) fn select_panel_row_by(&mut self, pick: impl FnOnce(usize, usize) -> usize, cx: &mut Context<Self>) {
         let page = self.current_page(cx);
         let visible = matches(&page.page, &self.panel_query.read(cx).value());
-        self.panel_selected = ix.min(visible.len().saturating_sub(1));
+        self.panel_selected = pick(self.panel_selected, visible.len()).min(visible.len().saturating_sub(1));
         if self.panel_selected == 0 {
             self.panel_scroll.set_offset(gpui_kit::Point::default());
         } else {

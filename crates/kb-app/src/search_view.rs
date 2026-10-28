@@ -34,7 +34,6 @@ use crate::navigator::{BackName, Nav, Navigator, Overlay, Place};
 use crate::sync_view::{Phase, SyncFinished, SyncJob, SyncView};
 use crate::tag_images::TagImages;
 use crate::trace;
-use crate::ui::action_panel::matches;
 use crate::ui::design::{design, pixels, pt};
 use crate::ui::entry_view::{EntryView, Layout, columns_for};
 use crate::ui::notice;
@@ -65,6 +64,8 @@ pub struct SearchView {
     sync: Option<Entity<SyncView>>,
     /// Its `SyncFinished` subscription, dropped with it.
     sync_subscription: Option<Subscription>,
+    /// The scroll of each place a pushed place covers, restored when it is popped (D3).
+    covered_scrolls: Vec<gpui_kit::Point<Pixels>>,
     show_details: bool,
     window_size: WindowSize,
     /// The detail screen's notes, scrolled by the keyboard.
@@ -143,6 +144,7 @@ impl SearchView {
             navigator: Navigator::default(),
             sync: None,
             sync_subscription: None,
+            covered_scrolls: Vec::new(),
             // The list alone, as Raycast's kb Search opens; ⌘D shows the split pane.
             show_details: false,
             window_size: WindowSize::default(),
@@ -251,6 +253,8 @@ impl SearchView {
     fn push(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
         let back = self.place_name(self.navigator.top(), cx);
         self.navigator.push(place, back);
+        // The place underneath keeps its scroll, to show it as it was left (D3).
+        self.covered_scrolls.push(self.detail_scroll.offset());
         self.detail_scroll.set_offset(gpui_kit::Point::default());
         self.apply_list_state(cx);
         self.focus_screen(window, cx);
@@ -259,13 +263,21 @@ impl SearchView {
 
     /// Back one place, to the one underneath as it was left (D3).
     fn pop(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.navigator.pop();
+        if self.navigator.pop().is_some()
+            && let Some(offset) = self.covered_scrolls.pop()
+        {
+            self.detail_scroll.set_offset(offset);
+        }
         self.settle(window, cx);
     }
 
     /// Back to the list, from anywhere.
     fn pop_to_list(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.navigator.pop_to_list();
+        if let Some(offset) = self.covered_scrolls.first().copied() {
+            self.detail_scroll.set_offset(offset);
+        }
+        self.covered_scrolls.clear();
         self.settle(window, cx);
     }
 
@@ -284,8 +296,6 @@ impl SearchView {
     /// Selects row `row` of the list (clamped; nothing with no results) and scrolls to it (D1). The list's one way to
     /// select: every move, filter change and refresh comes through here.
     fn select_entry(&mut self, row: usize, window: &mut Window, cx: &mut Context<Self>) {
-        self.navigator.set_pane_has_keys(false);
-        self.detail_scroll.set_offset(gpui_kit::Point::default());
         self.list.update(cx, |list, cx| {
             let count = list.delegate().entries().len();
             let ix = (count > 0).then(|| IndexPath::new(row.min(count - 1)));
@@ -294,6 +304,14 @@ impl SearchView {
                 list.scroll_to_selected_item(window, cx);
             }
         });
+        self.entry_selected(cx);
+    }
+
+    /// After the list's selection changed, by key, click or ⌘n: the new entry's pane starts at its top and the
+    /// keys return to the list (close-out D3). The one place that follows a selection change.
+    fn entry_selected(&mut self, cx: &mut Context<Self>) {
+        self.navigator.set_pane_has_keys(false);
+        self.detail_scroll.set_offset(gpui_kit::Point::default());
         self.apply_list_state(cx);
         cx.notify();
     }
@@ -344,7 +362,7 @@ impl SearchView {
         cx: &mut Context<Self>,
     ) {
         match event {
-            ListEvent::Select(_) => cx.notify(),
+            ListEvent::Select(_) => self.entry_selected(cx),
             ListEvent::Confirm(_) => {
                 let keys = if self.list.read(cx).delegate().is_secondary_confirm() {
                     "cmd-enter"
@@ -612,9 +630,7 @@ impl SearchView {
             }
             Place::List => {
                 if self.list.read(cx).delegate().entries().len() >= n {
-                    self.list.update(cx, |list, cx| {
-                        list.set_selected_index(Some(IndexPath::new(n - 1)), window, cx);
-                    });
+                    self.select_entry(n - 1, window, cx);
                     self.run_entry(false, window, cx);
                 }
             }
@@ -681,10 +697,9 @@ impl SearchView {
     /// selection while the pane has the keys. Called where they change (close-out D7, A16), never from `render`.
     fn apply_list_state(&mut self, cx: &mut Context<Self>) {
         let on_list = self.navigator.top() == Place::List;
-        let compact = on_list && self.show_details && self.list.read(cx).delegate().selected_entry().is_some();
         let idle = self.navigator.pane_has_keys();
         self.list.update(cx, |list, cx| {
-            list.delegate_mut().set_compact(compact);
+            list.delegate_mut().set_split(on_list && self.show_details);
             list.delegate_mut().set_idle(idle && on_list);
             cx.notify();
         });
@@ -737,8 +752,7 @@ impl SearchView {
         let d = design();
         if !self.navigator.screen_has_keys() {
             let page = Self::page_rows(d.components.panel.max_height, d.components.panel.row);
-            let count = matches(&self.current_page(cx).page, &self.panel_query.read(cx).value()).len();
-            return self.select_panel_row(Self::step(key, self.panel_selected, count, page), cx);
+            return self.select_panel_row_by(|current, count| Self::step(key, current, count, page), cx);
         }
         let scrolls =
             matches!(self.navigator.top(), Place::Detail | Place::ReportDetail) || self.navigator.pane_has_keys();
@@ -897,11 +911,7 @@ impl SearchView {
                 self.focus_screen(window, cx);
                 cx.notify();
             }
-            Place::ReportDetail => {
-                self.navigator.pop();
-                self.focus_screen(window, cx);
-                cx.notify();
-            }
+            Place::ReportDetail => self.pop(window, cx),
             // A refresh always opens on the list: the index it rebuilds may move or drop the entry a detail shows.
             Place::List | Place::Detail => {
                 self.navigator.pop_to_list();
