@@ -7,6 +7,11 @@ cheat sheets, commands, tasks and agent skills kept in plain YAML files. Type a 
 entry opens or is copied. It is written in Rust on [GPUI Kit](https://gpui-kit.com), indexes with SQLite FTS5, and
 is inspired by Raycast.
 
+**Who it's for.** Keyboard-first developers on macOS who keep their own commands, cheat sheets, bookmarks, notes and
+tasks, and want them one keystroke away from any app instead of in a browser tab or a terminal history. I use it
+dozens of times a day over my own knowledge base; the repository ships a made-up sample corpus for tests and
+screenshots.
+
 ## Technology Stack
 
 - Rust 1.99 (edition 2024), Cargo workspace
@@ -157,6 +162,17 @@ the committed expected outputs in `sample-goldens`, byte for byte.
 
 Every change passes `mise run gate`.
 
+**Roadmap.** The work ahead lives in [TODO.md](TODO.md), pending tasks after the done ones. The next steps:
+
+- **Daily use:** paste an entry straight into the app it was opened from; run a command entry in the terminal;
+  frecency sorting; search by keywords and tags.
+- **Notes:** render fenced code with line numbers and copy; fix bold text in the notes body.
+- **Adoption** ([ADR 0008](docs/adr/0008-kbx-stays-its-own-code.md)): import navi, cheat and pet files and Atuin's
+  shell history; bundle tldr pages so kbx is useful on first launch.
+- **Distribution:** a Developer ID signature and notarization, a universal binary, a Linux build.
+
 ## License
 
-MIT
+[MIT](LICENSE). The patched crates in `crates/third-party/` keep their own licenses: `block` is MIT
+([its LICENSE](crates/third-party/block/LICENSE)) and `gpui-pre-macos` is Apache-2.0
+([its LICENSE](crates/third-party/gpui-pre-macos/LICENSE-APACHE)).
