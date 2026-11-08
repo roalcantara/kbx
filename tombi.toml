@@ -1,0 +1,8 @@
+#:schema https://www.schemastore.org/tombi.json
+# Tombi lints TOML against its schemas (Cargo.toml, mise.toml, deny.toml, …), in the IDE and in the `tombi` hk step.
+# taplo formats it (taplo.toml), so Tombi's formatter is off: the two disagree.
+[files]
+exclude = ["target/**", ".mise/**", "crates/third-party/**", "crates/kbx-domain/tests/fixtures/**"]
+
+[lsp.formatting]
+enabled = false
