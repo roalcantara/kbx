@@ -235,6 +235,13 @@ local baseline_steps = new Mapping<String, Step> {
         check = "mise exec -- taplo fmt --check {{files}}"
         fix = "mise exec -- taplo fmt {{files}}"
     }
+    // Lints what taplo only formats: schemas (Cargo.toml, mise.toml, deny.toml, …) and Tombi's rules, the
+    // diagnostics the IDE shows. A warning fails the step. Config and excludes: tombi.toml.
+    ["tombi"] {
+        glob = List("**/*.toml")
+        exclude = List("crates/kbx-domain/tests/fixtures/**/*", ".mise/**/*")
+        check = "mise exec -- tombi lint --error-on-warnings --quiet {{files}}"
+    }
     ["cargo-check"] {
         glob = rust_inputs
         check = "mise exec -- cargo check --workspace --all-targets --locked"
