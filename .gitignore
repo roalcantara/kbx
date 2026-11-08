@@ -25,6 +25,3 @@
 
 # Local screenshots and notes: never committed.
 /tools/reports/
-
-/.mise/locks/
-*/**/.mise/locks
