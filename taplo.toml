@@ -1,4 +1,4 @@
-exclude = ["target/**", "crates/kb-domain/tests/fixtures/**", "tools/bench/fixtures/**"]
+exclude = ["target/**", "crates/kbx-domain/tests/fixtures/**"]
 
 [formatting]
 align_entries = false

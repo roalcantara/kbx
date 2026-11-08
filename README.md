@@ -1,30 +1,33 @@
-# kb native
+# kbx
 
 ## Project Name and Description
 
-kb native is an experiment: a native macOS port of the [kb](https://github.com/roalcantara/kb-raycast) Raycast extension's
-knowledge-base search, written in Rust on [GPUI Kit](https://gpui-kit.com), and measured against the original. Its
-deliverable is a report that says, with numbers, whether a native port is worth having once Raycast's extension
-size and runtime limits are out of the way.
+kbx is a macOS panel, opened from anywhere with ⌥K, that searches a personal knowledge base: bookmarks,
+cheat sheets, commands, tasks and agent skills kept in plain YAML files. Type a few letters, press Return, and the
+entry opens or is copied. It is written in Rust on [GPUI Kit](https://gpui-kit.com), indexes with SQLite FTS5, and
+is inspired by Raycast.
+
+**Who it's for.** Keyboard-first developers on macOS who keep their own commands, cheat sheets, bookmarks, notes and
+tasks, and want them one keystroke away from any app instead of in a browser tab or a terminal history. I use it
+dozens of times a day over my own knowledge base; the repository ships a made-up sample corpus for tests and
+screenshots.
 
 ## Technology Stack
 
 - Rust 1.99 (edition 2024), Cargo workspace
-- GPUI Kit for the UI (from Plan 3)
-- SQLite with FTS5 through `rusqlite`, the same schema as the Raycast extension (from Plan 2)
+- GPUI Kit for the UI
+- SQLite with FTS5 through `rusqlite`
 - YAML through saphyr; JSON through serde_json
-- mise for tool versions and tasks; hk for git hooks and quality steps
-- Bun and Node 22 for the TypeScript baseline benchmarks
+- mise for tool versions and tasks; hk for git hooks and quality steps; Bun for the scripts in `tools/`
 
 ## Project Architecture
 
-| Crate / folder     | Role                                                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `crates/kb-domain` | The engine: entries, source files, notes Markdown, the SQLite index and its queries. No UI. |
-| `crates/kb-app`    | The GPUI Kit application: a resident panel opened by a global hotkey.                       |
-| `tools/bench`      | The benchmark kit, purgeable as one folder: benchmarks of both engines, probes, the report. |
+| Crate / folder      | Role                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `crates/kbx-domain` | The engine: entries, source files, notes Markdown, the SQLite index and its queries. No UI. |
+| `crates/kbx-app`    | The GPUI Kit application: a resident panel opened by a global hotkey.                       |
 
-`kb-domain` never depends on a UI crate; the `domain-purity` hk step enforces it. See [CONTEXT.md](CONTEXT.md)
+`kbx-domain` never depends on a UI crate; the `domain-purity` hk step enforces it. See [CONTEXT.md](CONTEXT.md)
 for the domain vocabulary and [docs/adr](docs/adr) for the decisions.
 
 ## Getting Started
@@ -32,9 +35,9 @@ for the domain vocabulary and [docs/adr](docs/adr) for the decisions.
 **Quickstart.**
 
 ```bash
-mise run setup        # tools, crates, git hooks (the benchmark kit: mise run bench:setup)
-mise run install      # build kb.app and copy it to ~/Applications
-open ~/Applications/kb.app
+mise run setup        # tools, crates, git hooks
+mise run install      # build kbx.app and copy it to ~/Applications
+open ~/Applications/kbx.app
 ```
 
 Then press **⌥K** anywhere to open the panel, and **⌘R** once to build the index from your sources.
@@ -55,20 +58,19 @@ Then press **⌥K** anywhere to open the panel, and **⌘R** once to build the i
 | ⌘⇧,   | open the preferences file                            |
 | ⌘⇧F   | switch between the compact and expanded window       |
 | Esc   | close a popover, go back, then hide the panel        |
-| ⌘Q    | quit kb                                              |
+| ⌘Q    | quit kbx                                             |
 
-kb has no Dock icon: it lives behind ⌥K until you quit it. To start it at login, add `~/Applications/kb.app` in
-System Settings › General › Login Items. If another app holds ⌥K, kb says so when it opens.
+kbx has no Dock icon: it lives behind ⌥K until you quit it. To start it at login, add `~/Applications/kbx.app` in
+System Settings › General › Login Items. If another app holds ⌥K, kbx says so when it opens.
 
-The sources are `~/.config/kodexb/sources` unless `~/.config/kb/config.toml` says otherwise:
+The sources are `~/.config/kodexb/sources` unless `~/.config/kbx/config.toml` says otherwise:
 
 ```toml
 sources_path = "~/Work/knowledge"
-tag_images_path = "~/.config/kb/images" # <tag>.svg draws #tag; `mise run images` copies the extension's
+tag_images_path = "~/.config/kbx/images" # <tag>.svg draws #tag
 ```
 
-The index lives in `~/Library/Application Support/kb-native/kb.db`; the Raycast extension's index is never
-touched.
+The index lives in `~/Library/Application Support/kbx/kbx.db`; ⌘R rebuilds it from the sources.
 
 **Working on it.**
 
@@ -77,12 +79,9 @@ mise run gate         # every quality gate, stopping at the first failure
 mise run app          # build and start the panel from the terminal (then ⌥K); --trace logs its latencies
 ```
 
-`mise run package` builds `target/packager/kb.app` and signs it ad hoc, which is enough for this machine. To give it
+`mise run package` builds `target/packager/kbx.app` and signs it ad hoc, which is enough for this machine. To give it
 to someone else, sign it with a Developer ID and notarize it (`codesign --options runtime`, `xcrun notarytool`);
 Gatekeeper refuses an ad hoc signature from another machine.
-
-The TS baseline reads the Raycast repository at `$KB_TS_REPO` (default `~/Work/raycast/kb`) and never writes to
-it.
 
 ## Project Structure
 
@@ -90,23 +89,20 @@ Three folders at the root, each named by a widely used convention; the `root-lay
 
 ```text
 crates/                     Rust code: our crates, and patched third-party ones
-  kb-domain/                  the engine; tests/fixtures/ holds the sample corpus and its goldens
-  kb-app/                     the GPUI Kit app (assets/catalog.toml: entry types, actions, keys, words)
+  kbx-domain/                  the engine; tests/fixtures/ holds the sample corpus and its expected outputs
+  kbx-app/                     the GPUI Kit app (assets/catalog.toml: entry types, actions, keys, words)
   third-party/                patched external crates, outside the workspace (see its README)
-docs/                       adr/, experiment/ (methodology, parity, results, report), superpowers/ (specs, plans)
+docs/                       adr/, doctrine/, guides/
 tools/                      developer tooling
   graph/                      code graphs for agents: CRG, Gortex, Graphify (see its README)
-  bench/                      the benchmark kit: TS and Rust benchmarks, probes, report, their fixtures and tasks
   design/                     the design kit: palettes, validation, theme, showcase corpus, screenshots
   size/                       the release binary's size budget and its check
-  ast-grep/ icon/ mdschema/   lint rules, the app icon's source, document schemas
+  ast-grep/ icon/             lint rules, the app icon's source
 ```
 
 - **Where things go.** Rust code in `crates/`; prose in `docs/`; anything that helps build, check or measure in
   `tools/`, one folder per tool. Test data lives with the crate whose contract it is (`<crate>/tests/fixtures/`).
-- **The benchmark kit** (`tools/bench/`) produces the experiment's measurements and nothing else depends on it; its
-  [README](tools/bench/README.md) lists the purge steps.
-- **Product and design** are described at the root: [PRODUCT.md](PRODUCT.md) (what kb is for) and
+- **Product and design** are described at the root: [PRODUCT.md](PRODUCT.md) (what kbx is for) and
   [DESIGN.md](DESIGN.md) (how it looks; read it before any UI change).
 - **Root files** are the configs each tool looks for there. Moving tool configs into `.config/` is a later decision
   (`TODO.md`).
@@ -116,10 +112,11 @@ tools/                      developer tooling
 
 ## Key Features
 
-- The kb search experience — FTS search, filters, split pane, rendered notes with highlighted code, actions,
+- The kbx search experience — FTS search, filters, split pane, rendered notes with highlighted code, actions,
   sync — as a native panel opened by ⌥K.
-- Byte-for-byte parity with the Raycast engine's output, proven by golden tests.
-- A reproducible benchmark of both implementations on the same corpus.
+- Themes: base24 colour schemes, previewed as you move through them.
+- A catalog (`crates/kbx-app/assets/catalog.toml`) of entry types, actions, keys and words, overridable from
+  `~/.config/kbx/config.toml`.
 
 ## Development Workflow
 
@@ -129,35 +126,18 @@ tools/                      developer tooling
 | `mise run graph setup`                                | initialize the code graphs for agents (CRG, Gortex, Graphify)                  |
 | `mise doctor project`                                 | verify toolchain, code graph health and secrets                                |
 | `mise run gate`                                       | all gates in order; `--fast` runs tests and clippy only                        |
-| `mise run fixtures`                                   | copy the private corpus, verify its manifest, build the 10× copy               |
-| `mise run goldens`                                    | write goldens from the TS engine                                               |
-| `mise run parity`                                     | golden parity on the private corpus                                            |
-| `mise run bench:ts`                                   | tier 1 benchmarks of the TS engine                                             |
-| `mise run bench:rs <corpus>`                          | tier 1 benchmarks of kb-domain                                                 |
-| `mise run bench:memory <app>`                         | tier 2 memory of kb or raycast                                                 |
-| `mise run bench:e2e <app>`                            | tier 3 latency of kb or raycast                                                |
-| `mise run bench:maint`                                | lines, dependencies, tests and build time of both                              |
-| `mise run bench:home`                                 | an isolated home over the private corpus, index synced by `kb --sync`          |
-| `mise run bench:size <app>`                           | tier 2 artifact size of kb or raycast                                          |
-| `mise run bench:cpu <app>`                            | tier 2 cold-start CPU of kb or raycast                                         |
-| `mise run bench:session`                              | preflight, then every tier 2 and 3 run and maintainability, in order           |
-| `mise run package`                                    | build and sign `kb.app`; `install` copies it to ~/Applications                 |
-| `mise run show`                                       | (re)start kb in the background with the panel showing, without ⌥K              |
-| `mise run images`                                     | copy the Raycast extension's tag images into `~/.config/kb/images`             |
+| `mise run package`                                    | build and sign `kbx.app`; `install` copies it to ~/Applications                |
+| `mise run show`                                       | (re)start kbx in the background with the panel showing, without ⌥K             |
 | `mise run tags:suggest` / `tags:apply` / `tags:check` | propose, apply and check tag merges in your sources (tag conventions doctrine) |
 | `mise run ci`                                         | what CI checks: the gate on macOS, `ci:lint` and `ci:test` elsewhere           |
 | `mise run release -- --dry-run --no-ci`               | preview the next release (`GITHUB_TOKEN=$(gh auth token)`)                     |
-| `mise run report`                                     | gate, parity, then `docs/guides/report.md` from the results                    |
 | `hk check --all`                                      | every baseline step over the whole repository                                  |
-
-Measuring both apps is one sitting: set up what `docs/guides/methodology.md` ("Session") asks, run
-`mise run bench:session`, record the manual keystroke run, commit the results, then `mise run report`.
 
 Commits follow Conventional Commits with a sentence-case subject; hk checks the message.
 
 **Releases.** Every push to `main` is checked on GitHub Actions, and one with a `feat`, `fix` or `perf` commit is released:
 semantic-release picks the version, updates [CHANGELOG.md](CHANGELOG.md), tags it and publishes a
-[GitHub Release](https://github.com/roalcantara/kbx/releases) with `kb.app` for Apple silicon. The app is signed ad hoc:
+[GitHub Release](https://github.com/roalcantara/kbx/releases) with `kbx.app` for Apple silicon. The app is signed ad hoc:
 open it the first time with right-click → Open. How and why: [ADR 0007](docs/adr/0007-releases.md).
 
 ## Coding Standards
@@ -172,17 +152,27 @@ open it the first time with right-click → Open. How and why: [ADR 0007](docs/a
 
 ```bash
 cargo nextest run --workspace   # Rust tests
-bun run --cwd tools/bench/ts test   # TS bench helpers (not the linked Raycast specs)
+bun test tools/                  # the tested modules of the TS tools
 ```
 
-Golden tests compare the Rust engine with the TypeScript one. `crates/kb-domain/tests/fixtures/sample-goldens` is committed and runs
-everywhere; the private corpus's goldens stay local.
+Golden tests run the engine over the sample corpus (`crates/kbx-domain/tests/fixtures/sample`) and compare it with
+the committed expected outputs in `sample-goldens`, byte for byte.
 
 ## Contributing
 
-Work through a design spec in `docs/superpowers/specs` and a plan in `docs/superpowers/plans`. Every change passes
-`mise run gate`.
+Every change passes `mise run gate`.
+
+**Roadmap.** The work ahead lives in [TODO.md](TODO.md), pending tasks after the done ones. The next steps:
+
+- **Daily use:** paste an entry straight into the app it was opened from; run a command entry in the terminal;
+  frecency sorting; search by keywords and tags.
+- **Notes:** render fenced code with line numbers and copy; fix bold text in the notes body.
+- **Adoption** ([ADR 0008](docs/adr/0008-kbx-stays-its-own-code.md)): import navi, cheat and pet files and Atuin's
+  shell history; bundle tldr pages so kbx is useful on first launch.
+- **Distribution:** a Developer ID signature and notarization, a universal binary, a Linux build.
 
 ## License
 
-MIT
+[MIT](LICENSE). The patched crates in `crates/third-party/` keep their own licenses: `block` is MIT
+([its LICENSE](crates/third-party/block/LICENSE)) and `gpui-pre-macos` is Apache-2.0
+([its LICENSE](crates/third-party/gpui-pre-macos/LICENSE-APACHE)).

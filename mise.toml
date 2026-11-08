@@ -86,17 +86,8 @@ description = "fnox resolves the secrets in .fnox.toml (Graphify's --force pass 
 run = "fnox list -P default --sources >/dev/null 2>&1"
 hint = "Run `mise install`; fnox reads password-store (`pass`): see .fnox.toml for the entries it expects."
 
-[env]
-# ── Benchmark kit (tools/bench/README.md: remove this block, and its line in [task_config], when purging it) ──
-# Where the TS bench finds the Raycast implementation. Read only; nothing here writes to it.
-KB_TS_REPO = "{{ env.HOME }}/Work/raycast/kb"
-# Where the private corpus is copied from. Read only.
-KB_SOURCES = "{{ env.HOME }}/.config/kodexb/sources"
-# ── end of benchmark kit ──
-
 [task_config]
 includes = [
-  "tools/bench/tasks.toml",  # the benchmark kit: remove when purging it
   "tools/design/tasks.toml", # the design kit (tools/design)
   "tools/graph/tasks.toml",  # the code graph tools (tools/graph/README.md)
   "tools/tags/tasks.toml",   # the tag tools (docs/doctrine/tag-conventions.doctrine.md)
@@ -112,7 +103,7 @@ cargo-binstall = "1.25.3"
 "cargo:cargo-deny" = "0.20.2"
 "cargo:cargo-llvm-cov" = "0.9.1"
 "cargo:cargo-machete" = "0.9.2"
-# Packages kb.app, so macOS only.
+# Packages kbx.app, so macOS only.
 "cargo:cargo-packager" = { version = "0.11.8", os = ["macos"] }
 "cargo:cargo-nextest" = "0.9.148"
 "cargo:https://github.com/RayanBO/todo/" = "tag:v0.2.9"
@@ -131,7 +122,6 @@ pkl = "0.32.1"
 shellcheck = "0.11.0"
 shfmt = "3.14.1"
 taplo = "0.10.0"
-tokei = "15.0.0"
 typos = "1.51.1"
 zizmor = "1.30.1"
 "npm:quick-commitlint" = { version = "0.1.2", allow_low_downloads = true }
@@ -145,7 +135,7 @@ node = "26.11.1"
 fnox = "1.39.0"
 
 [tasks.setup]
-description = "Install tools, fetch crates and the git hooks; the benchmark kit has its own (bench:setup)"
+description = "Install tools, fetch crates and the git hooks"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
@@ -176,7 +166,7 @@ run = '''
   RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked
 '''
 
-# CI (.github/workflows/ci.yml) runs these on Linux; kb itself compiles only on macOS (GPUI).
+# CI (.github/workflows/ci.yml) runs these on Linux; kbx itself compiles only on macOS (GPUI).
 [tasks.ci]
 description = "What CI checks: the gate on macOS; elsewhere ci:lint and ci:test, in parallel"
 run = '''
@@ -187,24 +177,23 @@ run = '''
 '''
 
 [tasks."ci:lint"]
-description = "hk's checks that need neither GPUI nor the Raycast link nor a branch name"
-# cargo-check and clippy compile the app (GPUI, macOS only); bench-ts-typecheck needs the TS bench's link to the
-# Raycast repo; branch reads a branch name, which a pull request's merge checkout has not.
+description = "hk's checks that need neither GPUI nor a branch name"
+# cargo-check and clippy compile the app (GPUI, macOS only); branch reads a branch name, which a pull request's merge checkout has not.
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   cargo fetch --locked # domain-purity resolves offline, as after `mise run setup`
-  hk check --all --skip-step cargo-check --skip-step clippy --skip-step bench-ts-typecheck --skip-step branch
+  hk check --all --skip-step cargo-check --skip-step clippy --skip-step branch
 '''
 
 [tasks."ci:test"]
-description = "The engine, which compiles anywhere: clippy, tests and doctests of kb-domain; cargo deny"
+description = "The engine, which compiles anywhere: clippy, tests and doctests of kbx-domain; cargo deny"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
-  cargo clippy -p kb-domain --all-targets --locked -- -D warnings
-  cargo nextest run -p kb-domain --locked
-  cargo test --doc -p kb-domain --locked
+  cargo clippy -p kbx-domain --all-targets --locked -- -D warnings
+  cargo nextest run -p kbx-domain --locked
+  cargo test --doc -p kbx-domain --locked
   cargo deny check
 '''
 
@@ -225,7 +214,7 @@ run = '''
 '''
 
 [tasks."release:version"]
-description = "Set the workspace version in Cargo.toml and Cargo.lock, so kb.app reports it"
+description = "Set the workspace version in Cargo.toml and Cargo.lock, so kbx.app reports it"
 usage = 'arg "<version>"'
 run = '''
   #!/usr/bin/env bash
@@ -237,16 +226,16 @@ run = '''
 '''
 
 [tasks."release:app"]
-description = "Package kb.app at a version and zip it as target/release-assets/kb-<version>-macos-arm64.zip"
+description = "Package kbx.app at a version and zip it as target/release-assets/kbx-<version>-macos-arm64.zip"
 usage = 'arg "<version>"'
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   mise run release:version "$usage_version"
   mise run package
-  out="target/release-assets/kb-$usage_version-macos-arm64.zip"
+  out="target/release-assets/kbx-$usage_version-macos-arm64.zip"
   rm -rf target/release-assets && mkdir -p target/release-assets
-  ditto -c -k --keepParent target/packager/kb.app "$out" # ditto keeps the signature and bundle metadata
+  ditto -c -k --keepParent target/packager/kbx.app "$out" # ditto keeps the signature and bundle metadata
   echo "$out"
 '''
 
@@ -256,62 +245,50 @@ usage = 'flag "--trace" help="log the show and keystroke latencies to stderr"'
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
-  cargo build --release --locked -p kb-app
-  if [ "${usage_trace:-false}" = "true" ]; then exec target/release/kb --trace; fi
-  exec target/release/kb
-'''
-
-[tasks.images]
-description = "Copy the Raycast extension's tag images into ~/.config/kb/images, where kb draws #tag as <tag>.svg (reads $KB_TS_REPO, never writes it)"
-run = '''
-  #!/usr/bin/env bash
-  set -euo pipefail
-  src="${KB_TS_REPO:?set KB_TS_REPO to the Raycast extension repository}/apps/kb/assets/images"
-  dest="$HOME/.config/kb/images"
-  mkdir -p "$dest"
-  cp -n "$src"/*.svg "$dest"/ || true # -n keeps images already there
-  echo "$(ls "$dest" | wc -l | tr -d ' ') tag images in $dest"
+  cargo build --release --locked -p kbx-app
+  if [ "${usage_trace:-false}" = "true" ]; then exec target/release/kbx --trace; fi
+  exec target/release/kbx
 '''
 
 [tasks.show]
-description = "Show the panel without the hotkey: build, then (re)start kb in the background, which opens showing it"
+description = "Show the panel without the hotkey: build, then (re)start kbx in the background, which opens showing it"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
-  cargo build --release --locked -p kb-app
-  pkill -x kb || true # a running kb cannot be asked to show itself; a fresh one opens showing the panel
-  while pgrep -x kb >/dev/null; do sleep 0.2; done
+  cargo build --release --locked -p kbx-app
+  pkill -x kbx || true # a running kbx cannot be asked to show itself; a fresh one opens showing the panel
+  while pgrep -x kbx >/dev/null; do sleep 0.2; done
   mkdir -p tmp
-  nohup target/release/kb >tmp/kb.log 2>&1 &
-  echo "kb started (pid $!); its output goes to tmp/kb.log"
+  nohup target/release/kbx >tmp/kbx.log 2>&1 &
+  echo "kbx started (pid $!); its output goes to tmp/kbx.log"
 '''
 
 [tasks.size]
 description = "Build the release binary and check it against tools/size/budget"
-run = "cargo build --release --locked -p kb-app && tools/size/size.sh"
+run = "cargo build --release --locked -p kbx-app && tools/size/size.sh"
 
 [tasks.package]
-description = "Build kb.app (target/packager) and sign it ad hoc for this machine"
+description = "Build kbx.app (target/packager) and sign it ad hoc for this machine"
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
-  (cd crates/kb-app && cargo packager --release --formats app)
+  (cd crates/kbx-app && cargo packager --release --formats app)
   # Ad hoc: enough to run here. Distribution needs a Developer ID and notarization (README).
-  codesign --force --sign - target/packager/kb.app
-  echo "target/packager/kb.app"
+  codesign --force --sign - target/packager/kbx.app
+  echo "target/packager/kbx.app"
 '''
 
 [tasks.install]
-description = "Package kb.app and install it in ~/Applications; start it from there or at login"
+description = "Package kbx.app and install it in ~/Applications; start it from there or at login"
 depends = ["package"]
 run = '''
   #!/usr/bin/env bash
   set -euo pipefail
   mkdir -p ~/Applications
-  pkill -x kb || true
-  rm -rf ~/Applications/kb.app
-  cp -R target/packager/kb.app ~/Applications/
-  echo "installed ~/Applications/kb.app; open it, then press ⌥K"
+  pkill -x kbx || true
+  rm -rf ~/Applications/kbx.app
+  cp -R target/packager/kbx.app ~/Applications/
+  echo "installed ~/Applications/kbx.app; open it, then press ⌥K"
 '''
 
 [tasks.outdated]

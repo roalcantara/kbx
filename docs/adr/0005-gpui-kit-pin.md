@@ -5,7 +5,7 @@
 
 ## Context
 
-`kb-app` depends on GPUI Kit alone (ADR 0001), and through it on GPUI's text, platform and HTTP stacks. Three
+`kbx-app` depends on GPUI Kit alone (ADR 0001), and through it on GPUI's text, platform and HTTP stacks. Three
 things follow from that tree and need a decision rather than a workaround.
 
 ## Decision

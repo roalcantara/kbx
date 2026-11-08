@@ -4,7 +4,7 @@ Tools for agents to query and navigate the repository via code graphs: code-revi
 
 ## Overview
 
-Three complementary code graphs index `kb`'s Rust codebase:
+Three complementary code graphs index `kbx`'s Rust codebase:
 
 - **code-review-graph (CRG)**: MCP server delivering graph queries, structural blast radius, and PR/commit impact analysis directly to LLM agents.
 - **Gortex**: Daemon-backed code graph providing fast codebase queries and contextual briefings (`gortex context`, `gortex wakeup`).
@@ -48,7 +48,7 @@ Graphify's optional semantic pass (`--force`) runs through `fnox exec`, which re
 
 ## Global Side Effects
 
-Following spec decision D6, global state modifications outside this repository are strictly scoped:
+Global state modifications outside this repository are strictly scoped:
 
 - `mise run graph install` configures agent configuration files in user home directories (e.g. MCP registration, agent skills).
 - `mise run graph setup gortex` registers this repository with Gortex (`gortex track`) and starts its background daemon.

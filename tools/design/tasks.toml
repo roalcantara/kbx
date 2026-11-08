@@ -160,7 +160,7 @@ console.log(`wrote ${OUT}`)
 ]
 
 ["design:validate"]
-description = "Score the comparison palettes in palettes.json (WCAG 2.2 contrast of text on surfaces, accents on pills, accents apart under normal, protan and deutan vision) into tools/design/validation.json. kb's own themes are checked by the theme::legibility tests (themes spec D9)"
+description = "Score the comparison palettes in palettes.json (WCAG 2.2 contrast of text on surfaces, accents on pills, accents apart under normal, protan and deutan vision) into tools/design/validation.json. kbx's own themes are checked by the theme::legibility tests"
 run = [
   '''
 #!/usr/bin/env bun
@@ -240,7 +240,7 @@ for (const { id, failed, warned } of results) {
 ]
 
 ["design:tag-accents"]
-description = "Write the tag-accent fixture (the Raycast extension's tag hash) the Rust hash is tested against (presentation.rs); kb's GPUI Kit theme is built in Rust now (theme::gpui)"
+description = "Write the tag-accent fixture (kbx's tag hash) the Rust hash is tested against (presentation.rs); kbx's GPUI Kit theme is built in Rust now (theme::gpui)"
 run = [
   '''
 #!/usr/bin/env bun
@@ -250,14 +250,14 @@ import { dirname, resolve } from 'node:path'
 const { tagAccent } = await import(`${process.cwd()}/tools/design/color.ts`)
 
 const root = process.cwd()
-// Tag → hue by the Raycast extension's hash: the Rust hash is tested against it (presentation.rs).
-const fixtureOut = resolve(root, 'crates/kb-app/tests/fixtures/tag-accents.json')
+// Tag → hue by kbx's tag hash: the Rust hash is tested against it (presentation.rs).
+const fixtureOut = resolve(root, 'crates/kbx-app/tests/fixtures/tag-accents.json')
 const sampleTags = ['git', 'docker', 'kube', 'rust', 'kb', 'video', 'talks', 'docs', 'containers', 'mixed-case', 'aws', 'nu', 'linux', 'gradle', 'grails', 'schedule', 'ai', 'react', 'café']
 mkdirSync(dirname(fixtureOut), { recursive: true })
 writeFileSync(fixtureOut, `${JSON.stringify(Object.fromEntries(sampleTags.map((x) => [x, tagAccent(x)])), null, 2)}\n`)
 console.log(`wrote ${fixtureOut.replace(`${root}/`, '')}`)
 ''',
-  "dprint fmt crates/kb-app/tests/fixtures/tag-accents.json",
+  "dprint fmt crates/kbx-app/tests/fixtures/tag-accents.json",
 ]
 
 ["design:prototypes"]
@@ -289,7 +289,7 @@ for (const screen of screens) {
 '''
 
 ["design:shots"]
-description = "Capture kb on the showcase corpus, every screen, compact and expanded, into tools/design/shots (needs Accessibility and Screen Recording for the terminal, and ⌥K free)"
+description = "Capture kbx on the showcase corpus, every screen, compact and expanded, into tools/design/shots (needs Accessibility and Screen Recording for the terminal, and ⌥K free)"
 depends = ["probes"]
 usage = 'flag "--scale <n>" help="1 to save at 1× (owner O2, option B); the screen scale by default"'
 run = '''
@@ -300,7 +300,7 @@ import { resolve } from 'node:path'
 
 const root = process.cwd()
 const probe = resolve(root, 'tmp/bin/probe')
-const kb = resolve(root, 'target/release/kb')
+const kbx = resolve(root, 'target/release/kbx')
 const out = resolve(root, 'tools/design/shots')
 const scale = process.env.usage_scale
 
@@ -317,17 +317,17 @@ const type = (text: string) => run([probe, 'type', text])
 const home = (name: string, withIndex: boolean) => {
   const dir = resolve(root, 'tmp/design', name)
   rmSync(dir, { recursive: true, force: true })
-  mkdirSync(resolve(dir, '.config/kb'), { recursive: true })
+  mkdirSync(resolve(dir, '.config/kbx'), { recursive: true })
   writeFileSync(
-    resolve(dir, '.config/kb/config.toml'),
+    resolve(dir, '.config/kbx/config.toml'),
     `sources_path = "${resolve(root, 'tools/design/showcase')}"\ntag_images_path = "${resolve(root, 'tools/design/showcase-images')}"\n`
   )
-  if (withIndex) run([kb, '--sync'], { HOME: dir })
+  if (withIndex) run([kbx, '--sync'], { HOME: dir })
   return dir
 }
 const launch = (dir: string) => {
-  Bun.spawnSync(['pkill', '-x', 'kb'])
-  Bun.spawn([kb], { env: { ...process.env, HOME: dir }, stdout: 'ignore', stderr: 'ignore' })
+  Bun.spawnSync(['pkill', '-x', 'kbx'])
+  Bun.spawn([kbx], { env: { ...process.env, HOME: dir }, stdout: 'ignore', stderr: 'ignore' })
   sleep(3000)
   key(40, 'opt') // ⌥K shows the panel
   sleep(800)
@@ -336,7 +336,7 @@ const seen = new Map<string, string>()
 const shot = (name: string) => {
   run([probe, 'park']) // a pointer over the panel would draw a hover fill
   sleep(700)
-  const id = run([probe, 'window-id', 'kb'])
+  const id = run([probe, 'window-id', 'kbx'])
   const file = resolve(out, `${name}.png`)
   run(['screencapture', '-x', '-o', '-l', id, file])
   const md5 = createHash('md5').update(readFileSync(file)).digest('hex')
@@ -348,7 +348,7 @@ const shot = (name: string) => {
 // Back to the plain list, whatever the screen: Esc closes an overlay, leaves a detail or the report, clears the query,
 // and on the empty list hides the panel; ⌥K shows it again. Stops as soon as the panel is hidden, so no Esc reaches
 // another app.
-const visible = () => run([probe, 'windows', 'kb']).includes('onscreen=true layer=101')
+const visible = () => run([probe, 'windows', 'kbx']).includes('onscreen=true layer=101')
 const reset = () => {
   for (let i = 0; i < 6 && visible(); i++) { key(53); sleep(300) }
   if (visible()) throw new Error('the panel did not hide after six Esc')
@@ -356,7 +356,7 @@ const reset = () => {
   key(123); sleep(300) // ← hides the split pane, which stays open across screens; split shots press → themselves
 }
 
-run(['cargo', 'build', '--release', '-p', 'kb-app'])
+run(['cargo', 'build', '--release', '-p', 'kbx-app'])
 if (!existsSync(probe)) throw new Error(`need ${probe}; run mise run probes`)
 rmSync(out, { recursive: true, force: true }) // a screen no longer captured must not linger
 mkdirSync(out, { recursive: true })
@@ -396,6 +396,6 @@ key(3, 'shift+cmd')
 
 launch(home('shots-noindex', false))
 shot('compact-10-no-index')
-Bun.spawnSync(['pkill', '-x', 'kb'])
+Bun.spawnSync(['pkill', '-x', 'kbx'])
 console.log(`wrote ${out}`)
 '''

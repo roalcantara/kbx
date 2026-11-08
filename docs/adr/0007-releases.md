@@ -7,14 +7,14 @@
 
 Versions, the changelog and the downloadable app were made by hand, if at all. Commit messages already follow
 Conventional Commits (`.quick-commitlint.json`), which is all a release tool needs to derive a version. The repository
-is private on GitHub Free: 2,000 Actions minutes a month, macOS minutes count ten times, and Pages is unavailable. kb
+is private on GitHub Free: 2,000 Actions minutes a month, macOS minutes count ten times, and Pages is unavailable. kbx
 compiles only on macOS; its engine compiles anywhere.
 
 ## Decision
 
 semantic-release (`.releaserc.yml`) derives each release from the commits since the last tag: `feat` a minor version,
 `fix` and `perf` a patch, other types none. It writes `CHANGELOG.md`, sets the workspace version in `Cargo.toml` (so
-`kb.app` reports it), commits both, tags `vX.Y.Z` and creates the GitHub Release with the zipped `kb.app`. Versions
+`kbx.app` reports it), commits both, tags `vX.Y.Z` and creates the GitHub Release with the zipped `kbx.app`. Versions
 started at `v0.1.0`.
 
 One workflow, `.github/workflows/ci.yml`, runs it, calling only mise tasks:

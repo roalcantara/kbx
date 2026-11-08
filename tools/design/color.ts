@@ -39,7 +39,7 @@ export const contrast = (a: string, b: string): number => {
   return (x + 0.05) / (y + 0.05)
 }
 
-// Type tints and the tag hash, as the Raycast extension's accessories.ts: a tag keeps one accent everywhere.
+// Type tints and the tag hash: a tag keeps one accent everywhere.
 export const TYPE_ACCENTS: Record<string, Accent> = {
   bookmark: 'purple',
   command: 'green',
@@ -75,7 +75,7 @@ export const description = (roles: Roles): string => {
   return shade
 }
 
-// Light accents (Tailwind 600) over a white window, for GPUI Kit's default light theme: kb is designed for dark.
+// Light accents (Tailwind 600) over a white window, for GPUI Kit's default light theme: kbx is designed for dark.
 export const LIGHT_ACCENTS: Roles = {
   window: '#FFFFFF',
   text: '#0A0A0A',

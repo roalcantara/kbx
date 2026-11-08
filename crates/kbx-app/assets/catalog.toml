@@ -1,0 +1,278 @@
+# What kbx offers: its entry types, its actions, each screen's keys, the action panel's rows and the
+# words it shows. ~/.config/kbx/config.toml overrides any key below by the same path, for
+# example `[actions.copy] label = "Yank"`. Colours and sizes are not here: they are DESIGN.md's.
+#
+# Keys use GPUI's spelling: modifiers joined by `-` before the key (`cmd-shift-f`, `shift-cmd-enter`).
+# A screen's keys are `enter`, `cmd-enter`, `shift-cmd-enter` and `escape`; their value is an action,
+# or `entry.primary` / `entry.secondary` (the selected entry's actions, list and detail only).
+
+# Entry types (D6): any other type in the sources is ignored by the app. The table key is the type as
+# the sources write it. `tint` is a colour token of DESIGN.md; `hero` is media, command, snippet or task; a type without one shows none.
+[types.bookmarks]
+label = "Bookmarks"
+icon = "bookmark"
+tint = "blue"
+hero = "media"
+primary = "open"
+secondary = "copy"
+
+[types.cheats]
+label = "Cheat Sheets"
+icon = "book-open"
+tint = "mauve"
+hero = "snippet"
+primary = "copy"
+
+[types.commands]
+label = "Commands"
+icon = "square-terminal"
+tint = "green"
+hero = "command"
+mono_title = true
+primary = "copy"
+
+[types.tasks]
+label = "Tasks"
+icon = "circle-check"
+tint = "pink"
+hero = "task"
+primary = "copy"
+
+
+[types.skills]
+label = "Skills"
+icon = "notebook-text"
+tint = "yellow"
+primary = "copy"
+# Actions (D7, D9). `keys` binds the action everywhere in the panel.
+[actions.details]
+label = "Details"
+
+[actions.open]
+label = "Open"
+
+[actions.copy]
+label = "Copy"
+
+[actions.resize]
+label = "Resize"
+keys = "cmd-shift-f"
+
+[actions.copy-description]
+label = "Description"
+
+[actions.copy-notes]
+label = "Notes"
+
+[actions.copy-path]
+label = "Path"
+keys = "cmd-alt-c"
+
+[actions.copy-location]
+label = "Copy Location"
+keys = "cmd-shift-l"
+
+[actions.copy-error]
+label = "Copy Error"
+keys = "cmd-shift-e"
+
+[actions.reveal]
+label = "Reveal in Finder"
+keys = "cmd-shift-r"
+
+[actions.edit]
+label = "Edit"
+keys = "cmd-o"
+
+[actions.refresh]
+label = "Refresh"
+keys = "cmd-r"
+
+
+[actions.refresh-yaml]
+label = "Refresh YAML"
+
+[actions.refresh-skills]
+label = "Refresh Skills"
+[actions.configure]
+label = "Configure"
+keys = "cmd-shift-,"
+
+[actions.actions]
+label = "Actions"
+keys = "cmd-k"
+
+[actions.filter]
+label = "Filter"
+keys = "cmd-p"
+
+[actions.stop]
+label = "Stop"
+
+[actions.back]
+label = "Back"
+
+[actions.retry]
+label = "Retry"
+
+[actions.toggle]
+label = "Toggle"
+
+[actions.only]
+label = "Only"
+
+[actions.clear-filters]
+label = "Clear All"
+
+[actions.open-link]
+label = "Open"
+
+[actions.copy-link]
+label = "Copy"
+
+[actions.run]
+label = "Run"
+
+[actions.close]
+label = "Close"
+
+# Screen keys (D8, D10, D15, D16): the ladder ↵ / ⌘↵ / ⇧⌘↵, and Esc while refreshing; the report and its detail.
+[screens.list]
+enter = "details"
+cmd-enter = "entry.primary"
+shift-cmd-enter = "entry.secondary"
+
+[screens.detail]
+enter = "entry.primary"
+cmd-enter = "entry.secondary"
+
+[screens.empty]
+enter = "refresh"
+
+[screens.no-index]
+enter = "refresh"
+
+[screens.filter]
+enter = "toggle"
+cmd-enter = "only"
+
+[screens.links]
+enter = "open-link"
+cmd-enter = "copy-link"
+
+# While ⌘K is open (close-out D5): ↵ runs the selected row; ⌘K, shown as Close, shuts the panel.
+[screens.actions]
+enter = "run"
+escape = "back"
+
+[screens.refreshing]
+escape = "stop"
+
+[screens.report]
+enter = "details"
+cmd-enter = "edit"
+shift-cmd-enter = "copy-location"
+
+[screens.report-detail]
+enter = "edit"
+cmd-enter = "copy-location"
+[screens.stopped]
+enter = "retry"
+
+[screens.failed]
+enter = "retry"
+cmd-enter = "configure"
+
+# The action panel (D9): after the screen's keys, the root lists `root`, then Links… (with links) and
+# More…; More… lists `more_copy` under `copy_section`, then `more_admin` under `admin_section`, with
+# `refresh_more` after Refresh opening `more_refresh`, then `theme` opening the themes (~/.config/kbx/themes) at the end.
+[panel]
+links = "Links…"
+more = "More…"
+refresh_more = "Refresh More…"
+theme = "Theme…"
+search = "Search"
+copy_section = "Copy"
+admin_section = "Administration"
+types_section = "Types"
+tags_section = "Tags"
+root = ["resize"]
+more_copy = ["copy-description", "copy-notes", "copy-path"]
+more_admin = ["edit", "refresh", "configure"]
+more_refresh = ["refresh-yaml", "refresh-skills"]
+# The words kbx shows. `{name}` is filled in by the app.
+[messages]
+search_placeholder = "Search Knowledge Base…"
+all_entries = "All Entries"
+copied = "Copied to clipboard"
+paste_hint = "to paste"
+ready = "Ready"
+results = "{count} results"
+one_result = "1 result"
+refreshing_status = "Refreshing…"
+no_index_status = "No index"
+no_match_title = "No matching entries found"
+no_match = "No entries match “{query}”."
+no_match_filtered = "No entries match “{query}” with this filter."
+no_entries_filtered = "No entries with this filter."
+no_entries_title = "No entries yet"
+no_entries = "Your sources have no {types}."
+list_or = "or"
+no_index_title = "No entries indexed yet"
+no_index = "Press Refresh to build the index from your sources."
+refreshing_title = "Refreshing the index…"
+refreshing_progress = "{done} of {total} files · {file}"
+running_skills = "Running skills…"
+report_summary = "{entries} entries in {seconds} s"
+report_failed = "{count} failed"
+report_failed_chip = "failed"
+report_skipped = "{count} with skipped entries"
+report_indexed = "Indexed"
+report_skipped_entries = "Skipped: {entries} (not a map)"
+report_empty_file = "No entries"
+report_yaml_section = "YAML"
+report_skills_section = "Skills"
+report_source_failed = "{error} The previous entries are unchanged. Check it in Configure."
+report_not_configured = "Not configured: install skills, or set skills_command in Configure."
+report_warning_chip = "warning"
+report_not_configured_chip = "off"
+report_pane_location = "Location"
+report_pane_file = "File"
+report_pane_entries = "Entries"
+report_pane_index = "Index"
+report_pane_kept = "its previous entries are kept"
+report_pane_skills_kept = "the previous skills are kept"
+report_pane_exit = "Exit"
+report_pane_stderr = "Stderr"
+report_pane_nothing = "(nothing)"
+report_pane_line = "line {line}:{column}"
+report_pane_skipped = "{count} skipped: only a map of fields becomes an entry."
+report_pane_one_skipped = "1 entry was skipped: only a map of fields becomes an entry."
+report_pane_skipped_key = "{type} / {key} — not a map"
+report_pane_skipped_chip = "{entries} · {count} skipped"
+stopped_title = "Refresh stopped"
+stopped = "Sources not refreshed yet are unchanged."
+failed_title = "Couldn’t refresh the index"
+failed = "{error} Check it in Configure."
+filters = "{count} filters"
+one_filter = "1 filter"
+links_label = "Links"
+more_origin = "More"
+links_origin = "Links"
+refresh_origin = "Refresh More"
+theme_origin = "Theme"
+theme_chosen = "Theme: {name}"
+theme_weak = "{name}: {failure}"
+open_missing = "Couldn’t open {file}: not found."
+editor_failed = "Couldn’t run {program}: {error}. Opened it with its default app."
+
+config_create_failed = "Couldn’t create {file}: {error}"
+theme_save_failed = "Couldn’t save the theme in {file}: {error}"
+hotkey_failed = "Couldn’t register ⌥K: {error}. Another app may be using it."
+themes_seed_failed = "Couldn’t write kbx’s themes to {dir}: {error}"
+config_colors_ignored = "Ignored `colors` in {file}: not a table"
+config_unknown_ignored = "Ignored the unknown setting `{key}` in {file}"
+config_editor_ignored = "Ignored `editor` in {file}: {error}"
+# What ‹ says it returns to: the list without a query, and a refresh.
+back_search = "Search"
+back_refresh = "Refresh"

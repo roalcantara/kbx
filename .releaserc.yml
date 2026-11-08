@@ -26,7 +26,7 @@ plugins:
       changelogTitle: |-
         # Changelog
 
-        Every release of kb, written by semantic-release from the commit messages (docs/adr/0007-releases.md).
+        Every release of kbx, written by semantic-release from the commit messages (docs/adr/0007-releases.md).
   - - '@semantic-release/exec'
     # verifyRelease runs on --dry-run too: CI's plan job reads the next version from here.
     - verifyReleaseCmd: '[ -z "$GITHUB_OUTPUT" ] || echo "version=${nextRelease.version}" >> "$GITHUB_OUTPUT"'
@@ -37,7 +37,7 @@ plugins:
   - - '@semantic-release/github'
     - assets:
         - path: target/release-assets/*.zip
-          label: kb for macOS (Apple silicon)
+          label: kbx for macOS (Apple silicon)
       # No comments or labels on issues and pull requests, and no issue on failure: the run log says it.
       successComment: false
       releasedLabels: false
@@ -48,5 +48,5 @@ plugins:
 
         ---
 
-        **Install:** unzip, move `kb.app` to Applications, then open it once with right-click → Open: it is signed ad
+        **Install:** unzip, move `kbx.app` to Applications, then open it once with right-click → Open: it is signed ad
         hoc, not with a Developer ID, so macOS asks first. Press ⌥K to show the panel.

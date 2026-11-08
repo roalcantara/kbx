@@ -48,9 +48,9 @@ describe('translucent highlights', () => {
 })
 
 describe('accents', () => {
-  test('hash a tag to one accent whatever its case, as the Raycast extension', () => {
+  test('hash a tag to one accent whatever its case, as kbx does', () => {
     expect(tagAccent('Git')).toBe(tagAccent('git'))
-    expect(tagAccent('git')).toBe('red') // crates/kb-app/tests/fixtures/tag-accents.json
+    expect(tagAccent('git')).toBe('red') // crates/kbx-app/tests/fixtures/tag-accents.json
   })
 
   test('tint the known types, and hash the others', () => {

@@ -1,6 +1,6 @@
 # Design System Checklists
 
-Per-screen review of the app against its approved pages (spec §9), from the screenshots `mise run design:shots` takes
+Per-screen review of the app against its approved pages, from the screenshots `mise run design:shots` takes
 of the real app on the showcase corpus (`tools/design/shots/`, compact and expanded). Every row was checked by opening
 the screenshots named in its section (2026-10-14).
 

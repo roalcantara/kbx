@@ -1,9 +1,9 @@
 ---
-# The design tokens: the only place a design value is written (spec D18). The app reads this front matter at start
-# (crates/kb-app/src/ui/design.rs). Sizes are points.
-# The theme kb uses when config.toml names none (spec 2026-10-19-themes). Colours live in theme files:
-# crates/kb-app/assets/themes/<id>.yaml, seeded into ~/.config/kb/themes/.
-theme: kb-native
+# The design tokens: the only place a design value is written. The app reads this front matter at start
+# (crates/kbx-app/src/ui/design.rs). Sizes are points.
+# The theme kbx uses when config.toml names none. Colours live in theme files:
+# crates/kbx-app/assets/themes/<id>.yaml, seeded into ~/.config/kbx/themes/.
+theme: kbx
 typography:
   ui: Inter
   mono: JetBrains Mono
@@ -81,20 +81,20 @@ components:
 
 # Design system
 
-How kb looks. The owner's Stitch screens are the reference, settled screen by screen into the **approved pages**
+How kbx looks. The owner's Stitch screens are the reference, settled screen by screen into the **approved pages**
 ([docs/guides/design/](docs/guides/design/README.md)), which are the visual contract: where this text and a page
-differ, the page wins and this text is fixed. [PRODUCT.md](PRODUCT.md) says what kb is for; Raycast is the reference
+differ, the page wins and this text is fixed. [PRODUCT.md](PRODUCT.md) says what kbx is for; Raycast is the reference
 for behaviour. Read this file before any UI change.
 
 Every value lives in one place:
 
-| What                                   | Where                                                                                                           | Read by                                                               |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Type, radii, spacing, sizes            | This file's front matter (the design tokens)                                                                    | the app (`ui/design.rs`)                                              |
-| Colours                                | Theme files: [`crates/kb-app/assets/themes/`](crates/kb-app/assets/themes/), seeded into `~/.config/kb/themes/` | the app (`theme.rs`); the front matter names the default, `kb-native` |
-| Entry types, actions, keys, words      | [`crates/kb-app/assets/catalog.toml`](crates/kb-app/assets/catalog.toml)                                        | the app (`catalog.rs`); `~/.config/kb/config.toml` overrides it       |
-| GPUI Kit's theme                       | Built from the active theme by `theme::gpui`                                                                    | GPUI Kit's own components                                             |
-| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)                                                      | whoever changes a value                                               |
+| What                                   | Where                                                                                                              | Read by                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Type, radii, spacing, sizes            | This file's front matter (the design tokens)                                                                       | the app (`ui/design.rs`)                                         |
+| Colours                                | Theme files: [`crates/kbx-app/assets/themes/`](crates/kbx-app/assets/themes/), seeded into `~/.config/kbx/themes/` | the app (`theme.rs`); the front matter names the default, `kbx`  |
+| Entry types, actions, keys, words      | [`crates/kbx-app/assets/catalog.toml`](crates/kbx-app/assets/catalog.toml)                                         | the app (`catalog.rs`); `~/.config/kbx/config.toml` overrides it |
+| GPUI Kit's theme                       | Built from the active theme by `theme::gpui`                                                                       | GPUI Kit's own components                                        |
+| What reaches what when a value changes | [`tools/design/CHANGE-MAP.md`](tools/design/CHANGE-MAP.md)                                                         | whoever changes a value                                          |
 
 `theme::legibility` checks every shipped theme's contrast in a test; `mise run design:validate` scores the comparison
 palettes; `mise run design:shots` captures the app on the showcase corpus for comparison with the approved pages.
@@ -104,11 +104,11 @@ palettes; `mise run design:shots` captures the app on the showcase corpus for co
 A calm, dark launcher in Catppuccin Macchiato: a navy panel with 14 pt corners floating over the desktop, flat
 surfaces close in tone, hairlines only under the header and above the footer. Hierarchy comes from type weight, a
 selected row's fill and its mauve bar, never from boxes. Colour is reserved for meaning: an entry's type (its tile),
-a tag's identity (its icon), and state (the status dot). Always dark: kb has one approved palette.
+a tag's identity (its icon), and state (the status dot). Always dark: kbx has one approved palette.
 
 ## 2. Color Palette & Roles
 
-The roles, by name. Their values come from the active theme (below); kb-native's are kb's own:
+The roles, by name. Their values come from the active theme (below); kbx's are kbx's own:
 
 | Role       | Job                                                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -134,19 +134,19 @@ The roles, by name. Their values come from the active theme (below); kb-native's
 - **Chip state** (D3): _live_ (mantle, muted text) on every keycap and on the selected row's chips; _rest_ (badge)
   elsewhere, tag text muted, the link count faint.
 
-**Themes** (spec 2026-10-19-themes): the colours come from a theme file, a base24 (or base16) scheme in
-`~/.config/kb/themes/`, where kb seeds its eight (kb-native, Neon Dusk, Archwave, Azure Glow, Aetheria, Monokai,
-Sapphire, Nagai Poolside; page 19) and never overwrites one. kb maps a scheme onto the roles by each colour's base24
+**Themes**: the colours come from a theme file, a base24 (or base16) scheme in
+`~/.config/kbx/themes/`, where kbx seeds its eight (kbx, Neon Dusk, Archwave, Azure Glow, Aetheria, Monokai,
+Sapphire, Nagai Poolside; page 19) and never overwrites one. kbx maps a scheme onto the roles by each colour's base24
 meaning (base00 window, base01 badge, base02 selected, base03 faint, base04 muted, base05 text, base10 and base11 the
-darker layers, base08–base0E the accents, base0E the main accent `mauve`); a file's `kb:` section pins any role
-exactly. config.toml names the theme (`theme = "neon-dusk"`, kb-native without one) and may override single roles in
+darker layers, base08–base0E the accents, base0E the main accent `mauve`); a file's `kbx:` section pins any role
+exactly. config.toml names the theme (`theme = "neon-dusk"`, kbx without one) and may override single roles in
 `[colors]`. More… → Theme… lists the files and previews each as the selection moves; ↵ keeps and saves one, Esc
 restores the one in use. A theme below the legibility rules still loads, with a notice saying why.
 
 ## 3. Typography Rules
 
 Inter for the interface and keycaps, JetBrains Mono for commands, code, counts and URLs; both bundled
-(`crates/kb-app/assets/fonts`), ligatures off wherever mono text is drawn, so what you read is what you copy. Small,
+(`crates/kbx-app/assets/fonts`), ligatures off wherever mono text is drawn, so what you read is what you copy. Small,
 dense type: titles 13 medium, descriptions 12, labels 12 medium, the footer 11, section labels 10 semibold uppercase;
 the query 15; the pane's heading 15 semibold; the quote 14 italic. Command titles are mono (the catalog's
 `mono_title`). The type roles are the front matter's `typography.roles`.
@@ -162,9 +162,9 @@ clearances (the command card's room for its copy button, 40; the notice above th
 
 ## 4. Component Stylings
 
-Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an approved page:
+Each component is one file in `crates/kbx-app/src/ui/`, and matches a part of an approved page:
 
-- **Keycap** (`keycap.rs`; spec 2026-10-19 D1): one 20 × 20 cap per key, 2 apart (`⌘` `K`, `⇧` `⌘` `,`); a word key
+- **Keycap** (`keycap.rs`): one 20 × 20 cap per key, 2 apart (`⌘` `K`, `⇧` `⌘` `,`); a word key
   (`esc`) 28 wide; Inter 10 / 400; live or rest.
 - **Chip** (`chip.rs`; 01-list, 01-chips): 20 tall, 4 pt corners: tag pills, tag icon chips, task chips; live or rest. The `↗ n`
   link count is a round pill with a faint outline and no fill, never a key's shape.
@@ -198,7 +198,7 @@ Each component is one file in `crates/kb-app/src/ui/`, and matches a part of an 
   Quote (the description, red bar), Body (the notes, then the Links list); the same component in the split (34 %
   list) and on the detail screen.
 - **Command card** (`command_card.rs`; 04-command-cards): mantle, a `selected` border, 10 pt corners; fmt-rs breaks
-  at operators, kb wraps at spaces with a hanging indent; GPUI Kit's bash colours; a copy button in the corner.
+  at operators, kbx wraps at spaces with a hanging indent; GPUI Kit's bash colours; a copy button in the corner.
 - **Notice** (`notice.rs`; 01-list): bottom right above the footer, _Copied to clipboard_ with a `⌘V` hint.
 
 ## 5. Layout Principles
@@ -215,10 +215,10 @@ popover shadow) and the notice. The selected row's bar glows mauve; nothing else
 
 ## Adaptations
 
-Where kb departs from the owner's Stitch screens or from Raycast, and why:
+Where kbx departs from the owner's Stitch screens or from Raycast, and why:
 
-- **Back chevron instead of the magnifier** on the detail and refresh screens: kb needs a way back (01-list, note 1).
-- **No `deploy/api` chip**: kb entries have no field it could come from (01-list, note 4).
+- **Back chevron instead of the magnifier** on the detail and refresh screens: kbx needs a way back (01-list, note 1).
+- **No `deploy/api` chip**: kbx entries have no field it could come from (01-list, note 4).
 - **Lucide icons** for Material ones: the set GPUI Kit ships.
 - **Type colours as the owner drew them**: Commands green, Cheat Sheets mauve, Bookmarks blue, Tasks pink.
 - **Four entry types** (D6): any other type is ignored by the app; the engine still indexes it.

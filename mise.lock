@@ -283,19 +283,19 @@ provenance = "github-attestations"
 version = "2.3.9"
 backend = "pipx:code-review-graph"
 specifiers = ["2.3.9"]
-uv = { path = ".mise/locks/pipx-code-review-graph/2.3.9", digest = "sha256:677a72b72a5b90d3df3186b09682545dac440e30b97f4e17aa69ea80deacf1db" }
+uv = { path = ".mise/locks/pipx-code-review-graph/2.3.9", digest = "sha256:0c58699e2d045e9b893875dde3876f709bdcb8841a2df4feb8fb6f1989f27afd" }
 
 [[tools."pipx:commit-check"]]
 version = "2.18.3"
 backend = "pipx:commit-check"
 specifiers = ["2.18.3"]
-uv = { path = ".mise/locks/pipx-commit-check/2.18.3", digest = "sha256:4d12893b26316c8c0d1c192cffe6be28343a73eedd4b5f9ab78984262ab37822" }
+uv = { path = ".mise/locks/pipx-commit-check/2.18.3", digest = "sha256:044d566b8613c5c406b4a726dd85a4faea2e2a260c245aa327dfc426e417088f" }
 
 [[tools."pipx:graphifyy"]]
 version = "0.9.88"
 backend = "pipx:graphifyy"
 specifiers = ["0.9.88"]
-uv = { path = ".mise/locks/pipx-graphifyy/0.9.88", digest = "sha256:5fab351161e7904d661a27cb8771918e03ddf2ab0f406f986d13684f350131b9" }
+uv = { path = ".mise/locks/pipx-graphifyy/0.9.88", digest = "sha256:d5b0640b77ae450c62c82f88d7857b9aeda5643a2740de99963a3a2bc2651deb" }
 
 [[tools.pkl]]
 version = "0.32.1"
@@ -380,11 +380,6 @@ url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257322600"
 checksum = "sha256:713734314c3e71894b9e77513c5349835eefbd52908445a0d73b0c7dc469347d"
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-darwin-aarch64.gz"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323110"
-
-[[tools.tokei]]
-version = "15.0.0"
-backend = "cargo:tokei"
-specifiers = ["15.0.0"]
 
 [[tools.typos]]
 version = "1.51.1"

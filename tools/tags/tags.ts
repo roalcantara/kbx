@@ -256,14 +256,14 @@ export const rewrite = (text: string, aliases: Aliases): string => {
   return out.join('\n')
 }
 
-// ---- Input and output: kb's config and index, the knowledge folder, Stack Overflow. Used by tools/tags/tasks.toml.
+// ---- Input and output: kbx's config and index, the knowledge folder, Stack Overflow. Used by tools/tags/tasks.toml.
 
 const home = homedir()
 const expand = (path: string) => path.replace(/^~(?=\/|$)/, home)
 
-/** The knowledge folder: `sources_path` in kb's config, else the Raycast default, symlinks resolved. */
+/** The knowledge folder: `sources_path` in kbx's config, else `~/.config/kodexb/sources`, symlinks resolved. */
 export const sourcesDir = (): string => {
-  const config = join(home, '.config/kb/config.toml')
+  const config = join(home, '.config/kbx/config.toml')
   const configured = existsSync(config)
     ? (Bun.TOML.parse(readFileSync(config, 'utf8')) as { sources_path?: string }).sources_path
     : undefined
@@ -273,9 +273,9 @@ export const sourcesDir = (): string => {
 /** Where the tag maps live: the knowledge folder's `docs/`, apart from the YAML values they govern. */
 export const tagsDir = (): string => join(sourcesDir(), 'docs')
 
-/** Every tag's uses and every pair's co-occurrences, from kb's index. */
+/** Every tag's uses and every pair's co-occurrences, from kbx's index. */
 export const readIndex = (): { uses: Uses; cooccur: Cooccurrences } => {
-  const db = new Database(join(home, 'Library/Application Support/kb-native/kb.db'), { readonly: true })
+  const db = new Database(join(home, 'Library/Application Support/kbx/kbx.db'), { readonly: true })
   const uses = Object.fromEntries(
     db.query<{ tag: string; n: number }, []>('select tag, count(*) n from entry_tags group by tag').all()
       .map((r) => [r.tag, r.n])
@@ -318,7 +318,7 @@ export const stackOverflowSynonyms = async (cache: string): Promise<Synonyms> =>
   return synonyms
 }
 
-const userAgent = 'kb-tags/0.1 (https://github.com/roalcantara/kbx)'
+const userAgent = 'kbx-tags/0.1 (https://github.com/roalcantara/kbx)'
 
 /** The plain text of a wiki link or markup fragment: `[[Target|Shown]]` → `Shown`, other markup dropped. */
 const plain = (wiki: string) =>

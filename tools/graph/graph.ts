@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // mise run graph (tools/graph/tasks.toml): install, set up, build or update the code graphs.
-// Ported from the kb Raycast repo; mise passes the arguments as usage_* environment variables.
+// mise passes the arguments as usage_* environment variables.
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -125,7 +125,7 @@ const required = (label: string, result: { ok: boolean; timedOut: boolean; code:
   say(`${label} ${result.timedOut ? 'timed out (raise --timeout)' : `failed (exit ${result.code})`}`)
   process.exitCode = 1
 }
-// The daemon is machine-wide: only `setup gortex` starts it (spec D6); update and build reload it when it runs.
+// The daemon is machine-wide: only `setup gortex` starts it; update and build reload it when it runs.
 // `strict`: a failed reload fails the task (build); the background update reports it and goes on.
 const gortexReload = (strict: boolean) => {
   const status = runCommand('gortex', ['daemon', 'status'], { quiet: true, readOnly: true })

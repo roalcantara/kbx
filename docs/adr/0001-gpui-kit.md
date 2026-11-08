@@ -12,7 +12,7 @@ and HTML with an opt-in code highlighter), `Command`, `Popover`, `Resizable`, `N
 
 ## Decision
 
-Build `kb-app` on GPUI Kit, pinned to one exact version.
+Build `kbx-app` on GPUI Kit, pinned to one exact version.
 
 ## Consequences
 

@@ -1444,9 +1444,9 @@ impl PlatformWindow for MacWindow {
         this.foreground_executor
             .spawn(async move {
                 if_window_not_closed(closed, || unsafe {
-                    // kb: keep the window's centre (kb's crates/third-party/README.md).
+                    // kbx: keep the window's centre (kbx's crates/third-party/README.md).
                     // setContentSize keeps the bottom-left corner, so a panel resized in place
-                    // would drift off the screen's centre. kb's panel has no title bar, so its
+                    // would drift off the screen's centre. kbx's panel has no title bar, so its
                     // frame and content sizes are the same.
                     let frame = NSWindow::frame(window);
                     let width = size.width.as_f32() as f64;

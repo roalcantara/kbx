@@ -1,77 +1,66 @@
-<!-- todo-project: kb · CLI docs: https://rayanbo.github.io/todo/documentation · usage examples live in the REF* comments, the only place the `todo` CLI keeps them -->
+<!-- todo-project: kbx · CLI docs: https://rayanbo.github.io/todo/documentation · usage examples live in the REF* comments, the only place the `todo` CLI keeps them -->
 
 # Tasks
 
-- [x] 6GH4 **-** Plan 5 T1: kb --sync rebuilds the index without a window (39e962b)
+- [x] 6GH4 **-** Plan 5 T1: kbx --sync rebuilds the index without a window (39e962b)
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/cli.rs#L1:1"
   - **Tags**: app, plan5
 
-- [x] 0TZ2 **-** Plan 5 T2: bench:home, and the kb probes run under its synced home over the private corpus (ed2eeae)
+- [x] 0TZ2 **-** Plan 5 T2: bench:home, and the kbx probes run under its synced home over the private corpus (ed2eeae)
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/kb-home.sh#L1:1"
   - **Tags**: bench, plan5
 
-- [x] oEGj **-** Plan 5 T3: the Raycast latency run requires KB_RAYCAST_HOTKEY, kb Search's own hotkey (81ec9f3)
+- [x] oEGj **-** Plan 5 T3: the Raycast latency run requires KB_RAYCAST_HOTKEY, kbx Search's own hotkey (81ec9f3)
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/latency.sh#L1:1"
   - **Tags**: bench, plan5
 
 - [x] VkWL **-** Plan 5 T4: manual-keystroke.sh records Raycast's hand-timed keystroke run, and the report shows it (cd45960)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/manual-keystroke.sh#L1:1"
   - **Tags**: plan5, report
 
 - [x] mjTU **-** Plan 5 T5: maintainability adds dependency depth, coverage, duplication and clippy warnings (7224357)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/maint.sh#L1:1"
   - **Tags**: plan5, report
 
 - [x] pL64 **-** Plan 5 T6: the report links findings.md from its verdict (7076c6f)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/report/src/report.rs#L1:1"
   - **Tags**: plan5, report
 
 - [x] nHvS **-** Plan 5 T7: bench:cpu, bench:size, bench:session and a preflight (68f678d)
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/preflight.sh#L1:1"
   - **Tags**: bench, plan5
 
 - [x] bt8n **-** Plan 5 T8: methodology Session and Maintainability sections, and the spec's report amendment (44fedfa)
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/methodology.md#L1:1"
   - **Tags**: docs, plan5
 
-- [x] Kkuw **-** kb opens on the list alone, as Raycast's kb Search does; ⌘D shows the split pane (1cc355b)
+- [x] Kkuw **-** kbx opens on the list alone, as Raycast's kbx Search does; ⌘D shows the split pane (1cc355b)
   - **Comments**: Wgal
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/search_view.rs#L99:1"
   - **Tags**: app, parity
 
-- [x] JJ7v **-** Raycast probes stay inside kb Search: clear the field after typing, Esc until the window closes (18be397)
+- [x] JJ7v **-** Raycast probes stay inside kbx Search: clear the field after typing, Esc until the window closes (18be397)
   - **Comments**: z4MO
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/drive-queries.sh#L1:1"
   - **Tags**: bench
 
 - [x] AmRh **-** Archive the pre-polish tier 2 and 3 runs (a0ee1aa)
   - **Comments**: 7Tbq
   - **Priority**: medium
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/guides/results/archive/2026-10-10-pre-polish/README.md#L1:1"
   - **Tags**: bench, results
 
-- [x] hU1X **-** Visual polish: bring kb's colours, typography and spacing up to Raycast's, with a spec, a plan, side-by-side screenshots and the GPUI Kit Design Guides
+- [x] hU1X **-** Visual polish: bring kbx's colours, typography and spacing up to Raycast's, with a spec, a plan, side-by-side screenshots and the GPUI Kit Design Guides
   - **Comments**: lh5P,dW09
   - **Priority**: high
   - **Created**: 2026-10-10 02:29
@@ -81,57 +70,48 @@
   - **Comments**: ouCi,gMCt
   - **Priority**: low
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/tasks.toml#L1:1"
   - **Tags**: bench
 
 - [x] EYAZ **-** Read KB_RAYCAST_DEEP_LINK in memory.sh, action.sh and cpu-ts.sh, or drop it from mise.local.toml
   - **Comments**: S3cM,nLHf
   - **Priority**: low
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/probes/memory.sh#L13:1"
   - **Tags**: bench
 
 - [x] tquG **-** Repository layout: three root folders (crates, docs, tools), the benchmark kit isolated in tools/bench, a root-layout hk guard
   - **Priority**: medium
   - **Created**: 2026-10-10 03:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-repository-layout-design.md#L1:1"
   - **Tags**: layout, tools
 
 - [x] jYHt **-** Decide whether to keep the benchmark kit after the report, or purge it (tools/bench/README.md, Purge)
   - **Comments**: EYc7
   - **Priority**: low
   - **Created**: 2026-10-10 03:42
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/bench/README.md#L1:1"
   - **Tags**: bench, decision
 
-- [x] jyHv **-** CI and releases: lint and test on Linux for every PR and push to main; semantic-release cuts releases with CHANGELOG.md and kb.app (ADR 0007); tools installed from mise.lock
+- [x] jyHv **-** CI and releases: lint and test on Linux for every PR and push to main; semantic-release cuts releases with CHANGELOG.md and kbx.app (ADR 0007); tools installed from mise.lock
   - **Priority**: medium
   - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/.github/workflows/ci.yml#L1:1"
   - **Tags**: ci, release
 
 - [x] TbiD **-** Code graph tools for agents: CRG, Gortex, Graphify
   - **Created**: 2026-10-10 06:58
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
   - **Tags**: graph, tools
 
 - [x] 3mTj **-** Decide whether CI should publish a graph report
   - **Comments**: j6rR
   - **Priority**: low
   - **Created**: 2026-10-10 06:58
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/tools/graph/README.md#L1:1"
   - **Tags**: graph, tools
 
 - [x] dN8d **-** Plan 6: design foundation: measure Raycast, pick a validated palette (comparison page), PRODUCT.md, DESIGN.md, apply the theme (68de3a8)
   - **Priority**: high
   - **Created**: 2026-10-10 10:30
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/plans/2026-10-10-kb-native-06-design-foundation.md#L1:1"
   - **Tags**: design, next, ui
 
 - [x] eWka **-** Plan 7: components from DESIGN.md: anchored overlays, rows, split pane, footer, detail, media, ⌘⇧F size toggle; parity A01 and S12 (feat/components)
   - **Priority**: high
   - **Created**: 2026-10-10 10:30
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/superpowers/specs/2026-10-10-ui-polish-design.md#L1:1"
   - **Tags**: design, ui
 
 - [x] BAsb **-** Plan 7 T1: seven accents from accents.json; Raycast's type tints and tag hash, tested against it (fdf3b3c)
@@ -206,14 +186,12 @@
   - **Comments**: qC0Z,ITyZ
   - **Priority**: low
   - **Created**: 2026-10-10 02:29
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/crates/kb-app/src/notes.rs#L1:1"
   - **Tags**: a11y, upstream
 
 - [x] zfJD **-** GitHub Pages: a one-page site (a screenshot and the feature list); the repo is public, so Pages is available
   - **Comments**: toCs,Uj0P
   - **Priority**: low
   - **Created**: 2026-10-10 04:46
-  - **Position**: "file:///Users/roalcantara/Work/rust/kb/docs/adr/0007-releases.md#L1:1"
   - **Tags**: decision, pages, release
 
 - [x] elwx **-** Plan 8, 01 List in the companion: the owner's screen as reference, every chip and keycap 20 pt, one keycap component, chip state (live, rest) sets fill and text; approved as v5
@@ -294,7 +272,7 @@
   - **Created**: 2026-10-12 23:09
   - **Tags**: app, plan8
 
-- [x] RKHF **-** Plan 8: catalog: crates/kb-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kb/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
+- [x] RKHF **-** Plan 8: catalog: crates/kbx-app/assets/catalog.toml (entry types: label, icon, tint, primary, secondary; actions: label, keys; screens: ↵ ⌘↵ ⇧⌘↵; messages), deep-merged under ~/.config/kbx/config.toml (same keys win), validated at start with a notice and per-key fallback; colours and sizes stay in DESIGN.md; Configure (⇧⌘,) creates the file with the defaults as comments
   - **Comments**: IF60
 
 - [x] KhLt **-** Plan 8: rewrite the spec around the prototypes: the owner's screens canonical, the rules as tokens, a checklist per screen, the ui components, the change map
@@ -305,28 +283,35 @@
 
 - [x] VHnE **-** Plan 8: review the plan until no findings remain
 
-- [~] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
-  - **Comments**: CT5F,HZc2,mmdD
+- [x] y3ob **-** Plan 8: execute the plan (another agent), then verify the app against the prototypes
+  - **Comments**: CT5F,HZc2,mmdD,mXVg
 
-- [ ] SeKS **-** Paste: hide kb and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
+- [ ] SeKS **-** Paste: hide kbx and paste the entry into the app it came from (Raycast's Paste to Active App; needs Accessibility); becomes the Command and Cheat primary, Copy their secondary (one catalog change)
 
 - [ ] bVkg **-** Review and commit dots' script/catalog_global_skills.py (writes cheats tagged skills from docs/skills.tags.toml; default output overwrites skills.yml, so use --output); skills.yml's tags already match the map
 
-- [ ] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
+- [x] Bdaz **-** Verify Raycast's T3 count (parity.md): if its filter dropdown stays open while picking, Raycast is 4 keys, not 5
+  - **Comments**: VQKG
 
-- [ ] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kb (which memory.sh relaunches)
+- [x] Towo **-** Decide how Raycast's memory run starts, so it is measured in the same state as kbx (which memory.sh relaunches)
+  - **Comments**: 8wT2
 
-- [ ] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
+- [x] pzxe **-** Plan 5 T9: re-run mise run bench:session after the polish, both apps in one sitting
+  - **Comments**: ujVO
 
-- [ ] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
+- [x] mMjd **-** Plan 5 T10: time Raycast's keystroke → list by hand at 120 fps (10 runs), record it with manual-keystroke.sh, commit the results
+  - **Comments**: oVyk
 
-- [ ] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
+- [x] NRYN **-** Plan 5 T11: mise run report, write findings.md and the README Findings section, regenerate and commit the report
+  - **Comments**: rHRP
 
-- [ ] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
+- [x] 2pmT **-** Plan 5 T12: close the plan and merge feat/plan5-measurement-session into main
+  - **Comments**: SAJU
 
-- [ ] Y0HE **-** Purge the benchmark kit (tools/bench/README.md, Purge) once the Plan 5 report is merged
+- [x] Y0HE **-** Purge the benchmark kit (tools/bench/README.md, Purge) once the Plan 5 report is merged
+  - **Comments**: rt0I
 
-- [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types outside the benchmark kit (checked once with the kit's tsc, strict, 2026-10-10)
+- [ ] qlkb **-** Type-check tools/graph/graph.ts in hk: it needs TypeScript and Bun's types (checked once with tsc, strict, 2026-10-10)
 
 - [ ] EsTc **-** Drop the vendored block 0.1.6 patch once GPUI Kit no longer depends on block (objc2/block2 migration)
 
@@ -334,11 +319,11 @@
 
 - [ ] KDYD **-** Evaluate moving tool configs (mise, hk, dprint, typos, ls-lint, jscpd, gitleaks, mdschema, commitlint, cchk, taplo, ast-grep) into .config/
 
-- [ ] Sdkb **-** Sign kb.app with a Developer ID and notarize it, so macOS opens it without asking
+- [ ] Sdkb **-** Sign kbx.app with a Developer ID and notarize it, so macOS opens it without asking
 
 - [ ] enBz **-** Release a universal binary (Apple silicon and Intel): today's zip is arm64 only
 
-- [ ] DTN3 **-** A Linux build of kb (GPUI supports Linux; needs its system libraries on the runner)
+- [ ] DTN3 **-** A Linux build of kbx (GPUI supports Linux; needs its system libraries on the runner)
 
 - [ ] MOB4 **-** Plan 8, 17 Toast: restyle the notice (the owner is not happy with it); copy feedback lands meanwhile
 
@@ -347,37 +332,37 @@
 - [ ] rPyR **-** Notes code blocks: render fenced code in the Body with GPUI Kit's read-only code Editor (line numbers, Clipboard copy), as dbflux's SQL preview does, instead of TextView's code block; needs the notes Markdown split around code blocks
   - **Comments**: lsQ5
 
-- [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kb-domain could run as a Nohrs plugin
+- [ ] miT3 **-** Watch Nohrs (noh-rs/nohrs, Raycast-style GPUI launcher, MIT): when its plugin host ships (0.3.0), check whether kbx-domain could run as a Nohrs plugin
 
-- [ ] Th4B **-** Idea: read massCode's Markdown vault as a second kind of source beside the YAML, so massCode can be the editor and kb the launcher (owner-approved idea, 2026-10-12; only if a GUI editor is wanted)
+- [ ] Th4B **-** Idea: read massCode's Markdown vault as a second kind of source beside the YAML, so massCode can be the editor and kbx the launcher (owner-approved idea, 2026-10-12; only if a GUI editor is wanted)
   - **Priority**: low
   - **Created**: 2026-10-12 23:33
   - **Tags**: idea
 
-- [ ] CKx2 **-** Engine: accept every link shape the corpus uses: a bare URL (links: https://…) and a top-level title: url map, besides the two list forms; both engines drop them today (2 entries in the private corpus lose their links). After the experiment's report, since it changes kb-domain's output against the TS goldens; until then the sync report could flag them
+- [ ] CKx2 **-** Engine: accept every link shape the corpus uses: a bare URL (links: https://…) and a top-level title: url map, besides the two list forms; both engines drop them today (2 entries in the private corpus lose their links). After the experiment's report, since it changes kbx-domain's output against the TS goldens; until then the sync report could flag them
   - **Priority**: medium
   - **Created**: 2026-10-13 00:30
   - **Tags**: domain
 
-- [ ] ZF8t **-** Adoption: import navi, cheat and pet cheat files into kb (navi's library crate, Apache-2.0); after the experiment's report (ADR 0008)
+- [ ] ZF8t **-** Adoption: import navi, cheat and pet cheat files into kbx (navi's library crate, Apache-2.0) (ADR 0008)
   - **Priority**: medium
   - **Created**: 2026-10-13 14:50
   - **Tags**: adoption, engine
 
-- [ ] E78j **-** Adoption: import shell history from Atuin's SQLite database as command entries; after the experiment's report (ADR 0008)
+- [ ] E78j **-** Adoption: import shell history from Atuin's SQLite database as command entries (ADR 0008)
   - **Priority**: low
   - **Created**: 2026-10-13 14:50
   - **Tags**: adoption, engine
 
-- [ ] uAa3 **-** Adoption: bundle tldr pages as built-in content so kb is useful on first launch (CC BY 4.0 attribution); after the experiment's report (ADR 0008)
+- [ ] uAa3 **-** Adoption: bundle tldr pages as built-in content so kbx is useful on first launch (CC BY 4.0 attribution) (ADR 0008)
   - **Priority**: medium
   - **Created**: 2026-10-13 14:50
   - **Tags**: adoption, content
 
-- [ ] 8qUa **-** Notes body: adopt zorite-markdown =0.10.0 (MIT, on kb's gpui-pre 0.3 line) in ui/entry_view.rs in place of TextView: MarkdownStyle from the design tokens (notes roles, code background), code highlighting through on_highlight with GPUI Kit's SyntaxHighlighter, links through cx.open_url; owner choice 2026-10-13 (Plan 8f Task 5)
+- [ ] 8qUa **-** Notes body: adopt zorite-markdown =0.10.0 (MIT, on kbx's gpui-pre 0.3 line) in ui/entry_view.rs in place of TextView: MarkdownStyle from the design tokens (notes roles, code background), code highlighting through on_highlight with GPUI Kit's SyntaxHighlighter, links through cx.open_url; owner choice 2026-10-13 (Plan 8f Task 5)
   - **Created**: 2026-10-13 19:52
 
-- [ ] 4hQn **-** Notes bold: **bold** renders regular in the notes body (with TextView and zorite-markdown alike): kb bundles Inter Regular, Medium, SemiBold and Italic but no Bold; bundle Inter Bold or map bold to SemiBold
+- [ ] 4hQn **-** Notes bold: **bold** renders regular in the notes body (with TextView and zorite-markdown alike): kbx bundles Inter Regular, Medium, SemiBold and Italic but no Bold; bundle Inter Bold or map bold to SemiBold
   - **Created**: 2026-10-13 19:52
 
 - [x] Z5GP **-** Action panel and filter take no keyboard in the running app: after ⌘K (and ⌘P), ↓ and typing reach nothing and ↵ runs the list's Details; the filter's footer keeps the list's keys. UI tests pass (the harness routes keys differently). Found by design:shots, 2026-10-14; More… is not captured until it is fixed
@@ -491,7 +476,7 @@
 
 - REF5 **-** Keep notes as comments (`todo add --comment "..." --task-id <id>`): the CLI rewrites this file and drops front matter, HTML comments other than the todo-project line, and free-text lines under a task
 
-- Wgal **-** The first session measured kb with the notes pane open against Raycast's bare list: more work per keystroke, more memory. Parity row S09 now states the default.
+- Wgal **-** The first session measured kbx with the notes pane open against Raycast's bare list: more work per keystroke, more memory. Parity row S09 now states the default.
   - **Task**: Kkuw
 
 - z4MO **-** Found on screen by the owner: ⌫ in Raycast's empty search field pops to its root search, so all 100 memory-run queries went there.
@@ -500,7 +485,7 @@
 - 7Tbq **-** Tier 1 stays in results/: the engine is unchanged and Plan 5 does not re-run it.
   - **Task**: AmRh
 
-- lh5P **-** Owner, 2026-10-10: kb resembles Raycast but its colours, typography and spacing look off. Measure after it: a bundled font or window translucency changes memory, size and first-frame time; colours and spacing do not.
+- lh5P **-** Owner, 2026-10-10: kbx resembles Raycast but its colours, typography and spacing look off. Measure after it: a bundled font or window translucency changes memory, size and first-frame time; colours and spacing do not.
   - **Task**: hU1X
 
 - HGSp **-** A rerun right after the session's CPU, latency and ⌘↩ runs read 505 MiB idle against 178 MiB earlier. Relaunching Raycast in memory.sh, as cpu-ts.sh does, was proposed and set aside for now. Owner: run Raycast's memory after the polish.
@@ -524,7 +509,7 @@
 - toCs **-** GitHub Free publishes Pages only from public repositories (checked 2026-10-10). Then: a deploy job in .github/workflows/ci.yml after release (actions/upload-pages-artifact + actions/deploy-pages), from a static page in docs/.
   - **Task**: zfJD
 
-- dW09 **-** Superseded by Plan 6 (design foundation) and Plan 7 (components): docs/superpowers/specs/2026-10-10-ui-polish-design.md.
+- dW09 **-** Superseded by Plan 6 (design foundation) and Plan 7 (components) (the 2026-10-10 UI polish spec, in the git history).
   - **Task**: hU1X
 
 - j6rR **-** Decision 2026-10-11: no. The code graphs are a local aid for agents (tools/graph/README.md); a published report would add CI time and a page nobody reads.
@@ -563,7 +548,7 @@
 - jBhm **-** 2026-10-12: decided with the owner in the brainstorming companion (v1→v5): their Stitch screens are the reference, not the generated DESIGN.md text; the earlier spec (27918b2) and prototypes (0fcaddc) are superseded. Rules: Catppuccin Macchiato, 14 pt window, hairlines, Inter + JetBrains Mono; every chip and keycap 20 pt; one keycap (one cap per shortcut, mono 11, muted on mantle; the toast's keeps the grey fill); chip live (mantle, muted text) on keycaps and the selected row, rest (grey) elsewhere; magnifier on the list, back chevron elsewhere; no deploy/api chip; tag icons from the tag-images folder; type colours as drawn; Lucide for Material; ⌘V hint; ⌘1–⌘9 row shortcuts built.
   - **Task**: elwx
 
-- 3kaC **-** 2026-10-12: approved as v4 in the companion. One popover, 220 pt, no icons: Details ↵, Copy ⌘↵ (Open on bookmarks: their main action opens the URL; one name whatever the type), More… › (the page of other copies: title, description, notes, YAML), Split ⌘D, Source ⌘O, Toggle Size ⇧⌘F; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,. Dropped: Quit kb (⌘Q still quits), Copy YAML Snippet, Configure Filter, Run in Terminal (not now). Footer reads Details ↵. Goal for every popover: the smallest comfortable size, no redundant or rarely used rows.
+- 3kaC **-** 2026-10-12: approved as v4 in the companion. One popover, 220 pt, no icons: Details ↵, Copy ⌘↵ (Open on bookmarks: their main action opens the URL; one name whatever the type), More… › (the page of other copies: title, description, notes, YAML), Split ⌘D, Source ⌘O, Toggle Size ⇧⌘F; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,. Dropped: Quit kbx (⌘Q still quits), Copy YAML Snippet, Configure Filter, Run in Terminal (not now). Footer reads Details ↵. Goal for every popover: the smallest comfortable size, no redundant or rarely used rows.
   - **Task**: OKAo
 
 - QQca **-** 2026-10-12, v5: order Details ↵, Copy ⌘↵, Split ⌘D, Resize ⇧⌘F (was Toggle Size), Source ⌘O, More… ›; a hairline; ADMINISTRATION: Reindex ⌘R, Preferences ⇧⌘,.
@@ -587,16 +572,16 @@
 - QbWV **-** 2026-10-12: each screen also gets its ↵ / ⌘↵ pair from the catalog (proposed: no match ↵ Clear Search, ⌘↵ Clear Filters; no index ↵ Refresh, ⌘↵ Configure; filter ↵ Toggle, ⌘↵ Only this; rebuild report ↵ Back, stopped ↵ Retry, failed ↵ Retry, ⌘↵ Configure); confirm each in its companion pass.
   - **Task**: w5fY
 
-- GxRT **-** 2026-10-12, approved v2: Raycast's empty view as is (List.EmptyView): one large search icon, 'No matching entries found', 'No entries match "<query>"' (query in mauve mono; '… with this filter' when one is set); no badge circle, no hint chips, no ⌘N (kb never writes sources). Footer: status 'Ready • 0 results', primary Refresh ↵ (Raycast's Rebuild Index…); Esc clears the query as everywhere. Supersedes the ↵ Clear Search proposal. Builds on the toolkit's Empty already used.
+- GxRT **-** 2026-10-12, approved v2: Raycast's empty view as is (List.EmptyView): one large search icon, 'No matching entries found', 'No entries match "<query>"' (query in mauve mono; '… with this filter' when one is set); no badge circle, no hint chips, no ⌘N (kbx never writes sources). Footer: status 'Ready • 0 results', primary Refresh ↵ (Raycast's Rebuild Index…); Esc clears the query as everywhere. Supersedes the ↵ Clear Search proposal. Builds on the toolkit's Empty already used.
   - **Task**: w5fY
 
 - knER **-** 2026-10-12: folded into 03 (same Raycast empty view): a database icon, 'No entries indexed yet', 'Press Refresh to build the index from your sources.'; status '● No index'; footer Refresh ↵.
   - **Task**: n4kx
 
-- oVNz **-** 2026-10-12, command hero (owner): native card B (mantle box, JetBrains Mono, no window bar, no ❯), lines broken at the operators (&&, ||, |) when the chain is wider than the pane. Buy, don't build: formatting by fmt-rs =0.1.0 (MIT, pure Rust, no deps; tried on real commands; vendor into crates/third-party if abandoned); colours by GPUI Kit's SyntaxHighlighter with the tree-sitter-bash grammar kb already enables (function, constant = flags, string, property = vars, embedded, operator, number, comment; plain values stay text colour) mapped to the design tokens; drawn as GPUI StyledText in a CommandCard component. Used as the hero of commands and of cheats with a snippet; Markdown code in notes keeps TextView. Replaces the fabrix SVG idea (owner's earlier Raycast workaround).
+- oVNz **-** 2026-10-12, command hero (owner): native card B (mantle box, JetBrains Mono, no window bar, no ❯), lines broken at the operators (&&, ||, |) when the chain is wider than the pane. Buy, don't build: formatting by fmt-rs =0.1.0 (MIT, pure Rust, no deps; tried on real commands; vendor into crates/third-party if abandoned); colours by GPUI Kit's SyntaxHighlighter with the tree-sitter-bash grammar kbx already enables (function, constant = flags, string, property = vars, embedded, operator, number, comment; plain values stay text colour) mapped to the design tokens; drawn as GPUI StyledText in a CommandCard component. Used as the hero of commands and of cheats with a snippet; Markdown code in notes keeps TextView. Replaces the fabrix SVG idea (owner's earlier Raycast workaround).
   - **Task**: Z64Y
 
-- xpAF **-** 2026-10-12, pane template (owner, to render next): split and detail share one component; slots Header (title left, tags right), Hero, Summary (description), Body (notes); per-type fill from the catalog (command: no title, hero CommandCard; bookmark: URL title, hero YouTube thumbnail, og:image later; cheat: title, hero snippet card when present; note: title; task: task, hero status+priority badges; other: title); empty slots collapse; no type badge or path in the pane; Links only in the Links… submenu. Footer: left context (status line on the list, [type] file ⌥⌘C copy-path when a pane or detail is open), right the screen's ↵ / ⌘↵ / ⇧⌘↵ actions and Actions ⌘K. Stored notes_markdown stays (TS goldens); kb-domain adds a body-only Markdown function.
+- xpAF **-** 2026-10-12, pane template (owner, to render next): split and detail share one component; slots Header (title left, tags right), Hero, Summary (description), Body (notes); per-type fill from the catalog (command: no title, hero CommandCard; bookmark: URL title, hero YouTube thumbnail, og:image later; cheat: title, hero snippet card when present; note: title; task: task, hero status+priority badges; other: title); empty slots collapse; no type badge or path in the pane; Links only in the Links… submenu. Footer: left context (status line on the list, [type] file ⌥⌘C copy-path when a pane or detail is open), right the screen's ↵ / ⌘↵ / ⇧⌘↵ actions and Actions ⌘K. Stored notes_markdown stays (TS goldens); kbx-domain adds a body-only Markdown function.
   - **Task**: Z64Y
 
 - QU41 **-** 2026-10-12, template v2 (owner): one header row for every entry: [the row's icon: favicon for bookmarks, the type tile otherwise] [header text by type: bookmark URL (link style), cheat title, command description (else title), note title, task text] … tags right; at most 2 lines in the split, whole in detail. Summary = the description unless the header used it (so commands have none). The footer's left always shows the type tile + file + ⌥⌘C. Header text per type lives in the catalog with the actions.
@@ -605,13 +590,13 @@
 - dNCU **-** 2026-10-12, template v3 (owner, supersedes v2's per-type header): four fixed slots for every entry, only the hero varies by type. 1 Header: [the row's icon: favicon for bookmarks, type tile otherwise] the title (title field, else the key), one line trimmed, tags right. 2 Hero by type: command → CommandCard; bookmark → thumbnail (YouTube; og:image later) else the URL as a link line (↗ host/path); cheat → snippet card when it has one; task → status + priority badges; note, other → none. 3 Quote: the description (desc or description), whole, red bar; omitted when absent. 4 Body: the notes. Split = the same component, hero capped. Footer left: type tile + file + ⌥⌘C.
   - **Task**: Z64Y
 
-- nkjz **-** 2026-10-12, command card decided after a full-screen GPUI spike (real renders) and a survey (paperoll, probe, pasta, Loungy, markraft, dbflux): the hero is option (b), StyledText + GPUI Kit's bash highlighter, as pasta does: fmt-rs breaks at operators to the card's real column count; kb pre-wraps at spaces with a hanging indent, operators glued, tokens never split; ligatures off; 12 pt in the split, 13 pt in detail; GPUI Kit's Clipboard button in the corner; no line numbers. Register bash with an extended highlight query (dbflux-style, LanguageRegistry::register) so argument values get their own colour; test each token's colour role. Fixes from the spike: notes headings take the type tokens (TextView styles), the quote's italic needs Inter Italic bundled (or drop italic), favicons come from kb's curl client.
+- nkjz **-** 2026-10-12, command card decided after a full-screen GPUI spike (real renders) and a survey (paperoll, probe, pasta, Loungy, markraft, dbflux): the hero is option (b), StyledText + GPUI Kit's bash highlighter, as pasta does: fmt-rs breaks at operators to the card's real column count; kbx pre-wraps at spaces with a hanging indent, operators glued, tokens never split; ligatures off; 12 pt in the split, 13 pt in detail; GPUI Kit's Clipboard button in the corner; no line numbers. Register bash with an extended highlight query (dbflux-style, LanguageRegistry::register) so argument values get their own colour; test each token's colour role. Fixes from the spike: notes headings take the type tokens (TextView styles), the quote's italic needs Inter Italic bundled (or drop italic), favicons come from kbx's curl client.
   - **Task**: Z64Y
 
-- 8Ylj **-** 2026-10-12 survey: buy a terminal view instead of building output handling: gpui_xterm 0.2.1 (alacritty_terminal on GPUI Kit 0.6; kb is on 0.7.1, check before use) runs the command in an embedded terminal pane; tty7, KazeTerm and Miaominal are GPUI terminal apps on alacritty_terminal for reference. Prior art for runnable commands: Runme (DevOps notebooks from Markdown), Atuin Desktop (runbooks, archived), navi (argument placeholders with suggestion commands).
+- 8Ylj **-** 2026-10-12 survey: buy a terminal view instead of building output handling: gpui_xterm 0.2.1 (alacritty_terminal on GPUI Kit 0.6; kbx is on 0.7.1, check before use) runs the command in an embedded terminal pane; tty7, KazeTerm and Miaominal are GPUI terminal apps on alacritty_terminal for reference. Prior art for runnable commands: Runme (DevOps notebooks from Markdown), Atuin Desktop (runbooks, archived), navi (argument placeholders with suggestion commands).
   - **Task**: 3g6H
 
-- 2A23 **-** 2026-10-12, mechanism-level prior art for showing a command and running it: GPUI API clients on kb's GPUI (probe, Arc, Broquest, GetCat, Setu, Protide: request body in GPUI Kit's Editor, run, response pane, environments/variables); notebooks (marimo, Jupyter: output under the cell); Runme (Markdown code blocks as runnable cells; kb's notes already hold code blocks); navi (argument placeholders with suggestion commands). Read the GPUI API clients first when this task starts.
+- 2A23 **-** 2026-10-12, mechanism-level prior art for showing a command and running it: GPUI API clients on kbx's GPUI (probe, Arc, Broquest, GetCat, Setu, Protide: request body in GPUI Kit's Editor, run, response pane, environments/variables); notebooks (marimo, Jupyter: output under the cell); Runme (Markdown code blocks as runnable cells; kbx's notes already hold code blocks); navi (argument placeholders with suggestion commands). Read the GPUI API clients first when this task starts.
   - **Task**: 3g6H
 
 - cObJ **-** 2026-10-12: closed by the full-screen GPUI spike (four real screens): template v3, command card (b), footer with the type tile + file + ⌥⌘C and the screen's ↵/⌘↵/⇧⌘↵; 12 pt card in the split, 13 pt in detail; the count leaves the footer while a pane is open (← brings it back). Detail (05–06) is the same template at full width; → shows the metadata column.
@@ -623,7 +608,7 @@
 - qUan **-** 2026-10-12, approved (brainstorm 07-filter.html): the action component reused under the filter pill; search at the top (rule: the search sits next to the control that opened it); 28 pt rows; TYPES with their tile, TAGS with their icon or #; only chosen rows show ✓; picking keeps it open; with filters set a 'n filters · Clear All' row leads and the pill names the filters (Commands, #k8s; truncated); footer: Toggle ↵ · Only ⌘↵ · Actions ⌘K. Types offered: Bookmarks, Cheat Sheets, Commands, Tasks only (owner).
   - **Task**: kzv4
 
-- Bo3f **-** 2026-10-12, where to ignore them: (a) in the app (catalog lists the four types; list, filter and counts skip the rest) keeps kb-domain and the index identical to the TypeScript engine, so the goldens and the experiment's parity hold; (b) at sync (unknown types skipped, the sync report says so) is cleaner but changes the engine's output, which the TS goldens check (CONTEXT.md: 'Unknown keys are kept, not rejected'). Recommended: (a) in Plan 8, (b) after the experiment's report. Also update: CONTEXT.md (Entry type), the catalog, the type tints (Notes' peach and Other's hash fall away), the template rows for notes, parity.md, and the sample and showcase corpora.
+- Bo3f **-** 2026-10-12, where to ignore them: (a) in the app (catalog lists the four types; list, filter and counts skip the rest) keeps kbx-domain and the index identical to the TypeScript engine, so the goldens and the experiment's parity hold; (b) at sync (unknown types skipped, the sync report says so) is cleaner but changes the engine's output, which the TS goldens check (CONTEXT.md: 'Unknown keys are kept, not rejected'). Recommended: (a) in Plan 8, (b) after the experiment's report. Also update: CONTEXT.md (Entry type), the catalog, the type tints (Notes' peach and Other's hash fall away), the template rows for notes, parity.md, and the sample and showcase corpora.
   - **Task**: 7lTb
 
 - 8liG **-** 2026-10-12, correction (owner): the filter's search sits at the bottom, as Raycast's and as the actions panel's (07-filter.html v4); my 'search next to its trigger' rule is withdrawn.
@@ -644,7 +629,7 @@
 - Vx4Z **-** 2026-10-12 (owner): becomes the plan's first task, since both the pages and the app's screenshots need it.
   - **Task**: nNln
 
-- LGMU **-** 2026-10-12, decided before writing the spec: keep evolving kb rather than port massCode's slice (~55k lines of Vue/TS, an editing workspace without a hotkey panel) to GPUI; kb's design is bought from Raycast, the best-tested answer for its job.
+- LGMU **-** 2026-10-12, decided before writing the spec: keep evolving kbx rather than port massCode's slice (~55k lines of Vue/TS, an editing workspace without a hotkey panel) to GPUI; kbx's design is bought from Raycast, the best-tested answer for its job.
   - **Task**: KhLt
 
 - ixvo **-** 2026-10-13, detail links (owner): A1 compact Links list at the end of the Body (05-detail-links.html), no metadata column (every attribute has a home), one line per link (title trimmed with an ellipsis, URL without scheme/www/query/fragment and trimmed in the middle, full text in a tooltip), ⌘1–⌘9 open links, clickable header tags filter. Spec: D11 updated, D20 added, 04–06 checklist updated. Link shapes: only the two list forms are parsed by both engines; the other two queued as an engine task.
@@ -680,9 +665,33 @@
 - aSat **-** 2026-10-15: fixed; the popover tracked the panel container, not its search field, so the root's search never had the keyboard; the filter's footer also ignored the open overlay (owner reproduced it by hand; the fix is checked in the More… and filter shots)
   - **Task**: Z5GP
 
-- 57h9 **-** 2026-10-18: Implemented per docs/superpowers/plans/2026-10-18-skills-entry-and-scoped-refresh.md
+- 57h9 **-** 2026-10-18: Implemented per the 2026-10-18 Skills and scoped refresh plan (in the git history)
   - **Task**: Rkpg
 
 - uMHg **-** 2026-10-27: spec 2026-10-27-refresh-report-inspection; plan of the same name
   - **Task**: 2YnZ
+
+- rt0I **-** 2026-11-08: Done on chore/fresh-start: tools/bench, the experiment guides and their wiring removed; the sample goldens stay as the engine's contract.
+  - **Task**: Y0HE
+
+- mXVg **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: y3ob
+
+- VQKG **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: Bdaz
+
+- 8wT2 **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: Towo
+
+- ujVO **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: pzxe
+
+- oVyk **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: mMjd
+
+- rHRP **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: NRYN
+
+- SAJU **-** 2026-11-08: Won't do: the experiment is dropped (owner); the specs, plans and benchmark kit are removed.
+  - **Task**: 2pmT
 

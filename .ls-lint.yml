@@ -12,26 +12,13 @@ ls:
   crates/*/benches:
     .rs: snake_case
 
-  # The benchmark kit's crates follow the same rules.
-  tools/bench/*/src:
-    .dir: snake_case
-    .rs: snake_case
-
-  # TS bench: one concept per file, specs keep their suffix.
-  tools/bench/ts:
-    .ts: regex:^[a-z]+(\.spec)?$
-
 ignore:
   - .mise
   - .git
   - .vscode
   - target
   - tmp
-  - crates/kb-domain/tests/fixtures
-  - tools/bench/fixtures
-  - tools/bench/ts/kb
-  - tools/bench/ts/node_modules
-  - tools/bench/ts/dist
+  - crates/kbx-domain/tests/fixtures
   - .ls-lint.yml
   - .superpowers
   - .delta

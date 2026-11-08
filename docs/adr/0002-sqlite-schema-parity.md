@@ -9,7 +9,7 @@ Comparing search speed and results is only meaningful if both engines query the 
 
 ## Decision
 
-`kb-domain` creates the same `entries`, `entries_fts` (FTS5 over title, description, notes) and `entry_tags`
+`kbx-domain` creates the same `entries`, `entries_fts` (FTS5 over title, description, notes) and `entry_tags`
 tables with the same SQL, through `rusqlite` with its bundled SQLite. The database is the app's own file; the
 Raycast index is never opened.
 

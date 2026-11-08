@@ -1,5 +1,5 @@
 # The tag tools (docs/doctrine/tag-conventions.doctrine.md), included from the root mise.toml. The logic and its tests
-# are in tags.ts; these are its entry points. They read kb's index and config, and write only in the knowledge folder.
+# are in tags.ts; these are its entry points. They read kbx's index and config, and write only in the knowledge folder.
 
 ["tags:test"]
 description = "Test the tag tools"
@@ -49,7 +49,7 @@ const status = await $`git -C ${dir} status --porcelain`.nothrow().quiet()
 if (status.exitCode !== 0) throw new Error(`${dir} is not a git work tree: run git init and commit it first`)
 if (write && status.stdout.toString().trim()) throw new Error(`${dir} has uncommitted changes: commit them first`)
 const aliases = readAliases(join(tagsDir(), 'tags.toml'))
-// The dry run writes its copies in kb's tmp/, never in the knowledge folder.
+// The dry run writes its copies in kbx's tmp/, never in the knowledge folder.
 const scratch = join(process.cwd(), 'tmp/tags/dry-run')
 await $`rm -rf ${scratch}`.quiet()
 let changed = 0
@@ -104,17 +104,17 @@ import { join } from 'node:path'
 const { imageSource, readIndex, tagsDir } = await import(`${process.cwd()}/tools/tags/tags.ts`)
 
 const home = process.env.HOME
-const config = join(home, '.config/kb/config.toml')
+const config = join(home, '.config/kbx/config.toml')
 const configured = existsSync(config) ? Bun.TOML.parse(readFileSync(config, 'utf8')).tag_images_path : undefined
-const dir = (configured ?? '~/.config/kb/images').replace(/^~/, home)
+const dir = (configured ?? '~/.config/kbx/images').replace(/^~/, home)
 mkdirSync(dir, { recursive: true })
 const existing = new Set(readdirSync(dir).filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4).toLowerCase()))
 const mapFile = join(tagsDir(), 'tags.images.toml')
 const map = existsSync(mapFile) ? Bun.TOML.parse(readFileSync(mapFile, 'utf8')) : {}
 
 const brands = new Map(Object.values(simpleIcons).filter((i) => i?.slug).map((i) => [i.slug, i]))
-// A logo keeps its brand colour (kb draws a coloured image as it is), unless the colour is too dark to read on kb's
-// window: then it stays a shape, which kb draws in its muted text colour.
+// A logo keeps its brand colour (kbx draws a coloured image as it is), unless the colour is too dark to read on kbx's
+// window: then it stays a shape, which kbx draws in its muted text colour.
 const { contrast } = await import(`${process.cwd()}/tools/design/color.ts`)
 const window = JSON.parse(readFileSync('tools/design/palettes.json', 'utf8')).find((p) => p.chosen).roles.window
 const logo = ({ svg, hex }) => (contrast(`#${hex}`, window) >= 3 ? svg.replace('<svg ', `<svg fill="#${hex}" `) : svg)
@@ -141,7 +141,7 @@ for (const tag of tags) {
 }
 if (errors.length) { console.error(errors.join('\n')); process.exit(1) }
 
-// The preview draws each image as kb does: a mask in one colour, in a pill.
+// The preview draws each image as kbx does: a mask in one colour, in a pill.
 const shown = write ? tags.filter((t) => existsSync(join(dir, `${t}.svg`))) : tags.filter((t) => existing.has(t))
 const cell = (t) => `<figure><span style="-webkit-mask-image:url('file://${join(dir, t)}.svg')"></span><figcaption>#${t}</figcaption></figure>`
 mkdirSync('tmp/tags', { recursive: true })

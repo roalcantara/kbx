@@ -1,14 +1,5 @@
 [files]
-extend-exclude = [
-  ".mise/",
-  "crates/kb-domain/tests/fixtures/",
-  "tools/bench/fixtures/",
-  "target/",
-  "tools/bench/ts/kb",
-  "tools/bench/ts/node_modules/",
-  "*.lock",
-  "docs/guides/results/",
-]
+extend-exclude = [".mise/", "crates/kbx-domain/tests/fixtures/", "target/", "*.lock"]
 
 [default.extend-words]
 # A status of the todo CLI (TODO.md): French for "in progress".

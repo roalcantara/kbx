@@ -8,20 +8,14 @@
   "excludes": [
     "target/**",
     "tmp/**",
-    "crates/kb-domain/tests/fixtures/**",
-    "tools/bench/fixtures/**",
-    "tools/bench/ts/kb",
-    "tools/bench/ts/node_modules/**",
-    "tools/bench/ts/dist/**",
-    "docs/guides/results/**",
+    "crates/kbx-domain/tests/fixtures/**",
     "TODO.md",
     "CHANGELOG.md",
     ".mise/**",
     "crates/third-party/block/**",
     "crates/third-party/gpui-pre-macos/**",
     ".claude/settings.local.json",
-    "**/*.lock",
-    "tools/bench/ts/bun.lock"
+    "**/*.lock"
   ],
   "plugins": [
     "npm:@dprint/json@0.25.2",

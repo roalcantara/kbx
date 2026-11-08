@@ -2,29 +2,25 @@
 
 ## Project overview
 
-An experiment: a native Rust port of the kb Raycast extension's search command, on GPUI Kit, measured against the
-original. The design is [docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md][spec]; plans live
-in `docs/superpowers/plans/`.
-
-[spec]: docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md
+kbx: a native macOS panel, opened by a hotkey, that searches a personal knowledge base of YAML source files. Rust on
+GPUI Kit, inspired by Raycast.
 
 ## Repository map
 
 The layout and the rule for each folder: [README, "Project Structure"](README.md#project-structure).
 
-- `crates/kb-domain/`: the engine; no UI dependency; `tests/fixtures/` holds the sample corpus and its goldens
-- `crates/kb-app/`: the GPUI Kit application
+- `crates/kbx-domain/`: the engine; no UI dependency; `tests/fixtures/` holds the sample corpus and its goldens
+- `crates/kbx-app/`: the GPUI Kit application
 - `crates/third-party/`: patched external crates, outside the workspace
-- `tools/bench/`: the benchmark kit (TS and Rust benchmarks, probes, report); purgeable as a unit
 - `tools/graph/`: code graphs for agents (CRG, Gortex, Graphify); use them before a broad search: tools/graph/README.md
 - `tools/tags/`: the tag tools (suggest, apply, check) for the knowledge folder's tags; rules in
   `docs/doctrine/tag-conventions.doctrine.md`
-- `docs/`: ADRs, experiment, specs and plans; `docs/doctrine/`: principles to load when a change matches their
+- `docs/`: ADRs and guides; `docs/doctrine/`: principles to load when a change matches their
   `applies_to`
-- `PRODUCT.md`: what kb is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any
+- `PRODUCT.md`: what kbx is for, its users and principles; `DESIGN.md`: its visual design. Read DESIGN.md before any
   UI change
-- `crates/kb-app/assets/catalog.toml`: what kb offers — entry types, actions, keys, words — overridable from
-  `~/.config/kb/config.toml`
+- `crates/kbx-app/assets/catalog.toml`: what kbx offers — entry types, actions, keys, words — overridable from
+  `~/.config/kbx/config.toml`
 - `tools/design/`: the design kit: tokens validated (`design:validate`), GPUI Kit's theme generated (`design:theme`), the showcase corpus, screenshots (`design:shots`) and the change map (`CHANGE-MAP.md`)
 - `TODO.md`: done and pending work, kept with the `todo` CLI (pinned in `mise.toml`; usage in its REF comments)
   Done tasks come first, pending ones after, in the order to do them; a decision or a won't-do is a comment on its
@@ -32,13 +28,12 @@ The layout and the rule for each folder: [README, "Project Structure"](README.md
 
 ## Core engineering rules
 
-- `kb-domain` must never depend on `gpui*` or `kb-app`, directly or transitively. The `domain-purity` hk step
+- `kbx-domain` must never depend on `gpui*` or `kbx-app`, directly or transitively. The `domain-purity` hk step
   enforces it; do not bypass it.
 - Follow `~/.agents/skills/rust-best-practices`, and for UI work read the GPUI Kit Coding Guides
   (`~/.agents/skills/gpui-kit`) and Design Guides (`~/.agents/skills/gpui-kit-design-guides`) before deciding.
-- Never commit anything from or derived from the private corpus: `tools/bench/fixtures/private*` is gitignored and must
-  stay so. Only `tools/bench/fixtures/private.sha256` is committed.
-- Never write to the Raycast repository (`$KB_TS_REPO`).
+- Never commit real personal data: the sources directory stays outside the repository; tests and screenshots use the
+  sample and showcase corpora.
 - Keep quality gates and thresholds unchanged unless the owner approves the change.
 - Scripts that stay in `tools/` are TypeScript run by Bun, written inline in the tool's mise task file
   (`run = '''#!/usr/bin/env bun …'''`). A module file exists only for logic with unit tests (`bun test` beside it).
@@ -70,7 +65,7 @@ It runs, in order, stopping at the first failure: `cargo nextest run`, `cargo cl
 
 - Write the failing test first. Tests sit beside the code in `#[cfg(test)]` modules; integration tests in
   `crates/*/tests/`.
-- Engine behaviour is checked against goldens from the TypeScript engine, never against hand-copied expectations.
+- Engine behaviour is checked against the goldens; a change to a golden is a behaviour change, reviewed by hand.
 
 ## Commits
 
