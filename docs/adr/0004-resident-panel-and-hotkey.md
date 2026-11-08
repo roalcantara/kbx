@@ -5,13 +5,13 @@
 
 ## Context
 
-Raycast keeps running and shows kb in a floating panel. A port launched as an ordinary app would compare its cold
+Raycast keeps running and shows kbx in a floating panel. A port launched as an ordinary app would compare its cold
 start with Raycast's warm one.
 
 ## Decision
 
-`kb-app` runs resident without a Dock icon, registers a global hotkey with the `global-hotkey` crate, and shows a
-GPUI pop-up window that hides on Esc or when it loses focus. All of it lives in `crates/kb-app/src/panel.rs`.
+`kbx-app` runs resident without a Dock icon, registers a global hotkey with the `global-hotkey` crate, and shows a
+GPUI pop-up window that hides on Esc or when it loses focus. All of it lives in `crates/kbx-app/src/panel.rs`.
 
 ## Consequences
 

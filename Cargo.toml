@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
-# The last two are the benchmark kit (tools/bench/README.md): remove them when purging it.
-members = ["crates/kb-domain", "crates/kb-app", "tools/bench/kb-bench", "tools/bench/report"]
+members = ["crates/kbx-domain", "crates/kbx-app"]
 # Patched third-party crates (crates/third-party/README.md): dependencies, not members, so the workspace lints skip them.
 exclude = ["crates/third-party"]
 
@@ -34,7 +33,7 @@ gpui-kit = { version = "=0.7.1", features = [
   "tree-sitter-yaml",
 ] }
 indexmap = "2"
-kb-domain = { path = "crates/kb-domain" }
+kbx-domain = { path = "crates/kbx-domain" }
 rusqlite = { version = "0.37", features = ["bundled"] }
 saphyr = "0.1"
 serde = { version = "1", features = ["derive"] }

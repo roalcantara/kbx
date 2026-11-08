@@ -1,14 +1,7 @@
 {
-  "path": ["crates", "tools/bench"],
-  "ignore": [
-    "**/target/**",
-    "crates/third-party/**",
-    "tools/bench/ts/kb/**",
-    "tools/bench/ts/node_modules/**",
-    "tools/bench/ts/dist/**",
-    "tools/bench/fixtures/**"
-  ],
-  "format": ["rust", "typescript"],
+  "path": ["crates"],
+  "ignore": ["**/target/**", "crates/third-party/**"],
+  "format": ["rust"],
   "threshold": 0,
   "reporters": ["console"],
   "gitignore": true

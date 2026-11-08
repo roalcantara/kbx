@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>kb · 19 Colours · approved</title>
+<title>kbx · 19 Colours · approved</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="https://unpkg.com/lucide@0.511.0/dist/umd/lucide.min.js"></script>
 <style>
@@ -40,7 +40,7 @@
   .marker { position: absolute; z-index: 50; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 10px Inter; color: #11121a; box-shadow: 0 0 0 2px #11121a; pointer-events: none; }
   .hide-markers .marker { display: none; }
 
-  /* ===== The proposal: kb's 01 List, in your design's values (Catppuccin Macchiato) ===== */
+  /* ===== The proposal: kbx's 01 List, in your design's values (Catppuccin Macchiato) ===== */
   .kb { --window: #24273a; --selected: #363a4f; --hover: #2f334a; --badge: #2e3248; --toast: #181926; --mantle: #1e2030;
         --text: #cad3f5; --muted: #a5adcb; --faint: #6e738d;
         --mauve: #c6a0f6; --blue: #8aadf4; --green: #a6da95; --peach: #f5a97f; --pink: #f5bde6; --yellow: #eed49f; --red: #ed8796;
@@ -90,9 +90,9 @@
 <body>
 <div class="page">
   <div>
-    <h1>01 · List — your design, made into kb <span style="font-size:13px;color:#a6da95;font-weight:500">v5: the fill decides the text: on mantle (live) every chip and keycap reads muted</span></h1>
+    <h1>01 · List — your design, made into kbx <span style="font-size:13px;color:#a6da95;font-weight:500">v5: the fill decides the text: on mantle (live) every chip and keycap reads muted</span></h1>
     <p class="lead">Left: switch between <b>your design</b> (the Stitch screen) and <b>the proposal</b> (the same screen built from your design's
-    own values, with realistic data in kb's shapes). Everything is kept as you drew it unless a note on the right says otherwise.
+    own values, with realistic data in kbx's shapes). Everything is kept as you drew it unless a note on the right says otherwise.
     The circled numbers point at each spot that needed a decision.</p>
   </div>
 
@@ -179,16 +179,16 @@
       <div class="key"><span><i style="background:#a6da95"></i>kept as you drew it</span><span><i style="background:#eed49f"></i>adjusted, and why</span><span><i style="background:#f5a97f"></i>your call</span></div>
       <h2>What the proposal keeps</h2>
       <div class="note"><span class="num keep">✓</span><p><b>Everything visual</b>: Catppuccin Macchiato colours, 14 pt window corners, hairlines under the header and above the footer, 56 pt rows 4 pt apart with 6 pt corners, the mauve bar with its glow, tinted icon tiles, neutral grey tag pills, icon chips for tags, the ↗ link chip, small type (13 / 12 / 11), Inter + JetBrains Mono, monospace keycaps, the filter pill with ⌘P, the toast.</p></div>
-      <div class="note"><span class="num keep">2</span><p><b>Filter pill</b> as drawn: sliders icon, label, ⌘P. kb's current funnel and chevron go.</p></div>
+      <div class="note"><span class="num keep">2</span><p><b>Filter pill</b> as drawn: sliders icon, label, ⌘P. kbx's current funnel and chevron go.</p></div>
       <div class="note"><span class="num keep">3</span><p><b>Command titles in monospace</b>: only entries of type <i>commands</i>; everything else in Inter, as drawn.</p></div>
       <div class="note"><span class="num keep">10</span><p><b>Status line</b> as drawn: the true result count comes from the index.</p></div>
 
       <h2>What had to be adjusted</h2>
-      <div class="note"><span class="num adjust">1</span><p><b>Magnifier on the list, back chevron elsewhere.</b> Your list shows a search icon; kb needs a back button on the detail and rebuild screens, so it appears only there.</p></div>
-      <div class="note"><span class="num adjust">4</span><p><b>The <span class="mono">deploy/api</span> chip is gone.</b> kb entries have no field it could come from (title, description, tags, links, type only).</p></div>
-      <div class="note"><span class="num adjust">5</span><p><b>Tag icons come from your tag-images folder</b> (<span class="mono">~/.config/kb/images/&lt;tag&gt;.svg</span>), tinted in the tag's colour. A tag without an image is a grey pill. The icons here are stand-ins for your real logos.</p></div>
-      <div class="note"><span class="num adjust">7</span><p><b>Type colours follow your design</b>: commands green, cheat sheets mauve with a book, bookmarks blue with a bookmark, notes peach. kb today has cheats blue and bookmarks purple; this swaps them.</p></div>
-      <div class="note"><span class="num adjust">8</span><p><b>Your icons are Google's Material set; kb draws Lucide</b> (the set its UI toolkit ships). Each was swapped for its nearest twin, so shapes differ slightly.</p></div>
+      <div class="note"><span class="num adjust">1</span><p><b>Magnifier on the list, back chevron elsewhere.</b> Your list shows a search icon; kbx needs a back button on the detail and rebuild screens, so it appears only there.</p></div>
+      <div class="note"><span class="num adjust">4</span><p><b>The <span class="mono">deploy/api</span> chip is gone.</b> kbx entries have no field it could come from (title, description, tags, links, type only).</p></div>
+      <div class="note"><span class="num adjust">5</span><p><b>Tag icons come from your tag-images folder</b> (<span class="mono">~/.config/kbx/images/&lt;tag&gt;.svg</span>), tinted in the tag's colour. A tag without an image is a grey pill. The icons here are stand-ins for your real logos.</p></div>
+      <div class="note"><span class="num adjust">7</span><p><b>Type colours follow your design</b>: commands green, cheat sheets mauve with a book, bookmarks blue with a bookmark, notes peach. kbx today has cheats blue and bookmarks purple; this swaps them.</p></div>
+      <div class="note"><span class="num adjust">8</span><p><b>Your icons are Google's Material set; kbx draws Lucide</b> (the set its UI toolkit ships). Each was swapped for its nearest twin, so shapes differ slightly.</p></div>
       <div class="note"><span class="num adjust">9</span><p><b>Toast hint says ⌘V</b>, not ⌥V: paste on macOS is ⌘V.</p></div>
       <div class="note"><span class="num ask">6</span><p><b>⌘2…⌘7 on each row</b> need a new feature: ⌘&lt;n&gt; runs row n's main action. Small to build, but new behaviour. Your call below.</p></div>
     </div>
@@ -269,7 +269,7 @@
   <div>
     <h1>19 · Colours — omarchy themes <span style="font-size:13px;color:#a6da95;font-weight:500">2026-10-19: Neon Dusk picked; all seven became selectable themes, kb-native (first) stays the default</span></h1>
     <p class="lead">Each window is the approved list (page 18, one edge at 20) recoloured from an omarchy theme's own palette,
-    mapped onto kb's 19 colour roles. Every scheme passes kb's legibility rules (text and muted 4.5:1 on every surface,
+    mapped onto kbx's 19 colour roles. Every scheme passes kbx's legibility rules (text and muted 4.5:1 on every surface,
     faint 3:1, each accent 3:1 on its tile). The <b>frame</b> is part of the scheme: <b>none</b> (no hairlines, no outline;
     surfaces separate by tone), <b>accent</b> (the panel outlined in the theme's accent, as Hyprland draws an active
     window), or <b>lines</b> (visible hairlines). Click the ones worth keeping.</p>

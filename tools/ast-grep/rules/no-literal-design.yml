@@ -3,15 +3,15 @@ language: rust
 severity: error
 message: Sizes and colours come from DESIGN.md's tokens through ui::design (pt, pixels, design().colors).
 note: |
-  The design tokens live in one place (spec D18). A literal px(…), rgb(…) or rgba(…) in a view is a value the
+  The design tokens live in one place. A literal px(…), rgb(…) or rgba(…) in a view is a value the
   design cannot change; read it from `design()` instead, adding a token to DESIGN.md's front matter if none fits.
   pt(…) and pixels(…) stay allowed: they are how a token's points become GPUI lengths, so a literal passed to them
   is left to review (owner, 2026-10-13).
 files:
-  - crates/kb-app/src/**/*.rs
+  - crates/kbx-app/src/**/*.rs
 ignores:
-  - crates/kb-app/src/ui/design.rs
-  - crates/kb-app/src/tag_images.rs
+  - crates/kbx-app/src/ui/design.rs
+  - crates/kbx-app/src/tag_images.rs
 rule:
   any:
     - pattern: px($A)

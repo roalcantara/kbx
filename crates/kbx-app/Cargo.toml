@@ -1,0 +1,50 @@
+[package]
+name = "kbx-app"
+description = "The kbx search panel: a resident GPUI Kit app opened by a global hotkey."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "kbx"
+path = "src/main.rs"
+
+
+[dependencies]
+dirs.workspace = true
+fmt-rs.workspace = true
+futures.workspace = true
+global-hotkey.workspace = true
+gpui-kit.workspace = true
+kbx-domain.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+shlex.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+toml_edit.workspace = true
+[dev-dependencies]
+gpui-kit = { workspace = true, features = ["test-support"] }
+indexmap.workspace = true
+tempfile.workspace = true
+# `cargo packager --release` (mise run package): the .app and .dmg in target/packager.
+[package.metadata.packager]
+product-name = "kbx"
+identifier = "dev.roalcantara.kbx"
+icons = ["assets/icon.icns"]
+out-dir = "../../target/packager"
+before-packaging-command = "cargo build --release --locked -p kbx-app"
+binaries = [{ path = "kbx", main = true }]
+category = "Productivity"
+copyright = "© 2026 Rogério Alcântara"
+
+[package.metadata.packager.macos]
+# LSUIElement: no Dock icon or app menu, as the resident panel runs (ADR 0004).
+background-app = true
+minimum-system-version = "13.0"
+
+[lints]
+workspace = true

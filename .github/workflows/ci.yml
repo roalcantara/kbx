@@ -19,9 +19,9 @@ permissions: {}
 env:
   CI: true
   CARGO_TERM_COLOR: always
-  # Tools in mise.toml that no CI job runs: local developer tools (the code graphs, fnox, the todo CLI), the benchmark
-  # kit's tokei, and commit-check with the Python it runs on (only the local commit-msg and branch hooks use it).
-  MISE_DISABLE_TOOLS: tokei,cargo:https://github.com/RayanBO/todo/,github:zzet/gortex,pipx:code-review-graph,pipx:graphifyy,fnox,pipx:commit-check,python
+  # Tools in mise.toml that no CI job runs: local developer tools (the code graphs, fnox, the todo CLI), and
+  # commit-check with the Python it runs on (only the local commit-msg and branch hooks use it).
+  MISE_DISABLE_TOOLS: cargo:https://github.com/RayanBO/todo/,github:zzet/gortex,pipx:code-review-graph,pipx:graphifyy,fnox,pipx:commit-check,python
 
 jobs:
   lint:
@@ -40,7 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # pinact verifies pins through the GitHub API (60 calls/hour without)
 
   test:
-    name: Test (kb-domain)
+    name: Test (kbx-domain)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -76,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   app:
-    name: Build kb.app (macOS)
+    name: Build kbx.app (macOS)
     needs: plan
     if: needs.plan.outputs.version != ''
     runs-on: macos-15
@@ -96,7 +96,7 @@ jobs:
           VERSION: ${{ needs.plan.outputs.version }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: kb-macos
+          name: kbx-macos
           path: target/release-assets/*.zip
           if-no-files-found: error
           retention-days: 7
@@ -116,7 +116,7 @@ jobs:
       - uses: $/.github/actions/setup
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: kb-macos
+          name: kbx-macos
           path: target/release-assets
       - run: mise run release
         env:

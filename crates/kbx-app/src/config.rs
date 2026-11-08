@@ -1,0 +1,459 @@
+//! Where the app reads its sources and keeps its index.
+//!
+//! The preferences are one optional TOML file, `~/.config/kbx/config.toml`: the two locations, and
+//! any key of the catalog (`assets/catalog.toml`) to override:
+//!
+//! ```toml
+//! sources_path = "~/Work/knowledge"
+//! tag_images_path = "~/Pictures/kbx-tags"
+//! skills_command = "skills"
+//! editor = "zed {file}:{line}"
+//! theme = "neon-dusk"
+//! [colors]
+//! mauve = "#FF00AA"
+//! ```
+//!
+//! `skills_command` names the Skills command; unset, kbx looks for `skills` (`crate::command_path`).
+//! `theme` names a file in `~/.config/kbx/themes/` (`crate::theme`; kbx when unset) and `[colors]` overrides
+//! single colour roles over it.
+//!
+//! `editor` opens files at a line (`crate::editor`); unset, files open with their default app.
+//!
+//! Without it the sources are `~/.config/kodexb/sources`. The index is the app's own file in its
+//! data directory.
+
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+
+/// The sources directory when the preferences name none.
+const DEFAULT_SOURCES: &str = ".config/kodexb/sources";
+/// The tag-images folder when the preferences name none, relative to the home directory.
+const DEFAULT_TAG_IMAGES: &str = ".config/kbx/images";
+/// The preferences file, relative to the home directory.
+const PREFERENCES: &str = ".config/kbx/config.toml";
+
+/// Why the preferences could not be read.
+#[derive(Debug, thiserror::Error)]
+pub enum ConfigError {
+    /// The file exists but could not be read.
+    #[error("cannot read {}: {source}", path.display())]
+    Read {
+        /// The preferences file.
+        path: PathBuf,
+        /// The I/O error.
+        source: io::Error,
+    },
+    /// The file is not the expected TOML.
+    #[error("{} is not valid: {source}", path.display())]
+    Parse {
+        /// The preferences file.
+        path: PathBuf,
+        /// The parser's error.
+        source: Box<toml::de::Error>,
+    },
+}
+
+/// The location settings; the catalog's tables are kept apart as overrides.
+#[derive(Debug, Default, Deserialize)]
+struct Preferences {
+    sources_path: Option<String>,
+    tag_images_path: Option<String>,
+    skills_command: Option<String>,
+    theme: Option<String>,
+    editor: Option<String>,
+}
+
+/// The top-level tables of config.toml that override the catalog (`crate::catalog`).
+const CATALOG_TABLES: [&str; 5] = ["types", "actions", "screens", "panel", "messages"];
+
+/// The resolved locations, the catalog overrides and what was ignored.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Config {
+    home: PathBuf,
+    sources_dir: PathBuf,
+    tag_images: PathBuf,
+    skills_command: Option<String>,
+    theme: Option<String>,
+    colors: toml::Table,
+    editor: Option<String>,
+    database: PathBuf,
+    preferences: PathBuf,
+    overrides: toml::Table,
+    notices: Vec<String>,
+}
+
+impl Config {
+    /// Resolves the locations under `home` and `data_dir`, reading the preferences if present.
+    ///
+    /// # Errors
+    ///
+    /// The preferences file exists but cannot be read or parsed.
+    pub fn load(home: &Path, data_dir: &Path) -> Result<Self, ConfigError> {
+        let preferences = home.join(PREFERENCES);
+        let table = match fs::read_to_string(&preferences) {
+            Ok(text) => toml::from_str::<toml::Table>(&text).map_err(|source| ConfigError::Parse {
+                path: preferences.clone(),
+                source: Box::new(source),
+            })?,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => toml::Table::new(),
+            Err(source) => {
+                return Err(ConfigError::Read {
+                    path: preferences,
+                    source,
+                });
+            }
+        };
+        let (mut locations, mut overrides, mut notices) = (toml::Table::new(), toml::Table::new(), Vec::new());
+        let mut colors = toml::Table::new();
+        for (key, value) in table {
+            match key.as_str() {
+                "sources_path" | "tag_images_path" | "skills_command" | "theme" | "editor" => {
+                    locations.insert(key, value);
+                }
+                "colors" => {
+                    if let toml::Value::Table(table) = value {
+                        colors = table;
+                    } else {
+                        // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                        let m = crate::catalog::shipped_messages();
+                        let notice = crate::catalog::fill(
+                            &m.config_colors_ignored,
+                            &[("file", &preferences.display().to_string())],
+                        );
+                        notices.push(notice);
+                    }
+                }
+                k if CATALOG_TABLES.contains(&k) => {
+                    overrides.insert(key, value);
+                }
+                _ => {
+                    // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                    let m = crate::catalog::shipped_messages();
+                    let notice = crate::catalog::fill(
+                        &m.config_unknown_ignored,
+                        &[("key", key.as_str()), ("file", &preferences.display().to_string())],
+                    );
+                    notices.push(notice);
+                }
+            }
+        }
+        let parsed: Preferences = toml::Value::Table(locations)
+            .try_into()
+            .map_err(|source| ConfigError::Parse {
+                path: preferences.clone(),
+                source: Box::new(source),
+            })?;
+        Ok(Self::from_preferences(
+            parsed, overrides, colors, notices, home, data_dir,
+        ))
+    }
+
+    /// The locations without preferences: the default sources directory and the app's index.
+    #[must_use]
+    pub fn defaults(home: &Path, data_dir: &Path) -> Self {
+        Self::from_preferences(
+            Preferences::default(),
+            toml::Table::new(),
+            toml::Table::new(),
+            Vec::new(),
+            home,
+            data_dir,
+        )
+    }
+
+    fn from_preferences(
+        parsed: Preferences,
+        overrides: toml::Table,
+        colors: toml::Table,
+        notices: Vec<String>,
+        home: &Path,
+        data_dir: &Path,
+    ) -> Self {
+        let mut notices = notices;
+        let editor = parsed.editor.filter(|template| match crate::editor::check(template) {
+            Ok(()) => true,
+            Err(error) => {
+                // Runs before the user's catalog overrides load, so it uses the shipped catalog's words.
+                let m = crate::catalog::shipped_messages();
+                let notice = crate::catalog::fill(
+                    &m.config_editor_ignored,
+                    &[
+                        ("file", &home.join(PREFERENCES).display().to_string()),
+                        ("error", &error.to_string()),
+                    ],
+                );
+                notices.push(notice);
+                false
+            }
+        });
+        let sources_dir = parsed
+            .sources_path
+            .map_or_else(|| home.join(DEFAULT_SOURCES), |path| expand_home(&path, home));
+        let tag_images = parsed
+            .tag_images_path
+            .map_or_else(|| home.join(DEFAULT_TAG_IMAGES), |path| expand_home(&path, home));
+        Self {
+            home: home.to_path_buf(),
+            sources_dir,
+            tag_images,
+            skills_command: parsed.skills_command,
+            editor,
+            theme: parsed.theme,
+            colors,
+            database: data_dir.join("kbx").join("kbx.db"),
+            preferences: home.join(PREFERENCES),
+            overrides,
+            notices,
+        }
+    }
+
+    /// The directory the source files are found under.
+    #[must_use]
+    pub fn sources_dir(&self) -> &Path {
+        &self.sources_dir
+    }
+
+    /// The folder of tag images: `<tag>.svg` draws `#tag` (`mise run images` fills the default).
+    #[must_use]
+    pub fn tag_images(&self) -> &Path {
+        &self.tag_images
+    }
+
+    /// The Skills command to run, found as [`crate::command_path::skills_command`] finds it;
+    /// `None` when it is not configured.
+    #[must_use]
+    pub fn skills_command(&self) -> Option<PathBuf> {
+        crate::command_path::skills_command(
+            self.skills_command.as_deref(),
+            std::env::var_os("PATH").as_deref(),
+            &self.home,
+        )
+    }
+
+    /// The theme config.toml names, if any.
+    #[must_use]
+    pub fn theme(&self) -> Option<&str> {
+        self.theme.as_deref()
+    }
+
+    /// config.toml's `[colors]`: single colour roles over the theme's.
+    #[must_use]
+    pub fn colors(&self) -> &toml::Table {
+        &self.colors
+    }
+
+    /// The themes folder, beside config.toml.
+    #[must_use]
+    pub fn themes_dir(&self) -> PathBuf {
+        self.home.join(".config/kbx/themes")
+    }
+
+    /// Writes `theme = "<id>"` into config.toml, keeping every other line, comment and blank line (`toml_edit`); creates
+    /// the file when it is absent.
+    ///
+    /// # Errors
+    ///
+    /// The file cannot be read, is not TOML, or cannot be written.
+    pub fn save_theme(&self, id: &str) -> io::Result<()> {
+        let text = match fs::read_to_string(&self.preferences) {
+            Ok(text) => text,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => String::new(),
+            Err(error) => return Err(error),
+        };
+        let mut doc: toml_edit::DocumentMut = text
+            .parse()
+            .map_err(|e: toml_edit::TomlError| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        doc["theme"] = toml_edit::value(id);
+        if let Some(parent) = self.preferences.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(&self.preferences, doc.to_string())
+    }
+
+    /// The index file.
+    #[must_use]
+    pub fn database(&self) -> &Path {
+        &self.database
+    }
+
+    /// The preferences file, which may not exist yet.
+    #[must_use]
+    pub fn preferences(&self) -> &Path {
+        &self.preferences
+    }
+
+    /// The catalog tables of config.toml, applied by `Catalog::load`.
+    #[must_use]
+    pub fn overrides(&self) -> &toml::Table {
+        &self.overrides
+    }
+
+    /// What config.toml held that kbx ignored, to show as notices.
+    #[must_use]
+    pub fn notices(&self) -> &[String] {
+        &self.notices
+    }
+
+    /// The editor template config.toml names (`crate::editor`), if any and valid.
+    #[must_use]
+    pub fn editor(&self) -> Option<&str> {
+        self.editor.as_deref()
+    }
+
+    /// The home folder.
+    #[must_use]
+    pub fn home(&self) -> &Path {
+        &self.home
+    }
+}
+
+/// `~` and `~/…` relative to `home`; any other path as written.
+pub(crate) fn expand_home(path: &str, home: &Path) -> PathBuf {
+    match path.strip_prefix('~') {
+        Some("") => home.to_path_buf(),
+        Some(rest) if rest.starts_with('/') => home.join(&rest[1..]),
+        _ => PathBuf::from(path),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn home_with(preferences: Option<&str>) -> tempfile::TempDir {
+        let home = tempfile::tempdir().unwrap();
+        if let Some(text) = preferences {
+            let file = home.path().join(PREFERENCES);
+            fs::create_dir_all(file.parent().unwrap()).unwrap();
+            fs::write(file, text).unwrap();
+        }
+        home
+    }
+
+    #[test]
+    fn reads_the_theme_and_colour_overrides() {
+        let home = home_with(Some("theme = \"archwave\"\n[colors]\nmauve = \"#FF00AA\"\n"));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        assert_eq!(config.theme(), Some("archwave"));
+        assert_eq!(config.colors()["mauve"].as_str(), Some("#FF00AA"));
+        assert_eq!(config.themes_dir(), home.path().join(".config/kbx/themes"));
+        assert!(config.notices().is_empty(), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn saves_the_theme_keeping_everything_else() {
+        let text = "# my settings\nsources_path = \"~/k\"   # where\n\n[actions.copy]\nlabel = \"Yank\"\n";
+        let home = home_with(Some(text));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        config.save_theme("neon-dusk").unwrap();
+        let saved = fs::read_to_string(config.preferences()).unwrap();
+        assert!(
+            saved.contains("# my settings\nsources_path = \"~/k\"   # where\n"),
+            "{saved}"
+        );
+        assert!(saved.contains("theme = \"neon-dusk\""), "{saved}");
+        assert!(saved.contains("[actions.copy]\nlabel = \"Yank\""), "{saved}");
+        let home = home_with(None);
+        Config::load(home.path(), &home.path().join("data"))
+            .unwrap()
+            .save_theme("archwave")
+            .unwrap();
+        assert!(home.path().join(PREFERENCES).is_file(), "created when absent");
+    }
+
+    #[test]
+    fn defaults_to_the_kodexb_sources_directory() {
+        let home = home_with(None);
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.sources_dir(), home.path().join(".config/kodexb/sources"));
+        assert_eq!(config.database(), Path::new("/data/kbx/kbx.db"));
+    }
+
+    #[test]
+    fn reads_the_skills_command_and_expands_home() {
+        let home = home_with(Some("skills_command = \"~/bin/skills\"\n"));
+        let config = Config::load(home.path(), &home.path().join("data")).unwrap();
+        assert_eq!(config.skills_command(), Some(home.path().join("bin/skills")));
+        assert_eq!(config.notices(), [] as [String; 0]);
+    }
+
+    #[test]
+    fn reads_the_sources_path_and_expands_home() {
+        let home = home_with(Some("sources_path = \"~/Work/knowledge\"\n"));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.sources_dir(), home.path().join("Work/knowledge"));
+        assert_eq!(expand_home("/abs", home.path()), PathBuf::from("/abs"));
+        assert_eq!(expand_home("~", home.path()), home.path());
+    }
+
+    #[test]
+    fn falls_back_to_the_defaults() {
+        let home = home_with(Some("sources_path = \"~/elsewhere\"\n"));
+        let config = Config::defaults(home.path(), Path::new("/data"));
+        assert_eq!(config.sources_dir(), home.path().join(".config/kodexb/sources"));
+        assert_eq!(config.preferences(), home.path().join(".config/kbx/config.toml"));
+    }
+
+    #[test]
+    fn reads_the_tag_images_path_and_defaults_beside_the_preferences() {
+        let home = home_with(Some("tag_images_path = \"~/art\"\n"));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.tag_images(), home.path().join("art"));
+        let config = Config::defaults(home.path(), Path::new("/data"));
+        assert_eq!(config.tag_images(), home.path().join(".config/kbx/images"));
+    }
+
+    #[test]
+    fn ignores_unknown_settings_with_a_notice() {
+        let home = home_with(Some("source_path = \"x\"\n"));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.notices().len(), 1);
+        assert!(config.notices()[0].contains("source_path"), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn keeps_the_catalog_tables_as_overrides() {
+        let home = home_with(Some(
+            "sources_path = \"~/k\"\n[actions.copy]\nlabel = \"Yank\"\n[messages]\nready = \"Idle\"\n",
+        ));
+        let config = Config::load(home.path(), Path::new("/data")).unwrap();
+        assert_eq!(config.sources_dir(), home.path().join("k"));
+        assert_eq!(config.overrides()["actions"]["copy"]["label"].as_str(), Some("Yank"));
+        assert_eq!(config.overrides()["messages"]["ready"].as_str(), Some("Idle"));
+        assert!(config.notices().is_empty(), "{:?}", config.notices());
+    }
+
+    #[test]
+    fn rejects_a_file_that_is_not_toml() {
+        let home = home_with(Some("sources_path = \n"));
+        assert!(matches!(
+            Config::load(home.path(), Path::new("/data")),
+            Err(ConfigError::Parse { .. })
+        ));
+    }
+
+    #[test]
+    fn reads_the_editor_and_ignores_a_broken_one() {
+        let home = tempfile::tempdir().unwrap();
+        let file = home.path().join(".config/kbx/config.toml");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "editor = \"zed {file}:{line}\"\n").unwrap();
+        let config = Config::load(home.path(), home.path()).unwrap();
+        assert_eq!(config.editor(), Some("zed {file}:{line}"));
+
+        fs::write(&file, "editor = \"zed '{file}\"\n").unwrap();
+        let config = Config::load(home.path(), home.path()).unwrap();
+        assert_eq!(config.editor(), None);
+        assert!(
+            config
+                .notices()
+                .iter()
+                .any(|n| n.contains("`editor`") && n.contains("a quote is never closed")),
+            "{:?}",
+            config.notices()
+        );
+    }
+}

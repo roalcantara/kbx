@@ -1,5 +1,5 @@
-// Draws the app icon: a rounded square in two blues with "kb" in white, as a 1024 px PNG.
-// Usage: swift tools/icon/icon.swift crates/kb-app/assets/icon.png
+// Draws the app icon: a rounded square in two blues with "kbx" in white, as a 1024 px PNG.
+// Usage: swift tools/icon/icon.swift crates/kbx-app/assets/icon.png
 import AppKit
 
 let side: CGFloat = 1024
@@ -14,7 +14,7 @@ let frame = NSRect(x: 100, y: 100, width: side - 200, height: side - 200)
 let shape = NSBezierPath(roundedRect: frame, xRadius: 185, yRadius: 185)
 NSGradient(starting: NSColor(srgbRed: 0.16, green: 0.38, blue: 0.95, alpha: 1),
            ending: NSColor(srgbRed: 0.05, green: 0.12, blue: 0.40, alpha: 1))!.draw(in: shape, angle: -90)
-let text = NSAttributedString(string: "kb", attributes: [
+let text = NSAttributedString(string: "kbx", attributes: [
     .font: NSFont.systemFont(ofSize: 430, weight: .bold),
     .foregroundColor: NSColor.white,
 ])

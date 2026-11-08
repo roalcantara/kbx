@@ -45,5 +45,5 @@ and `kubernetes` into `kubernete`. Established conventions already settle these 
   `mise run tags:apply -- --write` rewrites the tag lines. The knowledge folder must be a clean git work tree.
 - Images: `mise run tags:images` shows which tags get which image, from the knowledge folder's
   `docs/tags.images.toml` (a brand's Simple Icons logo, else a Lucide icon); `-- --write` copies them into the
-  tag-images folder, and `tmp/tags/images.html` previews them as kb draws them.
-- kb itself never writes source files: these tools do, only when asked.
+  tag-images folder, and `tmp/tags/images.html` previews them as kbx draws them.
+- kbx itself never writes source files: these tools do, only when asked.

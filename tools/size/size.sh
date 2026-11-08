@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Measures the release `kb` binary and fails when it outgrows the budget in tools/size/budget.
-# Writes the measurement as a result when given a path (the benchmark kit's bench:size does).
-# Usage: size.sh [out.json]   (build first: cargo build --release --locked -p kb-app)
+# Measures the release `kbx` binary and fails when it outgrows the budget in tools/size/budget.
+# Writes the measurement as JSON when given a path.
+# Usage: size.sh [out.json]   (build first: cargo build --release --locked -p kbx-app)
 set -euo pipefail
 
-binary=target/release/kb
+binary=target/release/kbx
 budget=$(tr -d '[:space:]' <tools/size/budget)
 [ -f "$binary" ] || {
-  echo "no $binary; run cargo build --release --locked -p kb-app"
+  echo "no $binary; run cargo build --release --locked -p kbx-app"
   exit 1
 }
 bytes=$(stat -f %z "$binary")
@@ -19,7 +19,7 @@ if [ -n "${1:-}" ]; then
       repoCommit: $commit, bundle: "release binary, stripped, LTO", bytes: $bytes, budget: $budget}' >"$1"
 fi
 
-echo "kb: $((bytes / 1048576)) MiB ($bytes bytes), budget $((budget / 1048576)) MiB"
+echo "kbx: $((bytes / 1048576)) MiB ($bytes bytes), budget $((budget / 1048576)) MiB"
 if [ "$bytes" -gt "$budget" ]; then
   echo "    -> the binary outgrew its budget; find the cause with cargo bloat before raising tools/size/budget"
   exit 1

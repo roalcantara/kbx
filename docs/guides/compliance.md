@@ -1,7 +1,6 @@
 # Compliance
 
-The checklists the port is held to, each item with its evidence. `kb-report report` counts the checked items per section;
-an unchecked item says why and what would close it. Sources: the GPUI Kit Coding Guides ("Implementation checklist",
+The checklists kbx is held to, each item with its evidence; an unchecked item says why and what would close it. Sources: the GPUI Kit Coding Guides ("Implementation checklist",
 "Theme and styling", "Events, actions, and focus", "Performance rules"), the GPUI Kit Design Guides ("Accessibility
 checklist", "Interface language"), and the rust-best-practices quick reference.
 
@@ -15,7 +14,7 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 - [x] Repeated elements have stable domain-based ids: the notes `TextView` is keyed by the entry id; sync report rows
       by their path; list rows by the List's own index model, which is virtualized (`notes.rs`, `sync_view.rs`).
 - [x] Theme tokens replace visual literals: no hex, `rgb` or `hsla` in the app's code; colours come from the theme
-      (`assets/themes/kb.json`) and the seven accents from `assets/themes/accents.json` (`accents::accent`), both
+      (`assets/themes/kbx.json`) and the seven accents from `assets/themes/accents.json` (`accents::accent`), both
       generated from DESIGN.md's palette by `mise run design:theme`. **Exception:** component geometry (header,
       rows, footer, popovers, the window sizes) is in points, the values of `tools/design/layout.json` as DESIGN.md
       states them; text sizes stay in the rem scale.
@@ -28,8 +27,8 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
       (`EntryList::render_empty`); rebuild stopped and failed states (`SyncStatus`); unreadable preferences and a taken
       hotkey become notifications (`main.rs`, `panel::open`); a failed filter read too (`search_view.rs`).
 - [x] Long data sets use a virtualized component: `List`, paged 50 at a time like Raycast (`EntryList::load_more`).
-- [x] Public API additions preserve direction and encapsulation: `kb-domain` has no UI dependency (hk
-      `domain-purity`); `kb-app` exposes only what `main` and its UI tests use (`lib.rs`).
+- [x] Public API additions preserve direction and encapsulation: `kbx-domain` has no UI dependency (hk
+      `domain-purity`); `kbx-app` exposes only what `main` and its UI tests use (`lib.rs`).
 - [x] Tests prove behaviour at the right layer: domain units and goldens; presentation units; UI tests that press keys
       in a real window (`tests/ui.rs`).
 - [x] No state mutation or `notify` in `render`; entities and subscriptions are built once in `SearchView::new`.
@@ -50,7 +49,7 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 - [x] Copy follows Raycast's Title Case, with an ellipsis only on commands that open more choices or ask for more input:
       "Open", "Copy", "Resize", "Links…", "More…", "Clear All"
       ([DESIGN.md, Adaptations](../../DESIGN.md#adaptations); an owner-approved deviation from the GPUI Kit Design
-      Guides) (`crates/kb-app/assets/catalog.toml`). Messages stay sentences.
+      Guides) (`crates/kbx-app/assets/catalog.toml`). Messages stay sentences.
 - [x] Errors read as what happened and what to do: "Couldn’t register ⌥K: … Another app may be using it."
 - [x] An app-level Quit command exists: ⌘Q quits; the action panel has no Quit row (D9).
 - [x] Content remains usable at larger text: text sizes are in the rem scale and grow with the base font (design tokens in points, applied as rems by `ui::design::pt`); the split is
@@ -66,25 +65,24 @@ checklist", "Interface language"), and the rust-best-practices quick reference.
 
 - [x] Fallible operations return `Result`; no `unwrap` or `expect` outside tests (`clippy::unwrap_used` and
       `expect_used` are denied by the gate, `clippy.toml` allows them only in tests).
-- [x] `thiserror` for every error type (`SyncError`, `ConfigError`, `PanelError`, `kb-report`'s `Error`); no `anyhow`.
+- [x] `thiserror` for every error type (`SyncError`, `ConfigError`, `PanelError`); no `anyhow`.
 - [x] `#[expect(lint, reason = …)]` instead of `#[allow]`: no `allow` attribute remains in the crates.
 - [x] Clippy `pedantic` with `-D warnings` on all targets, in the gate (`mise run gate`).
 - [x] Public items are documented: `missing_docs` on both library crates, an error under the gate's `-D warnings`;
       `cargo doc` with `-D warnings`.
 - [x] Doc tests show the public API: the crate example syncs and searches; the query and id helpers have examples
-      (`kb_domain`, `query.rs`, `entry.rs`, `markdown.rs`); the gate runs them (`cargo test --doc`).
+      (`kbx_domain`, `query.rs`, `entry.rs`, `markdown.rs`); the gate runs them (`cargo test --doc`).
 - [x] Tests are named for the behaviour they prove (`opens_details_with_enter_in_the_list_without_running_the_primary_action`).
-- [x] Benchmarks run in release with LTO (`kb-bench`, `profile.release`).
+- [x] The release build uses LTO (`profile.release`).
 - [x] No `TODO` without an issue: none in the crates.
 - [x] No unsafe code: `unsafe_code = "forbid"` for the workspace.
 - [x] Static dispatch by default; `dyn` only where values are heterogeneous: the action panel's row callback
-      (`ui::action_panel::OnRow`), and `kb-bench` boxes its errors at the binary's edge.
+      (`ui::action_panel::OnRow`).
 
 ## Repository conventions
 
 - [x] Tool versions pinned in `mise.toml`, including the packager and the line counter.
 - [x] Dependencies audited by `cargo deny`; exceptions recorded with reasons (ADR 0005).
-- [x] Every hk step of the Raycast repo has its counterpart or a recorded reason (`hk.pkl`).
 - [x] The release binary stays within its size budget (`tools/size/budget`, `mise run size`).
 - [x] A signed, installable `.app` is built by one task (`mise run package`); the bundle id is shared with the app
-      identity (`kb_app::APP_ID`).
+      identity (`kbx_app::APP_ID`).

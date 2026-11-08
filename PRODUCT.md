@@ -1,4 +1,4 @@
-# kb
+# kbx
 
 A native macOS panel for searching a personal YAML knowledge base, by keyboard.
 
@@ -9,25 +9,23 @@ Product.
 ## Users
 
 - The owner: a keyboard-first developer who keeps commands, bookmarks, cheats, notes and tasks in YAML source files, and
-  opens kb dozens of times a day.
-- The coding agents that work on kb. They read this file, [AGENTS.md](AGENTS.md), [CONTEXT.md](CONTEXT.md) and
+  opens kbx dozens of times a day.
+- The coding agents that work on kbx. They read this file, [AGENTS.md](AGENTS.md), [CONTEXT.md](CONTEXT.md) and
   [DESIGN.md](DESIGN.md) before changing it.
 
 ## Problem
 
-The same search lives today as a Raycast extension. Raycast limits what an extension may be (window size, runtime,
-memory), and reaching the search costs two or three steps through Raycast's root search. For a tool opened that often,
-both add up.
+A knowledge base of commands, cheat sheets and bookmarks pays off only if reaching it is instant. A launcher extension
+is limited in what it may be (window size, runtime, memory), and reaching it costs two or three steps through the
+launcher's root search. For a tool opened that often, both add up.
 
 ## Product Purpose
 
-Find and use an entry in two keystrokes after ⌥K: type a few letters, press Return. The experiment's success criteria
-decide whether the native port earns its place
-([experiment design, "Report"](docs/superpowers/specs/2026-10-08-kb-native-port-experiment-design.md)).
+Find and use an entry in two keystrokes after ⌥K: type a few letters, press Return.
 
 ## Brand Personality / Tone
 
-Quiet, fast, native. kb looks and speaks like Raycast: Title Case labels, short verbs ("Open in Browser", "Copy
+Quiet, fast, native. kbx looks and speaks like Raycast: Title Case labels, short verbs ("Open in Browser", "Copy
 Command"), no exclamation marks, no chatter.
 
 ## Anti-references
@@ -52,7 +50,7 @@ Command"), no exclamation marks, no chatter.
   section labels, URLs) at least 3:1 on the window and popovers (owner, 2026-10-13, O1); `mise run design:validate`
   checks the tokens.
 - Nothing is told by colour alone: a tag carries its `#name`, a type its icon and tooltip.
-- Every control is named for assistive technology ([compliance checklist](docs/experiment/compliance.md)).
+- Every control is named for assistive technology ([compliance checklist](docs/guides/compliance.md)).
 
 ## Offer
 

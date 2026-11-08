@@ -381,11 +381,6 @@ checksum = "sha256:713734314c3e71894b9e77513c5349835eefbd52908445a0d73b0c7dc4693
 url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-darwin-aarch64.gz"
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323110"
 
-[[tools.tokei]]
-version = "15.0.0"
-backend = "cargo:tokei"
-specifiers = ["15.0.0"]
-
 [[tools.typos]]
 version = "1.51.1"
 backend = "aqua:crate-ci/typos"
